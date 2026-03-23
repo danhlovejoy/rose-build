@@ -18,7 +18,7 @@
 #   ./build.sh aiml2003/module1   # Build one module
 #   ./build.sh aiml2003           # Build one course
 #
-# Output goes to: build/output/ (relative to course or workspace root)
+# Output goes to: build/ (relative to course or workspace root)
 # Source files are never modified.
 # ============================================================
 
@@ -40,7 +40,7 @@ else
     MODE="workspace"
 fi
 
-BUILD_DIR="$ROOT_DIR/build/output"
+BUILD_DIR="$ROOT_DIR/build"
 INLINER="$SCRIPT_DIR/inline_css.py"
 
 # Color output
