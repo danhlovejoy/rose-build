@@ -310,6 +310,7 @@ def process_file(input_path, output_path, css_rules):
     body_styles = collect_body_styles(css_rules)
     if body_styles:
         style_str = '; '.join(f'{k}: {v}' for k, v in body_styles.items())
+        style_str = style_str.replace('"', "'")
         body = f'<div style="{style_str}">\n{body}\n</div>'
 
     os.makedirs(os.path.dirname(output_path) or '.', exist_ok=True)
