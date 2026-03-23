@@ -281,6 +281,17 @@ def extract_body(html):
     return m.group(1).strip() if m else html
 
 
+def collect_body_styles(css_rules):
+    """Collect CSS properties that target the body element."""
+    style_props = {}
+    for selector, props, specificity in css_rules:
+        sel = selector.strip()
+        if sel == 'body':
+            for pname, pval in props:
+                style_props[pname] = pval
+    return style_props
+
+
 def process_file(input_path, output_path, css_rules):
     """Process one HTML file: inline CSS, extract body, write output."""
     with open(input_path, 'r', encoding='utf-8') as f:
@@ -294,6 +305,13 @@ def process_file(input_path, output_path, css_rules):
 
     # Extract body only
     body = extract_body(html)
+
+    # Wrap in a div with body-level styles (font-family, color, etc.)
+    # since Canvas strips <body> and its inherited properties are lost
+    body_styles = collect_body_styles(css_rules)
+    if body_styles:
+        style_str = '; '.join(f'{k}: {v}' for k, v in body_styles.items())
+        body = f'<div style="{style_str}">\n{body}\n</div>'
 
     os.makedirs(os.path.dirname(output_path) or '.', exist_ok=True)
     with open(output_path, 'w', encoding='utf-8') as f:
