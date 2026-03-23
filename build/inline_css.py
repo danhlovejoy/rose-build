@@ -303,13 +303,17 @@ def process_file(input_path, output_path, css_rules):
 
 
 def main():
-    # Parse optional --css flag
+    # Parse optional flags
     args = sys.argv[1:]
     css_path = None
+    no_recurse = False
     if '--css' in args:
         idx = args.index('--css')
         css_path = args[idx + 1]
         args = args[:idx] + args[idx + 2:]
+    if '--no-recurse' in args:
+        args.remove('--no-recurse')
+        no_recurse = True
 
     if len(args) < 2:
         print("Usage: python3 inline_css.py [--css <path>] <input_dir> <output_dir>")
@@ -348,16 +352,30 @@ def main():
         print(f"  {input_path} -> {output_path}")
     else:
         count = 0
-        for root, dirs, fnames in os.walk(input_path):
-            for fname in sorted(fnames):
+        if no_recurse:
+            # Only process HTML files directly in input_path (no subdirs)
+            fnames = sorted(os.listdir(input_path))
+            for fname in fnames:
                 if not fname.endswith('.html'):
                     continue
-                src = os.path.join(root, fname)
-                rel = os.path.relpath(src, input_path)
-                dst = os.path.join(output_path, rel)
+                src = os.path.join(input_path, fname)
+                if not os.path.isfile(src):
+                    continue
+                dst = os.path.join(output_path, fname)
                 process_file(src, dst, css_rules)
-                print(f"  {rel}")
+                print(f"  {fname}")
                 count += 1
+        else:
+            for root, dirs, fnames in os.walk(input_path):
+                for fname in sorted(fnames):
+                    if not fname.endswith('.html'):
+                        continue
+                    src = os.path.join(root, fname)
+                    rel = os.path.relpath(src, input_path)
+                    dst = os.path.join(output_path, rel)
+                    process_file(src, dst, css_rules)
+                    print(f"  {rel}")
+                    count += 1
         print(f"\nProcessed {count} files -> {output_path}")
 
 

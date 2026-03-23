@@ -60,19 +60,25 @@ TARGET="${1:-all}"
 
 build_dir() {
     local src_dir="$1"
+    local no_recurse="${2:-}"
     local rel_path
     rel_path="$(python3 -c "import os; print(os.path.relpath('$src_dir', '$ROOT_DIR'))")"
     local out_dir="$BUILD_DIR/$rel_path"
 
-    # Count HTML files
+    # Count HTML files (top-level only)
     local count
     count=$(find "$src_dir" -name '*.html' -maxdepth 1 | wc -l | tr -d ' ')
     if [ "$count" -eq 0 ]; then
         return
     fi
 
+    local extra_flags=""
+    if [ "$no_recurse" = "--no-recurse" ]; then
+        extra_flags="--no-recurse"
+    fi
+
     echo -e "${YELLOW}Building: $rel_path ($count files)${NC}"
-    python3 "$INLINER" --css "$CSS_PATH" "$src_dir" "$out_dir"
+    python3 "$INLINER" --css "$CSS_PATH" $extra_flags "$src_dir" "$out_dir"
     echo ""
 }
 
@@ -82,7 +88,7 @@ if [ "$MODE" = "course" ]; then
         # Build standalone HTML files at course root
         standalone_count=$(find "$ROOT_DIR" -maxdepth 1 -name '*.html' | wc -l | tr -d ' ')
         if [ "$standalone_count" -gt 0 ]; then
-            build_dir "$ROOT_DIR"
+            build_dir "$ROOT_DIR" --no-recurse
         fi
         # Build each module
         for module_dir in "$ROOT_DIR"/module*/; do
@@ -106,7 +112,7 @@ else
             if [ -d "$course_dir" ]; then
                 standalone_count=$(find "$course_dir" -maxdepth 1 -name '*.html' | wc -l | tr -d ' ')
                 if [ "$standalone_count" -gt 0 ]; then
-                    build_dir "$course_dir"
+                    build_dir "$course_dir" --no-recurse
                 fi
                 for module_dir in "$course_dir"module*/; do
                     if [ -d "$module_dir" ]; then
@@ -121,7 +127,7 @@ else
             if ls "$target_dir"/module*/ 1>/dev/null 2>&1; then
                 standalone_count=$(find "$target_dir" -maxdepth 1 -name '*.html' | wc -l | tr -d ' ')
                 if [ "$standalone_count" -gt 0 ]; then
-                    build_dir "$target_dir"
+                    build_dir "$target_dir" --no-recurse
                 fi
                 for module_dir in "$target_dir"/module*/; do
                     if [ -d "$module_dir" ]; then
