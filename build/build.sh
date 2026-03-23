@@ -43,6 +43,12 @@ fi
 BUILD_DIR="$ROOT_DIR/build"
 INLINER="$SCRIPT_DIR/inline_css.py"
 
+# Per-course color overrides (optional)
+OVERRIDE_CSS=""
+if [ -f "$ROOT_DIR/course-colors.css" ]; then
+    OVERRIDE_CSS="$ROOT_DIR/course-colors.css"
+fi
+
 # Color output
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
@@ -52,6 +58,9 @@ NC='\033[0m'
 echo -e "${GREEN}Canvas Build Pipeline${NC}"
 echo "Root: $ROOT_DIR"
 echo "CSS:  $CSS_PATH"
+if [ -n "$OVERRIDE_CSS" ]; then
+    echo "Colors: $OVERRIDE_CSS"
+fi
 echo "Output: $BUILD_DIR"
 echo ""
 
@@ -75,6 +84,9 @@ build_dir() {
     local extra_flags=""
     if [ "$no_recurse" = "--no-recurse" ]; then
         extra_flags="--no-recurse"
+    fi
+    if [ -n "$OVERRIDE_CSS" ]; then
+        extra_flags="$extra_flags --override-css $OVERRIDE_CSS"
     fi
 
     echo -e "${YELLOW}Building: $rel_path ($count files)${NC}"

@@ -11,6 +11,8 @@
 
 :root {
     --primary: #1a3a5c;
+    --primary-light: #2e5a88;
+    --primary-faded: #d0e0f0;
     --accent: #2e7d32;
     --light-bg: #f7f9fc;
     --border: #d0d7de;
@@ -22,6 +24,9 @@
     --opt-border: #ffb300;
     --nlm-bg: #e8eaf6;
     --nlm-border: #3949ab;
+    --syllabus-bg: #e8eaf6;
+    --syllabus-border: #3949ab;
+    --syllabus-text: #1a237e;
     --warn-bg: #fff3e0;
     --warn-border: #e65100;
     --code-bg: #f0f3f6;
@@ -66,7 +71,7 @@ h2 {
 p { font-size: 0.95rem; margin-bottom: 0.75rem; }
 
 .hero {
-    background: linear-gradient(135deg, #1a3a5c 0%, #2e5a88 100%);
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
     color: #fff;
     padding: 2rem;
     border-radius: 10px;
@@ -81,7 +86,7 @@ p { font-size: 0.95rem; margin-bottom: 0.75rem; }
     padding: 0;
   }
 
-.hero p { color: #d0e0f0; margin-bottom: 0.5rem; }
+.hero p { color: var(--primary-faded); margin-bottom: 0.5rem; }
 
 .hero .highlight { color: #fff; font-weight: 600; }
 
@@ -182,8 +187,8 @@ a { color: #1565c0; }
 .contact-box p { margin-bottom: 0.3rem; font-size: 0.9rem; }
 
 .syllabus-notice {
-    background: #e8eaf6;
-    border: 2px solid #3949ab;
+    background: var(--syllabus-bg);
+    border: 2px solid var(--syllabus-border);
     border-radius: 8px;
     padding: 1rem 1.5rem;
     margin-bottom: 2rem;
@@ -191,9 +196,9 @@ a { color: #1565c0; }
     line-height: 1.6;
   }
 
-.syllabus-notice strong { color: #1a237e; }
+.syllabus-notice strong { color: var(--syllabus-text); }
 
-.syllabus-notice a { color: #1a237e; font-weight: 600; }
+.syllabus-notice a { color: var(--syllabus-text); font-weight: 600; }
 
 .video-list {
     margin-top: 0.5rem;
@@ -231,14 +236,14 @@ h3 {
 .time-box strong { color: var(--primary); }
 
 .framing-box {
-    background: linear-gradient(135deg, #1a3a5c 0%, #2e5a88 100%);
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
     color: #fff;
     padding: 1.5rem;
     border-radius: 10px;
     margin-bottom: 2rem;
   }
 
-.framing-box p { color: #d0e0f0; }
+.framing-box p { color: var(--primary-faded); }
 
 .framing-box strong { color: #fff; }
 
@@ -667,8 +672,8 @@ ul { margin-left: 1.5rem; margin-top: 0.5rem; }
   }
 
 .context-box {
-    background: #e8eaf6;
-    border: 2px solid #3949ab;
+    background: var(--syllabus-bg);
+    border: 2px solid var(--syllabus-border);
     border-radius: 8px;
     padding: 1rem 1.5rem;
     margin-bottom: 2rem;
@@ -676,7 +681,7 @@ ul { margin-left: 1.5rem; margin-top: 0.5rem; }
     line-height: 1.6;
   }
 
-.context-box strong { color: #1a237e; }
+.context-box strong { color: var(--syllabus-text); }
 
 .inst {
     background: var(--inst-bg);

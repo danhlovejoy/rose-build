@@ -28,8 +28,7 @@ from xml.etree import ElementTree as ET
 def parse_css(css_text):
     """Parse CSS into rules and variables."""
     variables = {}
-    root_match = re.search(r':root\s*\{([^}]+)\}', css_text)
-    if root_match:
+    for root_match in re.finditer(r':root\s*\{([^}]+)\}', css_text):
         for m in re.finditer(r'--([a-zA-Z0-9_-]+)\s*:\s*([^;]+);', root_match.group(1)):
             variables[f'--{m.group(1)}'] = m.group(2).strip()
 
@@ -324,10 +323,15 @@ def main():
     # Parse optional flags
     args = sys.argv[1:]
     css_path = None
+    override_css_path = None
     no_recurse = False
     if '--css' in args:
         idx = args.index('--css')
         css_path = args[idx + 1]
+        args = args[:idx] + args[idx + 2:]
+    if '--override-css' in args:
+        idx = args.index('--override-css')
+        override_css_path = args[idx + 1]
         args = args[:idx] + args[idx + 2:]
     if '--no-recurse' in args:
         args.remove('--no-recurse')
@@ -361,6 +365,11 @@ def main():
 
     with open(css_path, 'r', encoding='utf-8') as f:
         css_text = f.read()
+
+    if override_css_path and os.path.exists(override_css_path):
+        print(f"Override CSS: {override_css_path}")
+        with open(override_css_path, 'r', encoding='utf-8') as f:
+            css_text += '\n' + f.read()
 
     css_rules, variables = parse_css(css_text)
     print(f"Parsed {len(css_rules)} rules, {len(variables)} variables")
