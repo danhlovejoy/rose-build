@@ -81,16 +81,16 @@ build_dir() {
         return
     fi
 
-    local extra_flags=""
+    local -a extra_flags=()
     if [ "$no_recurse" = "--no-recurse" ]; then
-        extra_flags="--no-recurse"
+        extra_flags+=(--no-recurse)
     fi
     if [ -n "$OVERRIDE_CSS" ]; then
-        extra_flags="$extra_flags --override-css $OVERRIDE_CSS"
+        extra_flags+=(--override-css "$OVERRIDE_CSS")
     fi
 
     echo -e "${YELLOW}Building: $rel_path ($count files)${NC}"
-    python3 "$INLINER" --css "$CSS_PATH" $extra_flags "$src_dir" "$out_dir"
+    python3 "$INLINER" --css "$CSS_PATH" "${extra_flags[@]}" "$src_dir" "$out_dir"
     echo ""
 }
 
