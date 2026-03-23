@@ -90,7 +90,7 @@ build_dir() {
     fi
 
     echo -e "${YELLOW}Building: $rel_path ($count files)${NC}"
-    python3 "$INLINER" --css "$CSS_PATH" "${extra_flags[@]}" "$src_dir" "$out_dir"
+    python3 "$INLINER" --css "$CSS_PATH" ${extra_flags[@]+"${extra_flags[@]}"} "$src_dir" "$out_dir"
     echo ""
 }
 
