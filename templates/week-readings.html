@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Week {{WEEK_NUM}} Readings: {{TOPIC_TITLE}} | AIML 2003</title>
+<style>
+  :root {
+    --primary: #1a3a5c;
+    --accent: #2e7d32;
+    --light-bg: #f7f9fc;
+    --border: #d0d7de;
+    --text: #1f2328;
+    --muted: #656d76;
+    --tag-bg: #e3f2fd;
+    --tag-text: #1565c0;
+    --opt-bg: #fff8e1;
+    --opt-border: #ffb300;
+    --nlm-bg: #e8eaf6;
+    --nlm-border: #3949ab;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    color: var(--text);
+    line-height: 1.6;
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 2rem 1.5rem;
+    background: #fff;
+  }
+  h1 {
+    font-size: 1.6rem;
+    color: var(--primary);
+    border-bottom: 3px solid var(--primary);
+    padding-bottom: 0.5rem;
+    margin-bottom: 0.5rem;
+  }
+  .subtitle {
+    color: var(--muted);
+    font-size: 0.95rem;
+    margin-bottom: 2rem;
+  }
+  h2 {
+    font-size: 1.15rem;
+    color: var(--primary);
+    margin: 2.5rem 0 0.75rem;
+    padding-bottom: 0.3rem;
+    border-bottom: 1px solid var(--border);
+  }
+  h3 {
+    font-size: 1rem;
+    color: var(--primary);
+    margin: 1.5rem 0 0.5rem;
+  }
+  p { font-size: 0.95rem; margin-bottom: 0.75rem; }
+  .time-box {
+    background: var(--light-bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 1rem 1.25rem;
+    margin-bottom: 2rem;
+    font-size: 0.95rem;
+  }
+  .time-box strong { color: var(--primary); }
+  .framing-box {
+    background: linear-gradient(135deg, #1a3a5c 0%, #2e5a88 100%);
+    color: #fff;
+    padding: 1.5rem;
+    border-radius: 10px;
+    margin-bottom: 2rem;
+  }
+  .framing-box p { color: #d0e0f0; }
+  .framing-box strong { color: #fff; }
+  .resource-card {
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1.25rem;
+    margin-bottom: 1rem;
+    background: #fff;
+  }
+  .resource-card.optional {
+    border-left: 4px solid var(--opt-border);
+    background: var(--opt-bg);
+  }
+  .resource-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.4rem;
+    flex-wrap: wrap;
+  }
+  .resource-title {
+    font-weight: 600;
+    font-size: 1rem;
+  }
+  .tag {
+    display: inline-block;
+    font-size: 0.7rem;
+    font-weight: 600;
+    padding: 0.1rem 0.45rem;
+    border-radius: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+  .tag-required { background: #e8f5e9; color: #2e7d32; }
+  .tag-optional { background: var(--opt-bg); color: #e65100; }
+  .tag-time { background: var(--tag-bg); color: var(--tag-text); }
+  .tag-video { background: #f3e5f5; color: #7b1fa2; }
+  .tag-read { background: #fce4ec; color: #c62828; }
+  .tag-interactive { background: #e0f2f1; color: #00695c; }
+  .tag-paper { background: #fff3e0; color: #e65100; }
+  .resource-meta {
+    font-size: 0.8rem;
+    color: var(--muted);
+    margin-bottom: 0.4rem;
+  }
+  .resource-desc {
+    font-size: 0.9rem;
+    margin-bottom: 0.5rem;
+  }
+  .resource-link a {
+    color: var(--tag-text);
+    text-decoration: none;
+    font-weight: 500;
+    font-size: 0.9rem;
+  }
+  .resource-link a:hover { text-decoration: underline; }
+  .focus-box {
+    background: #e8f5e9;
+    border-left: 4px solid var(--accent);
+    padding: 0.75rem 1rem;
+    border-radius: 4px;
+    margin-top: 0.5rem;
+    font-size: 0.85rem;
+  }
+  .focus-box strong { color: var(--accent); }
+  .nlm-box {
+    background: var(--nlm-bg);
+    border-left: 4px solid var(--nlm-border);
+    padding: 1rem 1.25rem;
+    border-radius: 4px;
+    margin: 1.5rem 0;
+    font-size: 0.9rem;
+  }
+  .nlm-box strong { color: var(--nlm-border); }
+  .discussion-box {
+    background: var(--light-bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 1.25rem;
+    margin-top: 2rem;
+  }
+  .discussion-box ol {
+    margin-left: 1.25rem;
+    margin-top: 0.5rem;
+  }
+  .discussion-box li {
+    margin-bottom: 0.5rem;
+    font-size: 0.95rem;
+  }
+  .bridge-box {
+    background: #ede7f6;
+    border-left: 4px solid #5e35b1;
+    padding: 1rem 1.25rem;
+    border-radius: 4px;
+    margin-top: 2rem;
+  }
+  .bridge-box strong { color: #5e35b1; }
+  a { color: #1565c0; }
+  ul, ol { margin-left: 1.5rem; margin-top: 0.5rem; }
+  li { margin-bottom: 0.3rem; font-size: 0.95rem; }
+  hr { border: none; border-top: 1px solid var(--border); margin: 2rem 0; }
+</style>
+</head>
+<body>
+
+<h1>Week {{WEEK_NUM}}: {{TOPIC_TITLE}}</h1>
+<p class="subtitle">Readings &amp; Prep: Complete before Tuesday, {{TUESDAY_DATE}}</p>
+
+<div class="time-box">
+  <strong>Estimated prep time:</strong> ~{{PREP_TIME}} of reading/watching (required materials). Optional sources go deeper; use NotebookLM to help you navigate them. All materials are free.
+</div>
+
+<!-- ========== FRAMING ========== -->
+<div class="framing-box">
+  <p><strong>The big picture:</strong> {{BIG_PICTURE}}</p>
+</div>
+
+<!-- ========== NOTEBOOKLM REMINDER ========== -->
+<div class="nlm-box">
+  <strong>NotebookLM tip:</strong> Create a Week {{WEEK_NUM}} notebook, upload this week's readings and video URLs as sources, and use it to ask questions, generate summaries, and check your understanding. Try generating an Audio Overview of the required readings before class.
+</div>
+
+<!-- ================================================================
+     REQUIRED RESOURCES
+     ================================================================ -->
+<h2>Required</h2>
+
+<!-- RESOURCE CARD — copy this block for each required resource -->
+<div class="resource-card">
+  <div class="resource-header">
+    <span class="resource-title">{{RESOURCE_TITLE}}</span>
+    <span class="tag tag-required">Required</span>
+    <!-- Use tag-video, tag-read, tag-interactive, or tag-paper as appropriate -->
+    <span class="tag tag-video">Video</span>
+    <span class="tag tag-time">~{{RESOURCE_TIME}}</span>
+  </div>
+  <p class="resource-meta">{{RESOURCE_SOURCE}}</p>
+  <p class="resource-desc">{{RESOURCE_DESCRIPTION}}</p>
+  <p class="resource-link"><a href="{{RESOURCE_URL}}" target="_blank">Watch / Read &rarr;</a></p>
+  <!-- Optional: add a focus box for key takeaways -->
+  <!--
+  <div class="focus-box">
+    <strong>Key takeaway:</strong> {{KEY_TAKEAWAY}}
+  </div>
+  -->
+</div>
+<!-- END RESOURCE CARD -->
+
+<!-- ================================================================
+     OPTIONAL / DEEPER DIVE
+     ================================================================ -->
+<h2>Optional: Go Deeper</h2>
+
+<!-- OPTIONAL RESOURCE CARD — copy this block for each optional resource -->
+<div class="resource-card optional">
+  <div class="resource-header">
+    <span class="resource-title">{{OPT_RESOURCE_TITLE}}</span>
+    <span class="tag tag-optional">Optional</span>
+    <span class="tag tag-read">Read</span>
+    <span class="tag tag-time">~{{OPT_RESOURCE_TIME}}</span>
+  </div>
+  <p class="resource-meta">{{OPT_RESOURCE_SOURCE}}</p>
+  <p class="resource-desc">{{OPT_RESOURCE_DESCRIPTION}}</p>
+  <p class="resource-link"><a href="{{OPT_RESOURCE_URL}}" target="_blank">Read &rarr;</a></p>
+</div>
+<!-- END OPTIONAL RESOURCE CARD -->
+
+<!-- ========== DISCUSSION PREP ========== -->
+<div class="discussion-box">
+  <strong>Come to class ready to discuss:</strong>
+  <ol>
+    <li>{{DISCUSSION_Q1}}</li>
+    <li>{{DISCUSSION_Q2}}</li>
+    <li>{{DISCUSSION_Q3}}</li>
+  </ol>
+</div>
+
+<!-- ========== BRIDGE (for AIML 2013 dual-enrolled students) ========== -->
+<!-- Remove this section if not applicable for the week -->
+<!--
+<div class="bridge-box">
+  <strong>Bridge to Computer Vision (AIML 2013):</strong> {{BRIDGE_TEXT}}
+</div>
+-->
+
+</body>
+</html>

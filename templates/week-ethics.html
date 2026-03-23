@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Week {{WEEK_NUM}} Ethics Thread | AIML 2003</title>
+<style>
+  :root {
+    --primary: #1a3a5c;
+    --accent: #2e7d32;
+    --light-bg: #f7f9fc;
+    --border: #d0d7de;
+    --text: #1f2328;
+    --muted: #656d76;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    color: var(--text);
+    line-height: 1.6;
+    max-width: 820px;
+    margin: 0 auto;
+    padding: 2rem 1.5rem;
+    background: #fff;
+  }
+  h1 {
+    font-size: 1.6rem;
+    color: var(--primary);
+    border-bottom: 3px solid var(--primary);
+    padding-bottom: 0.5rem;
+    margin-bottom: 0.5rem;
+  }
+  .subtitle {
+    color: var(--muted);
+    font-size: 0.95rem;
+    margin-bottom: 2rem;
+  }
+  p { font-size: 0.95rem; margin-bottom: 0.75rem; }
+  .prompt-box {
+    background: var(--light-bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+  .prompt-box h2 {
+    font-size: 1.05rem;
+    color: var(--primary);
+    margin-bottom: 0.75rem;
+  }
+  .requirements {
+    background: #e8f5e9;
+    border-left: 4px solid var(--accent);
+    padding: 1rem 1.25rem;
+    border-radius: 4px;
+    margin: 1.5rem 0;
+    font-size: 0.9rem;
+  }
+  .requirements strong { color: var(--accent); }
+  ul { margin-left: 1.5rem; margin-top: 0.5rem; }
+  li { margin-bottom: 0.3rem; font-size: 0.95rem; }
+  .note {
+    color: var(--muted);
+    font-size: 0.85rem;
+    font-style: italic;
+    margin-top: 1.5rem;
+  }
+</style>
+</head>
+<body>
+
+<h1>Ethics Thread: {{ETHICS_TITLE}}</h1>
+<p class="subtitle">AIML 2003: Week {{WEEK_NUM}} Discussion. Post by Tuesday, {{DUE_DATE}} (before class)</p>
+
+<div class="prompt-box">
+  <h2>The Prompt</h2>
+  <p>{{ETHICS_CONTEXT}}</p>
+  <p>In your post, address at least one of the following:</p>
+  <ul>
+    <li>{{ETHICS_Q1}}</li>
+    <li>{{ETHICS_Q2}}</li>
+    <li>{{ETHICS_Q3}}</li>
+    <!-- Add or remove questions as needed -->
+    <!-- <li>{{ETHICS_Q4}}</li> -->
+  </ul>
+</div>
+
+<div class="requirements">
+  <strong>Requirements</strong>
+  <ul>
+    <li><strong>Your post:</strong> 150&ndash;250 words. Take a position. Don't just summarize the question.</li>
+    <li><strong>Reply to a classmate:</strong> At least one substantive reply (not just "I agree"). Engage with their reasoning: push back, build on it, or offer a different angle.</li>
+    <li><strong>Deadline:</strong> Initial post by Tuesday, {{DUE_DATE}} (before class). Reply by the following Tuesday class.</li>
+  </ul>
+</div>
+
+<p>This is part of a recurring ethics thread that runs alongside the technical content all semester. Thoughtful answers differ from lazy ones. I'm looking for evidence that you've considered the question, not that you've landed on the "correct" position.</p>
+
+<p class="note">The weekly ethics discussion is worth 20% of your weekly Participation grade (the other 80% comes from attendance and in-class engagement). Whether you attend in person or via Zoom, this post is required every week.</p>
+
+</body>
+</html>

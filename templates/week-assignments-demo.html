@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Week {{WEEK_NUM}} Deliverables: {{TOPIC_TITLE}} | AIML 2003</title>
+<style>
+  :root {
+    --primary: #1a3a5c;
+    --accent: #2e7d32;
+    --light-bg: #f7f9fc;
+    --border: #d0d7de;
+    --text: #1f2328;
+    --muted: #656d76;
+    --warn-bg: #fff3e0;
+    --warn-border: #e65100;
+    --code-bg: #f0f3f6;
+    --due-bg: #fce4ec;
+    --due-text: #c62828;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    color: var(--text);
+    line-height: 1.6;
+    max-width: 820px;
+    margin: 0 auto;
+    padding: 2rem 1.5rem;
+    background: #fff;
+  }
+  h1 {
+    font-size: 1.6rem;
+    color: var(--primary);
+    border-bottom: 3px solid var(--primary);
+    padding-bottom: 0.5rem;
+    margin-bottom: 0.5rem;
+  }
+  .subtitle {
+    color: var(--muted);
+    font-size: 0.95rem;
+    margin-bottom: 0.5rem;
+  }
+  .due-banner {
+    background: var(--due-bg);
+    color: var(--due-text);
+    font-weight: 600;
+    padding: 0.75rem 1.25rem;
+    border-radius: 6px;
+    margin-bottom: 2rem;
+    font-size: 0.95rem;
+  }
+  h2 {
+    font-size: 1.15rem;
+    color: var(--primary);
+    margin: 2.5rem 0 0.5rem;
+    padding-bottom: 0.3rem;
+    border-bottom: 1px solid var(--border);
+  }
+  h3 {
+    font-size: 1rem;
+    color: var(--text);
+    margin: 1.25rem 0 0.5rem;
+  }
+  p { font-size: 0.95rem; margin-bottom: 0.75rem; }
+  .tag {
+    display: inline-block;
+    font-size: 0.7rem;
+    font-weight: 700;
+    padding: 0.15rem 0.5rem;
+    border-radius: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    margin-left: 0.5rem;
+    vertical-align: middle;
+  }
+  .tag-lab { background: #e3f2fd; color: #1565c0; }
+  .tag-repo { background: #f3e5f5; color: #7b1fa2; }
+  .tag-demo { background: #fff3e0; color: #e65100; }
+  .overview-card {
+    background: var(--light-bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1.25rem;
+    margin-bottom: 1.5rem;
+  }
+  .overview-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+  }
+  .overview-table th {
+    text-align: left;
+    padding: 0.5rem 0.75rem;
+    border-bottom: 2px solid var(--border);
+    color: var(--primary);
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+  .overview-table td {
+    padding: 0.5rem 0.75rem;
+    border-bottom: 1px solid var(--border);
+  }
+  .section-card {
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    background: #fff;
+  }
+  .section-card h3 { margin-top: 0; }
+  code {
+    background: var(--code-bg);
+    padding: 0.15rem 0.4rem;
+    border-radius: 3px;
+    font-size: 0.9em;
+    font-family: "SF Mono", "Consolas", "Courier New", monospace;
+  }
+  pre {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 1rem;
+    overflow-x: auto;
+    font-size: 0.85rem;
+    margin: 0.75rem 0;
+    font-family: "SF Mono", "Consolas", "Courier New", monospace;
+  }
+  ul, ol { margin-left: 1.5rem; margin-top: 0.5rem; }
+  li { margin-bottom: 0.4rem; font-size: 0.95rem; }
+  a { color: #1565c0; }
+  .warning {
+    background: var(--warn-bg);
+    border-left: 4px solid var(--warn-border);
+    padding: 1rem 1.25rem;
+    border-radius: 4px;
+    margin: 1rem 0;
+    font-size: 0.9rem;
+  }
+  .warning strong { color: var(--warn-border); }
+  .tip {
+    background: #e8f5e9;
+    border-left: 4px solid var(--accent);
+    padding: 1rem 1.25rem;
+    border-radius: 4px;
+    margin: 1rem 0;
+    font-size: 0.9rem;
+  }
+  .tip strong { color: var(--accent); }
+  .rubric-section {
+    background: var(--light-bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 1.25rem;
+    margin: 1rem 0;
+  }
+  .rubric-section h4 {
+    color: var(--primary);
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin-bottom: 0.75rem;
+  }
+  .rubric-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.85rem;
+  }
+  .rubric-table th {
+    text-align: left;
+    padding: 0.4rem 0.6rem;
+    background: var(--primary);
+    color: #fff;
+    font-size: 0.8rem;
+  }
+  .rubric-table td {
+    padding: 0.4rem 0.6rem;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+  }
+  .rubric-table tr:last-child td { border-bottom: none; }
+  hr { border: none; border-top: 1px solid var(--border); margin: 2rem 0; }
+</style>
+</head>
+<body>
+
+<h1>Week {{WEEK_NUM}} Deliverables: {{TOPIC_TITLE}}</h1>
+<p class="subtitle">AIML 2003: Introduction to Natural Language Processing</p>
+<div class="due-banner">All deliverables due: Tuesday, {{DUE_DATE}} (by class time)</div>
+
+<!-- ========== OVERVIEW ========== -->
+<div class="overview-card">
+  <strong>This week you will submit {{NUM_DELIVERABLES}} things:</strong>
+  <table class="overview-table" style="margin-top: 0.75rem;">
+    <thead>
+      <tr>
+        <th>Deliverable</th>
+        <th>Type</th>
+        <th>Weight</th>
+        <th>Where</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Lab {{WEEK_NUM}}: {{LAB_TITLE}}</td>
+        <td>Colab notebook</td>
+        <td>Repos (25%)</td>
+        <td>GitHub + link in Canvas</td>
+      </tr>
+      <tr>
+        <td>GitHub Repository</td>
+        <td>Code repo</td>
+        <td>(part of Repo grade)</td>
+        <td>Link in Canvas</td>
+      </tr>
+      <tr>
+        <td>Week {{WEEK_NUM}} Demo</td>
+        <td>3&ndash;5 minute live demo</td>
+        <td>Demos (25%)</td>
+        <td>In class, Tuesday {{DEMO_DATE}}</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- =====================================================================
+     DELIVERABLE 1: LAB
+     ===================================================================== -->
+<h2>Deliverable 1: Lab {{WEEK_NUM}} &mdash; {{LAB_TITLE}} <span class="tag tag-lab">Lab</span></h2>
+
+<div class="section-card">
+  <h3>Overview</h3>
+  <p>{{LAB_OVERVIEW}}</p>
+
+  <h3>What to Build</h3>
+  <p>{{LAB_INSTRUCTIONS}}</p>
+  <!-- Add detailed steps, code snippets, options as needed -->
+
+  <h3>What to Submit</h3>
+  <ul>
+    <li>A completed Colab notebook (<code>.ipynb</code>) saved to your GitHub repo.</li>
+    <li>All cells executed with visible outputs.</li>
+    <li>Submit the GitHub link in Canvas.</li>
+  </ul>
+</div>
+
+<div class="tip">
+  <strong>Start this in Thursday lab.</strong> We'll work through it together. Come with questions from the readings.
+</div>
+
+<!-- =====================================================================
+     DELIVERABLE 2: GITHUB REPO
+     ===================================================================== -->
+<h2>Deliverable 2: GitHub Repository <span class="tag tag-repo">Repo</span></h2>
+
+<div class="section-card">
+  <h3>What I'm Looking For</h3>
+  <ul>
+    <li>Notebook is in your course repo under a clear folder (e.g., <code>week{{WEEK_NUM}}/</code>).</li>
+    <li>All cells run top-to-bottom without errors.</li>
+    <li>Outputs are saved (GitHub renders <code>.ipynb</code> files with outputs visible).</li>
+    <li>Code is reasonably commented or uses markdown cells to explain your approach.</li>
+  </ul>
+</div>
+
+<div class="rubric-section">
+  <h4>Repository Rubric (Summary)</h4>
+  <p style="font-size:0.85rem; margin-bottom:0.75rem;">100 points possible. Each criterion is scored on a 4-level scale (Full Credit &rarr; No Credit). <a href="https://rose.instructure.com/courses/26943/rubrics/66034" target="_blank"><strong>View the full rubric with detailed scoring &rarr;</strong></a></p>
+  <table class="rubric-table">
+    <thead>
+      <tr><th style="width:35%">Criterion</th><th style="width:12%">Points</th><th>What I'm Looking For</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Notebook Runs</td><td>25</td><td>Notebook is in the correct week folder. Cells execute top-to-bottom without errors. All outputs visible.</td></tr>
+      <tr><td>Task Requirements</td><td>40</td><td>See this week's assignment sheet for specific criteria. This criterion changes each week.</td></tr>
+      <tr><td>Reflection</td><td>20</td><td>200&ndash;400 words. Connects results to the readings. Addresses what worked, what didn't, and what you'd change.</td></tr>
+      <tr><td>Repo Hygiene</td><td>15</td><td>No active secrets. README updated. Descriptive commit message. Files in the right folder.</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<hr>
+
+<!-- =====================================================================
+     DELIVERABLE 3: DEMO
+     ===================================================================== -->
+<h2>Deliverable 3: Week {{WEEK_NUM}} Demo <span class="tag tag-demo">Demo</span></h2>
+
+<div class="section-card">
+  <h3>Overview</h3>
+  <p>A <strong>three- to five-minute live demonstration</strong> during Tuesday's class ({{DEMO_DATE}}) where you show your working code to the class. Unlike a presentation, a demo is about showing the thing running, not slides.</p>
+
+  <h3>What to Show</h3>
+  <ol>
+    <li><strong>{{DEMO_POINT_1}}</strong></li>
+    <li><strong>{{DEMO_POINT_2}}</strong></li>
+    <li><strong>{{DEMO_POINT_3}}</strong></li>
+  </ol>
+
+  <h3>Format</h3>
+  <p>Share your screen and run your code live. Walk the class through what's happening as it executes. Be prepared for things to break &mdash; that's part of a live demo. If something fails, explain what <em>should</em> have happened and why you think it failed. That's often more instructive than a perfect run.</p>
+
+  <div class="tip">
+    <strong>Tip:</strong> Test your demo end-to-end before class. Make sure your API keys are loaded, your notebook runs, and your outputs display correctly. Have a backup plan (screenshots of output) in case of connectivity issues.
+  </div>
+</div>
+
+<div class="rubric-section">
+  <h4>Demo Rubric (Summary)</h4>
+  <p style="font-size:0.85rem; margin-bottom:0.75rem;">100 points possible. Each criterion is scored on a 4-level scale (Full Credit &rarr; Unable). <a href="https://rose.instructure.com/courses/26943/rubrics/65794" target="_blank"><strong>View the full rubric with detailed scoring &rarr;</strong></a></p>
+  <table class="rubric-table">
+    <thead>
+      <tr><th style="width:35%">Criterion</th><th style="width:12%">Points</th><th>What I'm Looking For</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Execution &amp; Requirements</td><td>20</td><td>Code runs without errors and all assigned features are present and functional.</td></tr>
+      <tr><td>Variable &amp; Data Flow</td><td>20</td><td>You can trace a specific variable through the code from origin to output.</td></tr>
+      <tr><td>Dependency Justification</td><td>15</td><td>You can explain what any external library does and why it's used in your project.</td></tr>
+      <tr><td>Prompt Strategy</td><td>20</td><td>You can articulate how you directed the AI agent, including how you handled errors.</td></tr>
+      <tr><td>Live Modification</td><td>25</td><td>I'll ask you to change something on the spot &mdash; you modify the code and rerun it.</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<hr>
+
+<div class="warning">
+  <strong>Reminder:</strong> If it's not in your GitHub repo, it doesn't exist for grading. Save your final work before the deadline.
+</div>
+
+</body>
+</html>
