@@ -201,6 +201,13 @@
     raw score = <span id="eqW1">1.00</span> &times; TF-IDF("brilliant") + <span id="eqW2">&minus;1.00</span> &times; TF-IDF("awful") + <span id="eqB">0.00</span>
   </div>
 
+  <div class="card">
+    <strong>What does "best fit" mean here?</strong>
+    <p style="margin-bottom:0.5rem;">There are infinitely many lines you could draw through this chart. Most of them are bad &mdash; they put green dots on the red side or vice versa. The "best fit" is the line that makes the model's predicted probabilities match the actual labels as closely as possible across all the training data.</p>
+    <p style="margin-bottom:0.5rem;">More precisely: for every review, the model outputs a probability (via the sigmoid). If a review is actually positive, the model wants that probability close to 1. If it's actually negative, the model wants it close to 0. The best-fit weights are the ones that, on average, get those probabilities closest to the truth. That's what training optimizes.</p>
+    <p style="margin-bottom:0;">This isn't the same as "highest accuracy." A model could get 90% accuracy but be wildly overconfident on the ones it gets wrong. The best fit balances getting the right answer <em>and</em> knowing how sure it should be.</p>
+  </div>
+
   <div class="tip">
     <strong>The decision boundary is where the raw score equals zero.</strong> Points on the green side have a positive raw score (predicted positive). Points on the red side have a negative raw score (predicted negative). Moving the sliders rotates and shifts the line.
   </div>
