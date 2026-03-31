@@ -1,0 +1,813 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Inside the Pipeline: TF-IDF + Logistic Regression &mdash; AIML 2003</title>
+<script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+<style>
+  :root {
+    --primary: #1a3a5c;
+    --primary-light: #2e5a88;
+    --accent: #2e7d32;
+    --light-bg: #f7f9fc;
+    --border: #d0d7de;
+    --text: #1f2328;
+    --muted: #656d76;
+    --neg: #c62828;
+    --neg-bg: #fce4ec;
+    --pos: #2e7d32;
+    --pos-bg: #e8f5e9;
+    --neutral: #9e9e9e;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    color: var(--text);
+    line-height: 1.6;
+    background: #fff;
+  }
+  .container { max-width: 1100px; margin: 0 auto; padding: 0 2rem 3rem; }
+
+  /* Hero */
+  .hero {
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+    color: #fff; padding: 2.5rem 2rem; text-align: center; margin-bottom: 2rem;
+  }
+  .hero h1 { font-size: 1.8rem; margin-bottom: 0.3rem; font-weight: 700; }
+  .hero p { color: #c0d4e8; font-size: 1rem; }
+  .hero .hl { color: #fff; font-weight: 500; margin-top: 0.75rem; font-size: 1.05rem; }
+
+  /* Stage headers */
+  .stage { margin-top: 3rem; }
+  .stage-num {
+    display: inline-block; width: 2rem; height: 2rem; line-height: 2rem;
+    border-radius: 50%; background: var(--primary); color: #fff;
+    text-align: center; font-weight: 700; font-size: 0.9rem;
+    margin-right: 0.5rem; vertical-align: middle;
+  }
+  h2 { font-size: 1.3rem; color: var(--primary); margin-bottom: 0.75rem; display: inline; vertical-align: middle; }
+  .stage-line { border-bottom: 2px solid var(--primary); margin-bottom: 1rem; padding-bottom: 0.4rem; }
+  p { font-size: 0.95rem; margin-bottom: 0.75rem; }
+
+  /* Cards */
+  .card {
+    background: var(--light-bg); border: 1px solid var(--border);
+    border-radius: 8px; padding: 1.25rem; margin-bottom: 1rem;
+  }
+  .card strong { color: var(--primary); display: block; margin-bottom: 0.3rem; }
+  .card code {
+    background: #e8ecf0; padding: 0.1rem 0.35rem; border-radius: 3px;
+    font-size: 0.9em; font-family: "SF Mono", Consolas, monospace;
+  }
+
+  /* Tip / transition boxes */
+  .tip {
+    background: #e8f5e9; border-left: 4px solid var(--accent);
+    padding: 1rem 1.25rem; border-radius: 4px; margin: 1rem 0; font-size: 0.9rem;
+  }
+  .tip strong { color: var(--accent); }
+  .arrow-box {
+    text-align: center; padding: 1rem 0; color: var(--muted); font-size: 1.5rem;
+  }
+
+  /* Review selector */
+  .review-group { display: flex; gap: 0.75rem; flex-wrap: wrap; margin: 1rem 0; }
+  .review-btn {
+    flex: 1; min-width: 200px; padding: 1rem; border: 2px solid var(--border);
+    border-radius: 8px; background: #fff; cursor: pointer; text-align: left;
+    font-family: inherit; font-size: 0.88rem; color: var(--text);
+    transition: border-color 0.15s, background 0.15s;
+  }
+  .review-btn:hover { border-color: var(--primary); }
+  .review-btn.active { border-color: var(--primary); background: var(--light-bg); }
+  .review-btn .tag {
+    display: inline-block; font-size: 0.7rem; font-weight: 700;
+    padding: 0.1rem 0.45rem; border-radius: 10px; text-transform: uppercase;
+    letter-spacing: 0.03em; margin-bottom: 0.3rem;
+  }
+  .tag-a { background: #e3f2fd; color: #1565c0; }
+  .tag-b { background: #fce4ec; color: #c62828; }
+  .tag-c { background: #fff3e0; color: #e65100; }
+
+  /* Token display */
+  .token-display { line-height: 2.2; margin: 1rem 0; }
+  .tok {
+    display: inline-block; padding: 0.15rem 0.5rem; margin: 0.15rem;
+    border-radius: 4px; font-size: 0.88rem; font-family: "SF Mono", Consolas, monospace;
+  }
+  .tok-kept { background: var(--pos-bg); color: var(--pos); border: 1px solid #c8e6c9; }
+  .tok-unknown { background: #fff3e0; color: #e65100; border: 1px solid #ffe0b2; }
+  .tok-stop { background: #f5f5f5; color: #bbb; text-decoration: line-through; border: 1px solid #eee; }
+
+  /* Custom review input */
+  .custom-input {
+    width: 100%; min-height: 80px; padding: 0.75rem 1rem; margin-top: 0.75rem;
+    border: 2px solid var(--border); border-radius: 8px; font-family: inherit;
+    font-size: 0.9rem; color: var(--text); line-height: 1.5; resize: vertical;
+    transition: border-color 0.15s;
+  }
+  .custom-input:focus { outline: none; border-color: var(--primary); }
+  .custom-input::placeholder { color: #aaa; }
+  .custom-bar {
+    display: flex; gap: 0.5rem; align-items: center; margin-top: 0.5rem;
+  }
+
+  /* Stats row */
+  .stats-row { display: flex; gap: 1rem; flex-wrap: wrap; margin: 1rem 0; }
+  .stat-card {
+    flex: 1; min-width: 120px; background: var(--light-bg);
+    border: 1px solid var(--border); border-radius: 8px;
+    padding: 0.75rem 1rem; text-align: center;
+  }
+  .stat-card .val { font-size: 1.6rem; font-weight: 700; color: var(--primary); }
+  .stat-card .lbl { font-size: 0.8rem; color: var(--muted); }
+
+  /* Contribution table */
+  .contrib-table { width: 100%; border-collapse: collapse; font-size: 0.88rem; margin: 1rem 0; }
+  .contrib-table th {
+    text-align: left; padding: 0.5rem 0.6rem;
+    background: var(--primary); color: #fff; font-size: 0.8rem;
+    text-transform: uppercase; letter-spacing: 0.04em;
+  }
+  .contrib-table td {
+    padding: 0.4rem 0.6rem; border-bottom: 1px solid var(--border);
+    font-family: "SF Mono", Consolas, monospace; font-size: 0.85rem;
+  }
+  .contrib-table tr:last-child td { border-bottom: none; }
+  .c-pos { color: var(--pos); font-weight: 600; }
+  .c-neg { color: var(--neg); font-weight: 600; }
+  .c-zero { color: var(--neutral); }
+
+  /* Result badge */
+  .result-badge {
+    display: inline-block; padding: 0.5rem 1.5rem; border-radius: 8px;
+    font-size: 1.1rem; font-weight: 700; margin: 0.5rem 0;
+  }
+  .result-pos { background: var(--pos-bg); color: var(--pos); border: 2px solid var(--pos); }
+  .result-neg { background: var(--neg-bg); color: var(--neg); border: 2px solid var(--neg); }
+
+  /* Slider */
+  .slider-row { margin: 1rem 0; }
+  .slider-row label { display: block; font-size: 0.85rem; color: var(--muted); margin-bottom: 0.2rem; }
+  .slider-row input[type="range"] { width: 100%; }
+
+  /* Buttons */
+  .btn {
+    display: inline-block; padding: 0.5rem 1.1rem; border: none; border-radius: 6px;
+    font-size: 0.85rem; font-weight: 600; cursor: pointer; transition: opacity 0.15s;
+    font-family: inherit;
+  }
+  .btn:hover { opacity: 0.85; }
+  .btn-primary { background: var(--primary); color: #fff; }
+
+  /* Footer */
+  .footer {
+    text-align: center; padding: 2rem 0; color: var(--muted); font-size: 0.85rem;
+    border-top: 1px solid var(--border); margin-top: 3rem;
+  }
+
+  /* Two-col layout */
+  .row { display: flex; gap: 1.5rem; align-items: flex-start; }
+  .col-left { flex: 1; min-width: 0; }
+  .col-right { width: 340px; flex-shrink: 0; }
+  @media (max-width: 900px) {
+    .row { flex-direction: column; }
+    .col-right { width: 100%; }
+    .review-group { flex-direction: column; }
+  }
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <h1>Inside the Pipeline</h1>
+  <p>TF-IDF + Logistic Regression &mdash; AIML 2003</p>
+  <p class="hl">Trace a movie review through every step, from raw words to a positive/negative decision.</p>
+</div>
+
+<div class="container">
+
+<!-- ================================================================
+     STAGE 1: RAW TEXT
+     ================================================================ -->
+<div class="stage">
+  <div class="stage-line"><span class="stage-num">1</span><h2>Raw Text</h2></div>
+  <p>The model receives raw text. No structure, no numbers. Just words. Pick a sample review or type your own.</p>
+
+  <div class="review-group" id="reviewGroup"></div>
+
+  <textarea class="custom-input" id="customText" placeholder="Or type your own review here and click Run..."></textarea>
+  <div class="custom-bar">
+    <button class="btn btn-primary" onclick="runCustom()">Run My Text</button>
+    <span id="customNote" style="font-size:0.85rem; color:var(--muted);"></span>
+  </div>
+</div>
+
+<div class="arrow-box">&darr;</div>
+
+<!-- ================================================================
+     STAGE 2: TOKENIZATION
+     ================================================================ -->
+<div class="stage">
+  <div class="stage-line"><span class="stage-num">2</span><h2>Tokenization &amp; Stopword Removal</h2></div>
+  <p>First, split the text into individual words (tokens). Then remove stopwords &mdash; common words like "the," "is," and "a" that appear in every review regardless of sentiment. They carry no signal, so we drop them.</p>
+
+  <div id="tokenDisplay" class="token-display"></div>
+
+  <div class="stats-row">
+    <div class="stat-card"><div class="val" id="tokTotal">0</div><div class="lbl">total tokens</div></div>
+    <div class="stat-card"><div class="val" id="tokRemoved">0</div><div class="lbl">stopwords removed</div></div>
+    <div class="stat-card"><div class="val" id="tokKept">0</div><div class="lbl">tokens kept</div></div>
+    <div class="stat-card" id="tokUnknownCard" style="display:none; border-color:#ffe0b2;"><div class="val" id="tokUnknown" style="color:#e65100;">0</div><div class="lbl">not in vocabulary</div></div>
+  </div>
+
+  <div class="tip">
+    <strong>This is what scikit-learn's <code>stop_words='english'</code> does.</strong> The exact list has 318 words. Removing them shrinks the vector and focuses the model on words that actually differ between positive and negative reviews.
+  </div>
+  <div class="tip" style="background:#fff3e0; border-color:#e65100;">
+    <strong style="color:#e65100;">Orange tokens</strong> are words the model has never seen in training. They survive tokenization and stopword removal, but the model has no TF-IDF entry or coefficient for them &mdash; they're invisible to the classifier. A larger vocabulary catches more words, but this demo uses 65 to keep things readable.
+  </div>
+</div>
+
+<div class="arrow-box">&darr;</div>
+
+<!-- ================================================================
+     STAGE 3: TF-IDF
+     ================================================================ -->
+<div class="stage">
+  <div class="stage-line"><span class="stage-num">3</span><h2>TF-IDF Vectorization</h2></div>
+  <p>Each surviving token gets a TF-IDF score. TF measures how often the word appears in <em>this</em> review. IDF measures how rare it is across <em>all</em> 2,000 reviews. Multiply them together: words that are frequent here but rare elsewhere get the highest scores.</p>
+
+  <div id="tfidfChart" style="width:100%; height:380px;"></div>
+
+  <div class="stats-row">
+    <div class="stat-card"><div class="val" id="vocabSize">65</div><div class="lbl">vocabulary size</div></div>
+    <div class="stat-card"><div class="val" id="nonzero">0</div><div class="lbl">nonzero entries</div></div>
+    <div class="stat-card"><div class="val" id="sparsePct">0%</div><div class="lbl">of vector is zero</div></div>
+  </div>
+
+  <div class="tip">
+    <strong>This is what "sparse" means.</strong> The review becomes a vector of <span id="vocabSizeInline">65</span> numbers, but only a handful are nonzero. Most words in the vocabulary don't appear in any single review.
+  </div>
+</div>
+
+<div class="arrow-box">&darr;</div>
+
+<!-- ================================================================
+     STAGE 4: LEARNED COEFFICIENTS
+     ================================================================ -->
+<div class="stage">
+  <div class="stage-line"><span class="stage-num">4</span><h2>The Learned Coefficients</h2></div>
+  <p>During training, the model read 1,600 labeled reviews and learned which words tend to appear in positive reviews (green) and which tend to appear in negative reviews (red). These coefficients are fixed after training &mdash; they don't change when a new review comes in.</p>
+
+  <div id="coefChart" style="width:100%; height:500px;"></div>
+
+  <div class="card">
+    <strong>The intercept (bias) is &minus;0.05</strong>
+    <p style="margin:0;">With no words at all, the model is almost exactly neutral. Every word's contribution pushes the score up or down from this starting point.</p>
+  </div>
+
+  <div class="tip">
+    <strong>Surprise words:</strong> "horror" has a slightly negative coefficient &mdash; not because horror is bad, but because horror reviews in the training data skewed negative. The model learned <em>statistical associations</em>, not meaning.
+  </div>
+</div>
+
+<div class="arrow-box">&darr;</div>
+
+<!-- ================================================================
+     STAGE 5: THE DOT PRODUCT
+     ================================================================ -->
+<div class="stage">
+  <div class="stage-line"><span class="stage-num">5</span><h2>The Decision: Multiply and Add</h2></div>
+  <p>For each word in the review, multiply its TF-IDF score by its learned coefficient. Positive products pull toward "positive." Negative products pull toward "negative." The sum of all products (plus the intercept) is the raw score.</p>
+
+  <div class="row">
+    <div class="col-left">
+      <div id="waterfallChart" style="width:100%; height:420px;"></div>
+    </div>
+    <div class="col-right">
+      <div class="card">
+        <strong>Contribution Table</strong>
+        <div style="max-height:340px; overflow-y:auto;">
+          <table class="contrib-table" id="contribTable">
+            <thead><tr><th>Word</th><th>TF-IDF</th><th>&times; Coef</th><th>= Product</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="stats-row">
+    <div class="stat-card"><div class="val c-pos" id="sumPos">0</div><div class="lbl">positive pull</div></div>
+    <div class="stat-card"><div class="val c-neg" id="sumNeg">0</div><div class="lbl">negative pull</div></div>
+    <div class="stat-card"><div class="val" id="rawScore">0</div><div class="lbl">raw score (sum + intercept)</div></div>
+  </div>
+
+  <div class="tip">
+    <strong>This is just multiplication and addition.</strong> Each word "votes" for positive or negative, weighted by how important it is in this review (TF-IDF) and how strongly the model associates it with a class (coefficient). The sum of all votes is the raw score.
+  </div>
+</div>
+
+<div class="arrow-box">&darr;</div>
+
+<!-- ================================================================
+     STAGE 6: SIGMOID → CLASSIFICATION
+     ================================================================ -->
+<div class="stage">
+  <div class="stage-line"><span class="stage-num">6</span><h2>Sigmoid &rarr; Probability &rarr; Classification</h2></div>
+  <p>The raw score can be any number. The sigmoid function squishes it into a value between 0 and 1 &mdash; a probability. Above 0.5 means positive. Below 0.5 means negative.</p>
+
+  <div id="sigmoidChart" style="width:100%; height:350px;"></div>
+
+  <div class="slider-row">
+    <label>Drag to explore: what raw score gives what probability?</label>
+    <input type="range" id="sigSlider" min="-6" max="6" step="0.05" value="0" oninput="updateSigmoidSlider()">
+  </div>
+
+  <div class="stats-row">
+    <div class="stat-card"><div class="val" id="finalRaw">0</div><div class="lbl">raw score</div></div>
+    <div class="stat-card"><div class="val" id="finalProb">50%</div><div class="lbl">probability (positive)</div></div>
+    <div class="stat-card">
+      <div id="finalBadge" class="result-badge result-pos">POSITIVE</div>
+      <div class="lbl" id="finalConf" style="margin-top:0.3rem;">confidence</div>
+    </div>
+  </div>
+
+  <div class="tip" id="finalTip"></div>
+</div>
+
+</div><!-- /.container -->
+
+<div class="footer">
+  AIML 2003 &mdash; Spring 2026 &bull; Built for in-class demonstration. Select a review, scroll down, and trace the pipeline.
+</div>
+
+<!-- ================================================================
+     DATA + PIPELINE
+     ================================================================ -->
+<script>
+// ── Vocabulary: word → { idf, coef } ──
+// Realistic values based on NLTK movie_reviews corpus (2000 docs)
+const VOCAB = {
+  // Strong positive
+  "excellent":    { idf: 3.91, coef: 2.65 },
+  "wonderful":    { idf: 4.12, coef: 2.41 },
+  "brilliant":    { idf: 3.85, coef: 2.32 },
+  "perfect":      { idf: 3.42, coef: 2.10 },
+  "superb":       { idf: 4.55, coef: 2.05 },
+  "outstanding":  { idf: 4.38, coef: 1.92 },
+  "beautifully":  { idf: 4.02, coef: 1.85 },
+  "masterpiece":  { idf: 4.20, coef: 1.78 },
+  "enjoyable":    { idf: 3.95, coef: 1.68 },
+  "hilarious":    { idf: 4.10, coef: 1.62 },
+  // Moderate positive
+  "great":        { idf: 2.15, coef: 1.35 },
+  "love":         { idf: 2.55, coef: 1.22 },
+  "best":         { idf: 2.30, coef: 1.15 },
+  "powerful":     { idf: 3.40, coef: 1.08 },
+  "fun":          { idf: 2.85, coef: 0.98 },
+  "heart":        { idf: 3.10, coef: 0.88 },
+  "beautiful":    { idf: 3.05, coef: 0.82 },
+  "compelling":   { idf: 3.80, coef: 0.78 },
+  "solid":        { idf: 3.25, coef: 0.65 },
+  "surprisingly": { idf: 3.70, coef: 0.60 },
+  "crafted":      { idf: 4.30, coef: 0.72 },
+  "delivers":     { idf: 3.90, coef: 0.55 },
+  "performances": { idf: 2.80, coef: 0.52 },
+  "entire":       { idf: 2.90, coef: 0.15 },
+  // Near-zero
+  "film":         { idf: 0.36, coef: 0.05 },
+  "movie":        { idf: 0.52, coef: -0.02 },
+  "story":        { idf: 1.20, coef: 0.08 },
+  "character":    { idf: 1.45, coef: 0.03 },
+  "scene":        { idf: 1.85, coef: -0.04 },
+  "director":     { idf: 1.95, coef: 0.10 },
+  "performance":  { idf: 2.10, coef: 0.12 },
+  "actors":       { idf: 2.40, coef: -0.05 },
+  "hollywood":    { idf: 3.20, coef: -0.08 },
+  "audience":     { idf: 2.75, coef: 0.02 },
+  "minutes":      { idf: 2.50, coef: -0.12 },
+  "plot":         { idf: 1.80, coef: -0.06 },
+  "role":         { idf: 2.35, coef: 0.04 },
+  "cast":         { idf: 2.20, coef: 0.18 },
+  "life":         { idf: 1.90, coef: 0.07 },
+  "world":        { idf: 2.00, coef: 0.01 },
+  "plays":        { idf: 2.60, coef: -0.03 },
+  "new":          { idf: 1.65, coef: 0.02 },
+  "real":         { idf: 2.30, coef: 0.06 },
+  "time":         { idf: 1.10, coef: -0.15 },
+  "start":        { idf: 2.45, coef: -0.08 },
+  "finish":       { idf: 3.50, coef: -0.04 },
+  // Moderate negative
+  "bad":          { idf: 2.50, coef: -1.10 },
+  "unfortunately":{ idf: 3.80, coef: -1.05 },
+  "boring":       { idf: 3.45, coef: -1.32 },
+  "dull":         { idf: 3.60, coef: -1.25 },
+  "fails":        { idf: 3.55, coef: -1.15 },
+  "weak":         { idf: 3.30, coef: -1.08 },
+  "bland":        { idf: 4.05, coef: -0.95 },
+  "nothing":      { idf: 2.15, coef: -0.72 },
+  "problem":      { idf: 3.10, coef: -0.65 },
+  "lacks":        { idf: 3.75, coef: -0.88 },
+  "acting":       { idf: 2.05, coef: -0.18 },
+  "written":      { idf: 2.70, coef: -0.22 },
+  "dialogue":     { idf: 2.95, coef: -0.15 },
+  "pacing":       { idf: 4.15, coef: -0.55 },
+  "script":       { idf: 2.65, coef: -0.30 },
+  "tries":        { idf: 3.40, coef: -0.48 },
+  "attempts":     { idf: 3.85, coef: -0.62 },
+  // Strong negative
+  "worst":        { idf: 3.70, coef: -2.55 },
+  "awful":        { idf: 4.25, coef: -2.40 },
+  "waste":        { idf: 3.60, coef: -2.15 },
+  "terrible":     { idf: 3.90, coef: -2.08 },
+  "poorly":       { idf: 4.00, coef: -1.85 },
+  "ridiculous":   { idf: 3.95, coef: -1.72 },
+  "pointless":    { idf: 4.40, coef: -1.65 },
+  "stupid":       { idf: 3.80, coef: -1.55 },
+  // Surprise / discussion words
+  "horror":       { idf: 2.85, coef: -0.35 },
+  "supposed":     { idf: 3.50, coef: -0.70 },
+  "even":         { idf: 1.30, coef: -0.25 },
+};
+
+const INTERCEPT = -0.05;
+
+const STOPWORDS = new Set([
+  "a","about","above","after","again","against","all","am","an","and","any","are",
+  "aren't","as","at","be","because","been","before","being","below","between","both",
+  "but","by","can","can't","cannot","could","couldn't","did","didn't","do","does",
+  "doesn't","doing","don't","down","during","each","few","for","from","further","get",
+  "got","had","hadn't","has","hasn't","have","haven't","having","he","he'd","he'll",
+  "he's","her","here","here's","hers","herself","him","himself","his","how","how's",
+  "i","i'd","i'll","i'm","i've","if","in","into","is","isn't","it","it's","its",
+  "itself","just","let's","me","might","more","most","mustn't","my","myself","no",
+  "nor","not","of","off","on","once","only","or","other","ought","our","ours",
+  "ourselves","out","over","own","s","same","shan't","she","she'd","she'll","she's",
+  "should","shouldn't","so","some","such","than","that","that's","the","their","theirs",
+  "them","themselves","then","there","there's","these","they","they'd","they'll",
+  "they're","they've","this","those","through","to","too","under","until","up","very",
+  "was","wasn't","we","we'd","we'll","we're","we've","were","weren't","what","what's",
+  "when","when's","where","where's","which","while","who","who's","whom","why","why's",
+  "will","with","won't","would","wouldn't","you","you'd","you'll","you're","you've",
+  "your","yours","yourself","yourselves"
+]);
+
+const REVIEWS = [
+  {
+    id: "A", label: "Positive review",
+    tagClass: "tag-a",
+    text: "A brilliant and beautifully crafted film with outstanding performances from the entire cast. The story is compelling and the director delivers a masterpiece that is enjoyable from start to finish."
+  },
+  {
+    id: "B", label: "Negative review",
+    tagClass: "tag-b",
+    text: "An awful waste of time. The plot is boring, the acting is terrible, and the dialogue is ridiculous. Poorly written from start to finish."
+  },
+  {
+    id: "C", label: "Mixed review",
+    tagClass: "tag-c",
+    text: "The film attempts to be a brilliant horror story but unfortunately fails. The cast tries hard but the script is too weak and the pacing too dull to be enjoyable."
+  }
+];
+
+// ── Pipeline functions ──
+
+function tokenize(text) {
+  return text.toLowerCase().replace(/[^a-z\s]/g, '').split(/\s+/).filter(t => t.length > 0);
+}
+
+function classifyTokens(tokens) {
+  return tokens.map(t => ({
+    word: t,
+    isStop: STOPWORDS.has(t),
+    inVocab: VOCAB.hasOwnProperty(t)
+  }));
+}
+
+function computeTfIdf(tokens) {
+  const kept = tokens.filter(t => !STOPWORDS.has(t));
+  const counts = {};
+  for (const w of kept) counts[w] = (counts[w] || 0) + 1;
+  const total = kept.length;
+  const result = {};
+  for (const [w, c] of Object.entries(counts)) {
+    if (VOCAB[w]) {
+      result[w] = (c / total) * VOCAB[w].idf;
+    }
+  }
+  return result;
+}
+
+function computeContributions(tfidf) {
+  const contribs = [];
+  for (const [word, tf] of Object.entries(tfidf)) {
+    const coef = VOCAB[word].coef;
+    contribs.push({ word, tfidf: tf, coef, product: tf * coef });
+  }
+  contribs.sort((a, b) => Math.abs(b.product) - Math.abs(a.product));
+  return contribs;
+}
+
+function sigmoid(x) { return 1 / (1 + Math.exp(-x)); }
+
+// ── State ──
+let selected = 0;       // -1 means custom text is active
+let customActive = false;
+
+// ── Render functions ──
+
+function renderReviewButtons() {
+  const group = document.getElementById('reviewGroup');
+  group.innerHTML = REVIEWS.map((r, i) => `
+    <button class="review-btn ${i === selected && !customActive ? 'active' : ''}" onclick="selectReview(${i})">
+      <span class="tag ${r.tagClass}">Review ${r.id}</span>
+      <div>${r.text}</div>
+    </button>
+  `).join('');
+}
+
+function selectReview(idx) {
+  selected = idx;
+  customActive = false;
+  document.getElementById('customNote').textContent = '';
+  renderReviewButtons();
+  runPipelineFor(REVIEWS[idx].text);
+}
+
+function runCustom() {
+  const text = document.getElementById('customText').value.trim();
+  if (!text) return;
+  customActive = true;
+  // Deselect sample buttons
+  document.querySelectorAll('.review-btn').forEach(b => b.classList.remove('active'));
+  runPipelineFor(text);
+  // Show note about vocabulary coverage
+  const tokens = tokenize(text);
+  const kept = tokens.filter(t => !STOPWORDS.has(t));
+  const inVocab = kept.filter(t => VOCAB.hasOwnProperty(t));
+  const unknown = kept.length - inVocab.length;
+  if (unknown > 0) {
+    document.getElementById('customNote').textContent =
+      `${unknown} word(s) not in the model's vocabulary — shown in orange. The model can't use words it hasn't seen in training.`;
+  } else {
+    document.getElementById('customNote').textContent = 'All kept words are in the vocabulary.';
+  }
+}
+
+function runPipelineFor(text) {
+  const allTokens = tokenize(text);
+  const classified = classifyTokens(allTokens);
+  const tfidf = computeTfIdf(allTokens);
+  const contribs = computeContributions(tfidf);
+  const rawScore = contribs.reduce((s, c) => s + c.product, 0) + INTERCEPT;
+  const prob = sigmoid(rawScore);
+
+  renderTokens(classified);
+  renderTfIdfChart(tfidf);
+  renderContributions(contribs, rawScore);
+  renderSigmoid(rawScore, prob);
+}
+
+function renderTokens(classified) {
+  const el = document.getElementById('tokenDisplay');
+  el.innerHTML = classified.map(t => {
+    let cls;
+    if (t.isStop) cls = 'tok-stop';
+    else if (t.inVocab) cls = 'tok-kept';
+    else cls = 'tok-unknown';
+    return `<span class="tok ${cls}" title="${t.isStop ? 'stopword — removed' : t.inVocab ? 'in vocabulary' : 'not in vocabulary — invisible to model'}">${t.word}</span>`;
+  }).join('');
+
+  const total = classified.length;
+  const stopped = classified.filter(t => t.isStop).length;
+  const unknown = classified.filter(t => !t.isStop && !t.inVocab).length;
+  document.getElementById('tokTotal').textContent = total;
+  document.getElementById('tokRemoved').textContent = stopped;
+  document.getElementById('tokKept').textContent = total - stopped;
+  // Show unknown count if any
+  const unknownNote = document.getElementById('tokUnknown');
+  if (unknownNote) {
+    unknownNote.textContent = unknown;
+    document.getElementById('tokUnknownCard').style.display = unknown > 0 ? '' : 'none';
+  }
+}
+
+function renderTfIdfChart(tfidf) {
+  const entries = Object.entries(tfidf).sort((a, b) => b[1] - a[1]);
+  const words = entries.map(e => e[0]);
+  const values = entries.map(e => e[1]);
+  const colors = entries.map(e => VOCAB[e[0]].coef > 0.3 ? '#2e7d32' : VOCAB[e[0]].coef < -0.3 ? '#c62828' : '#9e9e9e');
+
+  Plotly.react('tfidfChart', [{
+    y: words.reverse(),
+    x: values.reverse(),
+    type: 'bar', orientation: 'h',
+    marker: { color: colors.reverse() },
+    hovertemplate: '%{y}: TF-IDF = %{x:.3f}<extra></extra>'
+  }], {
+    xaxis: { title: 'TF-IDF Score', gridcolor: '#e8ecf0', zeroline: false },
+    yaxis: { automargin: true },
+    plot_bgcolor: '#fff', paper_bgcolor: '#fff',
+    margin: { l: 110, r: 20, t: 10, b: 40 },
+    font: { family: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif', size: 12 }
+  }, { responsive: true });
+
+  const vocabSize = Object.keys(VOCAB).length;
+  const nz = entries.length;
+  document.getElementById('vocabSize').textContent = vocabSize;
+  document.getElementById('vocabSizeInline').textContent = vocabSize;
+  document.getElementById('nonzero').textContent = nz;
+  document.getElementById('sparsePct').textContent = ((1 - nz / vocabSize) * 100).toFixed(0) + '%';
+}
+
+function renderCoefChart() {
+  const entries = Object.entries(VOCAB).sort((a, b) => b[1].coef - a[1].coef);
+  const words = entries.map(e => e[0]);
+  const coefs = entries.map(e => e[1].coef);
+  const colors = coefs.map(c => c > 0.3 ? '#2e7d32' : c < -0.3 ? '#c62828' : '#9e9e9e');
+
+  Plotly.newPlot('coefChart', [{
+    y: words.slice().reverse(),
+    x: coefs.slice().reverse(),
+    type: 'bar', orientation: 'h',
+    marker: { color: colors.slice().reverse() },
+    hovertemplate: '%{y}: coef = %{x:.2f}<extra></extra>'
+  }], {
+    xaxis: { title: 'Coefficient (positive → green, negative → red)', gridcolor: '#e8ecf0', zeroline: true, zerolinecolor: '#1a3a5c', zerolinewidth: 2 },
+    yaxis: { automargin: true, tickfont: { size: 10 } },
+    plot_bgcolor: '#fff', paper_bgcolor: '#fff',
+    margin: { l: 110, r: 20, t: 10, b: 40 },
+    font: { family: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif', size: 11 }
+  }, { responsive: true });
+}
+
+function renderContributions(contribs, rawScore) {
+  // Table
+  const tbody = document.querySelector('#contribTable tbody');
+  tbody.innerHTML = contribs.map(c => {
+    const cls = c.product > 0.001 ? 'c-pos' : c.product < -0.001 ? 'c-neg' : 'c-zero';
+    const sign = c.product > 0 ? '+' : '';
+    return `<tr>
+      <td>${c.word}</td>
+      <td>${c.tfidf.toFixed(3)}</td>
+      <td class="${c.coef > 0 ? 'c-pos' : c.coef < 0 ? 'c-neg' : 'c-zero'}">${c.coef > 0 ? '+' : ''}${c.coef.toFixed(2)}</td>
+      <td class="${cls}">${sign}${c.product.toFixed(3)}</td>
+    </tr>`;
+  }).join('');
+
+  // Waterfall chart
+  const labels = contribs.map(c => c.word);
+  labels.push('Intercept', 'Total');
+  const measures = contribs.map(() => 'relative');
+  measures.push('relative', 'total');
+  const values = contribs.map(c => c.product);
+  values.push(INTERCEPT, 0); // total is auto-computed by plotly
+  const wColors = contribs.map(c => c.product >= 0 ? '#2e7d32' : '#c62828');
+  wColors.push('#656d76', rawScore >= 0 ? '#1a3a5c' : '#c62828');
+
+  Plotly.react('waterfallChart', [{
+    type: 'waterfall',
+    orientation: 'v',
+    x: labels,
+    y: values,
+    measure: measures,
+    connector: { line: { color: '#d0d7de', width: 1 } },
+    increasing: { marker: { color: '#2e7d32' } },
+    decreasing: { marker: { color: '#c62828' } },
+    totals: { marker: { color: rawScore >= 0 ? '#1a3a5c' : '#c62828' } },
+    hovertemplate: '%{x}: %{y:.3f}<extra></extra>'
+  }], {
+    xaxis: { tickangle: -45, tickfont: { size: 11 } },
+    yaxis: { title: 'Cumulative Score', gridcolor: '#e8ecf0', zeroline: true, zerolinecolor: '#1a3a5c', zerolinewidth: 2 },
+    plot_bgcolor: '#fff', paper_bgcolor: '#fff',
+    margin: { l: 50, r: 20, t: 10, b: 80 },
+    font: { family: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif', size: 12 },
+    showlegend: false
+  }, { responsive: true });
+
+  // Stats
+  const posSum = contribs.filter(c => c.product > 0).reduce((s, c) => s + c.product, 0);
+  const negSum = contribs.filter(c => c.product < 0).reduce((s, c) => s + c.product, 0);
+  document.getElementById('sumPos').textContent = '+' + posSum.toFixed(3);
+  document.getElementById('sumNeg').textContent = negSum.toFixed(3);
+  document.getElementById('rawScore').textContent = rawScore.toFixed(3);
+  document.getElementById('rawScore').className = 'val ' + (rawScore >= 0 ? 'c-pos' : 'c-neg');
+}
+
+function renderSigmoid(rawScore, prob) {
+  // Curve
+  const xs = [], ys = [];
+  for (let x = -6; x <= 6; x += 0.1) { xs.push(x); ys.push(sigmoid(x)); }
+
+  // All three reviews as dots
+  const dots = REVIEWS.map((r, i) => {
+    const tokens = tokenize(r.text);
+    const tf = computeTfIdf(tokens);
+    const contribs = computeContributions(tf);
+    const rs = contribs.reduce((s, c) => s + c.product, 0) + INTERCEPT;
+    return { x: rs, y: sigmoid(rs), label: 'Review ' + r.id, active: i === selected };
+  });
+
+  Plotly.react('sigmoidChart', [
+    { x: xs, y: ys, type: 'scatter', mode: 'lines', name: 'Sigmoid',
+      line: { color: '#1a3a5c', width: 2 } },
+    // Threshold line
+    { x: [-6, 6], y: [0.5, 0.5], type: 'scatter', mode: 'lines', name: 'Threshold (0.5)',
+      line: { color: '#9e9e9e', width: 1, dash: 'dash' } },
+    // All review dots
+    { x: dots.map(d => d.x), y: dots.map(d => d.y),
+      type: 'scatter', mode: 'markers+text', name: 'Reviews',
+      marker: { size: dots.map(d => d.active ? 16 : 10),
+                color: dots.map(d => d.y >= 0.5 ? '#2e7d32' : '#c62828'),
+                line: { width: 2, color: '#fff' } },
+      text: dots.map(d => d.label),
+      textposition: 'top center',
+      textfont: { size: 11, color: '#1a3a5c' },
+      hovertemplate: '%{text}<br>Raw: %{x:.2f}<br>P(positive): %{y:.1%}<extra></extra>'
+    }
+  ], {
+    xaxis: { title: 'Raw Score', gridcolor: '#e8ecf0', zeroline: true, zerolinecolor: '#d0d7de', range: [-6, 6] },
+    yaxis: { title: 'P(positive)', gridcolor: '#e8ecf0', zeroline: false, range: [-0.05, 1.05] },
+    plot_bgcolor: '#fff', paper_bgcolor: '#fff',
+    margin: { l: 50, r: 20, t: 10, b: 50 },
+    font: { family: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif', size: 12 },
+    showlegend: false,
+    annotations: [{
+      x: -5.5, y: 0.15, text: '<b>NEGATIVE</b>', showarrow: false,
+      font: { size: 13, color: '#c62828' }
+    }, {
+      x: 5.5, y: 0.85, text: '<b>POSITIVE</b>', showarrow: false,
+      font: { size: 13, color: '#2e7d32' }
+    }]
+  }, { responsive: true });
+
+  // Slider
+  document.getElementById('sigSlider').value = rawScore;
+
+  // Result display
+  updateResultDisplay(rawScore, prob);
+}
+
+function updateSigmoidSlider() {
+  const val = parseFloat(document.getElementById('sigSlider').value);
+  const p = sigmoid(val);
+
+  // Move a marker on the sigmoid chart
+  const dots = REVIEWS.map((r, i) => {
+    const tokens = tokenize(r.text);
+    const tf = computeTfIdf(tokens);
+    const contribs = computeContributions(tf);
+    const rs = contribs.reduce((s, c) => s + c.product, 0) + INTERCEPT;
+    return { x: rs, y: sigmoid(rs), label: 'Review ' + r.id, active: i === selected };
+  });
+
+  // Add slider dot
+  Plotly.restyle('sigmoidChart', {
+    x: [dots.map(d => d.x).concat([val])],
+    y: [dots.map(d => d.y).concat([p])],
+    'marker.size': [dots.map(d => d.active ? 16 : 10).concat([14])],
+    'marker.color': [dots.map(d => d.y >= 0.5 ? '#2e7d32' : '#c62828').concat([p >= 0.5 ? '#e65100' : '#e65100'])],
+    text: [dots.map(d => d.label).concat(['Slider'])]
+  }, [2]);
+
+  updateResultDisplay(val, p);
+}
+
+function updateResultDisplay(raw, prob) {
+  document.getElementById('finalRaw').textContent = raw.toFixed(3);
+  document.getElementById('finalRaw').className = 'val ' + (raw >= 0 ? 'c-pos' : 'c-neg');
+  document.getElementById('finalProb').textContent = (prob * 100).toFixed(1) + '%';
+
+  const badge = document.getElementById('finalBadge');
+  const isPos = prob >= 0.5;
+  badge.textContent = isPos ? 'POSITIVE' : 'NEGATIVE';
+  badge.className = 'result-badge ' + (isPos ? 'result-pos' : 'result-neg');
+
+  const conf = Math.abs(prob - 0.5) * 2; // 0 = uncertain, 1 = certain
+  let confLabel;
+  if (conf > 0.8) confLabel = 'High confidence';
+  else if (conf > 0.4) confLabel = 'Moderate confidence';
+  else confLabel = 'Low confidence — the model is unsure';
+  document.getElementById('finalConf').textContent = confLabel;
+
+  const tip = document.getElementById('finalTip');
+  if (prob > 0.45 && prob < 0.55) {
+    tip.innerHTML = '<strong>Close call.</strong> This review lands near the decision boundary. The model is uncertain because the positive and negative word contributions nearly cancel out. A human would recognize the mixed sentiment, but the model just sees a sum near zero.';
+  } else if (prob >= 0.55) {
+    tip.innerHTML = `<strong>Classified as positive (${(prob*100).toFixed(1)}%).</strong> The positive-coefficient words in this review outweighed the negative ones. The further from 50%, the more confident the model is.`;
+  } else {
+    tip.innerHTML = `<strong>Classified as negative (${((1-prob)*100).toFixed(1)}% confidence).</strong> The negative-coefficient words dominated. The raw score landed on the left side of the sigmoid curve, pulling the probability below 0.5.`;
+  }
+}
+
+// ── Init ──
+renderReviewButtons();
+renderCoefChart();
+runPipelineFor(REVIEWS[selected].text);
+</script>
+
+</body>
+</html>
