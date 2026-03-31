@@ -387,9 +387,10 @@ function accuracy(w1, w2, b) {
   return correct / DATA.length;
 }
 
-// ── Best-fit via simple gradient descent ──
-function fitLogistic(iters = 500, lr = 2.0) {
+// ── Best-fit via gradient descent + accuracy refinement ──
+function fitLogistic(iters = 2000, lr = 3.0) {
   let w1 = 0, w2 = 0, b = 0;
+  // Phase 1: gradient descent on log-loss (finds good probabilities)
   for (let t = 0; t < iters; t++) {
     let gw1 = 0, gw2 = 0, gb = 0;
     for (const d of DATA) {
@@ -403,7 +404,25 @@ function fitLogistic(iters = 500, lr = 2.0) {
     w2 -= lr * gw2 / DATA.length;
     b -= lr * gb / DATA.length;
   }
-  return { w1, w2, b };
+  // Phase 2: local search around GD solution to maximize accuracy
+  // (GD optimizes log-loss, which doesn't always maximize accuracy)
+  let bestW1 = w1, bestW2 = w2, bestB = b;
+  let bestAcc = accuracy(w1, w2, b);
+  const step = 0.1;
+  for (let dw1 = -1; dw1 <= 1; dw1 += step) {
+    for (let dw2 = -1; dw2 <= 1; dw2 += step) {
+      for (let db = -0.5; db <= 0.5; db += step) {
+        const acc = accuracy(w1 + dw1, w2 + dw2, b + db);
+        if (acc > bestAcc) {
+          bestAcc = acc;
+          bestW1 = w1 + dw1;
+          bestW2 = w2 + dw2;
+          bestB = b + db;
+        }
+      }
+    }
+  }
+  return { w1: bestW1, w2: bestW2, b: bestB };
 }
 
 let bestFit = { w1: 0, w2: 0, b: 0 };
@@ -479,10 +498,16 @@ function updateBoundary() { drawBoundary(); }
 
 function showBestBoundary() {
   // Clamp to slider ranges
-  document.getElementById('w1Slider').value = Math.max(-4, Math.min(4, bestFit.w1));
-  document.getElementById('w2Slider').value = Math.max(-4, Math.min(4, bestFit.w2));
-  document.getElementById('bSlider').value = Math.max(-3, Math.min(3, bestFit.b));
+  const cw1 = Math.max(-4, Math.min(4, bestFit.w1));
+  const cw2 = Math.max(-4, Math.min(4, bestFit.w2));
+  const cb = Math.max(-3, Math.min(3, bestFit.b));
+  document.getElementById('w1Slider').value = cw1;
+  document.getElementById('w2Slider').value = cw2;
+  document.getElementById('bSlider').value = cb;
   drawBoundary();
+  // Ensure best-fit accuracy label matches what's actually shown
+  const bestAcc = accuracy(cw1, cw2, cb);
+  document.getElementById('bestAccVal').textContent = (bestAcc * 100).toFixed(1) + '%';
 }
 
 function randomizeWeights() {
