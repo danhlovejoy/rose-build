@@ -165,7 +165,7 @@
       <div id="boundaryPlot" style="width:100%; height:480px;"></div>
       <div class="btn-group">
         <button class="btn btn-accent" onclick="showBestBoundary()">Show Best Fit</button>
-        <button class="btn btn-outline" onclick="resetWeights()">Reset My Guess</button>
+        <button class="btn btn-outline" onclick="randomizeWeights()">Randomize My Guess</button>
         <button class="btn btn-primary" onclick="shuffleData()">New Random Data</button>
       </div>
     </div>
@@ -478,16 +478,17 @@ function drawBoundary() {
 function updateBoundary() { drawBoundary(); }
 
 function showBestBoundary() {
-  document.getElementById('w1Slider').value = bestFit.w1;
-  document.getElementById('w2Slider').value = bestFit.w2;
-  document.getElementById('bSlider').value = bestFit.b;
+  // Clamp to slider ranges
+  document.getElementById('w1Slider').value = Math.max(-4, Math.min(4, bestFit.w1));
+  document.getElementById('w2Slider').value = Math.max(-4, Math.min(4, bestFit.w2));
+  document.getElementById('bSlider').value = Math.max(-3, Math.min(3, bestFit.b));
   drawBoundary();
 }
 
-function resetWeights() {
-  document.getElementById('w1Slider').value = 1;
-  document.getElementById('w2Slider').value = -1;
-  document.getElementById('bSlider').value = 0;
+function randomizeWeights() {
+  document.getElementById('w1Slider').value = (Math.random() * 4 - 2).toFixed(1);
+  document.getElementById('w2Slider').value = (Math.random() * 4 - 2).toFixed(1);
+  document.getElementById('bSlider').value = (Math.random() * 4 - 2).toFixed(1);
   drawBoundary();
 }
 
@@ -496,7 +497,7 @@ function shuffleData() {
   bestFit = fitLogistic();
   const bestAcc = accuracy(bestFit.w1, bestFit.w2, bestFit.b);
   document.getElementById('bestAccVal').textContent = (bestAcc * 100).toFixed(1) + '%';
-  drawBoundary();
+  randomizeWeights();
   populateReviewPicker();
   drawConfidencePlot();
 }
@@ -743,7 +744,7 @@ generateData();
 bestFit = fitLogistic();
 const bestAcc = accuracy(bestFit.w1, bestFit.w2, bestFit.b);
 document.getElementById('bestAccVal').textContent = (bestAcc * 100).toFixed(1) + '%';
-drawBoundary();
+randomizeWeights();
 drawSigmoidWithDot();
 populateReviewPicker();
 resetTraining();
