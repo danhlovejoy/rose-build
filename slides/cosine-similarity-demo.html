@@ -1,0 +1,777 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cosine Similarity: Measuring How Alike Two Things Are &mdash; AIML 2003 / 2013</title>
+<script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+<style>
+  :root {
+    --primary: #1a3a5c;
+    --primary-light: #2e5a88;
+    --accent: #2e7d32;
+    --light-bg: #f7f9fc;
+    --border: #d0d7de;
+    --text: #1f2328;
+    --muted: #656d76;
+    --neg: #c62828;
+    --neg-bg: #fce4ec;
+    --pos: #2e7d32;
+    --pos-bg: #e8f5e9;
+    --purple: #5e35b1;
+    --purple-bg: #ede7f6;
+    --orange: #e65100;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    color: var(--text); line-height: 1.6; background: #fff;
+  }
+  .container { max-width: 1100px; margin: 0 auto; padding: 0 2rem 3rem; }
+
+  .hero {
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+    color: #fff; padding: 2.5rem 2rem; text-align: center; margin-bottom: 2rem;
+  }
+  .hero h1 { font-size: 1.8rem; margin-bottom: 0.3rem; font-weight: 700; }
+  .hero p { color: #c0d4e8; font-size: 1rem; }
+  .hero .hl { color: #fff; font-weight: 500; margin-top: 0.75rem; font-size: 1.05rem; }
+  .hero .courses { margin-top: 0.5rem; font-size: 0.9rem; color: #a0bdd8; }
+
+  .stage { margin-top: 3rem; }
+  .stage-num {
+    display: inline-block; width: 2rem; height: 2rem; line-height: 2rem;
+    border-radius: 50%; background: var(--primary); color: #fff;
+    text-align: center; font-weight: 700; font-size: 0.9rem;
+    margin-right: 0.5rem; vertical-align: middle;
+  }
+  h2 { font-size: 1.3rem; color: var(--primary); margin-bottom: 0.75rem; display: inline; vertical-align: middle; }
+  .stage-line { border-bottom: 2px solid var(--primary); margin-bottom: 1rem; padding-bottom: 0.4rem; }
+  p { font-size: 0.95rem; margin-bottom: 0.75rem; }
+
+  .card {
+    background: var(--light-bg); border: 1px solid var(--border);
+    border-radius: 8px; padding: 1.25rem; margin-bottom: 1rem;
+  }
+  .card strong { color: var(--primary); display: block; margin-bottom: 0.3rem; }
+  .card code {
+    background: #e8ecf0; padding: 0.1rem 0.35rem; border-radius: 3px;
+    font-size: 0.9em; font-family: "SF Mono", Consolas, monospace;
+  }
+
+  .tip {
+    background: var(--pos-bg); border-left: 4px solid var(--accent);
+    padding: 1rem 1.25rem; border-radius: 4px; margin: 1rem 0; font-size: 0.9rem;
+  }
+  .tip strong { color: var(--accent); }
+  .warn-tip {
+    background: #fff3e0; border-left: 4px solid var(--orange);
+    padding: 1rem 1.25rem; border-radius: 4px; margin: 1rem 0; font-size: 0.9rem;
+  }
+  .warn-tip strong { color: var(--orange); }
+  .bridge-box {
+    background: var(--purple-bg); border-left: 4px solid var(--purple);
+    padding: 1rem 1.25rem; border-radius: 4px; margin: 1rem 0; font-size: 0.9rem;
+  }
+  .bridge-box strong { color: var(--purple); }
+  .arrow-box { text-align: center; padding: 1rem 0; color: var(--muted); font-size: 1.5rem; }
+
+  .row { display: flex; gap: 1.5rem; align-items: flex-start; }
+  .col-main { flex: 1; min-width: 0; }
+  .col-side { width: 320px; flex-shrink: 0; }
+  @media (max-width: 900px) {
+    .row { flex-direction: column; }
+    .col-side { width: 100%; }
+  }
+
+  .stats-row { display: flex; gap: 1rem; flex-wrap: wrap; margin: 1rem 0; }
+  .stat-card {
+    flex: 1; min-width: 110px; background: var(--light-bg);
+    border: 1px solid var(--border); border-radius: 8px;
+    padding: 0.75rem 1rem; text-align: center;
+  }
+  .stat-card .val { font-size: 1.5rem; font-weight: 700; color: var(--primary); }
+  .stat-card .lbl { font-size: 0.8rem; color: var(--muted); }
+
+  .slider-row { margin: 0.75rem 0; }
+  .slider-row label { display: block; font-size: 0.85rem; color: var(--muted); margin-bottom: 0.15rem; }
+  .slider-row input[type="range"] { width: 100%; }
+  .slider-val { font-weight: 600; color: var(--primary); float: right; font-size: 0.9rem; }
+
+  .btn {
+    display: inline-block; padding: 0.5rem 1.1rem; border: none; border-radius: 6px;
+    font-size: 0.85rem; font-weight: 600; cursor: pointer; font-family: inherit;
+    transition: opacity 0.15s;
+  }
+  .btn:hover { opacity: 0.85; }
+  .btn-accent { background: var(--accent); color: #fff; }
+  .btn-primary { background: var(--primary); color: #fff; }
+  .btn-outline { background: #fff; color: var(--primary); border: 1px solid var(--border); }
+  .btn-group { display: flex; gap: 0.5rem; flex-wrap: wrap; margin: 0.75rem 0; }
+
+  .eq-box {
+    background: var(--light-bg); border: 1px solid var(--border); border-radius: 8px;
+    padding: 1rem 1.25rem; margin: 1rem 0; text-align: center;
+    font-family: "SF Mono", Consolas, monospace; font-size: 0.95rem;
+  }
+
+  .sim-meter {
+    height: 24px; border-radius: 12px; background: #eee; overflow: hidden;
+    margin: 0.5rem 0; position: relative;
+  }
+  .sim-meter-fill {
+    height: 100%; border-radius: 12px; transition: width 0.3s, background 0.3s;
+  }
+  .sim-meter-label {
+    position: absolute; top: 0; left: 0; right: 0; text-align: center;
+    line-height: 24px; font-size: 0.8rem; font-weight: 700; color: #fff;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+  }
+
+  textarea.text-input {
+    width: 100%; min-height: 60px; padding: 0.6rem 0.8rem; margin-top: 0.3rem;
+    border: 1px solid var(--border); border-radius: 6px; font-family: inherit;
+    font-size: 0.88rem; color: var(--text); resize: vertical;
+  }
+  textarea.text-input:focus { outline: none; border-color: var(--primary); }
+
+  .pair-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin: 1rem 0; }
+  @media (max-width: 700px) { .pair-grid { grid-template-columns: 1fr; } }
+  .pair-card {
+    border: 2px solid var(--border); border-radius: 8px; padding: 1rem;
+    cursor: pointer; transition: border-color 0.15s;
+  }
+  .pair-card:hover { border-color: var(--primary); }
+  .pair-card.active { border-color: var(--primary); background: var(--light-bg); }
+  .pair-card .pair-label { font-size: 0.75rem; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.04em; color: var(--muted); margin-bottom: 0.3rem; }
+
+  .heatmap-row { display: flex; gap: 1.5rem; margin: 1rem 0; }
+  .heatmap-col { flex: 1; min-width: 0; }
+  @media (max-width: 700px) { .heatmap-row { flex-direction: column; } }
+
+  .footer {
+    text-align: center; padding: 2rem 0; color: var(--muted); font-size: 0.85rem;
+    border-top: 1px solid var(--border); margin-top: 3rem;
+  }
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <h1>Cosine Similarity</h1>
+  <p>Measuring How Alike Two Things Are</p>
+  <p class="hl">The same math works for text and images. Two vectors, one angle, one number.</p>
+  <p class="courses">AIML 2003 (NLP) &bull; AIML 2013 (Computer Vision)</p>
+</div>
+
+<div class="container">
+
+<!-- ================================================================
+     STAGE 1: THE GEOMETRY
+     ================================================================ -->
+<div class="stage">
+  <div class="stage-line"><span class="stage-num">1</span><h2>The Geometry: Two Arrows, One Angle</h2></div>
+  <p>Forget text and images for a moment. Start with two arrows (vectors) pointing out from the origin. Cosine similarity measures the angle between them. Same direction = 1. Perpendicular = 0. Opposite = &minus;1.</p>
+
+  <div class="row">
+    <div class="col-main">
+      <div id="vectorPlot" style="width:100%; height:440px;"></div>
+    </div>
+    <div class="col-side">
+      <div class="card">
+        <strong>Vector A (blue)</strong>
+        <div class="slider-row">
+          <label>A<sub>x</sub> <span class="slider-val" id="axVal">3.0</span></label>
+          <input type="range" id="axSlider" min="-5" max="5" step="0.1" value="3" oninput="updateVectors()">
+        </div>
+        <div class="slider-row">
+          <label>A<sub>y</sub> <span class="slider-val" id="ayVal">4.0</span></label>
+          <input type="range" id="aySlider" min="-5" max="5" step="0.1" value="4" oninput="updateVectors()">
+        </div>
+      </div>
+      <div class="card">
+        <strong>Vector B (orange)</strong>
+        <div class="slider-row">
+          <label>B<sub>x</sub> <span class="slider-val" id="bxVal">4.0</span></label>
+          <input type="range" id="bxSlider" min="-5" max="5" step="0.1" value="4" oninput="updateVectors()">
+        </div>
+        <div class="slider-row">
+          <label>B<sub>y</sub> <span class="slider-val" id="byVal">1.0</span></label>
+          <input type="range" id="bySlider" min="-5" max="5" step="0.1" value="1" oninput="updateVectors()">
+        </div>
+      </div>
+      <div class="stat-card" style="margin-bottom:0.75rem;">
+        <div class="val" id="cosVal">?</div>
+        <div class="lbl">cosine similarity</div>
+      </div>
+      <div class="stat-card">
+        <div class="val" id="angleVal">?</div>
+        <div class="lbl">angle between vectors</div>
+      </div>
+      <div class="btn-group">
+        <button class="btn btn-accent" onclick="presetVectors(3,4,4,3)">Nearly aligned</button>
+        <button class="btn btn-primary" onclick="presetVectors(3,4,-4,1)">Perpendicular</button>
+        <button class="btn btn-outline" onclick="presetVectors(3,4,-3,-4)">Opposite</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="eq-box">
+    cosine(A, B) = (A &middot; B) / (|A| &times; |B|) = <span id="dotProduct">?</span> / (<span id="magA">?</span> &times; <span id="magB">?</span>) = <span id="cosResult">?</span>
+  </div>
+
+  <div class="tip">
+    <strong>Length doesn't matter.</strong> Cosine similarity only cares about direction. A short arrow and a long arrow pointing the same way have similarity 1.0. That's why it works for comparing documents of different lengths or images of different sizes &mdash; the magnitude of the vector washes out.
+  </div>
+
+  <div class="card">
+    <strong>The scale</strong>
+    <p style="margin:0; font-size:0.9rem;">
+      <strong>1.0</strong> = identical direction (perfect match) &nbsp;&bull;&nbsp;
+      <strong>0.0</strong> = perpendicular (no relationship) &nbsp;&bull;&nbsp;
+      <strong>&minus;1.0</strong> = opposite direction (as different as possible)
+    </p>
+    <p style="margin:0.5rem 0 0; font-size:0.9rem;">In practice, TF-IDF and HOG vectors are never negative, so cosine similarity for those applications stays between 0 and 1.</p>
+  </div>
+</div>
+
+<div class="arrow-box">&darr;</div>
+
+<!-- ================================================================
+     STAGE 2: TEXT (NLP)
+     ================================================================ -->
+<div class="stage">
+  <div class="stage-line"><span class="stage-num">2</span><h2>Text: Comparing Documents by Their Words</h2></div>
+  <p>Each document becomes a TF-IDF vector &mdash; one number per word in the vocabulary. Two documents that use similar words in similar proportions will point in similar directions. Cosine similarity measures that alignment.</p>
+
+  <p>Pick a pair or type your own:</p>
+
+  <div class="pair-grid" id="textPairs"></div>
+
+  <div style="display:flex; gap:1rem; flex-wrap:wrap; margin:1rem 0;">
+    <div style="flex:1; min-width:200px;">
+      <label style="font-size:0.85rem; color:var(--muted);">Document A</label>
+      <textarea class="text-input" id="textA" placeholder="Type a sentence..."></textarea>
+    </div>
+    <div style="flex:1; min-width:200px;">
+      <label style="font-size:0.85rem; color:var(--muted);">Document B</label>
+      <textarea class="text-input" id="textB" placeholder="Type a sentence..."></textarea>
+    </div>
+  </div>
+  <button class="btn btn-accent" onclick="computeTextSim()">Compare</button>
+
+  <div id="textResults" style="display:none; margin-top:1rem;">
+    <div class="stats-row">
+      <div class="stat-card"><div class="val" id="textCos">?</div><div class="lbl">cosine similarity</div></div>
+      <div class="stat-card"><div class="val" id="textShared">?</div><div class="lbl">shared words</div></div>
+      <div class="stat-card"><div class="val" id="textUniqA">?</div><div class="lbl">only in Doc A</div></div>
+      <div class="stat-card"><div class="val" id="textUniqB">?</div><div class="lbl">only in Doc B</div></div>
+    </div>
+    <div class="sim-meter"><div class="sim-meter-fill" id="textMeter"></div><div class="sim-meter-label" id="textMeterLabel"></div></div>
+
+    <div class="heatmap-row">
+      <div class="heatmap-col">
+        <div id="textBarChart" style="width:100%; height:350px;"></div>
+      </div>
+      <div class="heatmap-col">
+        <div class="card" id="textExplain"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <strong>Why cosine instead of counting shared words?</strong> Two reviews might share the words "film" and "movie" &mdash; but those appear in every review and have low TF-IDF scores. Cosine similarity weights each shared word by how distinctive it is. Sharing the word "masterpiece" matters more than sharing the word "the."
+  </div>
+</div>
+
+<div class="arrow-box">&darr;</div>
+
+<!-- ================================================================
+     STAGE 3: IMAGES (CV)
+     ================================================================ -->
+<div class="stage">
+  <div class="stage-line"><span class="stage-num">3</span><h2>Images: Comparing Pictures by Their Edges</h2></div>
+  <p>HOG converts an image into a vector of gradient orientation counts &mdash; a numerical fingerprint of the image's edge structure. Two images with similar HOG vectors have similar shapes and textures, regardless of color or exact pixel values.</p>
+  <p>Below are synthetic "HOG-like" feature vectors for image pairs. Each bar represents a gradient orientation bin. The more the two patterns match, the higher the cosine similarity.</p>
+
+  <div class="pair-grid" id="imagePairs"></div>
+
+  <div id="imageResults" style="margin-top:1rem;">
+    <div class="stats-row">
+      <div class="stat-card"><div class="val" id="imgCos">?</div><div class="lbl">cosine similarity</div></div>
+      <div class="stat-card"><div class="val" id="imgAngle">?</div><div class="lbl">angle (degrees)</div></div>
+    </div>
+    <div class="sim-meter"><div class="sim-meter-fill" id="imgMeter"></div><div class="sim-meter-label" id="imgMeterLabel"></div></div>
+    <div id="hogBarChart" style="width:100%; height:320px;"></div>
+  </div>
+
+  <div class="tip">
+    <strong>Same idea, different domain.</strong> TF-IDF produces one number per word. HOG produces one number per orientation bin per cell. Both are vectors. Cosine similarity treats them identically &mdash; it doesn't know or care whether the numbers represent words or edges.
+  </div>
+</div>
+
+<div class="arrow-box">&darr;</div>
+
+<!-- ================================================================
+     STAGE 4: SIMILARITY MATRIX
+     ================================================================ -->
+<div class="stage">
+  <div class="stage-line"><span class="stage-num">4</span><h2>The Similarity Matrix</h2></div>
+  <p>When you have many items (documents or images), you compute cosine similarity for every pair and arrange the results in a matrix. Each cell shows how similar two items are. The diagonal is always 1.0 &mdash; everything is identical to itself.</p>
+
+  <div class="btn-group">
+    <button class="btn btn-accent" onclick="showTextMatrix()">Text Matrix (6 reviews)</button>
+    <button class="btn btn-primary" onclick="showImageMatrix()">Image Matrix (6 images)</button>
+  </div>
+
+  <div id="matrixPlot" style="width:100%; height:480px;"></div>
+
+  <div id="matrixExplain" class="card" style="display:none;"></div>
+
+  <div class="bridge-box">
+    <strong>Bridge: NLP &harr; CV.</strong> The matrix looks the same whether you're comparing movie reviews or photographs. In your NLP lab, the similarity matrix finds reviews with overlapping vocabulary. In your CV lab, it finds images with overlapping edge structure. The retrieval logic is identical: sort the row by similarity, return the top matches.
+  </div>
+</div>
+
+<div class="arrow-box">&darr;</div>
+
+<!-- ================================================================
+     STAGE 5: WHEN IT BREAKS
+     ================================================================ -->
+<div class="stage">
+  <div class="stage-line"><span class="stage-num">5</span><h2>When Cosine Similarity Fails</h2></div>
+
+  <div class="card">
+    <strong>Same meaning, different words (NLP)</strong>
+    <p style="margin:0;">"The movie was excellent" and "The film was outstanding" mean the same thing, but share zero distinctive words after stopword removal. Cosine similarity on TF-IDF vectors: <strong>0.0</strong>. The vectors point in completely different directions because the features (individual words) don't overlap.</p>
+  </div>
+
+  <div class="card">
+    <strong>Same shape, different context (CV)</strong>
+    <p style="margin:0;">A bicycle wheel and a clock face produce similar HOG descriptors &mdash; both are circular with radial gradient patterns. High cosine similarity, but the images are semantically unrelated. HOG sees edges, not objects.</p>
+  </div>
+
+  <div class="card">
+    <strong>The fix for both: learned representations</strong>
+    <p style="margin:0;">Word embeddings (NLP) and CNN features (CV) solve this by learning that "excellent" and "outstanding" are similar, or that wheels and clocks are different despite similar edges. That's Week 4. Cosine similarity stays the same &mdash; the vectors get smarter.</p>
+  </div>
+
+  <div class="warn-tip">
+    <strong>Cosine similarity is only as good as the vectors you feed it.</strong> It measures alignment perfectly. The question is always whether the vector representation captures what you actually care about. TF-IDF captures word overlap. HOG captures edge patterns. Neither captures meaning. That's not a flaw in cosine similarity &mdash; it's a flaw in the features.
+  </div>
+</div>
+
+</div><!-- /.container -->
+
+<div class="footer">
+  AIML 2003 (NLP) &bull; AIML 2013 (Computer Vision) &mdash; Spring 2026 &bull; Built for in-class demonstration.
+</div>
+
+<!-- ================================================================
+     JAVASCRIPT
+     ================================================================ -->
+<script>
+// ── Utility ──
+function cosineSim(a, b) {
+  let dot = 0, magA = 0, magB = 0;
+  for (let i = 0; i < a.length; i++) {
+    dot += a[i] * b[i];
+    magA += a[i] * a[i];
+    magB += b[i] * b[i];
+  }
+  magA = Math.sqrt(magA);
+  magB = Math.sqrt(magB);
+  if (magA < 1e-12 || magB < 1e-12) return 0;
+  return dot / (magA * magB);
+}
+
+function simColor(v) {
+  // 0 = red, 0.5 = orange, 1 = green
+  if (v >= 0.7) return '#2e7d32';
+  if (v >= 0.4) return '#e65100';
+  return '#c62828';
+}
+
+function renderMeter(fillId, labelId, value) {
+  const pct = Math.max(0, Math.min(1, (value + 1) / 2)) * 100; // map [-1,1] to [0,100]
+  const el = document.getElementById(fillId);
+  el.style.width = pct + '%';
+  el.style.background = simColor(value);
+  document.getElementById(labelId).textContent = value.toFixed(3);
+}
+
+// ── Stage 1: 2D Vectors ──
+function updateVectors() {
+  const ax = parseFloat(document.getElementById('axSlider').value);
+  const ay = parseFloat(document.getElementById('aySlider').value);
+  const bx = parseFloat(document.getElementById('bxSlider').value);
+  const by = parseFloat(document.getElementById('bySlider').value);
+  document.getElementById('axVal').textContent = ax.toFixed(1);
+  document.getElementById('ayVal').textContent = ay.toFixed(1);
+  document.getElementById('bxVal').textContent = bx.toFixed(1);
+  document.getElementById('byVal').textContent = by.toFixed(1);
+
+  const dot = ax * bx + ay * by;
+  const mA = Math.sqrt(ax * ax + ay * ay);
+  const mB = Math.sqrt(bx * bx + by * by);
+  const cos = (mA > 1e-9 && mB > 1e-9) ? dot / (mA * mB) : 0;
+  const angleDeg = Math.acos(Math.max(-1, Math.min(1, cos))) * 180 / Math.PI;
+
+  document.getElementById('dotProduct').textContent = dot.toFixed(2);
+  document.getElementById('magA').textContent = mA.toFixed(2);
+  document.getElementById('magB').textContent = mB.toFixed(2);
+  document.getElementById('cosResult').textContent = cos.toFixed(3);
+  document.getElementById('cosVal').textContent = cos.toFixed(3);
+  document.getElementById('cosVal').style.color = simColor(cos);
+  document.getElementById('angleVal').textContent = angleDeg.toFixed(1) + '°';
+
+  // Draw arc for angle
+  const arcPoints = 30;
+  const arcR = 1.2;
+  const angleA = Math.atan2(ay, ax);
+  const angleB = Math.atan2(by, bx);
+  let startAng = Math.min(angleA, angleB);
+  let endAng = Math.max(angleA, angleB);
+  if (endAng - startAng > Math.PI) { const tmp = startAng; startAng = endAng; endAng = tmp + 2 * Math.PI; }
+  const arcX = [], arcY = [];
+  for (let i = 0; i <= arcPoints; i++) {
+    const t = startAng + (endAng - startAng) * i / arcPoints;
+    arcX.push(arcR * Math.cos(t));
+    arcY.push(arcR * Math.sin(t));
+  }
+
+  Plotly.react('vectorPlot', [
+    // Vector A
+    { x: [0, ax], y: [0, ay], mode: 'lines+markers', name: 'A',
+      line: { color: '#1565c0', width: 3 },
+      marker: { size: [0, 10], color: '#1565c0' } },
+    // Vector B
+    { x: [0, bx], y: [0, by], mode: 'lines+markers', name: 'B',
+      line: { color: '#e65100', width: 3 },
+      marker: { size: [0, 10], color: '#e65100' } },
+    // Angle arc
+    { x: arcX, y: arcY, mode: 'lines', name: 'Angle',
+      line: { color: '#9e9e9e', width: 1.5, dash: 'dot' }, showlegend: false }
+  ], {
+    xaxis: { range: [-5.5, 5.5], zeroline: true, zerolinecolor: '#d0d7de', gridcolor: '#e8ecf0',
+             scaleanchor: 'y', scaleratio: 1 },
+    yaxis: { range: [-5.5, 5.5], zeroline: true, zerolinecolor: '#d0d7de', gridcolor: '#e8ecf0' },
+    plot_bgcolor: '#fff', paper_bgcolor: '#fff',
+    margin: { l: 40, r: 20, t: 10, b: 40 },
+    legend: { x: 0.02, y: 0.98, bgcolor: 'rgba(255,255,255,0.85)' },
+    font: { family: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif', size: 12 },
+    annotations: [
+      { x: ax, y: ay, text: `A (${ax.toFixed(1)}, ${ay.toFixed(1)})`, showarrow: false,
+        xshift: 10, yshift: 10, font: { color: '#1565c0', size: 11 } },
+      { x: bx, y: by, text: `B (${bx.toFixed(1)}, ${by.toFixed(1)})`, showarrow: false,
+        xshift: 10, yshift: -10, font: { color: '#e65100', size: 11 } }
+    ]
+  }, { responsive: true });
+}
+
+function presetVectors(ax, ay, bx, by) {
+  document.getElementById('axSlider').value = ax;
+  document.getElementById('aySlider').value = ay;
+  document.getElementById('bxSlider').value = bx;
+  document.getElementById('bySlider').value = by;
+  updateVectors();
+}
+
+// ── Stage 2: Text similarity ──
+
+const STOPWORDS = new Set([
+  "a","about","all","am","an","and","any","are","as","at","be","been","being","but","by",
+  "can","could","did","do","does","don't","down","each","for","from","get","got","had",
+  "has","have","he","her","here","him","his","how","i","if","in","into","is","it","its",
+  "just","let","me","might","more","most","my","no","nor","not","of","on","once","only",
+  "or","other","our","out","over","own","s","same","she","should","so","some","such","than",
+  "that","the","their","them","then","there","these","they","this","those","through","to",
+  "too","under","until","up","very","was","we","were","what","when","where","which","while",
+  "who","will","with","won't","would","you","your"
+]);
+
+function tokenizeText(text) {
+  return text.toLowerCase().replace(/[^a-z\s]/g, '').split(/\s+/)
+    .filter(t => t.length > 1 && !STOPWORDS.has(t));
+}
+
+function buildTfVector(tokens) {
+  const counts = {};
+  for (const t of tokens) counts[t] = (counts[t] || 0) + 1;
+  const total = tokens.length || 1;
+  const tf = {};
+  for (const [w, c] of Object.entries(counts)) tf[w] = c / total;
+  return tf;
+}
+
+function textCosineSim(textA, textB) {
+  const tokA = tokenizeText(textA);
+  const tokB = tokenizeText(textB);
+  const tfA = buildTfVector(tokA);
+  const tfB = buildTfVector(tokB);
+
+  // Union vocabulary
+  const vocab = new Set([...Object.keys(tfA), ...Object.keys(tfB)]);
+  const vecA = [], vecB = [];
+  const words = [...vocab].sort();
+  for (const w of words) {
+    vecA.push(tfA[w] || 0);
+    vecB.push(tfB[w] || 0);
+  }
+  const sim = cosineSim(vecA, vecB);
+  const shared = words.filter(w => (tfA[w] || 0) > 0 && (tfB[w] || 0) > 0);
+  const onlyA = words.filter(w => (tfA[w] || 0) > 0 && !(tfB[w] || 0));
+  const onlyB = words.filter(w => !(tfA[w] || 0) && (tfB[w] || 0) > 0);
+  return { sim, words, vecA, vecB, shared, onlyA, onlyB, tokA, tokB };
+}
+
+const TEXT_PAIRS = [
+  { label: 'Similar reviews', a: 'A brilliant and beautifully crafted film with outstanding performances.', b: 'An excellent film with superb acting and beautiful cinematography.' },
+  { label: 'Opposite sentiment', a: 'A brilliant and beautifully crafted film with outstanding performances.', b: 'An awful waste of time with terrible acting and a boring plot.' },
+  { label: 'Same meaning, different words', a: 'The movie was excellent and I enjoyed it thoroughly.', b: 'The film was outstanding and I had a wonderful time watching it.' },
+  { label: 'Unrelated topics', a: 'The horror movie had brilliant special effects and a compelling villain.', b: 'The romantic comedy was fun and had a surprisingly sweet ending.' }
+];
+
+function renderTextPairs() {
+  document.getElementById('textPairs').innerHTML = TEXT_PAIRS.map((p, i) => `
+    <div class="pair-card" onclick="selectTextPair(${i})" id="tpair${i}">
+      <div class="pair-label">${p.label}</div>
+      <div style="font-size:0.85rem;"><strong>A:</strong> ${p.a.substring(0, 60)}${p.a.length > 60 ? '...' : ''}</div>
+      <div style="font-size:0.85rem;"><strong>B:</strong> ${p.b.substring(0, 60)}${p.b.length > 60 ? '...' : ''}</div>
+    </div>
+  `).join('');
+}
+
+function selectTextPair(idx) {
+  document.querySelectorAll('#textPairs .pair-card').forEach(c => c.classList.remove('active'));
+  document.getElementById('tpair' + idx).classList.add('active');
+  document.getElementById('textA').value = TEXT_PAIRS[idx].a;
+  document.getElementById('textB').value = TEXT_PAIRS[idx].b;
+  computeTextSim();
+}
+
+function computeTextSim() {
+  const a = document.getElementById('textA').value.trim();
+  const b = document.getElementById('textB').value.trim();
+  if (!a || !b) return;
+
+  const r = textCosineSim(a, b);
+  document.getElementById('textResults').style.display = '';
+  document.getElementById('textCos').textContent = r.sim.toFixed(3);
+  document.getElementById('textCos').style.color = simColor(r.sim);
+  document.getElementById('textShared').textContent = r.shared.length;
+  document.getElementById('textUniqA').textContent = r.onlyA.length;
+  document.getElementById('textUniqB').textContent = r.onlyB.length;
+  renderMeter('textMeter', 'textMeterLabel', r.sim);
+
+  // Bar chart: top words by combined TF
+  const combined = r.words.map((w, i) => ({ word: w, a: r.vecA[i], b: r.vecB[i], sum: r.vecA[i] + r.vecB[i] }))
+    .sort((x, y) => y.sum - x.sum).slice(0, 20);
+
+  Plotly.react('textBarChart', [
+    { y: combined.map(c => c.word).reverse(), x: combined.map(c => c.a).reverse(),
+      type: 'bar', orientation: 'h', name: 'Doc A', marker: { color: '#1565c0' } },
+    { y: combined.map(c => c.word).reverse(), x: combined.map(c => -c.b).reverse(),
+      type: 'bar', orientation: 'h', name: 'Doc B', marker: { color: '#e65100' } }
+  ], {
+    barmode: 'relative',
+    xaxis: { title: '← Doc B          TF weight          Doc A →', gridcolor: '#e8ecf0', zeroline: true, zerolinecolor: '#1a3a5c' },
+    yaxis: { automargin: true },
+    plot_bgcolor: '#fff', paper_bgcolor: '#fff',
+    margin: { l: 90, r: 20, t: 10, b: 50 },
+    legend: { x: 0.6, y: 0.98 },
+    font: { family: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif', size: 11 }
+  }, { responsive: true });
+
+  // Explanation
+  let explain = '';
+  if (r.sim > 0.7) explain = `These documents share ${r.shared.length} word(s) and use them in similar proportions. The vectors point in nearly the same direction.`;
+  else if (r.sim > 0.3) explain = `Some overlap: ${r.shared.length} shared word(s), but the proportions differ enough to pull the vectors apart. Moderate similarity.`;
+  else if (r.sim > 0.01) explain = `Minimal overlap. ${r.shared.length} shared word(s), but they're a small fraction of each document's vocabulary. The vectors point in different directions.`;
+  else explain = `No shared words after stopword removal. The vectors are perpendicular (or nearly so) — cosine similarity is zero even though both documents are about movies.`;
+
+  if (r.shared.length > 0) explain += ` Shared: <strong>${r.shared.join(', ')}</strong>.`;
+  document.getElementById('textExplain').innerHTML = `<strong>What's happening</strong><p style="margin:0;">${explain}</p>`;
+}
+
+// ── Stage 3: Image (HOG) similarity ──
+
+// Synthetic HOG-like vectors: 9 orientation bins × 4 cells = 36 dimensions
+function makeHogVector(pattern) {
+  const v = new Array(36).fill(0);
+  for (let i = 0; i < 36; i++) {
+    v[i] = pattern[i % pattern.length] + (Math.random() * 0.1);
+  }
+  return v;
+}
+
+// Predefined patterns (gradient orientation profiles)
+const HOG_PATTERNS = {
+  'horizontal_lines':  [0.1, 0.1, 0.1, 0.1, 0.9, 0.8, 0.1, 0.1, 0.1],
+  'vertical_lines':    [0.9, 0.8, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.9],
+  'diagonal':          [0.1, 0.1, 0.8, 0.9, 0.1, 0.1, 0.1, 0.8, 0.1],
+  'circular':          [0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5],
+  'corner_heavy':      [0.9, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.9],
+  'random_texture':    [0.3, 0.7, 0.2, 0.6, 0.4, 0.8, 0.1, 0.5, 0.3],
+};
+
+const IMAGE_PAIRS = [
+  { label: 'Two horizontal scenes (similar)', descA: 'Horizon landscape', descB: 'Ocean sunset',
+    a: makeHogVector(HOG_PATTERNS.horizontal_lines), b: makeHogVector(HOG_PATTERNS.horizontal_lines) },
+  { label: 'Horizontal vs. vertical (different)', descA: 'Horizon landscape', descB: 'City skyscrapers',
+    a: makeHogVector(HOG_PATTERNS.horizontal_lines), b: makeHogVector(HOG_PATTERNS.vertical_lines) },
+  { label: 'Two circular objects (similar)', descA: 'Bicycle wheel', descB: 'Clock face',
+    a: makeHogVector(HOG_PATTERNS.circular), b: makeHogVector(HOG_PATTERNS.circular) },
+  { label: 'Circular vs. diagonal (different)', descA: 'Clock face', descB: 'Staircase',
+    a: makeHogVector(HOG_PATTERNS.circular), b: makeHogVector(HOG_PATTERNS.diagonal) }
+];
+
+let selectedImagePair = 0;
+
+function renderImagePairs() {
+  document.getElementById('imagePairs').innerHTML = IMAGE_PAIRS.map((p, i) => `
+    <div class="pair-card ${i === selectedImagePair ? 'active' : ''}" onclick="selectImagePair(${i})" id="ipair${i}">
+      <div class="pair-label">${p.label}</div>
+      <div style="font-size:0.85rem;"><strong>A:</strong> ${p.descA}</div>
+      <div style="font-size:0.85rem;"><strong>B:</strong> ${p.descB}</div>
+    </div>
+  `).join('');
+}
+
+function selectImagePair(idx) {
+  selectedImagePair = idx;
+  renderImagePairs();
+  const p = IMAGE_PAIRS[idx];
+  const sim = cosineSim(p.a, p.b);
+  const angle = Math.acos(Math.max(-1, Math.min(1, sim))) * 180 / Math.PI;
+
+  document.getElementById('imgCos').textContent = sim.toFixed(3);
+  document.getElementById('imgCos').style.color = simColor(sim);
+  document.getElementById('imgAngle').textContent = angle.toFixed(1) + '°';
+  renderMeter('imgMeter', 'imgMeterLabel', sim);
+
+  // Grouped bar chart of HOG bins
+  const bins = Array.from({ length: 36 }, (_, i) => `Bin ${i + 1}`);
+  Plotly.react('hogBarChart', [
+    { x: bins, y: p.a, type: 'bar', name: p.descA, marker: { color: '#1565c0', opacity: 0.7 } },
+    { x: bins, y: p.b, type: 'bar', name: p.descB, marker: { color: '#e65100', opacity: 0.7 } }
+  ], {
+    barmode: 'group',
+    xaxis: { title: 'HOG orientation bins', tickangle: -45, tickfont: { size: 9 }, gridcolor: '#e8ecf0' },
+    yaxis: { title: 'Bin magnitude', gridcolor: '#e8ecf0', range: [0, 1.1] },
+    plot_bgcolor: '#fff', paper_bgcolor: '#fff',
+    margin: { l: 50, r: 20, t: 10, b: 70 },
+    legend: { x: 0.7, y: 0.98 },
+    font: { family: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif', size: 11 }
+  }, { responsive: true });
+}
+
+// ── Stage 4: Similarity matrix ──
+
+const MATRIX_REVIEWS = [
+  { label: 'Pos: brilliant film',     text: 'A brilliant and beautifully crafted film with outstanding performances from the entire cast.' },
+  { label: 'Pos: excellent acting',    text: 'Excellent acting and a powerful story make this movie a masterpiece. Compelling from start to finish.' },
+  { label: 'Pos: enjoyable fun',       text: 'A fun and surprisingly enjoyable movie with great comedic performances and solid directing.' },
+  { label: 'Neg: awful waste',         text: 'An awful waste of time. The plot is boring and the acting is terrible. Poorly written dialogue.' },
+  { label: 'Neg: worst film',          text: 'The worst film of the year. Dull pacing, weak script, and pointless scenes that go nowhere.' },
+  { label: 'Neg: bad and boring',      text: 'Bad acting and a boring story with nothing to recommend. A stupid and ridiculous waste of time.' },
+];
+
+const MATRIX_IMAGES = [
+  { label: 'Landscape A', vec: makeHogVector(HOG_PATTERNS.horizontal_lines) },
+  { label: 'Landscape B', vec: makeHogVector(HOG_PATTERNS.horizontal_lines) },
+  { label: 'Skyscraper',  vec: makeHogVector(HOG_PATTERNS.vertical_lines) },
+  { label: 'Staircase',   vec: makeHogVector(HOG_PATTERNS.diagonal) },
+  { label: 'Wheel',       vec: makeHogVector(HOG_PATTERNS.circular) },
+  { label: 'Clock',       vec: makeHogVector(HOG_PATTERNS.circular) },
+];
+
+function buildTextMatrix() {
+  const n = MATRIX_REVIEWS.length;
+  const vecs = MATRIX_REVIEWS.map(r => {
+    const tokens = tokenizeText(r.text);
+    const tf = buildTfVector(tokens);
+    return tf;
+  });
+  // Build union vocab
+  const vocab = new Set();
+  for (const tf of vecs) for (const w of Object.keys(tf)) vocab.add(w);
+  const words = [...vocab].sort();
+  const numVecs = vecs.map(tf => words.map(w => tf[w] || 0));
+  const matrix = [];
+  for (let i = 0; i < n; i++) {
+    const row = [];
+    for (let j = 0; j < n; j++) {
+      row.push(cosineSim(numVecs[i], numVecs[j]));
+    }
+    matrix.push(row);
+  }
+  return { matrix, labels: MATRIX_REVIEWS.map(r => r.label) };
+}
+
+function buildImageMatrix() {
+  const n = MATRIX_IMAGES.length;
+  const matrix = [];
+  for (let i = 0; i < n; i++) {
+    const row = [];
+    for (let j = 0; j < n; j++) {
+      row.push(cosineSim(MATRIX_IMAGES[i].vec, MATRIX_IMAGES[j].vec));
+    }
+    matrix.push(row);
+  }
+  return { matrix, labels: MATRIX_IMAGES.map(im => im.label) };
+}
+
+function renderMatrix(data, title) {
+  const text = data.matrix.map(row => row.map(v => v.toFixed(2)));
+  Plotly.react('matrixPlot', [{
+    z: data.matrix, x: data.labels, y: data.labels,
+    type: 'heatmap',
+    colorscale: [[0, '#fce4ec'], [0.5, '#fff3e0'], [1, '#e8f5e9']],
+    zmin: 0, zmax: 1,
+    text: text, texttemplate: '%{text}', textfont: { size: 11 },
+    hovertemplate: '%{y} vs %{x}<br>Cosine: %{z:.3f}<extra></extra>'
+  }], {
+    title: { text: title, font: { size: 14, color: '#1a3a5c' } },
+    xaxis: { tickangle: -30, tickfont: { size: 10 } },
+    yaxis: { autorange: 'reversed', tickfont: { size: 10 } },
+    plot_bgcolor: '#fff', paper_bgcolor: '#fff',
+    margin: { l: 130, r: 20, t: 40, b: 100 },
+    font: { family: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }
+  }, { responsive: true });
+
+  // Find most/least similar pair (off-diagonal)
+  let maxSim = -1, minSim = 2, maxPair = '', minPair = '';
+  for (let i = 0; i < data.labels.length; i++) {
+    for (let j = i + 1; j < data.labels.length; j++) {
+      if (data.matrix[i][j] > maxSim) { maxSim = data.matrix[i][j]; maxPair = `"${data.labels[i]}" and "${data.labels[j]}"`; }
+      if (data.matrix[i][j] < minSim) { minSim = data.matrix[i][j]; minPair = `"${data.labels[i]}" and "${data.labels[j]}"`; }
+    }
+  }
+  const el = document.getElementById('matrixExplain');
+  el.style.display = '';
+  el.innerHTML = `<strong>Reading the matrix</strong>
+    <p style="margin:0.5rem 0 0;">Most similar pair: ${maxPair} at <strong style="color:#2e7d32">${maxSim.toFixed(3)}</strong>. Least similar: ${minPair} at <strong style="color:#c62828">${minSim.toFixed(3)}</strong>. The diagonal is always 1.000 — every item is identical to itself.</p>`;
+}
+
+function showTextMatrix() {
+  const data = buildTextMatrix();
+  renderMatrix(data, 'Text Similarity Matrix (6 Movie Reviews)');
+}
+
+function showImageMatrix() {
+  const data = buildImageMatrix();
+  renderMatrix(data, 'Image Similarity Matrix (6 Synthetic HOG Descriptors)');
+}
+
+// ── Init ──
+updateVectors();
+renderTextPairs();
+renderImagePairs();
+selectImagePair(0);
+showTextMatrix();
+</script>
+
+</body>
+</html>
