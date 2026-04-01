@@ -145,6 +145,13 @@
     <div class="vis-item"><canvas id="cvDir" width="256" height="256"></canvas><div class="vis-label">Direction (edge angle, color-coded)</div></div>
   </div>
 
+  <div class="card">
+    <strong>Reading the color-coding</strong>
+    <p style="margin-bottom:0.5rem;"><strong>G<sub>x</sub> and G<sub>y</sub>:</strong> Green pixels = brightness increasing in that direction. Red pixels = brightness decreasing. Dark blue = no change. Brighter colors = stronger gradients.</p>
+    <p style="margin-bottom:0.5rem;"><strong>Magnitude:</strong> Brighter = stronger edge. Black = flat area with no brightness change.</p>
+    <p style="margin-bottom:0;"><strong>Direction:</strong> Color = edge angle (hue cycles through 0&deg;&ndash;180&deg;). Saturation = edge strength. Gray pixels have weak gradients, so their direction is unreliable and shown desaturated. The color wheel: <span style="color:#f00;">&bull;</span> 0&deg; horizontal <span style="color:#0f0;">&bull;</span> 60&deg; <span style="color:#0ff;">&bull;</span> 90&deg; vertical <span style="color:#00f;">&bull;</span> 120&deg; <span style="color:#f0f;">&bull;</span> 150&deg; <span style="color:#f00;">&bull;</span> 180&deg; wraps to 0&deg;.</p>
+  </div>
+
   <div class="tip">
     <strong>The Sobel filter</strong> is a 3&times;3 kernel convolved across the image. G<sub>x</sub> uses <code>[[-1,0,1],[-2,0,2],[-1,0,1]]</code> to detect horizontal brightness changes. G<sub>y</sub> uses the transpose. Magnitude = &radic;(G<sub>x</sub>&sup2; + G<sub>y</sub>&sup2;). Direction = arctan(G<sub>y</sub> / G<sub>x</sub>).
   </div>
@@ -157,28 +164,43 @@
      ================================================================ -->
 <div class="stage">
   <div class="stage-line"><span class="stage-num">4</span><h2>Divide into Cells, Build Histograms</h2></div>
-  <p>Divide the image into a grid of 8&times;8 pixel cells. Within each cell, sort the gradient directions into 9 bins (0&deg; to 180&deg;, in 20&deg; steps), weighted by magnitude. The result: each cell gets a 9-number histogram summarizing its local edge pattern.</p>
+
+  <p>This is the core of HOG. The image is divided into a grid of small cells &mdash; each cell is 8&times;8 pixels. Inside each cell, every pixel has a gradient direction (from Stage 3) and a gradient magnitude. The question is: what directions do the edges in this cell point, and how strong are they?</p>
+
+  <p>To answer that, HOG sorts all 64 gradient directions within each cell into 9 orientation bins, spaced 20&deg; apart from 0&deg; to 180&deg;. Each pixel "votes" for a bin based on its gradient direction, and its vote is weighted by its gradient magnitude &mdash; strong edges count more than weak ones. The result is a 9-number histogram: a compact summary of the cell's edge pattern.</p>
+
+  <p>Click any cell in the grid below to see its histogram. The zoomed view shows the actual gradient arrows inside the cell, and the histogram shows how those arrows get sorted into bins.</p>
 
   <div class="vis-grid">
     <div class="vis-item">
       <canvas id="cvCellGrid" width="256" height="256" style="cursor:crosshair;"></canvas>
-      <div class="vis-label">Click a cell to inspect it</div>
+      <div class="vis-label">Click a cell to inspect it (16&times;16 grid)</div>
+    </div>
+    <div class="vis-item">
+      <canvas id="cvCellZoom" width="192" height="192" style="border:1px solid var(--border); border-radius:4px;"></canvas>
+      <div class="vis-label" id="cellLabel">Zoomed cell &mdash; click one to inspect</div>
     </div>
     <div class="vis-item" style="flex:1; min-width:300px;">
       <div id="cellHistChart" style="width:100%; height:280px;"></div>
-      <div class="vis-label" id="cellLabel">Click a cell in the image</div>
+      <div class="vis-label">9-bin orientation histogram for this cell</div>
     </div>
+  </div>
+
+  <div class="card">
+    <strong>How to read the histogram</strong>
+    <p style="margin-bottom:0.5rem;">Each bar represents a 20&deg; slice of orientation space. The height of the bar is the total gradient magnitude of all pixels in the cell whose edges point in that direction. A tall bar at 80&deg;&ndash;100&deg; means the cell has strong near-vertical edges. A flat histogram means edges point in many directions (or the cell has no edges at all).</p>
+    <p style="margin-bottom:0;">The zoomed cell view shows small arrows at each pixel: the arrow direction is the gradient direction, and the arrow length is the gradient magnitude. You can trace how each arrow contributes to the histogram.</p>
   </div>
 
   <div class="stats-row">
     <div class="stat-card"><div class="val">16 &times; 16</div><div class="lbl">cell grid</div></div>
     <div class="stat-card"><div class="val">8 &times; 8</div><div class="lbl">pixels per cell</div></div>
     <div class="stat-card"><div class="val">9</div><div class="lbl">orientation bins</div></div>
-    <div class="stat-card"><div class="val">2,304</div><div class="lbl">values before normalization</div></div>
+    <div class="stat-card"><div class="val">2,304</div><div class="lbl">values (16&times;16&times;9)</div></div>
   </div>
 
   <div class="tip">
-    <strong>Why 0&deg;&ndash;180&deg; and not 0&deg;&ndash;360&deg;?</strong> HOG uses unsigned gradients. A dark-to-light edge and a light-to-dark edge at the same angle are the same edge &mdash; just viewed from opposite sides. Folding 360&deg; into 180&deg; makes the descriptor invariant to contrast polarity.
+    <strong>Why 0&deg;&ndash;180&deg; and not 0&deg;&ndash;360&deg;?</strong> HOG uses unsigned gradients. A dark-to-light edge and a light-to-dark edge at the same angle are the same edge &mdash; just viewed from opposite sides. Folding 360&deg; into 180&deg; makes the descriptor invariant to contrast polarity. A horizontal edge is a horizontal edge, regardless of which side is brighter.
   </div>
 </div>
 
@@ -194,8 +216,11 @@
   <div class="vis-grid">
     <div class="vis-item"><canvas id="cvHogVis" width="384" height="384"></canvas><div class="vis-label">HOG visualization overlay</div></div>
     <div class="vis-item" style="flex:1; min-width:300px;">
-      <div id="hogVectorChart" style="width:100%; height:300px;"></div>
-      <div class="vis-label">The full descriptor vector (2,304 values)</div>
+      <div class="card">
+        <strong>The full descriptor vector (2,304 values)</strong>
+        <p style="font-size:0.85rem; margin-bottom:0.5rem;">Scroll to see all 2,304 numbers. Each group of 9 is one cell's histogram. The entire vector is what gets compared via cosine similarity.</p>
+        <div id="hogVectorScroll" style="max-height:320px; overflow-y:auto; border:1px solid var(--border); border-radius:4px; padding:0.5rem; background:#fff; font-family:'SF Mono',Consolas,monospace; font-size:0.75rem; line-height:1.8;"></div>
+      </div>
     </div>
   </div>
 
@@ -262,16 +287,16 @@ let compA = '', compB = '';
 
 // ── Synthetic image generators ──
 function genHorizontalStripes(ctx) {
+  const colors = ['#2196F3', '#FFC107'];
   for (let y = 0; y < IMG_SIZE; y++) {
-    const v = (Math.floor(y / 12) % 2 === 0) ? 220 : 40;
-    ctx.fillStyle = `rgb(${v},${v},${v})`;
+    ctx.fillStyle = colors[Math.floor(y / 12) % 2];
     ctx.fillRect(0, y, IMG_SIZE, 1);
   }
 }
 function genVerticalStripes(ctx) {
+  const colors = ['#E91E63', '#4CAF50'];
   for (let x = 0; x < IMG_SIZE; x++) {
-    const v = (Math.floor(x / 12) % 2 === 0) ? 220 : 40;
-    ctx.fillStyle = `rgb(${v},${v},${v})`;
+    ctx.fillStyle = colors[Math.floor(x / 12) % 2];
     ctx.fillRect(x, 0, 1, IMG_SIZE);
   }
 }
@@ -279,17 +304,18 @@ function genCircle(ctx) {
   ctx.fillStyle = '#ddd';
   ctx.fillRect(0, 0, IMG_SIZE, IMG_SIZE);
   const cx = IMG_SIZE / 2, cy = IMG_SIZE / 2;
-  for (let r = 50; r > 10; r -= 14) {
+  const colors = ['#222', '#ddd'];
+  for (let r = 55, i = 0; r > 5; r -= 10, i++) {
     ctx.beginPath();
     ctx.arc(cx, cy, r, 0, Math.PI * 2);
-    ctx.fillStyle = r % 28 === 0 ? '#222' : '#ddd';
+    ctx.fillStyle = colors[i % 2];
     ctx.fill();
   }
 }
 function genDiagonal(ctx) {
-  ctx.fillStyle = '#ddd';
+  ctx.fillStyle = '#FFF9C4';
   ctx.fillRect(0, 0, IMG_SIZE, IMG_SIZE);
-  ctx.strokeStyle = '#222';
+  ctx.strokeStyle = '#6A1B9A';
   ctx.lineWidth = 8;
   for (let i = -IMG_SIZE; i < IMG_SIZE * 2; i += 24) {
     ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i + IMG_SIZE, IMG_SIZE); ctx.stroke();
@@ -299,27 +325,29 @@ function genCheckerboard(ctx) {
   const s = 16;
   for (let y = 0; y < IMG_SIZE; y += s) {
     for (let x = 0; x < IMG_SIZE; x += s) {
-      ctx.fillStyle = ((x / s + y / s) % 2 === 0) ? '#222' : '#ddd';
+      ctx.fillStyle = ((x / s + y / s) % 2 === 0) ? '#D32F2F' : '#FFECB3';
       ctx.fillRect(x, y, s, s);
     }
   }
 }
 function genHouse(ctx) {
-  ctx.fillStyle = '#ccc';
+  ctx.fillStyle = '#81D4FA'; // sky
   ctx.fillRect(0, 0, IMG_SIZE, IMG_SIZE);
+  ctx.fillStyle = '#66BB6A'; // grass
+  ctx.fillRect(0, 90, IMG_SIZE, IMG_SIZE - 90);
   // Walls
-  ctx.fillStyle = '#555';
-  ctx.fillRect(30, 55, 68, 60);
+  ctx.fillStyle = '#D7CCC8';
+  ctx.fillRect(30, 50, 68, 65);
   // Roof
-  ctx.fillStyle = '#333';
-  ctx.beginPath(); ctx.moveTo(20, 58); ctx.lineTo(64, 15); ctx.lineTo(108, 58); ctx.closePath(); ctx.fill();
+  ctx.fillStyle = '#C62828';
+  ctx.beginPath(); ctx.moveTo(20, 53); ctx.lineTo(64, 12); ctx.lineTo(108, 53); ctx.closePath(); ctx.fill();
   // Door
-  ctx.fillStyle = '#888';
-  ctx.fillRect(52, 80, 24, 35);
-  // Window
-  ctx.fillStyle = '#aaa';
-  ctx.fillRect(36, 65, 14, 14);
-  ctx.fillRect(78, 65, 14, 14);
+  ctx.fillStyle = '#5D4037';
+  ctx.fillRect(52, 78, 24, 37);
+  // Windows
+  ctx.fillStyle = '#BBDEFB';
+  ctx.fillRect(36, 60, 14, 14);
+  ctx.fillRect(78, 60, 14, 14);
 }
 
 // ── Image processing ──
@@ -544,10 +572,11 @@ function cosineSim(a, b) {
 
 // ── Process an image fully ──
 function processImage(name, imageData) {
+  const colorData = new Uint8ClampedArray(imageData.data); // keep a copy of the RGBA pixels
   const gray = getGray(imageData);
   const { gx, gy, mag, dir } = computeGradients(gray, IMG_SIZE, IMG_SIZE);
   const { hists, vector } = computeHOG(mag, dir, IMG_SIZE, IMG_SIZE);
-  examples[name] = { gray, gx, gy, mag, dir, hists, vector };
+  examples[name] = { colorData, gray, gx, gy, mag, dir, hists, vector };
   return examples[name];
 }
 
@@ -556,10 +585,24 @@ function selectImage(name) {
   const data = examples[name];
   if (!data) return;
 
-  // Stage 1: original
+  // Stage 1: show color original
   const s1 = document.getElementById('stage1vis');
-  s1.innerHTML = '<div class="vis-item"><canvas id="cvOrig" width="256" height="256"></canvas><div class="vis-label">Original (128&times;128)</div></div>';
-  drawGray('cvOrig', data.gray, IMG_SIZE, IMG_SIZE);
+  s1.innerHTML = '<div class="vis-item"><canvas id="cvOrigColor" width="256" height="256"></canvas><div class="vis-label">Original (color, 128&times;128)</div></div>';
+  const cvOC = document.getElementById('cvOrigColor');
+  const ctxOC = cvOC.getContext('2d');
+  const origImg = ctxOC.createImageData(256, 256);
+  const sc = 2;
+  for (let y = 0; y < IMG_SIZE; y++) for (let x = 0; x < IMG_SIZE; x++) {
+    const si = (y * IMG_SIZE + x) * 4;
+    for (let dy = 0; dy < sc; dy++) for (let dx = 0; dx < sc; dx++) {
+      const di = ((y*sc+dy)*256 + x*sc+dx) * 4;
+      origImg.data[di]   = data.colorData[si];
+      origImg.data[di+1] = data.colorData[si+1];
+      origImg.data[di+2] = data.colorData[si+2];
+      origImg.data[di+3] = 255;
+    }
+  }
+  ctxOC.putImageData(origImg, 0, 0);
 
   // Stage 2
   drawGray('cvGray', data.gray, IMG_SIZE, IMG_SIZE);
@@ -570,9 +613,12 @@ function selectImage(name) {
     for (let x = 0; x < IMG_SIZE; x++) row.push(Math.round(data.gray[y * IMG_SIZE + x]));
     grayGrid.push(row);
   }
-  Plotly.react('grayHeatmap', [{ z: grayGrid, type: 'heatmap', colorscale: 'Greys', reversescale: true,
-    hovertemplate: 'x:%{x} y:%{y}<br>value:%{z}<extra></extra>' }],
-    { xaxis:{visible:false}, yaxis:{visible:false, autorange:'reversed'}, margin:{l:10,r:10,t:10,b:10},
+  Plotly.react('grayHeatmap', [{ z: grayGrid, type: 'heatmap',
+    colorscale: [[0,'#000'],[1,'#fff']], zmin: 0, zmax: 255,
+    hovertemplate: 'x:%{x} y:%{y}<br>brightness:%{z}<extra></extra>' }],
+    { xaxis:{visible:false, scaleanchor:'y', scaleratio:1, constrain:'domain'},
+      yaxis:{visible:false, autorange:'reversed', constrain:'domain'},
+      margin:{l:10,r:10,t:10,b:10}, width:280, height:280,
       plot_bgcolor:'#fff', paper_bgcolor:'#fff' }, {responsive:true});
 
   // Stage 3
@@ -586,16 +632,21 @@ function selectImage(name) {
 
   // Stage 5
   drawHogVis('cvHogVis', data.gray, data.hists, IMG_SIZE, IMG_SIZE, 384);
-  Plotly.react('hogVectorChart', [{
-    y: data.vector, type: 'bar',
-    marker: { color: data.vector.map(v => v > 0.01 ? '#2e7d32' : '#ddd') }
-  }], {
-    xaxis: { title: 'Dimension index', gridcolor: '#e8ecf0' },
-    yaxis: { title: 'Value', gridcolor: '#e8ecf0' },
-    plot_bgcolor: '#fff', paper_bgcolor: '#fff',
-    margin: { l: 40, r: 10, t: 10, b: 40 },
-    font: { family: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif', size: 11 }
-  }, {responsive:true});
+  // Scrollable vector display grouped by cell
+  const scrollEl = document.getElementById('hogVectorScroll');
+  let html = '';
+  for (let i = 0; i < N_CELLS * N_CELLS; i++) {
+    const cy = Math.floor(i / N_CELLS), cx = i % N_CELLS;
+    const hist = data.hists[i];
+    const vals = Array.from(hist).map(v => v.toFixed(4)).join(', ');
+    const maxBin = hist.indexOf(Math.max(...hist));
+    const highlight = Math.max(...hist) > 0.01;
+    html += `<div style="margin-bottom:0.3rem; ${highlight ? '' : 'color:#bbb;'}">`;
+    html += `<span style="color:var(--primary); font-weight:600;">Cell (${cx},${cy})</span> `;
+    html += `[${vals}]`;
+    html += `</div>`;
+  }
+  scrollEl.innerHTML = html;
 
   // Highlight example button
   document.querySelectorAll('.example-btn').forEach(b => b.classList.remove('active'));
@@ -628,9 +679,9 @@ document.getElementById('cvCellGrid').addEventListener('click', function(e) {
     font: { family: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif', size: 11 }
   }, {responsive:true});
 
-  document.getElementById('cellLabel').textContent = `Cell (${cx}, ${cy}) — row ${cy}, column ${cx}`;
+  document.getElementById('cellLabel').textContent = `Cell (${cx}, ${cy}) — 8×8 pixels, zoomed with gradient arrows`;
 
-  // Highlight cell
+  // Highlight cell on grid
   drawCellGrid('cvCellGrid', examples[currentName].gray, IMG_SIZE, IMG_SIZE);
   const cv = document.getElementById('cvCellGrid');
   const ctx = cv.getContext('2d');
@@ -638,6 +689,52 @@ document.getElementById('cvCellGrid').addEventListener('click', function(e) {
   ctx.strokeStyle = '#e65100';
   ctx.lineWidth = 3;
   ctx.strokeRect(cx * CELL_SIZE * s, cy * CELL_SIZE * s, CELL_SIZE * s, CELL_SIZE * s);
+
+  // Draw zoomed cell with gradient arrows
+  const zCv = document.getElementById('cvCellZoom');
+  const zCtx = zCv.getContext('2d');
+  const zSize = 192;
+  const zPx = zSize / CELL_SIZE; // pixels per cell-pixel in zoomed view (24px)
+  const zImg = zCtx.createImageData(zSize, zSize);
+  const dta = examples[currentName];
+  const maxMag = Math.max(...dta.mag) || 1;
+  // Draw zoomed grayscale
+  for (let dy = 0; dy < CELL_SIZE; dy++) for (let dx = 0; dx < CELL_SIZE; dx++) {
+    const px = cx * CELL_SIZE + dx, py = cy * CELL_SIZE + dy;
+    const v = dta.gray[py * IMG_SIZE + px];
+    for (let zy = 0; zy < zPx; zy++) for (let zx = 0; zx < zPx; zx++) {
+      const pi = ((dy * zPx + zy) * zSize + dx * zPx + zx) * 4;
+      zImg.data[pi] = v; zImg.data[pi+1] = v; zImg.data[pi+2] = v; zImg.data[pi+3] = 255;
+    }
+  }
+  zCtx.putImageData(zImg, 0, 0);
+  // Draw grid lines
+  zCtx.strokeStyle = 'rgba(46,125,50,0.3)';
+  zCtx.lineWidth = 1;
+  for (let i = 0; i <= CELL_SIZE; i++) {
+    zCtx.beginPath(); zCtx.moveTo(i*zPx, 0); zCtx.lineTo(i*zPx, zSize); zCtx.stroke();
+    zCtx.beginPath(); zCtx.moveTo(0, i*zPx); zCtx.lineTo(zSize, i*zPx); zCtx.stroke();
+  }
+  // Draw gradient arrows
+  for (let dy = 0; dy < CELL_SIZE; dy++) for (let dx = 0; dx < CELL_SIZE; dx++) {
+    const px = cx * CELL_SIZE + dx, py = cy * CELL_SIZE + dy;
+    const idx = py * IMG_SIZE + px;
+    const m = dta.mag[idx];
+    const d = dta.dir[idx] * Math.PI / 180;
+    const len = (m / maxMag) * zPx * 0.4;
+    if (len < 1) continue;
+    const centerX = (dx + 0.5) * zPx, centerY = (dy + 0.5) * zPx;
+    // Color the arrow by which bin it falls into
+    const binIdx = Math.floor(dta.dir[idx] / BIN_WIDTH) % N_BINS;
+    const hue = binIdx / N_BINS;
+    const [ar, ag, ab] = hslToRgb(hue, 0.9, 0.45);
+    zCtx.strokeStyle = `rgb(${ar},${ag},${ab})`;
+    zCtx.lineWidth = 2;
+    zCtx.beginPath();
+    zCtx.moveTo(centerX - Math.cos(d)*len, centerY - Math.sin(d)*len);
+    zCtx.lineTo(centerX + Math.cos(d)*len, centerY + Math.sin(d)*len);
+    zCtx.stroke();
+  }
 });
 
 // ── Generate example images ──
