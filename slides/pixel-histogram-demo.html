@@ -1,0 +1,783 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pixel Histograms: How Machines See Light | AIML 2013</title>
+<style>
+  :root {
+    --primary: #1a3a5c;
+    --primary-light: #2e5a88;
+    --accent: #2e7d32;
+    --light-bg: #f7f9fc;
+    --border: #d0d7de;
+    --text: #1f2328;
+    --muted: #656d76;
+    --orange: #e65100;
+    --orange-bg: #fff3e0;
+    --purple: #5e35b1;
+    --purple-bg: #ede7f6;
+    --red: #c62828;
+    --red-bg: #fce4ec;
+    --green-bg: #e8f5e9;
+    --ch-r: #e53935;
+    --ch-g: #43a047;
+    --ch-b: #1e88e5;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    color: var(--text); line-height: 1.6; background: #fff;
+  }
+  .container { max-width: 1100px; margin: 0 auto; padding: 0 2rem 4rem; }
+
+  .hero {
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+    color: #fff; padding: 2.5rem 2rem; text-align: center; margin-bottom: 2rem;
+  }
+  .hero h1 { font-size: 1.8rem; margin-bottom: 0.3rem; font-weight: 700; }
+  .hero .sub { color: #c0d4e8; font-size: 1rem; margin-top: 0.25rem; }
+  .hero .hl { color: #fff; font-weight: 500; margin-top: 0.75rem; font-size: 1.05rem; }
+  .hero .courses { margin-top: 0.5rem; font-size: 0.9rem; color: #a0bdd8; }
+
+  .stage { margin-top: 3rem; }
+  .stage-line {
+    display: flex; align-items: center; gap: 0.6rem;
+    border-bottom: 2px solid var(--primary); margin-bottom: 1.25rem; padding-bottom: 0.4rem;
+  }
+  .stage-num {
+    display: inline-flex; width: 2rem; height: 2rem;
+    border-radius: 50%; background: var(--primary); color: #fff;
+    align-items: center; justify-content: center;
+    font-weight: 700; font-size: 0.9rem; flex-shrink: 0;
+  }
+  h2 { font-size: 1.3rem; color: var(--primary); font-weight: 700; }
+  p { font-size: 0.95rem; margin-bottom: 0.75rem; }
+
+  .tip {
+    background: var(--green-bg); border-left: 4px solid var(--accent);
+    padding: 1rem 1.25rem; border-radius: 4px; margin: 1rem 0; font-size: 0.9rem;
+  }
+  .tip strong { color: var(--accent); }
+  .warn-tip {
+    background: var(--orange-bg); border-left: 4px solid var(--orange);
+    padding: 1rem 1.25rem; border-radius: 4px; margin: 1rem 0; font-size: 0.9rem;
+  }
+  .warn-tip strong { color: var(--orange); }
+  .info-box {
+    background: var(--light-bg); border: 1px solid var(--border);
+    border-radius: 8px; padding: 1.25rem; margin-bottom: 1rem;
+  }
+
+  /* Upload zone */
+  .upload-zone {
+    border: 2px dashed var(--border); border-radius: 10px;
+    padding: 2.5rem; text-align: center; cursor: pointer;
+    transition: border-color 0.2s, background 0.2s;
+    background: var(--light-bg);
+  }
+  .upload-zone:hover, .upload-zone.drag-over {
+    border-color: var(--primary); background: #edf2f8;
+  }
+  .upload-zone input { display: none; }
+  .upload-icon { font-size: 2.5rem; margin-bottom: 0.5rem; }
+  .upload-zone p { margin: 0; color: var(--muted); font-size: 0.9rem; }
+  .upload-zone strong { color: var(--primary); }
+
+  .sample-strip { display: flex; gap: 0.75rem; flex-wrap: wrap; margin-top: 1rem; }
+  .sample-thumb {
+    width: 80px; height: 60px; object-fit: cover; border-radius: 6px;
+    border: 2px solid transparent; cursor: pointer; transition: border-color 0.15s;
+  }
+  .sample-thumb:hover { border-color: var(--primary); }
+  .sample-thumb.active { border-color: var(--accent); }
+
+  /* Mode buttons */
+  .mode-bar { display: flex; gap: 0.5rem; flex-wrap: wrap; margin: 1rem 0; }
+  .mode-btn {
+    padding: 0.45rem 1rem; border: 1.5px solid var(--border);
+    border-radius: 20px; font-size: 0.85rem; font-weight: 600;
+    cursor: pointer; background: #fff; color: var(--primary);
+    transition: all 0.15s; font-family: inherit;
+  }
+  .mode-btn:hover { border-color: var(--primary); background: #edf2f8; }
+  .mode-btn.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+
+  /* Slider */
+  .slider-row { margin: 0.75rem 0; }
+  .slider-row label {
+    display: flex; justify-content: space-between;
+    font-size: 0.85rem; color: var(--muted); margin-bottom: 0.25rem;
+  }
+  .slider-row label .val { font-weight: 700; color: var(--primary); }
+  input[type="range"] { width: 100%; accent-color: var(--primary); }
+
+  /* Main layout */
+  .work-area { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-top: 1rem; }
+  @media (max-width: 800px) { .work-area { grid-template-columns: 1fr; } }
+
+  .panel-label {
+    font-size: 0.75rem; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.06em; color: var(--muted); margin-bottom: 0.4rem;
+  }
+
+  .img-wrap {
+    position: relative; background: #111; border-radius: 8px; overflow: hidden;
+    display: flex; align-items: center; justify-content: center; min-height: 200px;
+  }
+  canvas.display-canvas {
+    max-width: 100%; max-height: 340px; display: block;
+    object-fit: contain;
+  }
+  .img-placeholder {
+    color: #555; font-size: 0.9rem; text-align: center; padding: 2rem;
+  }
+
+  /* Histogram canvas */
+  .hist-wrap {
+    background: var(--light-bg); border: 1px solid var(--border);
+    border-radius: 8px; padding: 0.75rem;
+  }
+  canvas.hist-canvas { display: block; width: 100%; height: 180px; }
+
+  .hist-axis {
+    display: flex; justify-content: space-between;
+    font-size: 0.7rem; color: var(--muted); margin-top: 0.2rem; padding: 0 2px;
+  }
+
+  /* Stats row */
+  .stats-row { display: flex; gap: 0.75rem; flex-wrap: wrap; margin: 1rem 0; }
+  .stat-card {
+    flex: 1; min-width: 90px; background: var(--light-bg);
+    border: 1px solid var(--border); border-radius: 8px;
+    padding: 0.6rem 0.75rem; text-align: center;
+  }
+  .stat-card .val { font-size: 1.3rem; font-weight: 700; color: var(--primary); }
+  .stat-card .lbl { font-size: 0.72rem; color: var(--muted); line-height: 1.2; }
+
+  /* Insight box */
+  .insight {
+    background: var(--purple-bg); border-left: 4px solid var(--purple);
+    padding: 1rem 1.25rem; border-radius: 4px; margin-top: 1rem; font-size: 0.9rem;
+  }
+  .insight strong { color: var(--purple); display: block; margin-bottom: 0.25rem; }
+
+  /* Legend */
+  .legend { display: flex; gap: 1rem; flex-wrap: wrap; margin: 0.5rem 0; font-size: 0.82rem; }
+  .legend-item { display: flex; align-items: center; gap: 0.35rem; }
+  .legend-swatch { width: 14px; height: 14px; border-radius: 3px; flex-shrink: 0; }
+
+  /* Footer */
+  .footer {
+    margin-top: 4rem; border-top: 1px solid var(--border);
+    padding-top: 1rem; text-align: center; font-size: 0.8rem; color: var(--muted);
+  }
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <h1>Pixel Histograms: How Machines See Light</h1>
+  <p class="sub">An interactive lesson in image representation</p>
+  <p class="hl">Every image is a grid of numbers. A histogram tells you the story of those numbers.</p>
+  <p class="courses">AIML 2013 &bull; Module 2</p>
+</div>
+
+<div class="container">
+
+  <!-- Stage 1 -->
+  <div class="stage">
+    <div class="stage-line">
+      <div class="stage-num">1</div>
+      <h2>What is a pixel histogram?</h2>
+    </div>
+    <p>A grayscale image is a 2D grid of numbers, each between 0 (black) and 255 (white). A histogram counts how many pixels fall at each value. A photo taken in bright sunlight piles up near 255. A photo taken in a dim room piles up near 0. Before any neural network touches an image, a histogram tells you whether the data is usable.</p>
+    <div class="tip">
+      <strong>Why this matters for HOG.</strong> HOG features are computed from <em>gradients</em> — differences between neighboring pixel values. If the histogram is flat (all pixels near the same value), gradients are tiny and HOG produces garbage. Understanding the histogram is step one in diagnosing a bad feature extractor.
+    </div>
+  </div>
+
+  <!-- Stage 2: Upload -->
+  <div class="stage">
+    <div class="stage-line">
+      <div class="stage-num">2</div>
+      <h2>Load an image</h2>
+    </div>
+    <p>Upload your own photo or click a sample image below.</p>
+
+    <div class="upload-zone" id="uploadZone">
+      <input type="file" id="fileInput" accept="image/*">
+      <div class="upload-icon">&#128247;</div>
+      <p><strong>Click to upload</strong> or drag and drop</p>
+      <p>JPEG, PNG, WEBP &mdash; any size</p>
+    </div>
+
+    <div class="sample-strip" id="sampleStrip">
+      <!-- Generated by JS -->
+    </div>
+  </div>
+
+  <!-- Stage 3: Explore -->
+  <div class="stage">
+    <div class="stage-line">
+      <div class="stage-num">3</div>
+      <h2>Explore transformations</h2>
+    </div>
+    <p>Each mode transforms the image and recomputes the histogram. Watch how the distribution shifts.</p>
+
+    <div class="mode-bar" id="modeBar">
+      <button class="mode-btn active" data-mode="color">Color (RGB)</button>
+      <button class="mode-btn" data-mode="gray">Grayscale</button>
+      <button class="mode-btn" data-mode="bw">Black &amp; White</button>
+      <button class="mode-btn" data-mode="lowres">Low-Res</button>
+      <button class="mode-btn" data-mode="equalize">Equalized</button>
+      <button class="mode-btn" data-mode="channel">Channel Isolation</button>
+    </div>
+
+    <!-- Per-mode controls -->
+    <div id="ctrlBw" class="slider-row" style="display:none; max-width:400px;">
+      <label>Threshold <span class="val" id="bwVal">128</span></label>
+      <input type="range" id="bwThresh" min="0" max="255" value="128">
+    </div>
+    <div id="ctrlLowres" class="slider-row" style="display:none; max-width:400px;">
+      <label>Resolution <span class="val" id="lrVal">32 px</span></label>
+      <input type="range" id="lrSize" min="4" max="120" value="32">
+    </div>
+    <div id="ctrlChannel" class="mode-bar" style="display:none; margin-top:0;">
+      <button class="mode-btn active" data-ch="r" style="color:var(--ch-r); border-color:var(--ch-r);">Red</button>
+      <button class="mode-btn" data-ch="g" style="color:var(--ch-g); border-color:var(--ch-g);">Green</button>
+      <button class="mode-btn" data-ch="b" style="color:var(--ch-b); border-color:var(--ch-b);">Blue</button>
+    </div>
+
+    <div class="work-area">
+      <!-- Left: processed image -->
+      <div>
+        <div class="panel-label">Processed image</div>
+        <div class="img-wrap">
+          <canvas id="displayCanvas" class="display-canvas"></canvas>
+          <div class="img-placeholder" id="imgPlaceholder">Load an image above to begin</div>
+        </div>
+      </div>
+
+      <!-- Right: histogram -->
+      <div>
+        <div class="panel-label">Pixel histogram &mdash; <span id="histLabel">intensity (0&ndash;255)</span></div>
+        <div class="hist-wrap">
+          <canvas id="histCanvas" class="hist-canvas" width="512" height="180"></canvas>
+          <div class="hist-axis">
+            <span>0 (black)</span>
+            <span>128</span>
+            <span>255 (white)</span>
+          </div>
+        </div>
+        <div id="legendArea" class="legend" style="margin-top:0.5rem;"></div>
+      </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="stats-row" id="statsRow">
+      <div class="stat-card"><div class="val" id="statMean">--</div><div class="lbl">Mean<br>brightness</div></div>
+      <div class="stat-card"><div class="val" id="statStd">--</div><div class="lbl">Std dev<br>(contrast)</div></div>
+      <div class="stat-card"><div class="val" id="statMin">--</div><div class="lbl">Min<br>value</div></div>
+      <div class="stat-card"><div class="val" id="statMax">--</div><div class="lbl">Max<br>value</div></div>
+      <div class="stat-card"><div class="val" id="statRange">--</div><div class="lbl">Dynamic<br>range</div></div>
+    </div>
+
+    <!-- Insight box -->
+    <div class="insight" id="insightBox">
+      <strong>What to notice</strong>
+      <span id="insightText">Load an image to see mode-specific observations.</span>
+    </div>
+  </div>
+
+  <!-- Stage 4: Think about it -->
+  <div class="stage">
+    <div class="stage-line">
+      <div class="stage-num">4</div>
+      <h2>Think about it</h2>
+    </div>
+    <div class="info-box">
+      <p><strong>Try this with your own photo:</strong> Take a picture in a very dark room and one in bright daylight. Load each one here. The histogram will tell you immediately which image has more usable information. The dark image's histogram is crushed toward 0 — there are almost no gradients for HOG to work with.</p>
+    </div>
+    <div class="warn-tip">
+      <strong>Histogram equalization sounds like magic. It is not.</strong> Equalization stretches the histogram so pixel values are more evenly distributed. It recovers detail in dark images — but it also amplifies noise. A histogram with a long flat tail of very dark pixels doesn't contain hidden detail; it contains sensor noise. Equalization will make that noise more visible, not more informative.
+    </div>
+    <div class="info-box" style="margin-top:1rem;">
+      <p><strong>Discussion question for ethics:</strong> Surveillance cameras in low-light environments produce images whose histograms are heavily left-skewed. Histogram equalization can be applied automatically to "improve" them before a face detection model runs. Who decides whether that enhancement is appropriate? What is lost when the original distribution is discarded?</p>
+    </div>
+  </div>
+
+</div><!-- /container -->
+
+<div class="footer">
+  AIML 2013: Introduction to Computer Vision &bull; Rose State College &bull; Spring 2026
+</div>
+
+<!-- Hidden canvases for processing -->
+<canvas id="srcCanvas" style="display:none;"></canvas>
+
+<script>
+// ── State ──────────────────────────────────────────────────────────────────────
+let srcImageData = null;   // original RGBA pixel array at native size
+let srcWidth = 0, srcHeight = 0;
+let currentMode = 'color';
+let currentChannel = 'r';
+
+// ── Sample images (generated programmatically — no external URLs needed) ───────
+const SAMPLES = [
+  { label: 'Gradient',  fn: makeSampleGradient },
+  { label: 'Dark',      fn: makeSampleDark },
+  { label: 'Bright',    fn: makeSampleBright },
+  { label: 'Contrast',  fn: makeSampleContrast },
+  { label: 'Colorful',  fn: makeSampleColorful },
+];
+
+function makeSampleGradient(w, h, ctx) {
+  const g = ctx.createLinearGradient(0, 0, w, h);
+  g.addColorStop(0, '#000'); g.addColorStop(1, '#fff');
+  ctx.fillStyle = g; ctx.fillRect(0, 0, w, h);
+}
+function makeSampleDark(w, h, ctx) {
+  const g = ctx.createRadialGradient(w/2, h/2, 0, w/2, h/2, w*0.6);
+  g.addColorStop(0, '#334'); g.addColorStop(1, '#000');
+  ctx.fillStyle = g; ctx.fillRect(0, 0, w, h);
+  // add some noise
+  const d = ctx.getImageData(0,0,w,h);
+  for(let i=0;i<d.data.length;i+=4){
+    const n=(Math.random()-0.5)*20;
+    d.data[i]=Math.max(0,Math.min(255,d.data[i]+n));
+    d.data[i+1]=Math.max(0,Math.min(255,d.data[i+1]+n));
+    d.data[i+2]=Math.max(0,Math.min(255,d.data[i+2]+n));
+  }
+  ctx.putImageData(d,0,0);
+}
+function makeSampleBright(w, h, ctx) {
+  ctx.fillStyle='#f0f0e0'; ctx.fillRect(0,0,w,h);
+  ctx.fillStyle='#fff9c4'; ctx.fillRect(20,20,w-40,h-40);
+  ctx.fillStyle='#fff'; ctx.fillRect(w*0.3,h*0.2,w*0.4,h*0.6);
+}
+function makeSampleContrast(w, h, ctx) {
+  const bands = 6;
+  for(let i=0;i<bands;i++){
+    const v=Math.floor(i/(bands-1)*255);
+    ctx.fillStyle=`rgb(${v},${v},${v})`;
+    ctx.fillRect(i*(w/bands),0,w/bands,h);
+  }
+}
+function makeSampleColorful(w, h, ctx) {
+  const cols=['#e53935','#f57c00','#fdd835','#43a047','#1e88e5','#8e24aa'];
+  cols.forEach((c,i)=>{
+    ctx.fillStyle=c;
+    ctx.fillRect(i*(w/cols.length),0,w/cols.length,h);
+  });
+  // blend horizontally
+  const g=ctx.createLinearGradient(0,0,0,h);
+  g.addColorStop(0,'rgba(255,255,255,0.2)');
+  g.addColorStop(1,'rgba(0,0,0,0.2)');
+  ctx.fillStyle=g; ctx.fillRect(0,0,w,h);
+}
+
+function buildSampleStrip() {
+  const strip = document.getElementById('sampleStrip');
+  const offscreen = document.createElement('canvas');
+  offscreen.width = 120; offscreen.height = 90;
+  const oc = offscreen.getContext('2d');
+  SAMPLES.forEach((s, i) => {
+    oc.clearRect(0,0,120,90);
+    s.fn(120, 90, oc);
+    const img = document.createElement('img');
+    img.src = offscreen.toDataURL();
+    img.className = 'sample-thumb' + (i === 0 ? ' active' : '');
+    img.title = s.label;
+    img.dataset.idx = i;
+    img.addEventListener('click', () => {
+      document.querySelectorAll('.sample-thumb').forEach(t => t.classList.remove('active'));
+      img.classList.add('active');
+      loadSample(i);
+    });
+    strip.appendChild(img);
+  });
+  // load first sample by default
+  loadSample(0);
+}
+
+function loadSample(idx) {
+  const offscreen = document.createElement('canvas');
+  offscreen.width = 400; offscreen.height = 300;
+  const oc = offscreen.getContext('2d');
+  SAMPLES[idx].fn(400, 300, oc);
+  srcImageData = oc.getImageData(0, 0, 400, 300);
+  srcWidth = 400; srcHeight = 300;
+  document.getElementById('imgPlaceholder').style.display = 'none';
+  render();
+}
+
+// ── Upload ─────────────────────────────────────────────────────────────────────
+const uploadZone = document.getElementById('uploadZone');
+const fileInput  = document.getElementById('fileInput');
+
+uploadZone.addEventListener('click', () => fileInput.click());
+uploadZone.addEventListener('dragover', e => { e.preventDefault(); uploadZone.classList.add('drag-over'); });
+uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('drag-over'));
+uploadZone.addEventListener('drop', e => {
+  e.preventDefault(); uploadZone.classList.remove('drag-over');
+  const f = e.dataTransfer.files[0];
+  if (f && f.type.startsWith('image/')) loadFile(f);
+});
+fileInput.addEventListener('change', () => {
+  if (fileInput.files[0]) loadFile(fileInput.files[0]);
+});
+
+function loadFile(file) {
+  const reader = new FileReader();
+  reader.onload = ev => {
+    const img = new Image();
+    img.onload = () => {
+      // cap at 600px wide for performance
+      const maxW = 600;
+      let w = img.width, h = img.height;
+      if (w > maxW) { h = Math.round(h * maxW / w); w = maxW; }
+      const offscreen = document.createElement('canvas');
+      offscreen.width = w; offscreen.height = h;
+      const oc = offscreen.getContext('2d');
+      oc.drawImage(img, 0, 0, w, h);
+      srcImageData = oc.getImageData(0, 0, w, h);
+      srcWidth = w; srcHeight = h;
+      document.getElementById('imgPlaceholder').style.display = 'none';
+      // clear sample active states
+      document.querySelectorAll('.sample-thumb').forEach(t => t.classList.remove('active'));
+      render();
+    };
+    img.src = ev.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+// ── Mode controls ──────────────────────────────────────────────────────────────
+document.querySelectorAll('#modeBar .mode-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('#modeBar .mode-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentMode = btn.dataset.mode;
+    document.getElementById('ctrlBw').style.display      = (currentMode === 'bw')      ? '' : 'none';
+    document.getElementById('ctrlLowres').style.display  = (currentMode === 'lowres')  ? '' : 'none';
+    document.getElementById('ctrlChannel').style.display = (currentMode === 'channel') ? '' : 'none';
+    if (srcImageData) render();
+  });
+});
+
+document.getElementById('bwThresh').addEventListener('input', function() {
+  document.getElementById('bwVal').textContent = this.value;
+  if (srcImageData) render();
+});
+document.getElementById('lrSize').addEventListener('input', function() {
+  document.getElementById('lrVal').textContent = this.value + ' px';
+  if (srcImageData) render();
+});
+
+document.querySelectorAll('#ctrlChannel .mode-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('#ctrlChannel .mode-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentChannel = btn.dataset.ch;
+    if (srcImageData) render();
+  });
+});
+
+// ── Image processing ───────────────────────────────────────────────────────────
+function toGrayData(src) {
+  // returns Float32Array of luma values, same length as pixel count
+  const n = src.width * src.height;
+  const gray = new Float32Array(n);
+  for (let i = 0; i < n; i++) {
+    gray[i] = 0.299 * src.data[i*4] + 0.587 * src.data[i*4+1] + 0.114 * src.data[i*4+2];
+  }
+  return gray;
+}
+
+function processColor(src) {
+  return new ImageData(new Uint8ClampedArray(src.data), src.width, src.height);
+}
+
+function processGray(src) {
+  const out = new Uint8ClampedArray(src.data.length);
+  const n = src.width * src.height;
+  for (let i = 0; i < n; i++) {
+    const g = Math.round(0.299*src.data[i*4] + 0.587*src.data[i*4+1] + 0.114*src.data[i*4+2]);
+    out[i*4] = out[i*4+1] = out[i*4+2] = g;
+    out[i*4+3] = 255;
+  }
+  return new ImageData(out, src.width, src.height);
+}
+
+function processBW(src, threshold) {
+  const out = new Uint8ClampedArray(src.data.length);
+  const n = src.width * src.height;
+  for (let i = 0; i < n; i++) {
+    const g = 0.299*src.data[i*4] + 0.587*src.data[i*4+1] + 0.114*src.data[i*4+2];
+    const v = g >= threshold ? 255 : 0;
+    out[i*4] = out[i*4+1] = out[i*4+2] = v;
+    out[i*4+3] = 255;
+  }
+  return new ImageData(out, src.width, src.height);
+}
+
+function processLowRes(src, blockSize) {
+  const w = src.width, h = src.height;
+  const out = new Uint8ClampedArray(src.data.length);
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      // sample from top-left of block
+      const bx = Math.floor(x / blockSize) * blockSize;
+      const by = Math.floor(y / blockSize) * blockSize;
+      const si = (Math.min(by, h-1) * w + Math.min(bx, w-1)) * 4;
+      const di = (y * w + x) * 4;
+      out[di]   = src.data[si];
+      out[di+1] = src.data[si+1];
+      out[di+2] = src.data[si+2];
+      out[di+3] = 255;
+    }
+  }
+  return new ImageData(out, w, h);
+}
+
+function processEqualize(src) {
+  const n = src.width * src.height;
+  const gray = toGrayData(src);
+  // build CDF
+  const hist = new Float32Array(256);
+  for (let i = 0; i < n; i++) hist[Math.round(gray[i])]++;
+  const cdf = new Float32Array(256);
+  cdf[0] = hist[0];
+  for (let i = 1; i < 256; i++) cdf[i] = cdf[i-1] + hist[i];
+  const cdfMin = cdf.find(v => v > 0) || 0;
+  const lut = new Uint8Array(256);
+  for (let i = 0; i < 256; i++) {
+    lut[i] = Math.round((cdf[i] - cdfMin) / (n - cdfMin) * 255);
+  }
+  const out = new Uint8ClampedArray(src.data.length);
+  for (let i = 0; i < n; i++) {
+    const g = lut[Math.round(gray[i])];
+    out[i*4] = out[i*4+1] = out[i*4+2] = g;
+    out[i*4+3] = 255;
+  }
+  return new ImageData(out, src.width, src.height);
+}
+
+function processChannel(src, ch) {
+  const out = new Uint8ClampedArray(src.data.length);
+  const n = src.width * src.height;
+  const offset = ch === 'r' ? 0 : ch === 'g' ? 1 : 2;
+  for (let i = 0; i < n; i++) {
+    out[i*4]   = ch === 'r' ? src.data[i*4]   : 0;
+    out[i*4+1] = ch === 'g' ? src.data[i*4+1] : 0;
+    out[i*4+2] = ch === 'b' ? src.data[i*4+2] : 0;
+    out[i*4+3] = 255;
+  }
+  return new ImageData(out, src.width, src.height);
+}
+
+// ── Histogram computation ──────────────────────────────────────────────────────
+function computeHistograms(imgData, mode, ch) {
+  const n = imgData.width * imgData.height;
+  if (mode === 'color') {
+    const r = new Float32Array(256), g = new Float32Array(256), b = new Float32Array(256);
+    for (let i = 0; i < n; i++) {
+      r[imgData.data[i*4]]++;
+      g[imgData.data[i*4+1]]++;
+      b[imgData.data[i*4+2]]++;
+    }
+    return [
+      { data: r, color: 'rgba(229,57,53,0.65)', label: 'Red' },
+      { data: g, color: 'rgba(67,160,71,0.65)', label: 'Green' },
+      { data: b, color: 'rgba(30,136,229,0.65)', label: 'Blue' },
+    ];
+  } else if (mode === 'channel') {
+    const hist = new Float32Array(256);
+    const offset = ch === 'r' ? 0 : ch === 'g' ? 1 : 2;
+    for (let i = 0; i < n; i++) hist[imgData.data[i*4 + offset]]++;
+    const col = ch==='r' ? 'rgba(229,57,53,0.8)' : ch==='g' ? 'rgba(67,160,71,0.8)' : 'rgba(30,136,229,0.8)';
+    return [{ data: hist, color: col, label: ch.toUpperCase() + ' channel' }];
+  } else {
+    // gray-based modes — read the R channel (all equal for gray/bw/equalize)
+    const hist = new Float32Array(256);
+    for (let i = 0; i < n; i++) hist[imgData.data[i*4]]++;
+    return [{ data: hist, color: 'rgba(26,58,92,0.75)', label: 'Intensity' }];
+  }
+}
+
+// ── Histogram rendering ────────────────────────────────────────────────────────
+function drawHistogram(hists) {
+  const canvas = document.getElementById('histCanvas');
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  const pad = { t: 8, b: 8, l: 36, r: 8 };
+  const pw = W - pad.l - pad.r, ph = H - pad.t - pad.b;
+
+  ctx.clearRect(0, 0, W, H);
+
+  // background
+  ctx.fillStyle = '#f7f9fc';
+  ctx.fillRect(0, 0, W, H);
+
+  // grid lines
+  ctx.strokeStyle = '#d0d7de'; ctx.lineWidth = 0.5;
+  for (let i = 0; i <= 4; i++) {
+    const y = pad.t + ph * (1 - i/4);
+    ctx.beginPath(); ctx.moveTo(pad.l, y); ctx.lineTo(pad.l + pw, y); ctx.stroke();
+  }
+  // x-axis lines at 64, 128, 192
+  [64, 128, 192].forEach(v => {
+    const x = pad.l + pw * (v / 255);
+    ctx.beginPath(); ctx.moveTo(x, pad.t); ctx.lineTo(x, pad.t + ph); ctx.stroke();
+  });
+
+  // find global max for scaling
+  let globalMax = 0;
+  hists.forEach(h => h.data.forEach(v => { if (v > globalMax) globalMax = v; }));
+  if (globalMax === 0) return;
+
+  // y-axis labels
+  ctx.fillStyle = '#656d76'; ctx.font = '10px sans-serif'; ctx.textAlign = 'right';
+  for (let i = 0; i <= 4; i++) {
+    const y = pad.t + ph * (1 - i/4);
+    ctx.fillText(Math.round(globalMax * i/4).toLocaleString(), pad.l - 3, y + 3);
+  }
+
+  // x-axis labels
+  ctx.textAlign = 'center';
+  [0, 64, 128, 192, 255].forEach(v => {
+    const x = pad.l + pw * (v/255);
+    ctx.fillText(v, x, H - 1);
+  });
+
+  // draw bars — all histograms layered
+  const barW = pw / 256;
+  hists.forEach(h => {
+    ctx.fillStyle = h.color;
+    for (let i = 0; i < 256; i++) {
+      const barH = ph * (h.data[i] / globalMax);
+      ctx.fillRect(pad.l + i * barW, pad.t + ph - barH, barW, barH);
+    }
+  });
+
+  // axes
+  ctx.strokeStyle = '#888'; ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(pad.l, pad.t); ctx.lineTo(pad.l, pad.t + ph);
+  ctx.moveTo(pad.l, pad.t + ph); ctx.lineTo(pad.l + pw, pad.t + ph);
+  ctx.stroke();
+}
+
+// ── Stats computation ──────────────────────────────────────────────────────────
+function computeStats(imgData, mode, ch) {
+  const n = imgData.width * imgData.height;
+  let values;
+  if (mode === 'color') {
+    // use luma
+    values = new Float32Array(n);
+    for (let i = 0; i < n; i++)
+      values[i] = 0.299*imgData.data[i*4] + 0.587*imgData.data[i*4+1] + 0.114*imgData.data[i*4+2];
+  } else if (mode === 'channel') {
+    const off = ch==='r'?0:ch==='g'?1:2;
+    values = new Float32Array(n);
+    for (let i = 0; i < n; i++) values[i] = imgData.data[i*4+off];
+  } else {
+    values = new Float32Array(n);
+    for (let i = 0; i < n; i++) values[i] = imgData.data[i*4];
+  }
+  let sum=0, min=255, max=0;
+  for (let i=0;i<n;i++){sum+=values[i];if(values[i]<min)min=values[i];if(values[i]>max)max=values[i];}
+  const mean=sum/n;
+  let variance=0;
+  for(let i=0;i<n;i++) variance+=(values[i]-mean)**2;
+  const std=Math.sqrt(variance/n);
+  return { mean: mean.toFixed(1), std: std.toFixed(1), min: Math.round(min), max: Math.round(max), range: Math.round(max-min) };
+}
+
+// ── Insights ───────────────────────────────────────────────────────────────────
+const INSIGHTS = {
+  color:   (s) => `The three channels often have different shapes. In daylight photos, green peaks higher because cameras are more sensitive to green light (they use twice as many green sensors as red or blue). Mean brightness: ${s.mean}/255. Std dev: ${s.std} — higher means more contrast.`,
+  gray:    (s) => `Grayscale collapses three channels into one weighted sum (0.299R + 0.587G + 0.114B). Mean: ${s.mean}. Std dev: ${s.std}. A well-exposed image typically has a mean near 120&ndash;140 and a std dev above 40. Yours: ${parseFloat(s.std) < 30 ? 'low contrast — gradients will be weak' : parseFloat(s.std) > 60 ? 'high contrast — good for HOG' : 'moderate contrast'}.`,
+  bw:      (s) => `After thresholding, every pixel is either 0 or 255 — the histogram has two spikes and nothing in between. The ratio of black to white pixels encodes the threshold's effect. Dynamic range collapses to ${s.range}. All intermediate gradient information is gone.`,
+  lowres:  (s) => `Downsampling replaces each block of pixels with a single color. The histogram doesn't change much in shape — the same values appear, just fewer unique ones. But HOG cells that span multiple block boundaries lose gradient accuracy because adjacent pixels are now identical within a block.`,
+  equalize:(s) => `Histogram equalization redistributes values so the CDF is linear. Mean is now near ${s.mean} (should be close to 128). Std dev: ${s.std} — equalization tends to push this up. If the original image was dark, you'll see detail emerge. If it was already well-exposed, equalization adds noise.`,
+  channel: (s) => `You are looking at a single color channel. The histogram tells you how that color is distributed across the image. A red channel that peaks near 0 means very little red in the scene. A channel with a narrow peak has low variation — uniform color patches. Mean: ${s.mean}, range: ${s.range}.`,
+};
+
+const HIST_LABELS = {
+  color: 'R / G / B intensity (0&ndash;255)',
+  gray:  'luma intensity (0&ndash;255)',
+  bw:    'binary threshold (0 or 255)',
+  lowres:'intensity (0&ndash;255)',
+  equalize: 'equalized intensity (0&ndash;255)',
+  channel: 'single channel intensity (0&ndash;255)',
+};
+
+const LEGENDS = {
+  color: [
+    { color: 'rgba(229,57,53,0.8)', label: 'Red' },
+    { color: 'rgba(67,160,71,0.8)', label: 'Green' },
+    { color: 'rgba(30,136,229,0.8)', label: 'Blue' },
+  ],
+};
+
+// ── Main render ────────────────────────────────────────────────────────────────
+function render() {
+  if (!srcImageData) return;
+
+  const mode = currentMode;
+  const threshold = parseInt(document.getElementById('bwThresh').value);
+  const lrSize = parseInt(document.getElementById('lrSize').value);
+  const ch = currentChannel;
+
+  // process image
+  let processed;
+  if      (mode === 'color')    processed = processColor(srcImageData);
+  else if (mode === 'gray')     processed = processGray(srcImageData);
+  else if (mode === 'bw')       processed = processBW(srcImageData, threshold);
+  else if (mode === 'lowres')   processed = processLowRes(srcImageData, lrSize);
+  else if (mode === 'equalize') processed = processEqualize(srcImageData);
+  else if (mode === 'channel')  processed = processChannel(srcImageData, ch);
+  else processed = processColor(srcImageData);
+
+  // draw to display canvas
+  const disp = document.getElementById('displayCanvas');
+  disp.width = processed.width; disp.height = processed.height;
+  disp.style.display = 'block';
+  const dc = disp.getContext('2d');
+  dc.putImageData(processed, 0, 0);
+
+  // histogram
+  const hists = computeHistograms(processed, mode, ch);
+  drawHistogram(hists);
+
+  // histogram label
+  document.getElementById('histLabel').innerHTML = HIST_LABELS[mode] || '';
+
+  // legend
+  const legendArea = document.getElementById('legendArea');
+  legendArea.innerHTML = '';
+  if (LEGENDS[mode]) {
+    LEGENDS[mode].forEach(item => {
+      legendArea.innerHTML += `<div class="legend-item"><div class="legend-swatch" style="background:${item.color}"></div><span>${item.label}</span></div>`;
+    });
+  }
+
+  // stats
+  const s = computeStats(processed, mode, ch);
+  document.getElementById('statMean').textContent  = s.mean;
+  document.getElementById('statStd').textContent   = s.std;
+  document.getElementById('statMin').textContent   = s.min;
+  document.getElementById('statMax').textContent   = s.max;
+  document.getElementById('statRange').textContent = s.range;
+
+  // insight
+  document.getElementById('insightText').innerHTML = INSIGHTS[mode] ? INSIGHTS[mode](s) : '';
+}
+
+// ── Init ───────────────────────────────────────────────────────────────────────
+buildSampleStrip();
+</script>
+</body>
+</html>
