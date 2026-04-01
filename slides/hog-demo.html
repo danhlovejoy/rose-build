@@ -1,0 +1,819 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HOG: Histogram of Oriented Gradients &mdash; AIML 2013</title>
+<script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+<style>
+  :root {
+    --primary: #1a3a5c; --primary-light: #2e5a88; --accent: #2e7d32;
+    --light-bg: #f7f9fc; --border: #d0d7de; --text: #1f2328; --muted: #656d76;
+    --neg: #c62828; --pos: #2e7d32; --orange: #e65100; --purple: #5e35b1;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    color: var(--text); line-height: 1.6; background: #fff; }
+  .container { max-width: 1100px; margin: 0 auto; padding: 0 2rem 3rem; }
+  .hero { background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+    color: #fff; padding: 2.5rem 2rem; text-align: center; margin-bottom: 2rem; }
+  .hero h1 { font-size: 1.8rem; margin-bottom: 0.3rem; font-weight: 700; }
+  .hero p { color: #c0d4e8; font-size: 1rem; }
+  .hero .hl { color: #fff; font-weight: 500; margin-top: 0.75rem; font-size: 1.05rem; }
+
+  .stage { margin-top: 3rem; }
+  .stage-num { display: inline-block; width: 2rem; height: 2rem; line-height: 2rem;
+    border-radius: 50%; background: var(--primary); color: #fff;
+    text-align: center; font-weight: 700; font-size: 0.9rem;
+    margin-right: 0.5rem; vertical-align: middle; }
+  h2 { font-size: 1.3rem; color: var(--primary); margin-bottom: 0.75rem; display: inline; vertical-align: middle; }
+  .stage-line { border-bottom: 2px solid var(--primary); margin-bottom: 1rem; padding-bottom: 0.4rem; }
+  p { font-size: 0.95rem; margin-bottom: 0.75rem; }
+
+  .card { background: var(--light-bg); border: 1px solid var(--border);
+    border-radius: 8px; padding: 1.25rem; margin-bottom: 1rem; }
+  .card strong { color: var(--primary); display: block; margin-bottom: 0.3rem; }
+  .tip { background: #e8f5e9; border-left: 4px solid var(--accent);
+    padding: 1rem 1.25rem; border-radius: 4px; margin: 1rem 0; font-size: 0.9rem; }
+  .tip strong { color: var(--accent); }
+  .warn-tip { background: #fff3e0; border-left: 4px solid var(--orange);
+    padding: 1rem 1.25rem; border-radius: 4px; margin: 1rem 0; font-size: 0.9rem; }
+  .warn-tip strong { color: var(--orange); }
+  .arrow-box { text-align: center; padding: 1rem 0; color: var(--muted); font-size: 1.5rem; }
+
+  .btn { display: inline-block; padding: 0.5rem 1.1rem; border: none; border-radius: 6px;
+    font-size: 0.85rem; font-weight: 600; cursor: pointer; font-family: inherit; transition: opacity 0.15s; }
+  .btn:hover { opacity: 0.85; }
+  .btn-accent { background: var(--accent); color: #fff; }
+  .btn-primary { background: var(--primary); color: #fff; }
+  .btn-outline { background: #fff; color: var(--primary); border: 1px solid var(--border); }
+  .btn-group { display: flex; gap: 0.5rem; flex-wrap: wrap; margin: 0.75rem 0; }
+
+  .stats-row { display: flex; gap: 1rem; flex-wrap: wrap; margin: 1rem 0; }
+  .stat-card { flex: 1; min-width: 110px; background: var(--light-bg);
+    border: 1px solid var(--border); border-radius: 8px; padding: 0.75rem 1rem; text-align: center; }
+  .stat-card .val { font-size: 1.4rem; font-weight: 700; color: var(--primary); }
+  .stat-card .lbl { font-size: 0.8rem; color: var(--muted); }
+
+  .vis-grid { display: flex; gap: 1.5rem; flex-wrap: wrap; margin: 1rem 0; align-items: flex-start; }
+  .vis-item { text-align: center; }
+  .vis-item canvas { border: 1px solid var(--border); border-radius: 4px; image-rendering: pixelated; }
+  .vis-item .vis-label { font-size: 0.8rem; color: var(--muted); margin-top: 0.3rem; }
+
+  .example-grid { display: flex; gap: 0.75rem; flex-wrap: wrap; margin: 1rem 0; }
+  .example-btn { padding: 0.5rem; border: 2px solid var(--border); border-radius: 8px;
+    background: #fff; cursor: pointer; transition: border-color 0.15s; text-align: center; }
+  .example-btn:hover { border-color: var(--primary); }
+  .example-btn.active { border-color: var(--primary); background: var(--light-bg); }
+  .example-btn canvas { display: block; border-radius: 4px; image-rendering: pixelated; }
+  .example-btn .elabel { font-size: 0.75rem; color: var(--muted); margin-top: 0.25rem; }
+
+  .sim-meter { height: 24px; border-radius: 12px; background: #eee; overflow: hidden;
+    margin: 0.5rem 0; position: relative; }
+  .sim-meter-fill { height: 100%; border-radius: 12px; transition: width 0.3s, background 0.3s; }
+  .sim-meter-label { position: absolute; top: 0; left: 0; right: 0; text-align: center;
+    line-height: 24px; font-size: 0.8rem; font-weight: 700; color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,0.3); }
+
+  .compare-row { display: flex; gap: 1.5rem; }
+  .compare-col { flex: 1; min-width: 0; text-align: center; }
+  @media (max-width: 800px) { .compare-row { flex-direction: column; } .vis-grid { flex-direction: column; } }
+
+  .footer { text-align: center; padding: 2rem 0; color: var(--muted); font-size: 0.85rem;
+    border-top: 1px solid var(--border); margin-top: 3rem; }
+
+  .upload-area { border: 2px dashed var(--border); border-radius: 8px; padding: 1.5rem;
+    text-align: center; cursor: pointer; transition: border-color 0.15s; margin: 0.75rem 0; }
+  .upload-area:hover { border-color: var(--primary); }
+  .upload-area input { display: none; }
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <h1>HOG: Histogram of Oriented Gradients</h1>
+  <p>AIML 2013 &mdash; Interactive Walkthrough</p>
+  <p class="hl">Watch an image become a vector, one step at a time.</p>
+</div>
+
+<div class="container">
+
+<!-- ================================================================
+     STAGE 1: THE IMAGE
+     ================================================================ -->
+<div class="stage">
+  <div class="stage-line"><span class="stage-num">1</span><h2>Start with an Image</h2></div>
+  <p>HOG starts with a photograph and ends with a vector of numbers. Pick an example or upload your own. The image will be resized to 128&times;128 pixels &mdash; small enough to see every step, large enough to have interesting structure.</p>
+
+  <div class="example-grid" id="exampleGrid"></div>
+
+  <div class="upload-area" onclick="document.getElementById('fileInput').click()">
+    <input type="file" id="fileInput" accept="image/*" onchange="handleUpload(event)">
+    <p style="margin:0; color:var(--muted);">Click to upload your own image (or drag and drop)</p>
+  </div>
+
+  <div class="vis-grid" id="stage1vis"></div>
+</div>
+
+<div class="arrow-box">&darr;</div>
+
+<!-- ================================================================
+     STAGE 2: GRAYSCALE
+     ================================================================ -->
+<div class="stage">
+  <div class="stage-line"><span class="stage-num">2</span><h2>Convert to Grayscale</h2></div>
+  <p>Color doesn't help HOG. Edge structure is the same whether a wall is red or blue. Converting to grayscale collapses three channels (R, G, B) into one brightness value per pixel. Every step after this operates on a single 128&times;128 grid of numbers.</p>
+
+  <div class="vis-grid">
+    <div class="vis-item"><canvas id="cvGray" width="256" height="256"></canvas><div class="vis-label">Grayscale</div></div>
+    <div class="vis-item" style="flex:1; min-width:300px;"><div id="grayHeatmap" style="width:100%; height:280px;"></div><div class="vis-label">Pixel intensities (0 = black, 255 = white)</div></div>
+  </div>
+</div>
+
+<div class="arrow-box">&darr;</div>
+
+<!-- ================================================================
+     STAGE 3: GRADIENTS
+     ================================================================ -->
+<div class="stage">
+  <div class="stage-line"><span class="stage-num">3</span><h2>Compute Gradients</h2></div>
+  <p>A gradient measures how fast brightness changes at each pixel. The horizontal gradient (G<sub>x</sub>) catches vertical edges. The vertical gradient (G<sub>y</sub>) catches horizontal edges. Together, they give each pixel a magnitude (how strong the edge is) and a direction (which way it points).</p>
+
+  <div class="vis-grid">
+    <div class="vis-item"><canvas id="cvGx" width="256" height="256"></canvas><div class="vis-label">G<sub>x</sub> (horizontal gradient)</div></div>
+    <div class="vis-item"><canvas id="cvGy" width="256" height="256"></canvas><div class="vis-label">G<sub>y</sub> (vertical gradient)</div></div>
+    <div class="vis-item"><canvas id="cvMag" width="256" height="256"></canvas><div class="vis-label">Magnitude (edge strength)</div></div>
+    <div class="vis-item"><canvas id="cvDir" width="256" height="256"></canvas><div class="vis-label">Direction (edge angle, color-coded)</div></div>
+  </div>
+
+  <div class="tip">
+    <strong>The Sobel filter</strong> is a 3&times;3 kernel convolved across the image. G<sub>x</sub> uses <code>[[-1,0,1],[-2,0,2],[-1,0,1]]</code> to detect horizontal brightness changes. G<sub>y</sub> uses the transpose. Magnitude = &radic;(G<sub>x</sub>&sup2; + G<sub>y</sub>&sup2;). Direction = arctan(G<sub>y</sub> / G<sub>x</sub>).
+  </div>
+</div>
+
+<div class="arrow-box">&darr;</div>
+
+<!-- ================================================================
+     STAGE 4: CELLS AND HISTOGRAMS
+     ================================================================ -->
+<div class="stage">
+  <div class="stage-line"><span class="stage-num">4</span><h2>Divide into Cells, Build Histograms</h2></div>
+  <p>Divide the image into a grid of 8&times;8 pixel cells. Within each cell, sort the gradient directions into 9 bins (0&deg; to 180&deg;, in 20&deg; steps), weighted by magnitude. The result: each cell gets a 9-number histogram summarizing its local edge pattern.</p>
+
+  <div class="vis-grid">
+    <div class="vis-item">
+      <canvas id="cvCellGrid" width="256" height="256" style="cursor:crosshair;"></canvas>
+      <div class="vis-label">Click a cell to inspect it</div>
+    </div>
+    <div class="vis-item" style="flex:1; min-width:300px;">
+      <div id="cellHistChart" style="width:100%; height:280px;"></div>
+      <div class="vis-label" id="cellLabel">Click a cell in the image</div>
+    </div>
+  </div>
+
+  <div class="stats-row">
+    <div class="stat-card"><div class="val">16 &times; 16</div><div class="lbl">cell grid</div></div>
+    <div class="stat-card"><div class="val">8 &times; 8</div><div class="lbl">pixels per cell</div></div>
+    <div class="stat-card"><div class="val">9</div><div class="lbl">orientation bins</div></div>
+    <div class="stat-card"><div class="val">2,304</div><div class="lbl">values before normalization</div></div>
+  </div>
+
+  <div class="tip">
+    <strong>Why 0&deg;&ndash;180&deg; and not 0&deg;&ndash;360&deg;?</strong> HOG uses unsigned gradients. A dark-to-light edge and a light-to-dark edge at the same angle are the same edge &mdash; just viewed from opposite sides. Folding 360&deg; into 180&deg; makes the descriptor invariant to contrast polarity.
+  </div>
+</div>
+
+<div class="arrow-box">&darr;</div>
+
+<!-- ================================================================
+     STAGE 5: HOG VISUALIZATION
+     ================================================================ -->
+<div class="stage">
+  <div class="stage-line"><span class="stage-num">5</span><h2>The HOG Descriptor</h2></div>
+  <p>Stack all 256 cell histograms into one long vector. That's the HOG descriptor &mdash; a numerical fingerprint of the image's edge structure. The classic visualization draws oriented lines in each cell, with length proportional to the bin magnitude.</p>
+
+  <div class="vis-grid">
+    <div class="vis-item"><canvas id="cvHogVis" width="384" height="384"></canvas><div class="vis-label">HOG visualization overlay</div></div>
+    <div class="vis-item" style="flex:1; min-width:300px;">
+      <div id="hogVectorChart" style="width:100%; height:300px;"></div>
+      <div class="vis-label">The full descriptor vector (2,304 values)</div>
+    </div>
+  </div>
+
+  <div class="warn-tip">
+    <strong>What HOG keeps and what it throws away.</strong> The descriptor encodes local edge orientations and their magnitudes. It throws away color, exact pixel positions, and global spatial relationships. Two images with the same edge pattern but different colors produce nearly identical HOG descriptors.
+  </div>
+</div>
+
+<div class="arrow-box">&darr;</div>
+
+<!-- ================================================================
+     STAGE 6: COMPARE TWO IMAGES
+     ================================================================ -->
+<div class="stage">
+  <div class="stage-line"><span class="stage-num">6</span><h2>Compare Two Images</h2></div>
+  <p>Compute HOG descriptors for two images, then measure their cosine similarity. Same edge patterns = high similarity. Different edge patterns = low similarity. The comparison ignores color entirely.</p>
+
+  <div class="compare-row">
+    <div class="compare-col">
+      <div class="card" style="padding:0.5rem;"><strong style="text-align:center;">Image A</strong></div>
+      <div class="btn-group" id="pickA"></div>
+      <canvas id="cvCompA" width="192" height="192" style="border:1px solid var(--border); border-radius:4px; image-rendering:pixelated;"></canvas>
+      <canvas id="cvCompHogA" width="192" height="192" style="border:1px solid var(--border); border-radius:4px; margin-top:0.5rem;"></canvas>
+      <div class="vis-label">HOG overlay</div>
+    </div>
+    <div class="compare-col">
+      <div class="card" style="padding:0.5rem;"><strong style="text-align:center;">Image B</strong></div>
+      <div class="btn-group" id="pickB"></div>
+      <canvas id="cvCompB" width="192" height="192" style="border:1px solid var(--border); border-radius:4px; image-rendering:pixelated;"></canvas>
+      <canvas id="cvCompHogB" width="192" height="192" style="border:1px solid var(--border); border-radius:4px; margin-top:0.5rem;"></canvas>
+      <div class="vis-label">HOG overlay</div>
+    </div>
+  </div>
+
+  <div class="stats-row" style="margin-top:1rem;">
+    <div class="stat-card"><div class="val" id="compCos">?</div><div class="lbl">cosine similarity</div></div>
+    <div class="stat-card"><div class="val" id="compAngle">?</div><div class="lbl">angle between vectors</div></div>
+  </div>
+  <div class="sim-meter"><div class="sim-meter-fill" id="compMeter"></div><div class="sim-meter-label" id="compMeterLabel"></div></div>
+  <div id="compExplain" class="card" style="display:none;"></div>
+
+  <div id="compBarChart" style="width:100%; height:280px; margin-top:1rem;"></div>
+</div>
+
+</div>
+
+<div class="footer">AIML 2013 &mdash; Spring 2026 &bull; Built for in-class demonstration.</div>
+
+<!-- ================================================================
+     JAVASCRIPT
+     ================================================================ -->
+<script>
+// ── Constants ──
+const IMG_SIZE = 128;
+const CELL_SIZE = 8;
+const N_CELLS = IMG_SIZE / CELL_SIZE; // 16
+const N_BINS = 9;
+const BIN_WIDTH = 180 / N_BINS; // 20 degrees
+
+// ── Image storage ──
+const examples = {};  // name → { gray, gx, gy, mag, dir, hists, vector }
+let currentName = '';
+let compA = '', compB = '';
+
+// ── Synthetic image generators ──
+function genHorizontalStripes(ctx) {
+  for (let y = 0; y < IMG_SIZE; y++) {
+    const v = (Math.floor(y / 12) % 2 === 0) ? 220 : 40;
+    ctx.fillStyle = `rgb(${v},${v},${v})`;
+    ctx.fillRect(0, y, IMG_SIZE, 1);
+  }
+}
+function genVerticalStripes(ctx) {
+  for (let x = 0; x < IMG_SIZE; x++) {
+    const v = (Math.floor(x / 12) % 2 === 0) ? 220 : 40;
+    ctx.fillStyle = `rgb(${v},${v},${v})`;
+    ctx.fillRect(x, 0, 1, IMG_SIZE);
+  }
+}
+function genCircle(ctx) {
+  ctx.fillStyle = '#ddd';
+  ctx.fillRect(0, 0, IMG_SIZE, IMG_SIZE);
+  const cx = IMG_SIZE / 2, cy = IMG_SIZE / 2;
+  for (let r = 50; r > 10; r -= 14) {
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, 0, Math.PI * 2);
+    ctx.fillStyle = r % 28 === 0 ? '#222' : '#ddd';
+    ctx.fill();
+  }
+}
+function genDiagonal(ctx) {
+  ctx.fillStyle = '#ddd';
+  ctx.fillRect(0, 0, IMG_SIZE, IMG_SIZE);
+  ctx.strokeStyle = '#222';
+  ctx.lineWidth = 8;
+  for (let i = -IMG_SIZE; i < IMG_SIZE * 2; i += 24) {
+    ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i + IMG_SIZE, IMG_SIZE); ctx.stroke();
+  }
+}
+function genCheckerboard(ctx) {
+  const s = 16;
+  for (let y = 0; y < IMG_SIZE; y += s) {
+    for (let x = 0; x < IMG_SIZE; x += s) {
+      ctx.fillStyle = ((x / s + y / s) % 2 === 0) ? '#222' : '#ddd';
+      ctx.fillRect(x, y, s, s);
+    }
+  }
+}
+function genHouse(ctx) {
+  ctx.fillStyle = '#ccc';
+  ctx.fillRect(0, 0, IMG_SIZE, IMG_SIZE);
+  // Walls
+  ctx.fillStyle = '#555';
+  ctx.fillRect(30, 55, 68, 60);
+  // Roof
+  ctx.fillStyle = '#333';
+  ctx.beginPath(); ctx.moveTo(20, 58); ctx.lineTo(64, 15); ctx.lineTo(108, 58); ctx.closePath(); ctx.fill();
+  // Door
+  ctx.fillStyle = '#888';
+  ctx.fillRect(52, 80, 24, 35);
+  // Window
+  ctx.fillStyle = '#aaa';
+  ctx.fillRect(36, 65, 14, 14);
+  ctx.fillRect(78, 65, 14, 14);
+}
+
+// ── Image processing ──
+function getGray(imageData) {
+  const w = imageData.width, h = imageData.height, d = imageData.data;
+  const gray = new Float32Array(w * h);
+  for (let i = 0; i < w * h; i++) {
+    gray[i] = 0.299 * d[i*4] + 0.587 * d[i*4+1] + 0.114 * d[i*4+2];
+  }
+  return gray;
+}
+
+function computeGradients(gray, w, h) {
+  const gx = new Float32Array(w * h);
+  const gy = new Float32Array(w * h);
+  const mag = new Float32Array(w * h);
+  const dir = new Float32Array(w * h);
+  for (let y = 1; y < h - 1; y++) {
+    for (let x = 1; x < w - 1; x++) {
+      const idx = y * w + x;
+      // Sobel
+      const gxVal = -gray[(y-1)*w+(x-1)] + gray[(y-1)*w+(x+1)]
+                   -2*gray[y*w+(x-1)]    + 2*gray[y*w+(x+1)]
+                   -gray[(y+1)*w+(x-1)]  + gray[(y+1)*w+(x+1)];
+      const gyVal = -gray[(y-1)*w+(x-1)] - 2*gray[(y-1)*w+x] - gray[(y-1)*w+(x+1)]
+                   +gray[(y+1)*w+(x-1)]  + 2*gray[(y+1)*w+x] + gray[(y+1)*w+(x+1)];
+      gx[idx] = gxVal;
+      gy[idx] = gyVal;
+      mag[idx] = Math.sqrt(gxVal * gxVal + gyVal * gyVal);
+      let angle = Math.atan2(gyVal, gxVal) * 180 / Math.PI;
+      if (angle < 0) angle += 180; // unsigned: 0-180
+      if (angle >= 180) angle -= 180;
+      dir[idx] = angle;
+    }
+  }
+  return { gx, gy, mag, dir };
+}
+
+function computeHOG(mag, dir, w, h) {
+  const hists = [];
+  for (let cy = 0; cy < N_CELLS; cy++) {
+    for (let cx = 0; cx < N_CELLS; cx++) {
+      const hist = new Float32Array(N_BINS);
+      for (let dy = 0; dy < CELL_SIZE; dy++) {
+        for (let dx = 0; dx < CELL_SIZE; dx++) {
+          const px = cx * CELL_SIZE + dx;
+          const py = cy * CELL_SIZE + dy;
+          if (px >= w || py >= h) continue;
+          const idx = py * w + px;
+          const m = mag[idx];
+          const d = dir[idx];
+          // Bilinear interpolation between bins
+          const bin = d / BIN_WIDTH;
+          const lo = Math.floor(bin) % N_BINS;
+          const hi = (lo + 1) % N_BINS;
+          const frac = bin - Math.floor(bin);
+          hist[lo] += m * (1 - frac);
+          hist[hi] += m * frac;
+        }
+      }
+      hists.push(hist);
+    }
+  }
+  // L2 block normalization (2x2 blocks)
+  const normHists = hists.map(h => new Float32Array(h));
+  for (let by = 0; by < N_CELLS - 1; by++) {
+    for (let bx = 0; bx < N_CELLS - 1; bx++) {
+      const block = [];
+      for (let dy = 0; dy < 2; dy++)
+        for (let dx = 0; dx < 2; dx++)
+          block.push(...hists[(by+dy)*N_CELLS+(bx+dx)]);
+      let norm = 0;
+      for (const v of block) norm += v * v;
+      norm = Math.sqrt(norm + 1e-6);
+      for (let dy = 0; dy < 2; dy++)
+        for (let dx = 0; dx < 2; dx++) {
+          const ci = (by+dy)*N_CELLS+(bx+dx);
+          for (let b = 0; b < N_BINS; b++)
+            normHists[ci][b] = hists[ci][b] / norm;
+        }
+    }
+  }
+  // Flatten to vector
+  const vector = [];
+  for (const h of normHists) for (const v of h) vector.push(v);
+  return { hists: normHists, vector };
+}
+
+// ── Drawing utilities ──
+function drawGray(canvasId, gray, w, h, scale) {
+  const cv = document.getElementById(canvasId);
+  const ctx = cv.getContext('2d');
+  const s = cv.width / w;
+  const imgData = ctx.createImageData(cv.width, cv.height);
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+    const v = Math.max(0, Math.min(255, gray[y*w+x] * (scale || 1)));
+    for (let dy = 0; dy < s; dy++) for (let dx = 0; dx < s; dx++) {
+      const pi = ((y*s+dy)*cv.width + (x*s+dx)) * 4;
+      imgData.data[pi] = v; imgData.data[pi+1] = v; imgData.data[pi+2] = v; imgData.data[pi+3] = 255;
+    }
+  }
+  ctx.putImageData(imgData, 0, 0);
+}
+
+function drawGradient(canvasId, data, w, h) {
+  const cv = document.getElementById(canvasId);
+  const ctx = cv.getContext('2d');
+  const s = cv.width / w;
+  const maxVal = Math.max(...data.map(Math.abs)) || 1;
+  const imgData = ctx.createImageData(cv.width, cv.height);
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+    const v = data[y*w+x] / maxVal;
+    const r = v < 0 ? Math.round(-v * 255) : 0;
+    const g = v > 0 ? Math.round(v * 255) : 0;
+    const b = 80;
+    for (let dy = 0; dy < s; dy++) for (let dx = 0; dx < s; dx++) {
+      const pi = ((y*s+dy)*cv.width + (x*s+dx)) * 4;
+      imgData.data[pi] = r; imgData.data[pi+1] = g; imgData.data[pi+2] = b; imgData.data[pi+3] = 255;
+    }
+  }
+  ctx.putImageData(imgData, 0, 0);
+}
+
+function drawDirection(canvasId, dir, mag, w, h) {
+  const cv = document.getElementById(canvasId);
+  const ctx = cv.getContext('2d');
+  const s = cv.width / w;
+  const maxMag = Math.max(...mag) || 1;
+  const imgData = ctx.createImageData(cv.width, cv.height);
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+    const idx = y*w+x;
+    const hue = dir[idx] * 2; // 0-360
+    const sat = Math.min(1, mag[idx] / maxMag);
+    const [r, g, b] = hslToRgb(hue/360, sat, 0.5);
+    for (let dy = 0; dy < s; dy++) for (let dx = 0; dx < s; dx++) {
+      const pi = ((y*s+dy)*cv.width + (x*s+dx)) * 4;
+      imgData.data[pi] = r; imgData.data[pi+1] = g; imgData.data[pi+2] = b; imgData.data[pi+3] = 255;
+    }
+  }
+  ctx.putImageData(imgData, 0, 0);
+}
+
+function hslToRgb(h, s, l) {
+  let r, g, b;
+  if (s === 0) { r = g = b = l; } else {
+    const hue2rgb = (p, q, t) => { if(t<0)t+=1; if(t>1)t-=1; if(t<1/6)return p+(q-p)*6*t; if(t<1/2)return q; if(t<2/3)return p+(q-p)*(2/3-t)*6; return p; };
+    const q = l < 0.5 ? l*(1+s) : l+s-l*s, p = 2*l-q;
+    r = hue2rgb(p, q, h+1/3); g = hue2rgb(p, q, h); b = hue2rgb(p, q, h-1/3);
+  }
+  return [Math.round(r*255), Math.round(g*255), Math.round(b*255)];
+}
+
+function drawCellGrid(canvasId, gray, w, h) {
+  const cv = document.getElementById(canvasId);
+  const ctx = cv.getContext('2d');
+  const s = cv.width / w;
+  // Draw grayscale
+  const imgData = ctx.createImageData(cv.width, cv.height);
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+    const v = gray[y*w+x];
+    for (let dy = 0; dy < s; dy++) for (let dx = 0; dx < s; dx++) {
+      const pi = ((y*s+dy)*cv.width + (x*s+dx)) * 4;
+      imgData.data[pi] = v; imgData.data[pi+1] = v; imgData.data[pi+2] = v; imgData.data[pi+3] = 255;
+    }
+  }
+  ctx.putImageData(imgData, 0, 0);
+  // Draw grid
+  ctx.strokeStyle = 'rgba(46, 125, 50, 0.4)';
+  ctx.lineWidth = 1;
+  for (let i = 0; i <= N_CELLS; i++) {
+    const p = i * CELL_SIZE * s;
+    ctx.beginPath(); ctx.moveTo(p, 0); ctx.lineTo(p, cv.height); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(0, p); ctx.lineTo(cv.width, p); ctx.stroke();
+  }
+}
+
+function drawHogVis(canvasId, gray, hists, w, h, cvSize) {
+  const cv = document.getElementById(canvasId);
+  cv.width = cvSize; cv.height = cvSize;
+  const ctx = cv.getContext('2d');
+  const s = cvSize / w;
+  // Draw dimmed grayscale
+  const imgData = ctx.createImageData(cvSize, cvSize);
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+    const v = Math.round(gray[y*w+x] * 0.3 + 30);
+    for (let dy = 0; dy < s; dy++) for (let dx = 0; dx < s; dx++) {
+      const pi = ((y*s+dy)*cvSize + (x*s+dx)) * 4;
+      imgData.data[pi] = v; imgData.data[pi+1] = v; imgData.data[pi+2] = v; imgData.data[pi+3] = 255;
+    }
+  }
+  ctx.putImageData(imgData, 0, 0);
+  // Draw HOG lines
+  const cellPx = CELL_SIZE * s;
+  ctx.strokeStyle = '#2e7d32';
+  ctx.lineWidth = 1.5;
+  for (let cy = 0; cy < N_CELLS; cy++) {
+    for (let cx = 0; cx < N_CELLS; cx++) {
+      const hist = hists[cy * N_CELLS + cx];
+      const maxH = Math.max(...hist) || 1;
+      const centerX = (cx + 0.5) * cellPx;
+      const centerY = (cy + 0.5) * cellPx;
+      for (let b = 0; b < N_BINS; b++) {
+        const len = (hist[b] / maxH) * cellPx * 0.45;
+        if (len < 1) continue;
+        const angle = (b * BIN_WIDTH + BIN_WIDTH / 2) * Math.PI / 180;
+        ctx.beginPath();
+        ctx.moveTo(centerX - Math.cos(angle) * len, centerY - Math.sin(angle) * len);
+        ctx.lineTo(centerX + Math.cos(angle) * len, centerY + Math.sin(angle) * len);
+        ctx.stroke();
+      }
+    }
+  }
+}
+
+// ── Cosine similarity ──
+function cosineSim(a, b) {
+  let dot = 0, ma = 0, mb = 0;
+  for (let i = 0; i < a.length; i++) { dot += a[i]*b[i]; ma += a[i]*a[i]; mb += b[i]*b[i]; }
+  ma = Math.sqrt(ma); mb = Math.sqrt(mb);
+  return (ma < 1e-12 || mb < 1e-12) ? 0 : dot / (ma * mb);
+}
+
+// ── Process an image fully ──
+function processImage(name, imageData) {
+  const gray = getGray(imageData);
+  const { gx, gy, mag, dir } = computeGradients(gray, IMG_SIZE, IMG_SIZE);
+  const { hists, vector } = computeHOG(mag, dir, IMG_SIZE, IMG_SIZE);
+  examples[name] = { gray, gx, gy, mag, dir, hists, vector };
+  return examples[name];
+}
+
+function selectImage(name) {
+  currentName = name;
+  const data = examples[name];
+  if (!data) return;
+
+  // Stage 1: original
+  const s1 = document.getElementById('stage1vis');
+  s1.innerHTML = '<div class="vis-item"><canvas id="cvOrig" width="256" height="256"></canvas><div class="vis-label">Original (128&times;128)</div></div>';
+  drawGray('cvOrig', data.gray, IMG_SIZE, IMG_SIZE);
+
+  // Stage 2
+  drawGray('cvGray', data.gray, IMG_SIZE, IMG_SIZE);
+  // Heatmap
+  const grayGrid = [];
+  for (let y = 0; y < IMG_SIZE; y++) {
+    const row = [];
+    for (let x = 0; x < IMG_SIZE; x++) row.push(Math.round(data.gray[y * IMG_SIZE + x]));
+    grayGrid.push(row);
+  }
+  Plotly.react('grayHeatmap', [{ z: grayGrid, type: 'heatmap', colorscale: 'Greys', reversescale: true,
+    hovertemplate: 'x:%{x} y:%{y}<br>value:%{z}<extra></extra>' }],
+    { xaxis:{visible:false}, yaxis:{visible:false, autorange:'reversed'}, margin:{l:10,r:10,t:10,b:10},
+      plot_bgcolor:'#fff', paper_bgcolor:'#fff' }, {responsive:true});
+
+  // Stage 3
+  drawGradient('cvGx', data.gx, IMG_SIZE, IMG_SIZE);
+  drawGradient('cvGy', data.gy, IMG_SIZE, IMG_SIZE);
+  drawGray('cvMag', data.mag, IMG_SIZE, IMG_SIZE, 255 / (Math.max(...data.mag) || 1));
+  drawDirection('cvDir', data.dir, data.mag, IMG_SIZE, IMG_SIZE);
+
+  // Stage 4
+  drawCellGrid('cvCellGrid', data.gray, IMG_SIZE, IMG_SIZE);
+
+  // Stage 5
+  drawHogVis('cvHogVis', data.gray, data.hists, IMG_SIZE, IMG_SIZE, 384);
+  Plotly.react('hogVectorChart', [{
+    y: data.vector, type: 'bar',
+    marker: { color: data.vector.map(v => v > 0.01 ? '#2e7d32' : '#ddd') }
+  }], {
+    xaxis: { title: 'Dimension index', gridcolor: '#e8ecf0' },
+    yaxis: { title: 'Value', gridcolor: '#e8ecf0' },
+    plot_bgcolor: '#fff', paper_bgcolor: '#fff',
+    margin: { l: 40, r: 10, t: 10, b: 40 },
+    font: { family: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif', size: 11 }
+  }, {responsive:true});
+
+  // Highlight example button
+  document.querySelectorAll('.example-btn').forEach(b => b.classList.remove('active'));
+  const btn = document.getElementById('ex_' + name);
+  if (btn) btn.classList.add('active');
+}
+
+// ── Cell click handler ──
+document.getElementById('cvCellGrid').addEventListener('click', function(e) {
+  if (!currentName || !examples[currentName]) return;
+  const rect = this.getBoundingClientRect();
+  const scale = IMG_SIZE / this.width;
+  const px = (e.clientX - rect.left) * scale;
+  const py = (e.clientY - rect.top) * scale;
+  const cx = Math.floor(px / CELL_SIZE);
+  const cy = Math.floor(py / CELL_SIZE);
+  if (cx < 0 || cx >= N_CELLS || cy < 0 || cy >= N_CELLS) return;
+
+  const hist = examples[currentName].hists[cy * N_CELLS + cx];
+  const labels = Array.from({length: N_BINS}, (_, i) => `${i*20}°–${(i+1)*20}°`);
+
+  Plotly.react('cellHistChart', [{
+    x: labels, y: Array.from(hist), type: 'bar',
+    marker: { color: '#2e7d32' }
+  }], {
+    xaxis: { title: 'Orientation bin', tickangle: -30 },
+    yaxis: { title: 'Weighted magnitude', gridcolor: '#e8ecf0' },
+    plot_bgcolor: '#fff', paper_bgcolor: '#fff',
+    margin: { l: 50, r: 10, t: 10, b: 60 },
+    font: { family: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif', size: 11 }
+  }, {responsive:true});
+
+  document.getElementById('cellLabel').textContent = `Cell (${cx}, ${cy}) — row ${cy}, column ${cx}`;
+
+  // Highlight cell
+  drawCellGrid('cvCellGrid', examples[currentName].gray, IMG_SIZE, IMG_SIZE);
+  const cv = document.getElementById('cvCellGrid');
+  const ctx = cv.getContext('2d');
+  const s = cv.width / IMG_SIZE;
+  ctx.strokeStyle = '#e65100';
+  ctx.lineWidth = 3;
+  ctx.strokeRect(cx * CELL_SIZE * s, cy * CELL_SIZE * s, CELL_SIZE * s, CELL_SIZE * s);
+});
+
+// ── Generate example images ──
+function generateExamples() {
+  const generators = [
+    ['horiz', 'Horizontal stripes', genHorizontalStripes],
+    ['vert', 'Vertical stripes', genVerticalStripes],
+    ['circle', 'Circles', genCircle],
+    ['diag', 'Diagonal lines', genDiagonal],
+    ['checker', 'Checkerboard', genCheckerboard],
+    ['house', 'Simple house', genHouse]
+  ];
+
+  const grid = document.getElementById('exampleGrid');
+  grid.innerHTML = '';
+
+  for (const [name, label, genFn] of generators) {
+    const tmpCv = document.createElement('canvas');
+    tmpCv.width = IMG_SIZE; tmpCv.height = IMG_SIZE;
+    const tmpCtx = tmpCv.getContext('2d');
+    genFn(tmpCtx);
+    const imageData = tmpCtx.getImageData(0, 0, IMG_SIZE, IMG_SIZE);
+    processImage(name, imageData);
+
+    // Create button with preview
+    const btn = document.createElement('div');
+    btn.className = 'example-btn';
+    btn.id = 'ex_' + name;
+    btn.onclick = () => selectImage(name);
+    const preview = document.createElement('canvas');
+    preview.width = 64; preview.height = 64;
+    preview.getContext('2d').drawImage(tmpCv, 0, 0, 64, 64);
+    btn.appendChild(preview);
+    const lbl = document.createElement('div');
+    lbl.className = 'elabel';
+    lbl.textContent = label;
+    btn.appendChild(lbl);
+    grid.appendChild(btn);
+  }
+}
+
+// ── Upload handler ──
+function handleUpload(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(ev) {
+    const img = new Image();
+    img.onload = function() {
+      const cv = document.createElement('canvas');
+      cv.width = IMG_SIZE; cv.height = IMG_SIZE;
+      const ctx = cv.getContext('2d');
+      ctx.drawImage(img, 0, 0, IMG_SIZE, IMG_SIZE);
+      const imageData = ctx.getImageData(0, 0, IMG_SIZE, IMG_SIZE);
+      const name = 'upload_' + Date.now();
+      processImage(name, imageData);
+
+      // Add to example grid
+      const grid = document.getElementById('exampleGrid');
+      const btn = document.createElement('div');
+      btn.className = 'example-btn';
+      btn.id = 'ex_' + name;
+      btn.onclick = () => selectImage(name);
+      const preview = document.createElement('canvas');
+      preview.width = 64; preview.height = 64;
+      preview.getContext('2d').drawImage(cv, 0, 0, 64, 64);
+      btn.appendChild(preview);
+      const lbl = document.createElement('div');
+      lbl.className = 'elabel';
+      lbl.textContent = file.name.substring(0, 12);
+      btn.appendChild(lbl);
+      grid.appendChild(btn);
+
+      selectImage(name);
+      rebuildComparisonPickers();
+    };
+    img.src = ev.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+// ── Stage 6: Comparison ──
+function rebuildComparisonPickers() {
+  const names = Object.keys(examples);
+  for (const side of ['A', 'B']) {
+    const el = document.getElementById('pick' + side);
+    el.innerHTML = names.map(n =>
+      `<button class="btn btn-outline" style="padding:0.3rem 0.6rem; font-size:0.78rem;" onclick="pickComp('${side}','${n}')">${n}</button>`
+    ).join('');
+  }
+}
+
+function pickComp(side, name) {
+  if (side === 'A') compA = name; else compB = name;
+  const data = examples[name];
+  if (!data) return;
+  const cvId = side === 'A' ? 'cvCompA' : 'cvCompB';
+  const hogId = side === 'A' ? 'cvCompHogA' : 'cvCompHogB';
+  drawGray(cvId, data.gray, IMG_SIZE, IMG_SIZE, 1);
+  document.getElementById(cvId).width = 192; document.getElementById(cvId).height = 192;
+  // Redraw at 192px
+  const cv = document.getElementById(cvId);
+  const ctx = cv.getContext('2d');
+  const s = 192 / IMG_SIZE;
+  const imgData = ctx.createImageData(192, 192);
+  for (let y = 0; y < IMG_SIZE; y++) for (let x = 0; x < IMG_SIZE; x++) {
+    const v = data.gray[y*IMG_SIZE+x];
+    for (let dy = 0; dy < s; dy++) for (let dx = 0; dx < s; dx++) {
+      const pi = ((Math.floor(y*s)+dy)*192 + Math.floor(x*s)+dx) * 4;
+      if (pi >= 0 && pi < imgData.data.length - 3) {
+        imgData.data[pi]=v; imgData.data[pi+1]=v; imgData.data[pi+2]=v; imgData.data[pi+3]=255;
+      }
+    }
+  }
+  ctx.putImageData(imgData, 0, 0);
+  drawHogVis(hogId, data.gray, data.hists, IMG_SIZE, IMG_SIZE, 192);
+
+  if (compA && compB && examples[compA] && examples[compB]) {
+    const sim = cosineSim(examples[compA].vector, examples[compB].vector);
+    const angle = Math.acos(Math.max(-1, Math.min(1, sim))) * 180 / Math.PI;
+    document.getElementById('compCos').textContent = sim.toFixed(3);
+    document.getElementById('compCos').style.color = sim > 0.7 ? '#2e7d32' : sim > 0.4 ? '#e65100' : '#c62828';
+    document.getElementById('compAngle').textContent = angle.toFixed(1) + '°';
+
+    const pct = Math.max(0, sim) * 100;
+    document.getElementById('compMeter').style.width = pct + '%';
+    document.getElementById('compMeter').style.background = sim > 0.7 ? '#2e7d32' : sim > 0.4 ? '#e65100' : '#c62828';
+    document.getElementById('compMeterLabel').textContent = sim.toFixed(3);
+
+    const el = document.getElementById('compExplain');
+    el.style.display = '';
+    if (sim > 0.8) el.innerHTML = '<strong>High similarity.</strong> These images have similar edge patterns — the HOG descriptors point in nearly the same direction.';
+    else if (sim > 0.5) el.innerHTML = '<strong>Moderate similarity.</strong> Some shared edge structure, but enough differences to separate the descriptors.';
+    else el.innerHTML = '<strong>Low similarity.</strong> Different edge patterns produce descriptors pointing in different directions.';
+
+    // Side-by-side vector comparison (downsampled)
+    const step = Math.max(1, Math.floor(examples[compA].vector.length / 200));
+    const idxs = [], vA = [], vB = [];
+    for (let i = 0; i < examples[compA].vector.length; i += step) {
+      idxs.push(i); vA.push(examples[compA].vector[i]); vB.push(examples[compB].vector[i]);
+    }
+    Plotly.react('compBarChart', [
+      { x: idxs, y: vA, type: 'bar', name: 'Image A', marker: { color: '#1565c0', opacity: 0.6 } },
+      { x: idxs, y: vB, type: 'bar', name: 'Image B', marker: { color: '#e65100', opacity: 0.6 } }
+    ], {
+      barmode: 'group',
+      xaxis: { title: 'Descriptor dimension', gridcolor: '#e8ecf0' },
+      yaxis: { title: 'Value', gridcolor: '#e8ecf0' },
+      plot_bgcolor: '#fff', paper_bgcolor: '#fff',
+      margin: { l: 40, r: 10, t: 10, b: 40 },
+      legend: { x: 0.7, y: 0.98 },
+      font: { family: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif', size: 11 }
+    }, {responsive:true});
+  }
+}
+
+// ── Drag and drop ──
+const uploadArea = document.querySelector('.upload-area');
+uploadArea.addEventListener('dragover', e => { e.preventDefault(); uploadArea.style.borderColor = '#1a3a5c'; });
+uploadArea.addEventListener('dragleave', () => { uploadArea.style.borderColor = ''; });
+uploadArea.addEventListener('drop', e => {
+  e.preventDefault(); uploadArea.style.borderColor = '';
+  const file = e.dataTransfer.files[0];
+  if (file && file.type.startsWith('image/')) {
+    document.getElementById('fileInput').files = e.dataTransfer.files;
+    handleUpload({ target: { files: [file] } });
+  }
+});
+
+// ── Init ──
+generateExamples();
+selectImage('horiz');
+rebuildComparisonPickers();
+pickComp('A', 'horiz');
+pickComp('B', 'vert');
+</script>
+
+</body>
+</html>
