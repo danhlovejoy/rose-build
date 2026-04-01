@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Cosine Similarity: Measuring How Alike Two Things Are &mdash; AIML 2003 / 2013</title>
+<title>Cosine Similarity: Measuring How Alike Two Things Are | AIML 2003 / 2013</title>
 <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
 <style>
   :root {
@@ -222,7 +222,7 @@
   </div>
 
   <div class="tip">
-    <strong>Length doesn't matter.</strong> Cosine similarity only cares about direction. A short arrow and a long arrow pointing the same way have similarity 1.0. That's why it works for comparing documents of different lengths or images of different sizes &mdash; the magnitude of the vector washes out.
+    <strong>Length doesn't matter.</strong> Cosine similarity only cares about direction. A short arrow and a long arrow pointing the same way have similarity 1.0. That's why it works for comparing documents of different lengths or images of different sizes: the magnitude of the vector washes out.
   </div>
 
   <div class="card">
@@ -243,7 +243,7 @@
      ================================================================ -->
 <div class="stage">
   <div class="stage-line"><span class="stage-num">2</span><h2>Text: Comparing Documents by Their Words</h2></div>
-  <p>Each document becomes a TF-IDF vector &mdash; one number per word in the vocabulary. Two documents that use similar words in similar proportions will point in similar directions. Cosine similarity measures that alignment.</p>
+  <p>Each document becomes a TF-IDF vector (one number per word in the vocabulary). Two documents that use similar words in similar proportions will point in similar directions. Cosine similarity measures that alignment.</p>
 
   <p>Pick a pair or type your own:</p>
 
@@ -281,7 +281,7 @@
   </div>
 
   <div class="tip">
-    <strong>Why cosine instead of counting shared words?</strong> Two reviews might share the words "film" and "movie" &mdash; but those appear in every review and have low TF-IDF scores. Cosine similarity weights each shared word by how distinctive it is. Sharing the word "masterpiece" matters more than sharing the word "the."
+    <strong>Why cosine instead of counting shared words?</strong> Two reviews might share the words "film" and "movie," but those appear in every review and carry low TF-IDF scores. Cosine similarity weights each shared word by how distinctive it is. Sharing the word "masterpiece" matters more than sharing the word "the."
   </div>
 </div>
 
@@ -292,7 +292,7 @@
      ================================================================ -->
 <div class="stage">
   <div class="stage-line"><span class="stage-num">3</span><h2>Images: Comparing Pictures by Their Edges</h2></div>
-  <p>HOG converts an image into a vector of gradient orientation counts &mdash; a numerical fingerprint of the image's edge structure. Two images with similar HOG vectors have similar shapes and textures, regardless of color or exact pixel values.</p>
+  <p>HOG converts an image into a vector of gradient orientation counts: a fixed-length fingerprint of the image's edge structure. Two images with similar HOG vectors have similar shapes and textures, regardless of color or exact pixel values.</p>
   <p>Below are synthetic "HOG-like" feature vectors for image pairs. Each bar represents a gradient orientation bin. The more the two patterns match, the higher the cosine similarity.</p>
 
   <div class="pair-grid" id="imagePairs"></div>
@@ -307,7 +307,7 @@
   </div>
 
   <div class="tip">
-    <strong>Same idea, different domain.</strong> TF-IDF produces one number per word. HOG produces one number per orientation bin per cell. Both are vectors. Cosine similarity treats them identically &mdash; it doesn't know or care whether the numbers represent words or edges.
+    <strong>Same idea, different domain.</strong> TF-IDF produces one number per word. HOG produces one number per orientation bin per cell. Both are vectors. Cosine similarity treats them identically. It doesn't know whether the numbers represent words or edges.
   </div>
 </div>
 
@@ -318,7 +318,7 @@
      ================================================================ -->
 <div class="stage">
   <div class="stage-line"><span class="stage-num">4</span><h2>The Similarity Matrix</h2></div>
-  <p>When you have many items (documents or images), you compute cosine similarity for every pair and arrange the results in a matrix. Each cell shows how similar two items are. The diagonal is always 1.0 &mdash; everything is identical to itself.</p>
+  <p>When you have many items (documents or images), you compute cosine similarity for every pair and arrange the results in a matrix. Each cell shows how similar two items are. The diagonal is always 1.0 (every item is identical to itself).</p>
 
   <div class="btn-group">
     <button class="btn btn-accent" onclick="showTextMatrix()">Text Matrix (6 reviews)</button>
@@ -349,23 +349,23 @@
 
   <div class="card">
     <strong>Same shape, different context (CV)</strong>
-    <p style="margin:0;">A bicycle wheel and a clock face produce similar HOG descriptors &mdash; both are circular with radial gradient patterns. High cosine similarity, but the images are semantically unrelated. HOG sees edges, not objects.</p>
+    <p style="margin:0;">A bicycle wheel and a clock face produce similar HOG descriptors: both are circular with radial gradient patterns. High cosine similarity, but the images are semantically unrelated. HOG sees edges, not objects.</p>
   </div>
 
   <div class="card">
     <strong>The fix for both: learned representations</strong>
-    <p style="margin:0;">Word embeddings (NLP) and CNN features (CV) solve this by learning that "excellent" and "outstanding" are similar, or that wheels and clocks are different despite similar edges. That's Week 4. Cosine similarity stays the same &mdash; the vectors get smarter.</p>
+    <p style="margin:0;">Word embeddings (NLP) and CNN features (CV) solve this by learning that "excellent" and "outstanding" are similar, or that wheels and clocks are different despite similar edges. That's Week 4. Cosine similarity stays the same. The vectors get smarter.</p>
   </div>
 
   <div class="warn-tip">
-    <strong>Cosine similarity is only as good as the vectors you feed it.</strong> It measures alignment perfectly. The question is always whether the vector representation captures what you actually care about. TF-IDF captures word overlap. HOG captures edge patterns. Neither captures meaning. That's not a flaw in cosine similarity &mdash; it's a flaw in the features.
+    <strong>The metric is not the bottleneck. The representation is.</strong> Cosine similarity computes the angle between two vectors and has no opinion about what those numbers encode. TF-IDF vectors for &#8220;excellent&#8221; and &#8220;outstanding&#8221; sit far apart in vocabulary space because the words don't overlap, so the metric faithfully reports low similarity. The representation was the wrong tool for the question, not the math. HOG has the same problem with semantics: a bicycle wheel and a clock both produce gradient histograms dominated by radial patterns, so their vectors sit close together in HOG space. Cosine similarity will say they're alike. Given the features it was handed, it's right.
   </div>
 </div>
 
 </div><!-- /.container -->
 
 <div class="footer">
-  AIML 2003 (NLP) &bull; AIML 2013 (Computer Vision) &mdash; Spring 2026 &bull; Built for in-class demonstration.
+  AIML 2003 (NLP) &bull; AIML 2013 (Computer Vision) &bull; Spring 2026 &bull; Built for in-class demonstration.
 </div>
 
 <!-- ================================================================
@@ -527,18 +527,37 @@ function textCosineSim(textA, textB) {
 }
 
 const TEXT_PAIRS = [
-  { label: 'Similar reviews', a: 'A brilliant and beautifully crafted film with outstanding performances.', b: 'An excellent film with superb acting and beautiful cinematography.' },
-  { label: 'Opposite sentiment', a: 'A brilliant and beautifully crafted film with outstanding performances.', b: 'An awful waste of time with terrible acting and a boring plot.' },
-  { label: 'Same meaning, different words', a: 'The movie was excellent and I enjoyed it thoroughly.', b: 'The film was outstanding and I had a wonderful time watching it.' },
-  { label: 'Unrelated topics', a: 'The horror movie had brilliant special effects and a compelling villain.', b: 'The romantic comedy was fun and had a surprisingly sweet ending.' }
+  // HIGH similarity — heavy shared vocabulary
+  { label: 'High similarity: same words, same praise',
+    a: 'The acting was brilliant and the story was compelling. A beautifully crafted film with brilliant performances.',
+    b: 'Brilliant acting and a compelling story. This beautifully crafted film delivers brilliant performances throughout.' },
+  { label: 'High similarity: both negative, shared vocabulary',
+    a: 'A boring and terrible waste of time. The awful acting and dull plot made this film painful to watch.',
+    b: 'Terrible acting and a boring plot make this an awful waste of time. Dull and painful from start to finish.' },
+  // MODERATE — some overlap, some divergence
+  { label: 'Moderate: same sentiment, partial overlap',
+    a: 'A brilliant and beautifully crafted film with outstanding performances from the entire cast.',
+    b: 'An excellent film with superb acting and beautiful cinematography. The cast delivers strong work.' },
+  // LOW — opposite vocabulary
+  { label: 'Low: opposite sentiment, opposite words',
+    a: 'A brilliant and beautifully crafted film with outstanding performances.',
+    b: 'An awful waste of time with terrible acting and a boring plot.' },
+  // NEAR-ZERO — same meaning but no shared distinctive words
+  { label: 'Near zero: same meaning, different words',
+    a: 'The movie was excellent and I enjoyed it thoroughly.',
+    b: 'The film was outstanding and I had a wonderful time watching it.' },
+  // NEAR-ZERO — completely unrelated
+  { label: 'Near zero: unrelated topics',
+    a: 'The horror movie had brilliant special effects and a compelling villain.',
+    b: 'The romantic comedy was fun and had a surprisingly sweet ending.' }
 ];
 
 function renderTextPairs() {
   document.getElementById('textPairs').innerHTML = TEXT_PAIRS.map((p, i) => `
     <div class="pair-card" onclick="selectTextPair(${i})" id="tpair${i}">
       <div class="pair-label">${p.label}</div>
-      <div style="font-size:0.85rem;"><strong>A:</strong> ${p.a.substring(0, 60)}${p.a.length > 60 ? '...' : ''}</div>
-      <div style="font-size:0.85rem;"><strong>B:</strong> ${p.b.substring(0, 60)}${p.b.length > 60 ? '...' : ''}</div>
+      <div style="font-size:0.85rem;"><strong>A:</strong> ${p.a.substring(0, 75)}${p.a.length > 75 ? '...' : ''}</div>
+      <div style="font-size:0.85rem;"><strong>B:</strong> ${p.b.substring(0, 75)}${p.b.length > 75 ? '...' : ''}</div>
     </div>
   `).join('');
 }
