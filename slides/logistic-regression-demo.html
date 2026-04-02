@@ -146,9 +146,9 @@
      ================================================================ -->
 <div class="stage">
   <div class="stage-line"><span class="stage-num">1</span><h2>The Setup</h2></div>
-  <p>You have a pile of movie reviews. Each one is labeled positive or negative. You want a model that can classify new, unlabeled reviews. That's binary classification &mdash; two categories, one decision.</p>
+  <p>You have a pile of movie reviews that humans have already labeled &mdash; each one tagged positive or negative by hand. This is your <strong>training data</strong>: examples where you already know the right answer. The goal is to learn a rule from these labeled examples so the model can classify future reviews it has never seen.</p>
   <p>The TF-IDF pipeline already turned each review into a vector of numbers. Now we need a rule that takes those numbers and outputs a class. Logistic regression is that rule.</p>
-  <p>To see how it works, we'll start with just two features &mdash; the TF-IDF scores for two words. That way we can draw the data on a 2D chart and watch the classifier learn.</p>
+  <p>To see how it works, we'll start with just two features &mdash; the TF-IDF scores for two words. That way we can draw the training data on a 2D chart and watch the classifier learn.</p>
 </div>
 
 <div class="arrow-box">&darr;</div>
@@ -158,7 +158,7 @@
      ================================================================ -->
 <div class="stage">
   <div class="stage-line"><span class="stage-num">2</span><h2>Two Words, One Boundary</h2></div>
-  <p>Each dot is a review. The x-axis is how much "brilliant" appears (TF-IDF); the y-axis is how much "awful" appears. Green dots are positive reviews; red dots are negative. The dashed line is the decision boundary &mdash; everything on one side is predicted positive, the other side negative.</p>
+  <p>Each dot is one of those pre-labeled training reviews. The x-axis is how much "brilliant" appears (TF-IDF); the y-axis is how much "awful" appears. Green dots are reviews labeled positive; red dots are reviews labeled negative. We know these labels already &mdash; the model's job is to find a boundary that matches them, so it can apply that boundary to new reviews later. The dashed line is that decision boundary.</p>
 
   <div class="row">
     <div class="col-main">
@@ -259,7 +259,7 @@
      ================================================================ -->
 <div class="stage">
   <div class="stage-line"><span class="stage-num">4</span><h2>How the Model Learns</h2></div>
-  <p>The model starts with random weights. It looks at the training data, sees how many reviews it gets wrong, and nudges the weights to reduce errors. Each nudge is small. After many rounds (called iterations), the boundary settles into the position that classifies the most reviews correctly.</p>
+  <p>The model starts with random weights and compares its predictions to the labels that already exist in the training data. Every review where it guesses wrong is a signal to adjust. It nudges the weights to reduce errors, a little at a time. After many rounds (called iterations), the boundary settles into the position that best matches the known labels &mdash; and that boundary is what the model will use on unlabeled reviews in the future.</p>
 
   <div id="trainingPlot" style="width:100%; height:450px;"></div>
   <div class="btn-group">
@@ -322,7 +322,7 @@
      ================================================================ -->
 <div class="stage">
   <div class="stage-line"><span class="stage-num">6</span><h2>Confidence and Failures</h2></div>
-  <p>The model doesn't just say "positive" or "negative." It says how sure it is. Reviews far from the boundary get high-confidence predictions. Reviews near the boundary are coin flips. The interesting cases are high-confidence mistakes &mdash; reviews the model was sure about and still got wrong.</p>
+  <p>The model doesn't just say "positive" or "negative." It says how sure it is. Training reviews far from the boundary get high-confidence predictions. Reviews near the boundary are coin flips. The interesting cases are high-confidence mistakes &mdash; training reviews where we know the correct label, the model was sure of itself, and it still got the answer wrong.</p>
 
   <div id="confPlot" style="width:100%; height:380px;"></div>
 
@@ -330,6 +330,55 @@
 
   <div class="tip">
     <strong>High-confidence failures are the most informative errors.</strong> In your lab, Cell 6 finds these cases. They reveal what the model can't see: sarcasm ("a brilliant waste of talent"), negation ("not awful, just boring"), and context that a bag-of-words model misses entirely.
+  </div>
+</div>
+
+<div class="arrow-box">&darr;</div>
+
+<!-- ================================================================
+     STAGE 7: CLASSIFY A NEW REVIEW
+     ================================================================ -->
+<div class="stage">
+  <div class="stage-line"><span class="stage-num">7</span><h2>Classify a New Review</h2></div>
+  <p>Training is done. The boundary is set. Now here's the payoff: a new review arrives that the model has never seen. It has no label &mdash; nobody has read it yet. The model applies the same weights it learned from the training data, computes a probability, and stamps it positive or negative. This is what the whole process was for.</p>
+
+  <div class="row">
+    <div class="col-main">
+      <div id="newReviewPlot" style="width:100%; height:480px;"></div>
+    </div>
+    <div class="col-side">
+      <div class="card">
+        <strong>Drop in an unlabeled review</strong>
+        <p style="font-size:0.85rem; margin-bottom:0.75rem;">Pick a preset or set your own TF-IDF values. The model will classify it using the boundary it learned from training.</p>
+        <div class="btn-group" style="margin-bottom:0.75rem;">
+          <button class="btn btn-outline" onclick="setNewReview(0.8, 0.1)">"brilliant" heavy</button>
+          <button class="btn btn-outline" onclick="setNewReview(0.1, 0.75)">"awful" heavy</button>
+          <button class="btn btn-outline" onclick="setNewReview(0.45, 0.5)">borderline</button>
+          <button class="btn btn-outline" onclick="setNewReview(Math.random(), Math.random())">random</button>
+        </div>
+        <div class="slider-row">
+          <label>TF-IDF("brilliant") <span class="slider-val" id="newX1Val">0.50</span></label>
+          <input type="range" id="newX1Slider" min="0" max="1" step="0.01" value="0.5" oninput="classifyNewReview()">
+        </div>
+        <div class="slider-row">
+          <label>TF-IDF("awful") <span class="slider-val" id="newX2Val">0.50</span></label>
+          <input type="range" id="newX2Slider" min="0" max="1" step="0.01" value="0.5" oninput="classifyNewReview()">
+        </div>
+      </div>
+      <div class="card" id="newReviewResult">
+        <strong>Model's Verdict</strong>
+        <table class="review-tbl">
+          <tr><td>Raw score</td><td id="new_raw">&mdash;</td></tr>
+          <tr><td>P(positive)</td><td id="new_prob">&mdash;</td></tr>
+          <tr><td style="font-size:1rem;">Prediction</td><td id="new_pred" style="font-size:1rem;">&mdash;</td></tr>
+        </table>
+        <p style="font-size:0.82rem; color:var(--muted); margin-top:0.5rem; margin-bottom:0;">No human labeled this review. The model is applying the boundary it learned from labeled training data to make this call on its own.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <strong>This is the supervised learning loop.</strong> Humans label examples &rarr; the model learns a boundary from those labels &rarr; the model applies that boundary to new, unlabeled data. The training reviews are the teacher. The decision boundary is the lesson. New reviews are the test.
   </div>
 </div>
 
@@ -388,9 +437,10 @@ function accuracy(w1, w2, b) {
 }
 
 // ── Best-fit via gradient descent + accuracy refinement ──
-function fitLogistic(iters = 2000, lr = 3.0) {
+function fitLogistic(iters = 2000, lr = 2.0) {
   let w1 = 0, w2 = 0, b = 0;
-  // Phase 1: gradient descent on log-loss (finds good probabilities)
+  const lambda = 0.05; // L2 regularization — prevents weights from blowing up
+  // Phase 1: gradient descent on log-loss with L2 penalty
   for (let t = 0; t < iters; t++) {
     let gw1 = 0, gw2 = 0, gb = 0;
     for (const d of DATA) {
@@ -400,9 +450,10 @@ function fitLogistic(iters = 2000, lr = 3.0) {
       gw2 += err * d.x2;
       gb += err;
     }
-    w1 -= lr * gw1 / DATA.length;
-    w2 -= lr * gw2 / DATA.length;
-    b -= lr * gb / DATA.length;
+    // Regularization gradient pushes weights toward zero
+    w1 -= lr * (gw1 / DATA.length + lambda * w1);
+    w2 -= lr * (gw2 / DATA.length + lambda * w2);
+    b  -= lr * gb / DATA.length; // no regularization on bias (standard practice)
   }
   // Phase 2: local search around GD solution to maximize accuracy
   // (GD optimizes log-loss, which doesn't always maximize accuracy)
@@ -610,8 +661,9 @@ function startTraining() {
   drawTrainingFrame();
 
   trainInterval = setInterval(() => {
-    // One gradient descent step
+    // One gradient descent step (with L2 regularization, matching best-fit solver)
     const lr = 2.0;
+    const lambda = 0.05;
     let gw1 = 0, gw2 = 0, gb = 0;
     for (const d of DATA) {
       const p = sigmoid(trainState.w1 * d.x1 + trainState.w2 * d.x2 + trainState.b);
@@ -620,9 +672,9 @@ function startTraining() {
       gw2 += err * d.x2;
       gb += err;
     }
-    trainState.w1 -= lr * gw1 / DATA.length;
-    trainState.w2 -= lr * gw2 / DATA.length;
-    trainState.b -= lr * gb / DATA.length;
+    trainState.w1 -= lr * (gw1 / DATA.length + lambda * trainState.w1);
+    trainState.w2 -= lr * (gw2 / DATA.length + lambda * trainState.w2);
+    trainState.b  -= lr * gb / DATA.length;
     trainState.iter++;
 
     drawTrainingFrame();
@@ -764,6 +816,73 @@ function drawConfidencePlot() {
   }
 }
 
+// ── Stage 7: Classify a new review ──
+
+function setNewReview(x1, x2) {
+  document.getElementById('newX1Slider').value = x1.toFixed(2);
+  document.getElementById('newX2Slider').value = x2.toFixed(2);
+  classifyNewReview();
+}
+
+function classifyNewReview() {
+  const x1 = parseFloat(document.getElementById('newX1Slider').value);
+  const x2 = parseFloat(document.getElementById('newX2Slider').value);
+  document.getElementById('newX1Val').textContent = x1.toFixed(2);
+  document.getElementById('newX2Val').textContent = x2.toFixed(2);
+
+  const { raw, prob, pred } = predict(x1, x2, bestFit.w1, bestFit.w2, bestFit.b);
+  document.getElementById('new_raw').innerHTML = `<span class="${raw >= 0 ? 'c-pos' : 'c-neg'}">${raw.toFixed(3)}</span>`;
+  document.getElementById('new_prob').textContent = (prob * 100).toFixed(1) + '%';
+  document.getElementById('new_pred').innerHTML = pred
+    ? '<span class="result-badge result-pos">Positive</span>'
+    : '<span class="result-badge result-neg">Negative</span>';
+
+  drawNewReviewPlot(x1, x2);
+}
+
+function drawNewReviewPlot(nx1, nx2) {
+  const w1 = bestFit.w1, w2 = bestFit.w2, b = bestFit.b;
+  const pos = DATA.filter(d => d.label === 1);
+  const neg = DATA.filter(d => d.label === 0);
+
+  // Decision boundary
+  let lineX = [], lineY = [];
+  if (Math.abs(w2) > 0.01) {
+    for (let x1 = -0.1; x1 <= 1.1; x1 += 0.01) {
+      const x2 = -(w1 * x1 + b) / w2;
+      if (x2 >= -0.1 && x2 <= 1.1) { lineX.push(x1); lineY.push(x2); }
+    }
+  } else if (Math.abs(w1) > 0.01) {
+    const x1v = -b / w1;
+    lineX = [x1v, x1v]; lineY = [-0.1, 1.1];
+  }
+
+  const { prob } = predict(nx1, nx2, w1, w2, b);
+  const newColor = prob >= 0.5 ? '#2e7d32' : '#c62828';
+
+  Plotly.react('newReviewPlot', [
+    { x: pos.map(d => d.x1), y: pos.map(d => d.x2), mode: 'markers', name: 'Training (pos)',
+      marker: { color: 'rgba(46,125,50,0.25)', size: 8, symbol: 'circle', line: { width: 1, color: 'rgba(46,125,50,0.4)' } },
+      hoverinfo: 'skip' },
+    { x: neg.map(d => d.x1), y: neg.map(d => d.x2), mode: 'markers', name: 'Training (neg)',
+      marker: { color: 'rgba(198,40,40,0.25)', size: 8, symbol: 'diamond', line: { width: 1, color: 'rgba(198,40,40,0.4)' } },
+      hoverinfo: 'skip' },
+    { x: lineX, y: lineY, mode: 'lines', name: 'Decision Boundary',
+      line: { color: '#1a3a5c', width: 2.5, dash: 'dash' } },
+    { x: [nx1], y: [nx2], mode: 'markers', name: 'New Review',
+      marker: { color: newColor, size: 18, symbol: 'star', line: { width: 2, color: '#fff' } },
+      text: [`NEW<br>brilliant: ${nx1.toFixed(2)}<br>awful: ${nx2.toFixed(2)}<br>P(pos): ${(prob*100).toFixed(1)}%`],
+      hoverinfo: 'text' }
+  ], {
+    xaxis: { title: 'TF-IDF("brilliant")', range: [-0.05, 1.05], gridcolor: '#e8ecf0', zeroline: false },
+    yaxis: { title: 'TF-IDF("awful")', range: [-0.05, 1.05], gridcolor: '#e8ecf0', zeroline: false },
+    plot_bgcolor: '#fff', paper_bgcolor: '#fff',
+    margin: { l: 60, r: 20, t: 10, b: 50 },
+    legend: { x: 0.02, y: 0.98, bgcolor: 'rgba(255,255,255,0.85)' },
+    font: { family: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif', size: 12 }
+  }, { responsive: true });
+}
+
 // ── Init ──
 generateData();
 bestFit = fitLogistic();
@@ -774,6 +893,7 @@ drawSigmoidWithDot();
 populateReviewPicker();
 resetTraining();
 drawConfidencePlot();
+classifyNewReview();
 </script>
 
 </body>
