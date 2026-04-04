@@ -17,11 +17,16 @@ rose/
 ├── MODULE-STANDARDS.md        ← how to build any module
 ├── WRITING-STANDARDS.md       ← lexical bans, formatting rules, tone
 ├── build.conf                 ← delivery mode config (concurrent vs standalone)
-├── CANVAS-SETUP-GUIDE.html    ← instructor reference for Canvas configuration
 ├── course-styles.css          ← single source of truth for all CSS
 ├── glossary.json              ← single glossary source: terms tagged nlp, cv, or both
-├── upload_to_canvas.py        ← API uploader: pages/wiki content
-├── create_module_assignments.py ← API script: assignments, discussions, module structure
+├── docs/
+│   ├── CANVAS-PUSH-CHECKLIST.md
+│   └── CANVAS-SETUP-GUIDE.html ← instructor reference for Canvas configuration
+├── scripts/
+│   ├── upload_to_canvas.py     ← API uploader: pages/wiki content
+│   ├── create_module_assignments.py ← API script: assignments, discussions, module structure
+│   ├── create_module2_assignments.py
+│   └── fix_module2_structure.py
 ├── build/
 │   ├── build.sh               ← orchestrator: ./build.sh [target]
 │   ├── build_glossary.py      ← generates glossary.html per course from glossary.json
@@ -261,17 +266,17 @@ Canvas strips `<style>` and `<link>` tags from wiki pages. The build pipeline in
 - `bash build/build.sh --standalone` — build everything for single-course delivery (strips concurrent content)
 - `bash build/build.sh --standalone aiml2003` — standalone build, one course
 - `python3 build/audit_concurrent.py` — report all concurrent content across the project
-- `python3 upload_to_canvas.py` — upload all built pages to Canvas wiki
-- `python3 upload_to_canvas.py aiml2003` — upload one course
-- `python3 create_module_assignments.py <course> <module_num> <due_date>` — create Canvas artifacts for a module (see below)
+- `python3 scripts/upload_to_canvas.py` — upload all built pages to Canvas wiki
+- `python3 scripts/upload_to_canvas.py aiml2003` — upload one course
+- `python3 scripts/create_module_assignments.py <course> <module_num> <due_date>` — create Canvas artifacts for a module (see below)
 
-**`create_module_assignments.py` — Canvas artifact automation:**
+**`scripts/create_module_assignments.py` — Canvas artifact automation:**
 
 Creates all four Canvas artifacts for a module (Participation assignment, Ethics Discussion, Presentation/Demo assignment, GitHub Repo assignment), wires them into the Canvas module structure, and publishes everything. Also removes stale artifacts if the module was previously set up under different names.
 
 ```
-python3 create_module_assignments.py aiml2003 2 2026-04-07T17:30:00-05:00
-python3 create_module_assignments.py aiml2013 3 2026-04-14T19:00:00-05:00
+python3 scripts/create_module_assignments.py aiml2003 2 2026-04-07T17:30:00-05:00
+python3 scripts/create_module_assignments.py aiml2013 3 2026-04-14T19:00:00-05:00
 ```
 
 - `course` — `aiml2003` or `aiml2013`

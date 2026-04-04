@@ -9,6 +9,9 @@ build/aiml2013/
 # Standalone build temp files (should be cleaned up, but just in case)
 *.standalone.tmp
 
+# Scratch/prep work
+prep-scratch/
+
 # OS files
 .DS_Store
 .venv/
