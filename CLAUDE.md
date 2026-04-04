@@ -16,6 +16,7 @@ rose/
 ├── CLAUDE.md                  ← you are here
 ├── MODULE-STANDARDS.md        ← how to build any module
 ├── WRITING-STANDARDS.md       ← lexical bans, formatting rules, tone
+├── DEMO-STANDARDS.md          ← how to build interactive demos (slides/)
 ├── build.conf                 ← delivery mode config (concurrent vs standalone)
 ├── course-styles.css          ← single source of truth for all CSS
 ├── glossary.json              ← single glossary source: terms tagged nlp, cv, or both
@@ -106,6 +107,7 @@ Read these before making any content changes:
 
 - **MODULE-STANDARDS.md** — Module structure, file numbering (sequential, not fixed slots), page types, dates/deadlines, rubric display format with Canvas links, participation 80/20 model, lab sheet structure, readings page structure, ethics discussion format, CSS design system.
 - **WRITING-STANDARDS.md** — Banned frames, banned AI tells, banned buffer phrases, encouraged precision vocabulary, formatting constraints (list counts, paragraph rhythm, no bold in prose), banned tone patterns.
+- **DEMO-STANDARDS.md** — Standalone interactive demo structure, CSS variables, Plotly/Canvas conventions, pedagogical rules, known pitfalls from past bugs.
 
 ## Key Conventions
 
