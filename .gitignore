@@ -3,6 +3,8 @@
 
 # Build output (generated, not source)
 build/output/
+build/aiml2003/
+build/aiml2013/
 
 # Standalone build temp files (should be cleaned up, but just in case)
 *.standalone.tmp
