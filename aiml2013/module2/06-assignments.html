@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Module 2 Deliverables: Hand-Crafted Features (HOG) | AIML 2013</title>
+<link rel="stylesheet" href="../../course-styles.css">
+</head>
+<body>
+
+<h1>Module 2 Deliverables: Hand-Crafted Features (HOG)</h1>
+<p class="subtitle">AIML 2013: Introduction to Computer Vision</p>
+<div class="due-banner">All deliverables due: By Tuesday, April 7 (by class time).</div>
+
+<!-- ========== OVERVIEW ========== -->
+<div class="overview-card">
+  <strong>This week you will submit three things:</strong>
+  <table class="overview-table" style="margin-top: 0.75rem;">
+    <thead>
+      <tr>
+        <th>Deliverable</th>
+        <th>Type</th>
+        <th>Weight</th>
+        <th>Where</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Module 2 Lab: HOG Features &amp; Image Similarity</td>
+        <td>Colab notebook via GitHub</td>
+        <td>Repos (25%)</td>
+        <td>GitHub + link in Canvas</td>
+      </tr>
+      <tr>
+        <td>Module 2 Presentation</td>
+        <td>3&ndash;5 minute presentation</td>
+        <td>Presentations (15%)</td>
+        <td>In class, Tuesday April 7</td>
+      </tr>
+      <tr>
+        <td>Ethics Discussion</td>
+        <td>Discussion post</td>
+        <td>Participation (20%)</td>
+        <td>Canvas Discussion</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- =====================================================================
+     DELIVERABLE 1: LAB
+     ===================================================================== -->
+<h2>Deliverable 1: Module 2 Lab <span class="tag tag-lab">Lab</span></h2>
+
+<div class="section-card">
+  <h3>Overview</h3>
+  <p>In the readings and in class, you learned that HOG converts raw pixel data into gradient orientation histograms: a fixed-length vector that encodes local edge structure while discarding color and exact pixel positions. This lab puts that idea into practice. You'll compute HOG descriptors on a set of images, build a cosine similarity matrix, retrieve the most similar images for a query, and systematically find where the approach breaks down.</p>
+  <p>The failures are the point. HOG captures shape and local texture, but it throws away everything else. Finding what it misses tells you exactly why deep learning eventually replaced hand-crafted features for most vision tasks.</p>
+
+  <h3>Choose Your Version</h3>
+  <p>Two versions of the lab are available:</p>
+  <ul>
+    <li><strong><a href="lab2-cv-hog.html">Training Wheels Version:</a></strong> Full code scaffold with all cells provided. Read each cell, run it, and write your analysis in the markdown prompts.</li>
+    <li><strong><a href="lab2-cv-hog-challenge.html">Challenge Version:</a></strong> Specification boxes replace the code cells. You generate the code using an LLM, document your prompts, and earn 10 bonus points. Same analysis requirements; you write the implementation.</li>
+  </ul>
+
+  <h3>What to Submit</h3>
+  <ul>
+    <li>A completed Colab notebook (<code>.ipynb</code>) saved to your GitHub repo at <code>week3/lab2_hog.ipynb</code>.</li>
+    <li>All cells executed with visible outputs (images must render in GitHub's notebook viewer).</li>
+    <li>No API keys or secrets anywhere in the notebook.</li>
+    <li>Submit the GitHub link in Canvas. The notebook in GitHub IS your submission — if it's not in the repo, it doesn't exist for grading.</li>
+  </ul>
+</div>
+
+<div class="tip">
+  <strong>Start this in Thursday lab.</strong> We'll work through HOG extraction and the similarity matrix together. Come with the readings done so you already know what gradient orientations and cell binning mean.
+</div>
+
+<div class="rubric-section">
+  <h4>Repository Rubric (Summary)</h4>
+  <p style="font-size:0.85rem; margin-bottom:0.75rem;">100 points possible. Each criterion is scored on a 4-level scale (Full Credit &rarr; No Credit). <a href="https://rose.instructure.com/courses/26944/rubrics/66064" target="_blank"><strong>View the full rubric with detailed scoring &rarr;</strong></a></p>
+  <p style="font-size:0.85rem; color: var(--muted); margin-bottom:0.75rem;">Criteria marked <strong>WEEKLY</strong> change per assignment; criteria marked <strong>STANDARD</strong> stay the same all semester.</p>
+  <table class="rubric-table">
+    <thead>
+      <tr><th style="width:30%">Criterion</th><th style="width:10%">Points</th><th style="width:10%">Type</th><th>Description</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Notebook Runs</td><td>/25</td><td>STANDARD</td><td>Notebook is in the correct week folder (<code>week3/</code>). Cells execute top-to-bottom without errors. All outputs visible.</td></tr>
+      <tr style="background:#fff3e0;"><td>Task Requirements</td><td>/40</td><td>WEEKLY</td><td><strong>This week:</strong>
+        <ul style="margin: 0.4rem 0 0 1rem; padding: 0;">
+          <li>HOG descriptors extracted with correct parameters: <code>orientations</code>, <code>pixels_per_cell</code>, and <code>cells_per_block</code> set explicitly.</li>
+          <li>Cosine similarity matrix computed and displayed.</li>
+          <li>Retrieval results shown with matplotlib for at least two query images.</li>
+          <li>Failure analysis: at least one case where HOG similarity is high but the images are visually dissimilar (or vice versa), with a written explanation of why.</li>
+        </ul></td></tr>
+      <tr><td>Reflection</td><td>/20</td><td>STANDARD</td><td>200&ndash;400 words. Connects results to the readings. Addresses what worked, what didn't, and what you'd change.</td></tr>
+      <tr><td>Repo Hygiene</td><td>/15</td><td>STANDARD</td><td>No active (unrevoked) secrets. README updated. Descriptive commit message. Files in the right folder.</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<hr>
+
+<!-- =====================================================================
+     DELIVERABLE 2: PRESENTATION
+     ===================================================================== -->
+<h2>Deliverable 2: Module 2 Presentation <span class="tag tag-pres">Presentation</span></h2>
+
+<div class="section-card">
+  <h3>Overview</h3>
+  <p>A <strong>three- to five-minute</strong> presentation during Tuesday's class (April 7, 7:00 PM) about what you learned building the HOG retrieval system. This is not a formal slide deck; think of it as a short show-and-tell for your classmates.</p>
+
+  <h3>What to Cover</h3>
+  <p>In three to five minutes, walk us through:</p>
+  <ol>
+    <li><strong>The retrieval:</strong> Show one query image and its top matches by HOG similarity. Did the system find visually similar images?</li>
+    <li><strong>The descriptor:</strong> Show the HOG visualization overlay for one image and explain what the gradient orientations represent in terms of the image's structure.</li>
+    <li><strong>The failure:</strong> Show a retrieval result where HOG similarity was high but the images look different (or vice versa). Why did the descriptor get it wrong?</li>
+    <li><strong>Your takeaway:</strong> What does HOG capture about an image, and what does it throw away? How does that connect to why deep learning eventually replaced hand-crafted features?</li>
+  </ol>
+
+  <h3>Format</h3>
+  <p>You can share your screen and walk through your notebook, use a few slides, or just talk: whatever communicates your points clearly in three to five minutes. If you attend via Zoom, be prepared to share your screen.</p>
+
+  <div class="tip">
+    <strong>Tip:</strong> Practice timing yourself. Five minutes is shorter than you think. Focus on one or two good insights rather than trying to cover everything.
+  </div>
+</div>
+
+<div class="rubric-section">
+  <h4>Presentation Rubric (Summary)</h4>
+  <p style="font-size:0.85rem; margin-bottom:0.75rem;">100 points possible. Each criterion is scored on a 4-level scale (Full Credit &rarr; No Focus/Absent). <a href="https://rose.instructure.com/courses/26944/rubrics/66062" target="_blank"><strong>View the full rubric with detailed scoring &rarr;</strong></a></p>
+  <table class="rubric-table">
+    <thead>
+      <tr><th style="width:35%">Criterion</th><th style="width:12%">Points</th><th>What I'm Looking For</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Focus &amp; Clarity</td><td>25</td><td>Topic is clearly stated early and the presentation stays on it throughout.</td></tr>
+      <tr><td>Key Takeaways</td><td>25</td><td>You share what you learned: insights or implications, not just facts.</td></tr>
+      <tr><td>Visual Aid Effectiveness</td><td>20</td><td>Your visual is relevant, legible, and actively used (not just displayed).</td></tr>
+      <tr><td>Verbal Delivery</td><td>20</td><td>You speak clearly, engage the audience, and don't simply read from the slide.</td></tr>
+      <tr><td>Time Management</td><td>10</td><td>Presentation falls between 2:30 and 5:30. Content feels paced, not rushed or padded.</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<hr>
+
+<!-- ========== COMBINED ASSIGNMENT NOTE ========== -->
+<div class="bridge-box" data-concurrent="true">
+  <strong>Taking AIML 2003 (NLP) too?</strong>
+  <p>A combined lab is available: <a href="lab2-combined-how-machines-read.html">How Machines Read Text and Images</a>. It covers both HOG (CV) and TF-IDF (NLP) in one notebook. You submit the same GitHub URL to both courses. A <a href="lab2-combined-challenge.html">challenge version</a> is also available for 10 bonus points. If you do the combined lab, it replaces the individual CV lab. Do not submit both. Your presentation this week is also combined: plan for 5&ndash;7 minutes instead of 3&ndash;5 to cover both domains.</p>
+</div>
+
+<hr>
+
+<!-- =====================================================================
+     DELIVERABLE 3: ETHICS DISCUSSION
+     ===================================================================== -->
+<h2>Deliverable 3: Ethics Discussion <span class="tag tag-ethics">Ethics</span></h2>
+
+<div class="section-card">
+  <h3>Overview</h3>
+  <p>Complete the ethics discussion thread for this module. The full prompt and context are on the <a href="07-ethics.html">Ethics Thread page</a> in this module.</p>
+
+  <h3>Requirements</h3>
+  <ul>
+    <li>Initial post: 150&ndash;250 words. Take a position: don&rsquo;t just summarize the question.</li>
+    <li>Reply to a classmate: at least one substantive reply (not just &ldquo;I agree&rdquo;).</li>
+    <li>Initial post due by Tuesday class (April 7). Reply due by the following Tuesday class (April 14).</li>
+  </ul>
+  <p style="margin-top:0.75rem; font-size:0.9rem; color:var(--muted);">The ethics discussion is worth 20% of your weekly Participation grade. Whether you attend in person or via Zoom, this post is required every week.</p>
+</div>
+
+<!-- ========== SUBMISSION CHECKLIST ========== -->
+<div class="overview-card" style="margin-top:1.5rem;">
+  <strong>Submission Checklist</strong>
+  <ul>
+    <li>Module 2 Lab notebook runs cleanly top-to-bottom with all outputs visible</li>
+    <li>No API keys exposed in any committed file</li>
+    <li>Notebook saved to GitHub at <code>week3/lab2_hog.ipynb</code></li>
+    <li>README updated to reflect Module 2 contents</li>
+    <li>GitHub repo link submitted in Canvas</li>
+    <li>Presentation prepared and ready for Tuesday class (April 7)</li>
+    <li>Ethics discussion post submitted in Canvas by Tuesday class (April 7)</li>
+  </ul>
+</div>
+
+<div class="warning" style="margin-top:1.5rem;">
+  <strong>Reminder:</strong> If it's not in your GitHub repo, it doesn't exist for grading. Save your final work before the deadline.
+</div>
+
+<div class="tip" style="margin-top: 1rem;">
+  <strong>Need help?</strong> Start your work during Thursday lab (April 2, Zoom, 6:00 PM): that's what lab time is for. If you get stuck after lab, email me before the weekend so I can help. Don't wait until Monday night.
+</div>
+
+</body>
+</html>

@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lab 1 Option B: Tone Detector | AIML 2003</title>
+<link rel="stylesheet" href="../../course-styles.css">
+</head>
+<body>
+
+<h1>Lab 1, Option B: Tone Detector for Social Media</h1>
+<p class="subtitle">Build a tone classifier that distinguishes between sarcasm, sincerity, and other intentions beyond sentiment analysis.</p>
+
+<div class="section-card">
+  <h3>The Task</h3>
+  <p>Sentiment analysis (positive/negative/neutral) is a solved problem for most models. Tone is harder. A sarcastic tweet and a sincere tweet can both be "negative" in sentiment, but they're doing different things. You'll build a tone classifier that distinguishes between sarcastic, sincere, promotional, rage-bait, and informational posts, then see how structured context changes the model's accuracy on ambiguous cases.</p>
+</div>
+
+<h2>Your Dataset</h2>
+
+<p>Collect or write 12-15 social media posts. You can pull real examples from X/Twitter, Reddit, or product review sites, or write your own. Include at least 2 of each tone:</p>
+
+<div class="section-card">
+  <h3>Tone categories</h3>
+  <ul>
+    <li><strong>Sarcastic:</strong> "Oh great, another update that breaks everything. Thanks so much." The words sound positive. The meaning isn't.</li>
+    <li><strong>Sincere:</strong> "This actually helped me understand transformers. Bookmarked." Genuine, no hidden layer of meaning.</li>
+    <li><strong>Promotional:</strong> "Just dropped our new AI course. Link in bio. Use code LEARN25 for 20% off." Selling something, even when it doesn't look like it.</li>
+    <li><strong>Rage-bait:</strong> "Unpopular opinion: college is a scam and everyone who disagrees is coping." Designed to provoke engagement, not to inform.</li>
+    <li><strong>Informational:</strong> "The transformer architecture was introduced in the 2017 paper 'Attention Is All You Need.'" Neutral delivery of facts.</li>
+  </ul>
+  <p>The hard cases are posts that could plausibly be two tones. Include at least 3-4 of these. A post like "I can't believe this AI wrote my entire essay in 10 seconds" could be sincere amazement, sarcasm, or even promotional depending on context.</p>
+</div>
+
+<h2>Code Scaffold</h2>
+
+<div class="warning">
+  <strong>Training wheels alert:</strong> This code scaffold is here to get you started. In later labs, you won't have one &mdash; you'll be writing your own code from scratch, using Gemini or another AI assistant to help you build it. So don't just copy-paste and run. Read each cell, understand what it does, and experiment with changing things. The more comfortable you get now, the easier it will be when the training wheels come off.
+</div>
+
+<pre># Cell 1: Setup
+!pip install google-genai -q
+
+from google.colab import userdata
+from google import genai
+
+client = genai.Client(api_key=userdata.get('GEMINI_API_KEY'))</pre>
+
+<pre># Cell 2: Your dataset
+posts = [
+    {"text": "Oh great, another update that breaks everything. Thanks so much.",
+     "tone": "sarcastic"},
+    {"text": "This actually helped me understand transformers. Bookmarked.",
+     "tone": "sincere"},
+    {"text": "Just dropped our new AI course. Link in bio. Use LEARN25 for 20% off.",
+     "tone": "promotional"},
+    {"text": "Unpopular opinion: college is a scam and everyone who disagrees is coping.",
+     "tone": "rage-bait"},
+    {"text": "The transformer architecture was introduced in 'Attention Is All You Need' (2017).",
+     "tone": "informational"},
+    {"text": "I can't believe this AI wrote my entire essay in 10 seconds",
+     "tone": "sarcastic"},  # Your judgment. Others might disagree. That's the point.
+    # Add 12-15 total
+]</pre>
+
+<pre># Cell 3: Approach 1 - Zero-shot
+def detect_zero_shot(text):
+    response = client.models.generate_content(
+        model="gemini-2.0-flash",
+        contents=f"Classify the tone of this social media post as one of: "
+                 f"sarcastic, sincere, promotional, rage-bait, informational. "
+                 f"Respond with only the label.\n\nPost: {text}"
+    )
+    return response.text.strip().lower()
+
+zero_shot = [detect_zero_shot(p["text"]) for p in posts]</pre>
+
+<pre># Cell 4: Approach 2 - Few-shot
+def detect_few_shot(text):
+    prompt = """Classify the tone of each post as: sarcastic, sincere, promotional, rage-bait, or informational.
+
+Post: "Wow, love how the app crashes every time I need it most." → sarcastic
+Post: "Genuinely impressed by how fast this model runs." → sincere
+Post: "Check out our new toolkit. Free trial at example.com." → promotional
+
+Post: "{text}" →"""
+    response = client.models.generate_content(
+        model="gemini-2.0-flash",
+        contents=prompt.format(text=text)
+    )
+    return response.text.strip().lower()
+
+few_shot = [detect_few_shot(p["text"]) for p in posts]</pre>
+
+<pre># Cell 5: Approach 3 - Context-engineered prompt
+import json
+
+TONE_PROMPT = """## System Instruction
+You are a social media analyst specializing in tone detection.
+You distinguish between what words literally say and what the
+author actually means. You're especially good at catching
+sarcasm, disguised promotion, and engagement bait.
+
+## Task
+Classify the tone of the social media post below. Consider:
+the literal meaning, likely author intent, rhetorical devices
+(irony, exaggeration, provocation), and whether the post is
+trying to sell something.
+
+## Categories
+- sarcastic: says one thing, means the opposite or uses irony
+- sincere: genuine expression without hidden intent
+- promotional: selling a product, service, or personal brand,
+  including subtle self-promotion
+- rage-bait: deliberately provocative to generate engagement
+- informational: neutral delivery of facts or explanations
+
+## Output Format
+Respond with ONLY valid JSON:
+{{"tone": "sarcastic" | "sincere" | "promotional" | "rage-bait" | "informational",
+  "confidence": "high" | "medium" | "low",
+  "signals": "list the specific words/patterns that led to your classification",
+  "alternative": "if confidence is medium or low, what other tone could this be?"}}
+
+## Calibration Examples
+Post: "Sure, let me just mass-produce a PhD thesis with ChatGPT. That'll go well."
+{{"tone": "sarcastic", "confidence": "high",
+  "signals": "'Sure' opener, hypothetical scenario presented as absurd, 'That'll go well' is verbal irony",
+  "alternative": "none"}}
+
+Post: "We just launched v2.0 and honestly I'm really proud of what the team built."
+{{"tone": "promotional", "confidence": "medium",
+  "signals": "Announcement of a product launch, pride framing is common in founder posts",
+  "alternative": "sincere - if the author isn't affiliated with the product"}}
+
+Post: "Hot take: if you still write code without AI you're basically doing calligraphy"
+{{"tone": "rage-bait", "confidence": "high",
+  "signals": "'Hot take' framing, absolutist claim ('basically doing calligraphy'), designed to provoke disagreement",
+  "alternative": "none"}}
+
+## Constraints
+- If the post could genuinely be two tones, pick the more likely
+  one but set confidence to "low" and name the alternative.
+- Posts under 5 words are hard to classify. Use confidence "low".
+
+## Post to Classify
+{post}"""
+
+def detect_context(text):
+    response = client.models.generate_content(
+        model="gemini-2.0-flash",
+        contents=TONE_PROMPT.format(post=text)
+    )
+    try:
+        result = json.loads(response.text)
+        return result.get("tone", "error").lower()
+    except json.JSONDecodeError:
+        return "parse_error"
+
+context_results = [detect_context(p["text"]) for p in posts]</pre>
+
+<pre># Cell 6: Approach 4 - LLM-assisted refinement
+errors = []
+for p, pred in zip(posts, context_results):
+    if pred != p["tone"]:
+        errors.append(
+            f'Post: "{p["text"]}"\n'
+            f'  Predicted: {pred}\n'
+            f'  Your label: {p["tone"]}'
+        )
+
+error_report = "\n\n".join(errors) if errors else "All predictions matched."
+
+meta_prompt = f"""You optimize prompts for tone classification.
+Below is a tone detection prompt and the posts it misclassified.
+
+## Current Prompt
+{TONE_PROMPT}
+
+## Misclassified Posts
+{error_report}
+
+## Your Task
+1. Diagnose why each error occurred.
+2. Propose a revised prompt that fixes these without
+   breaking posts that already work.
+3. Return ONLY the complete revised prompt."""
+
+refinement = client.models.generate_content(
+    model="gemini-2.0-flash",
+    contents=meta_prompt
+)
+print("=== SUGGESTED REFINEMENTS ===")
+print(refinement.text)</pre>
+
+<pre># Cell 7: Comparison table
+print(f"{'Post':<60} {'Label':<14} {'Zero':<14} {'Few':<14} {'Context':<14}")
+print("-" * 116)
+for p, zs, fs, ce in zip(posts, zero_shot, few_shot, context_results):
+    short = p["text"][:57] + "..." if len(p["text"]) > 60 else p["text"]
+    print(f"{short:<60} {p['tone']:<14} {zs:<14} {fs:<14} {ce:<14}")
+
+for name, results in [("Zero-shot", zero_shot), ("Few-shot", few_shot),
+                       ("Context", context_results)]:
+    correct = sum(1 for p, r in zip(posts, results) if p["tone"] == r)
+    print(f"{name}: {correct}/{len(posts)} ({100*correct/len(posts):.0f}%)")</pre>
+
+<h2>What Makes This Option Interesting</h2>
+
+<p>Tone is subjective in ways that sentiment isn't. Your ground-truth labels reflect your interpretation. You and a classmate could label the same post differently and both be right. This means the lab becomes partly about how well you can teach the model your definition of each tone category through the context-engineered prompt.</p>
+
+<p>The "signals" field in the structured output is especially useful. It forces the model to show its reasoning, and you can check whether it noticed the same rhetorical cues you did. When it misclassifies a post, the signals tell you why: maybe it treated a genuine product announcement as rage-bait because of strong language, or missed sarcasm because the literal meaning was positive.</p>
+
+<div class="tip">
+  <strong>For your reflection:</strong> Focus on the ambiguous posts, the ones where confidence was "low." Did the context-engineered prompt handle ambiguity better than the baselines? What happened when you asked the model to improve its own prompt? Did it change the category definitions, the examples, or the decision rules?
+</div>
+
+</body>
+</html>

@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Module 2 Ethics Thread | AIML 2003</title>
+<link rel="stylesheet" href="../../course-styles.css">
+</head>
+<body>
+
+<h1>Ethics Thread: Who Decides What's "Positive"?</h1>
+<p class="subtitle">AIML 2003: Module 2 Discussion. Post by Tuesday, April 7 (before class)</p>
+
+<div class="prompt-box">
+  <h2>The Prompt</h2>
+  <p>Your lab this week trains a sentiment classifier on the NLTK movie reviews corpus. The corpus contains 2,000 reviews labeled "positive" or "negative" by individual reviewers. When you inspect the TF-IDF model's coefficients, you can see exactly which words push the model toward each category.</p>
+  <p>Sentiment is not a fact. It's an interpretation. The same word can mean different things in different contexts: "predictable" might be a flaw in a thriller but a virtue in a children's movie. The labels in the training data encode the judgments of the people who wrote them, and the model inherits those judgments as ground truth.</p>
+  <p>In your post, address at least one of the following:</p>
+  <ul>
+    <li>The NLTK movie reviews corpus was labeled by individual reviewers. If those reviewers share similar demographics, tastes, or cultural reference points, what assumptions get baked into the model's definition of "positive" and "negative"?</li>
+    <li>Your lab found words with high positive or negative coefficients. If a word like "predictable" has a negative coefficient, the model treats it as evidence of a bad review, regardless of context. What does this tell you about the limits of training on a single labeled dataset?</li>
+    <li>Sentiment analysis is used at scale: product reviews, social media monitoring, customer feedback scoring. If the training data reflects one community's language patterns, what happens when the model is applied to a different community?</li>
+    <li>You used Gemini to classify the same reviews. Gemini was not trained on this specific dataset, but it carries its own biases from its training data. Is one approach more "fair" than the other, or do they encode different biases?</li>
+  </ul>
+</div>
+
+<div class="requirements">
+  <strong>Requirements</strong>
+  <ul>
+    <li><strong>Your post:</strong> 150&ndash;250 words. Take a position. Don't just summarize the question.</li>
+    <li><strong>Reply to a classmate:</strong> At least one substantive reply (not just "I agree"). Engage with their reasoning: push back, build on it, or offer a different angle.</li>
+    <li><strong>Deadline:</strong> Initial post by Tuesday, April 7 (before class). Reply by the following Tuesday class (April 14).</li>
+  </ul>
+</div>
+
+<p>This is one of a recurring ethics thread that runs alongside the technical content all semester. The lab gives you a concrete system to reason about: you've seen the coefficients, you've found the failures, and you know where the training data came from. Use that specificity. I'm looking for evidence that you've connected the ethical question to what you observed in the lab, not that you've landed on the "correct" position.</p>
+
+<p class="note">The weekly ethics discussion is worth 20% of your weekly Participation grade (the other 80% comes from attendance and in-class engagement). Whether you attend in person or via Zoom, this post is required every week.</p>
+
+</body>
+</html>

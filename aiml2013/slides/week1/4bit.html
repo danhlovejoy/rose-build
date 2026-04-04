@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+  body { background-color: #ffffff; padding: 20px; }
+  .grid {
+    display: flex;
+    flex-wrap: wrap;
+    width: 550px; 
+    gap: 8px;
+  }
+  .square {
+    width: 100px;
+    height: 100px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Courier New', monospace;
+    font-weight: bold;
+    font-size: 24px; /* Larger font for the binary codes */
+    border: 1px solid #ddd;
+  }
+  /* 2-bit Grayscale Mapping */
+  .c11 { background-color: #FFFFFF; color: #000000; } /* White */
+  .c10 { background-color: #D3D3D3; color: #000000; } /* Light Gray */
+  .c01 { background-color: #696969; color: #FFFFFF; } /* Dark Gray */
+  .c00 { background-color: #000000; color: #FFFFFF; } /* Black */
+</style>
+</head>
+<body>
+
+<div class="grid">
+  <div class="square c00">00</div>
+  <div class="square c01">01</div>
+  <div class="square c11">11</div>
+  <div class="square c01">01</div>
+  <div class="square c00">00</div>
+
+  <div class="square c01">01</div>
+  <div class="square c10">10</div>
+  <div class="square c11">11</div>
+  <div class="square c10">10</div>
+  <div class="square c01">01</div>
+
+  <div class="square c11">11</div>
+  <div class="square c11">11</div>
+  <div class="square c11">11</div>
+  <div class="square c11">11</div>
+  <div class="square c11">11</div>
+
+  <div class="square c01">01</div>
+  <div class="square c10">10</div>
+  <div class="square c11">11</div>
+  <div class="square c10">10</div>
+  <div class="square c01">01</div>
+
+  <div class="square c00">00</div>
+  <div class="square c01">01</div>
+  <div class="square c11">11</div>
+  <div class="square c01">01</div>
+  <div class="square c00">00</div>
+</div>
+
+</body>
+</html>

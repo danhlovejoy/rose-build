@@ -1,0 +1,381 @@
+{
+  "_comment": "Single source of truth for both course glossaries. Run build.sh to regenerate HTML.",
+  "_schema": {
+    "term": "Display name (title case for proper nouns/acronyms, lowercase otherwise)",
+    "definition": "Brief, non-technical definition. 1-2 sentences max.",
+    "courses": "Array: [\"nlp\"], [\"cv\"], or [\"nlp\", \"cv\"] for both",
+    "link_text": "Short label for the external link",
+    "link_url": "URL to a longer explanation (free, no login required)",
+    "module_introduced": "First module number where the term appears (1-based)"
+  },
+  "terms": [
+    {
+      "term": "accuracy",
+      "definition": "The percentage of predictions a model gets right. If a classifier correctly labels 85 out of 100 examples, its accuracy is 85%.",
+      "courses": ["nlp", "cv"],
+      "link_text": "Google ML Glossary — Accuracy",
+      "link_url": "https://developers.google.com/machine-learning/glossary#accuracy",
+      "module_introduced": 2
+    },
+    {
+      "term": "API",
+      "definition": "Application Programming Interface. A structured way for one program to talk to another. When you send a prompt to Gemini from a Colab notebook, you're using Google's API.",
+      "courses": ["nlp", "cv"],
+      "link_text": "AWS — What is an API?",
+      "link_url": "https://aws.amazon.com/what-is/api/",
+      "module_introduced": 1
+    },
+    {
+      "term": "bag of words",
+      "definition": "A text representation that counts how many times each word appears in a document, ignoring word order entirely. \"the cat sat on the mat\" becomes {the: 2, cat: 1, sat: 1, on: 1, mat: 1}.",
+      "courses": ["nlp"],
+      "link_text": "Wikipedia — Bag-of-words model",
+      "link_url": "https://en.wikipedia.org/wiki/Bag-of-words_model",
+      "module_introduced": 2
+    },
+    {
+      "term": "cell (HOG)",
+      "definition": "A small rectangular region of the image (typically 8×8 pixels) over which HOG computes a histogram of gradient orientations. Cells are grouped into blocks for normalization.",
+      "courses": ["cv"],
+      "link_text": "Dalal & Triggs — HOG for Human Detection (PDF)",
+      "link_url": "https://inria.hal.science/inria-00548512/document",
+      "module_introduced": 2
+    },
+    {
+      "term": "chain-of-thought",
+      "definition": "A prompting technique that asks a language model to show its reasoning step by step before giving a final answer. Often triggered by adding \"think step by step\" to a prompt.",
+      "courses": ["nlp"],
+      "link_text": "Prompt Engineering Guide — Chain-of-Thought",
+      "link_url": "https://www.promptingguide.ai/techniques/cot",
+      "module_introduced": 1
+    },
+    {
+      "term": "CIFAR-10",
+      "definition": "A widely used image dataset containing 60,000 tiny (32×32 pixel) color images in 10 classes: airplane, automobile, bird, cat, deer, dog, frog, horse, ship, truck.",
+      "courses": ["cv"],
+      "link_text": "CIFAR-10 Dataset Page",
+      "link_url": "https://www.cs.toronto.edu/~kriz/cifar.html",
+      "module_introduced": 2
+    },
+    {
+      "term": "classifier",
+      "definition": "A model that assigns a category label to an input. A spam filter is a classifier (spam or not spam). A sentiment analyzer is a classifier (positive or negative).",
+      "courses": ["nlp", "cv"],
+      "link_text": "Google ML Glossary — Classification",
+      "link_url": "https://developers.google.com/machine-learning/glossary#classification",
+      "module_introduced": 2
+    },
+    {
+      "term": "coefficient",
+      "definition": "In logistic regression, a number assigned to each feature (word) that indicates how strongly it pushes the prediction in one direction. A large positive coefficient for \"brilliant\" means that word is a strong signal for a positive review.",
+      "courses": ["nlp"],
+      "link_text": "scikit-learn — Logistic Regression",
+      "link_url": "https://scikit-learn.org/stable/modules/linear_model.html#logistic-regression",
+      "module_introduced": 2
+    },
+    {
+      "term": "context engineering",
+      "definition": "Designing the full information environment sent to a language model: system prompts, tool definitions, examples, retrieved documents, and conversation history, all within a finite attention budget. The successor framing to prompt engineering.",
+      "courses": ["nlp"],
+      "link_text": "Anthropic — Effective Context Engineering for AI Agents",
+      "link_url": "https://www.anthropic.com/engineering/effective-context-engineering-for-ai-agents",
+      "module_introduced": 1
+    },
+    {
+      "term": "convolution",
+      "definition": "An operation that slides a small grid of numbers (a kernel) across an image, computing a weighted sum at each position. In classical image processing, kernels are hand-designed for tasks like blurring or edge detection. In convolutional neural networks (CNNs), the kernels are learned from data — the network discovers which patterns are worth detecting.",
+      "courses": ["cv"],
+      "link_text": "3Blue1Brown — But what is a convolution?",
+      "link_url": "https://www.youtube.com/watch?v=KuXjwB4LzSA",
+      "module_introduced": 1
+    },
+    {
+      "term": "corpus",
+      "definition": "A collection of texts assembled for a particular purpose. In NLP, a corpus is any dataset of text — reviews, articles, conversations — collected for training or evaluating a model.",
+      "courses": ["nlp", "cv"],
+      "link_text": "Subex — What is a Corpus?",
+      "link_url": "https://www.subex.com/article/corpus/",
+      "module_introduced": 2
+    },
+    {
+      "term": "cosine similarity",
+      "definition": "A measure of how similar two vectors are based on the angle between them, ignoring their length. A score of 1.0 means identical direction; 0.0 means unrelated. Used to compare both text (TF-IDF) and image (HOG) feature vectors.",
+      "courses": ["nlp", "cv"],
+      "link_text": "Wikipedia — Cosine Similarity",
+      "link_url": "https://en.wikipedia.org/wiki/Cosine_similarity",
+      "module_introduced": 2
+    },
+    {
+      "term": "data leakage",
+      "definition": "When information from the test set accidentally influences the training process, making results look better than they really are. A common cause: fitting a TF-IDF vectorizer on both training and test data instead of training data only.",
+      "courses": ["nlp", "cv"],
+      "link_text": "Google ML Glossary — Data Leakage",
+      "link_url": "https://developers.google.com/machine-learning/glossary#data-leakage",
+      "module_introduced": 2
+    },
+    {
+      "term": "descriptor",
+      "definition": "A compact numerical summary of an image or image region. HOG descriptors encode gradient orientations; SIFT descriptors encode local texture. The descriptor replaces raw pixels with a structured representation designed for comparison.",
+      "courses": ["cv"],
+      "link_text": "Szeliski §7.1 — Points and Patches",
+      "link_url": "https://szeliski.org/Book/",
+      "module_introduced": 2
+    },
+    {
+      "term": "edge detection",
+      "definition": "Finding boundaries in an image where brightness changes sharply. Edges typically correspond to object boundaries, texture changes, or shadows.",
+      "courses": ["cv"],
+      "link_text": "Szeliski §3.2 — Edge Detection",
+      "link_url": "https://szeliski.org/Book/",
+      "module_introduced": 1
+    },
+    {
+      "term": "embedding",
+      "definition": "A dense numeric vector that represents the meaning of a word, sentence, or image. Items with similar meaning have vectors that are close together in space, so a search for \"delicious pasta\" can find \"tasty noodles\" even though they share no words.",
+      "courses": ["nlp", "cv"],
+      "link_text": "Google ML Glossary — Embedding",
+      "link_url": "https://developers.google.com/machine-learning/glossary#embedding",
+      "module_introduced": 3
+    },
+    {
+      "term": "feature extraction",
+      "definition": "Converting raw data (pixels, words) into a structured numerical representation designed to capture meaningful patterns. TF-IDF extracts features from text; HOG extracts features from images.",
+      "courses": ["nlp", "cv"],
+      "link_text": "Google ML Glossary — Feature Engineering",
+      "link_url": "https://developers.google.com/machine-learning/glossary#feature-engineering",
+      "module_introduced": 2
+    },
+    {
+      "term": "feature vector",
+      "definition": "A list of numbers that represents a data point (a document, an image) in a way a machine learning model can process. Each number captures one measured property of the input.",
+      "courses": ["nlp", "cv"],
+      "link_text": "Google ML Glossary — Feature Vector",
+      "link_url": "https://developers.google.com/machine-learning/glossary#feature-vector",
+      "module_introduced": 2
+    },
+    {
+      "term": "few-shot",
+      "definition": "Providing a language model with a small number of labeled examples (typically 2\u20135) in the prompt before asking it to perform the same task on new input.",
+      "courses": ["nlp"],
+      "link_text": "Prompt Engineering Guide — Few-Shot Prompting",
+      "link_url": "https://www.promptingguide.ai/techniques/fewshot",
+      "module_introduced": 1
+    },
+    {
+      "term": "gradient",
+      "definition": "The rate of change in pixel brightness across an image. Gradients are large at edges (where brightness changes quickly) and small in uniform regions. Computed separately in the horizontal and vertical directions.",
+      "courses": ["cv"],
+      "link_text": "Szeliski §3.2 — Image Gradients",
+      "link_url": "https://szeliski.org/Book/",
+      "module_introduced": 1
+    },
+    {
+      "term": "grayscale",
+      "definition": "An image where each pixel has a single brightness value (0 = black, 255 = white) instead of separate red, green, and blue channels. Many feature extraction methods convert to grayscale first.",
+      "courses": ["cv"],
+      "link_text": "Wikipedia — Grayscale",
+      "link_url": "https://en.wikipedia.org/wiki/Grayscale",
+      "module_introduced": 1
+    },
+    {
+      "term": "HOG",
+      "definition": "Histogram of Oriented Gradients. A feature descriptor that represents an image by counting edge orientations within local cells. Captures shape and texture while discarding color and exact pixel positions. Introduced for pedestrian detection (Dalal & Triggs, 2005).",
+      "courses": ["cv"],
+      "link_text": "Szeliski §6.3.2 — Pedestrian Detection (HOG)",
+      "link_url": "https://szeliski.org/Book/",
+      "module_introduced": 2
+    },
+    {
+      "term": "inverse document frequency",
+      "definition": "A weight that penalizes words appearing in many documents. Words like \"the\" get near-zero IDF scores because they appear everywhere; distinctive words like \"cinematography\" get high scores. The \"ID\" in TF-IDF.",
+      "courses": ["nlp"],
+      "link_text": "Wikipedia — TF-IDF",
+      "link_url": "https://en.wikipedia.org/wiki/Tf%E2%80%93idf",
+      "module_introduced": 2
+    },
+    {
+      "term": "kernel",
+      "definition": "A small grid of numbers (e.g., 3×3) used in convolution. Different kernels produce different effects: a Sobel kernel detects edges, a Gaussian kernel blurs, a sharpening kernel enhances contrast.",
+      "courses": ["cv"],
+      "link_text": "Szeliski §3.2 — Linear Filtering",
+      "link_url": "https://szeliski.org/Book/",
+      "module_introduced": 1
+    },
+    {
+      "term": "layer (neural network)",
+      "definition": "A column of neurons in a neural network that all receive the same inputs and produce outputs for the next column. Networks are described by their depth (number of layers) and width (neurons per layer). The first layer takes raw data; the last layer produces predictions; everything in between are hidden layers.",
+      "courses": ["cv"],
+      "link_text": "3Blue1Brown — But what is a neural network?",
+      "link_url": "https://www.youtube.com/watch?v=aircAruvnKk",
+      "module_introduced": 3
+    },
+    {
+      "term": "LLM",
+      "definition": "Large Language Model. A neural network trained on massive amounts of text that can generate, classify, and reason about language. GPT, Claude, and Gemini are LLMs.",
+      "courses": ["nlp", "cv"],
+      "link_text": "Wikipedia — Large Language Model",
+      "link_url": "https://en.wikipedia.org/wiki/Large_language_model",
+      "module_introduced": 1
+    },
+    {
+      "term": "logistic regression",
+      "definition": "A linear classifier that predicts the probability of a binary outcome (e.g., positive vs. negative review). Despite the name, it is used for classification, not regression. Fast to train, and its coefficients are directly interpretable.",
+      "courses": ["nlp"],
+      "link_text": "scikit-learn — Logistic Regression",
+      "link_url": "https://scikit-learn.org/stable/modules/linear_model.html#logistic-regression",
+      "module_introduced": 2
+    },
+    {
+      "term": "NLTK",
+      "definition": "Natural Language Toolkit. A Python library for working with text data. Includes built-in corpora (like movie_reviews), tokenizers, stemmers, and other NLP utilities.",
+      "courses": ["nlp"],
+      "link_text": "NLTK Documentation",
+      "link_url": "https://www.nltk.org/",
+      "module_introduced": 2
+    },
+    {
+      "term": "normalize",
+      "definition": "Adjusting values to a common scale so they can be compared fairly. In HOG, block normalization prevents bright regions from dominating the descriptor. In text, normalizing can mean lowercasing or removing punctuation.",
+      "courses": ["nlp", "cv"],
+      "link_text": "Google ML Glossary — Normalization",
+      "link_url": "https://developers.google.com/machine-learning/glossary#normalization",
+      "module_introduced": 2
+    },
+    {
+      "term": "neural network",
+      "definition": "A model loosely inspired by the brain, built from layers of neurons where each neuron computes a weighted sum of its inputs and passes the result through an activation function. Neural networks learn by adjusting the weights until their outputs match the training labels.",
+      "courses": ["nlp", "cv"],
+      "link_text": "3Blue1Brown — But what is a neural network?",
+      "link_url": "https://www.youtube.com/watch?v=aircAruvnKk",
+      "module_introduced": 3
+    },
+    {
+      "term": "pixel",
+      "definition": "The smallest unit of a digital image. Each pixel stores color information — either a single brightness value (grayscale) or three values for red, green, and blue channels (RGB).",
+      "courses": ["cv"],
+      "link_text": "Wikipedia — Pixel",
+      "link_url": "https://en.wikipedia.org/wiki/Pixel",
+      "module_introduced": 1
+    },
+    {
+      "term": "prompt engineering",
+      "definition": "The practice of writing and refining instructions to get useful outputs from a language model. Includes techniques like zero-shot, few-shot, and chain-of-thought prompting.",
+      "courses": ["nlp"],
+      "link_text": "Prompt Engineering Guide",
+      "link_url": "https://www.promptingguide.ai/",
+      "module_introduced": 1
+    },
+    {
+      "term": "repository",
+      "definition": "A storage location for code and files, typically managed by Git. A GitHub repository tracks every change to every file, so you can always see what changed, when, and why.",
+      "courses": ["nlp", "cv"],
+      "link_text": "GitHub Docs — About Repositories",
+      "link_url": "https://docs.github.com/en/repositories/creating-and-managing-repositories/about-repositories",
+      "module_introduced": 1
+    },
+    {
+      "term": "retrieval",
+      "definition": "Finding the most relevant items from a collection given a query. In this course, retrieval means finding the most similar documents (NLP) or images (CV) by comparing feature vectors.",
+      "courses": ["nlp", "cv"],
+      "link_text": "Szeliski §6.2.3 — Visual Similarity Search",
+      "link_url": "https://szeliski.org/Book/",
+      "module_introduced": 2
+    },
+    {
+      "term": "RGB",
+      "definition": "Red, Green, Blue. The standard color model for digital images. Each pixel stores three values (0\u2013255) representing the intensity of each color channel.",
+      "courses": ["cv"],
+      "link_text": "Wikipedia — RGB Color Model",
+      "link_url": "https://en.wikipedia.org/wiki/RGB_color_model",
+      "module_introduced": 1
+    },
+    {
+      "term": "sentiment analysis",
+      "definition": "Classifying text by the opinion or emotion it expresses — typically positive, negative, or neutral. One of the most common NLP tasks.",
+      "courses": ["nlp"],
+      "link_text": "Wikipedia — Sentiment Analysis",
+      "link_url": "https://en.wikipedia.org/wiki/Sentiment_analysis",
+      "module_introduced": 2
+    },
+    {
+      "term": "sentiment classifier",
+      "definition": "A model that labels text as positive, negative, or another sentiment category. In this course, a logistic regression model trained on TF-IDF features serves as a sentiment classifier for movie reviews.",
+      "courses": ["nlp"],
+      "link_text": "scikit-learn — Text feature extraction",
+      "link_url": "https://scikit-learn.org/stable/modules/feature_extraction.html#text-feature-extraction",
+      "module_introduced": 2
+    },
+    {
+      "term": "Sobel filter",
+      "definition": "A specific 3×3 kernel used to detect edges by computing the gradient (rate of brightness change) in the horizontal or vertical direction.",
+      "courses": ["cv"],
+      "link_text": "Wikipedia — Sobel Operator",
+      "link_url": "https://en.wikipedia.org/wiki/Sobel_operator",
+      "module_introduced": 1
+    },
+    {
+      "term": "sparse vector",
+      "definition": "A vector where most values are zero. TF-IDF vectors are sparse because any single document uses only a tiny fraction of the full vocabulary. Sparsity is both a feature (efficient storage) and a limitation (no notion of word similarity).",
+      "courses": ["nlp"],
+      "link_text": "Google ML Glossary — Sparse Vector",
+      "link_url": "https://developers.google.com/machine-learning/glossary#sparse-vector",
+      "module_introduced": 2
+    },
+    {
+      "term": "term frequency",
+      "definition": "How often a word appears in a single document, usually relative to the document's length. The \"TF\" in TF-IDF.",
+      "courses": ["nlp"],
+      "link_text": "Wikipedia — TF-IDF",
+      "link_url": "https://en.wikipedia.org/wiki/Tf%E2%80%93idf",
+      "module_introduced": 2
+    },
+    {
+      "term": "test set",
+      "definition": "A portion of the data held back from training and used only to evaluate how well the model performs on examples it has never seen. Typically 20% of the dataset.",
+      "courses": ["nlp", "cv"],
+      "link_text": "Google ML Glossary — Test Set",
+      "link_url": "https://developers.google.com/machine-learning/glossary#test-set",
+      "module_introduced": 2
+    },
+    {
+      "term": "TF-IDF",
+      "definition": "Term Frequency \u00d7 Inverse Document Frequency. A method for representing documents as numerical vectors by weighting words that are frequent in a document but rare across the corpus. Common words like \"the\" get low scores; distinctive words get high scores.",
+      "courses": ["nlp"],
+      "link_text": "Wikipedia — TF-IDF",
+      "link_url": "https://en.wikipedia.org/wiki/Tf%E2%80%93idf",
+      "module_introduced": 2
+    },
+    {
+      "term": "token",
+      "definition": "The smallest unit a language model processes. Depending on the model, a token might be a word, part of a word, or a single character. \"unhappiness\" might become [\"un\", \"happiness\"] or [\"unhapp\", \"iness\"].",
+      "courses": ["nlp"],
+      "link_text": "OpenAI — Tokenizer Tool",
+      "link_url": "https://platform.openai.com/tokenizer",
+      "module_introduced": 1
+    },
+    {
+      "term": "training set",
+      "definition": "The portion of the data used to teach the model its patterns. The model sees training data during learning but is evaluated on the separate test set.",
+      "courses": ["nlp", "cv"],
+      "link_text": "Google ML Glossary — Training Set",
+      "link_url": "https://developers.google.com/machine-learning/glossary#training-set",
+      "module_introduced": 2
+    },
+    {
+      "term": "vocabulary",
+      "definition": "In NLP, the complete set of unique words (or tokens) that a model or vectorizer knows about. A TF-IDF vectorizer builds its vocabulary from the training corpus; words not in the vocabulary are ignored at test time.",
+      "courses": ["nlp"],
+      "link_text": "Google ML Glossary — Vocabulary",
+      "link_url": "https://developers.google.com/machine-learning/glossary#vocabulary",
+      "module_introduced": 2
+    },
+    {
+      "term": "zero-shot",
+      "definition": "Asking a language model to perform a task with no examples — just an instruction. \"Classify this review as positive or negative\" with no labeled examples is zero-shot classification.",
+      "courses": ["nlp", "cv"],
+      "link_text": "Prompt Engineering Guide — Zero-Shot Prompting",
+      "link_url": "https://www.promptingguide.ai/techniques/zeroshot",
+      "module_introduced": 1
+    }
+  ]
+}

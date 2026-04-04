@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Getting Started with Google Colab | AIML 2003</title>
+<link rel="stylesheet" href="../../course-styles.css">
+</head>
+<body>
+
+<h1>Getting Started with Google Colab</h1>
+<p class="subtitle">AIML 2003: Setup Guide. Your coding environment for the course</p>
+
+<p class="intro">Google Colab (short for "Colaboratory") is a free, browser-based notebook environment where you can write and run Python code. It runs on Google's servers, so you don't need to install anything on your own computer. All of our labs will be built in Colab.</p>
+
+<!-- ========== WHAT YOU NEED ========== -->
+<h2>What You Need</h2>
+<div class="step">
+  <p>A Google account. If you already use Gmail, Google Drive, or any Google service, you're set. If you don't have one, create a free account at <a href="https://accounts.google.com/signup" target="_blank">accounts.google.com/signup</a>.</p>
+</div>
+
+<!-- ========== GETTING STARTED ========== -->
+<h2>Opening Google Colab</h2>
+
+<div class="step">
+  <span class="step-number">1</span>
+  <p class="step-title">Go to Google Colab</p>
+  <p>Navigate to <a href="https://colab.research.google.com" target="_blank">colab.research.google.com</a>. Sign in with your Google account if prompted.</p>
+</div>
+
+<div class="step">
+  <span class="step-number">2</span>
+  <p class="step-title">Create a new notebook</p>
+  <p>Click <strong>New Notebook</strong> (or go to <strong>File &rarr; New notebook</strong>). A new notebook will open with an empty code cell ready to go.</p>
+</div>
+
+<div class="step">
+  <span class="step-number">3</span>
+  <p class="step-title">Run your first cell</p>
+  <p>Type the following into the code cell and press <strong>Shift + Enter</strong> (or click the play button) to run it:</p>
+  <pre>print("Hello, AIML 2003!")</pre>
+  <p>If you see the output below the cell, you're up and running.</p>
+</div>
+
+<div class="step">
+  <span class="step-number">4</span>
+  <p class="step-title">Rename your notebook</p>
+  <p>Click on "Untitled0.ipynb" at the top left and rename it to something descriptive, like <code>week1_setup.ipynb</code>. This makes it easier to find later in Google Drive.</p>
+</div>
+
+<!-- ========== KEY CONCEPTS ========== -->
+<h2>Key Concepts</h2>
+
+<div class="step">
+  <p class="step-title">Cells</p>
+  <p>Notebooks are made up of cells. Code cells are where you write Python. Text cells are where you write notes in Markdown. You can add new cells with the <strong>+ Code</strong> or <strong>+ Text</strong> buttons at the top.</p>
+</div>
+
+<div class="step">
+  <p class="step-title">Runtime</p>
+  <p>Your code executes on a virtual machine hosted by Google (called your "runtime"). If you're idle for ~90 minutes or your session exceeds ~12 hours, the runtime will disconnect and you'll lose variables in memory. Your notebook file stays safe on Google Drive though.</p>
+</div>
+
+<div class="step">
+  <p class="step-title">Installing packages</p>
+  <p>Most common Python libraries (numpy, pandas, etc.) are pre-installed. To install something else, run this in a code cell:</p>
+  <pre>!pip install google-genai</pre>
+  <p>The <code>!</code> prefix tells Colab to run the command in the system shell, not as Python.</p>
+</div>
+
+<!-- ========== API KEY SAFETY ========== -->
+<h2>Keeping Your API Key Safe</h2>
+
+<div class="warning">
+  <strong>Critical:</strong> In this course, you'll use API keys to access LLMs. Never paste your API key directly into a code cell. If you accidentally commit a notebook with an exposed key to GitHub, bots will find and steal it within minutes.
+</div>
+
+<div class="step">
+  <p class="step-title">Use Colab's Secrets Manager (recommended)</p>
+  <p>Colab has a built-in way to store secrets securely:</p>
+  <ol>
+    <li>Click the <strong>key icon</strong> in the left sidebar (or go to <strong>Tools &rarr; Secrets</strong>).</li>
+    <li>Click <strong>Add new secret</strong>.</li>
+    <li>Name it <code>GEMINI_API_KEY</code> and paste your key as the value.</li>
+    <li>Toggle "Notebook access" to ON for the current notebook.</li>
+  </ol>
+  <p>Then access it in your code like this:</p>
+  <pre>from google.colab import userdata
+api_key = userdata.get('GEMINI_API_KEY')</pre>
+  <p>This way, your key never appears in the notebook file itself.</p>
+</div>
+
+<div class="tip">
+  <strong>Tip:</strong> We'll walk through API key setup together during the Week 1 Thursday lab. Don't worry if this doesn't make sense yet; just know that there's a safe way to do it.
+</div>
+
+<!-- ========== USEFUL SHORTCUTS ========== -->
+<h2>Useful Keyboard Shortcuts</h2>
+
+<div class="step">
+  <p>These will save you a lot of time throughout the course:</p>
+  <ul>
+    <li><code>Shift + Enter</code>: Run the current cell and move to the next one</li>
+    <li><code>Ctrl + Enter</code>: Run the current cell and stay on it</li>
+    <li><code>Ctrl + M, B</code>: Insert a new code cell below</li>
+    <li><code>Ctrl + M, M</code>: Convert a cell to Markdown (text)</li>
+    <li><code>Ctrl + M, D</code>: Delete the current cell</li>
+    <li><code>Ctrl + /</code>: Comment/uncomment selected lines</li>
+  </ul>
+</div>
+
+<!-- ========== SAVING ========== -->
+<h2>Saving Your Work</h2>
+
+<div class="step">
+  <p>Your notebooks auto-save to <strong>Google Drive</strong> in a folder called "Colab Notebooks." You can also save manually with <code>Ctrl + S</code>. To download a local copy, go to <strong>File &rarr; Download &rarr; Download .ipynb</strong>.</p>
+  <p>Later in this module, you'll learn how to connect Colab directly to GitHub so your work is version-controlled from the start.</p>
+</div>
+
+<!-- ========== VS CODE ========== -->
+<h2>Optional: Using Colab from VS Code</h2>
+
+<p>If you prefer working in VS Code instead of the browser, Google's official Colab extension lets you run notebooks locally in VS Code while using Colab's cloud runtimes (including GPUs). This is optional. The browser works fine for everything in this course, but VS Code gives you better code editing, Git integration, and access to your full extension library.</p>
+
+<div class="step">
+  <span class="step-number">1</span>
+  <p class="step-title">Install the extension</p>
+  <p>Open VS Code, go to Extensions (<code>Ctrl/Cmd+Shift+X</code>), search for <strong>"Google Colab"</strong>, and install the official extension by Google. It will also install the Jupyter extension if you don't have it.</p>
+</div>
+
+<div class="step">
+  <span class="step-number">2</span>
+  <p class="step-title">Connect to a Colab runtime</p>
+  <p>Open any <code>.ipynb</code> file in VS Code, then click <strong>Select Kernel</strong> in the top right. Choose <strong>Colab</strong> and select your runtime type. Sign in with your Google account when prompted.</p>
+</div>
+
+<div class="step">
+  <span class="step-number">3</span>
+  <p class="step-title">Run cells as usual</p>
+  <p>Your code runs on Colab's cloud servers, but you edit in VS Code with all its features: autocomplete, terminal, debugging, and Git built in.</p>
+</div>
+
+<div class="warning">
+  <strong>Limitation:</strong> Colab's Secrets Manager (where we store API keys) is not available through the VS Code extension yet. If you use VS Code, you'll need to store your <code>GEMINI_API_KEY</code> in a local <code>.env</code> file (and add <code>.env</code> to your <code>.gitignore</code> so it never gets committed). We'll cover this in Thursday lab for anyone who wants to use VS Code.
+</div>
+
+<!-- ========== FAQS ========== -->
+<h2>Common Questions</h2>
+
+<div class="faq">
+  <p class="faq-q">Do I need a powerful computer?</p>
+  <p class="faq-a">No. Colab runs in the cloud. Any device with a modern web browser will work; even a Chromebook.</p>
+</div>
+
+<div class="faq">
+  <p class="faq-q">Is Colab really free?</p>
+  <p class="faq-a">Yes. The free tier is more than enough for everything in this course. You do not need Colab Pro.</p>
+</div>
+
+<div class="faq">
+  <p class="faq-q">What if my runtime disconnects?</p>
+  <p class="faq-a">Your notebook file is safe (it's on Drive). You'll just need to re-run your cells from the top. Get in the habit of writing code that can be re-run cleanly.</p>
+</div>
+
+<div class="faq">
+  <p class="faq-q">Can I use a local Jupyter notebook instead?</p>
+  <p class="faq-a">For labs, please use Colab so we're all on the same environment and I can help debug issues. You're welcome to also work locally if you prefer, but submit the Colab version.</p>
+</div>
+
+</body>
+</html>

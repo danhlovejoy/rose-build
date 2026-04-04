@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Module 3 Overview: Learned Embeddings | AIML 2003</title>
+<link rel="stylesheet" href="../../course-styles.css">
+</head>
+<body>
+
+<!-- ========== HERO ========== -->
+<div class="hero">
+  <h2>Module 3: Learned Embeddings</h2>
+  <p>AIML 2003 &bull; Introduction to Natural Language Processing &bull; Spring 2026</p>
+  <p class="highlight" style="margin-top:0.75rem;">TF-IDF can't tell that "I loved it" and "absolutely fantastic film" mean the same thing. Sentence transformers can. This week you replace a word-counting baseline with a model that encodes meaning, and you find out exactly where the difference is real.</p>
+</div>
+
+<!-- ========== AT A GLANCE ========== -->
+<div class="info-grid">
+  <div class="info-card">
+    <strong>This Week's Focus</strong>
+    <p>Generate sentence embeddings using <code>all-MiniLM-L6-v2</code>, build a semantic search system, compare it against your TF-IDF baseline on the same queries, and visualize the embedding space with t-SNE.</p>
+  </div>
+  <div class="info-card">
+    <strong>Deliverables</strong>
+    <p>GitHub Repo + Demo (3&ndash;5 min)</p>
+    <p data-concurrent="true" style="margin-top:0.25rem; font-size:0.9em;">Dual-enrolled: Combined demo is 5&ndash;7 min</p>
+    <p>Ethics discussion post</p>
+  </div>
+  <div class="info-card">
+    <strong>Key Dates</strong>
+    <p>Tuesday April 7: Class (Zoom, 5:30 PM)</p>
+    <p>Thursday April 9: Lab (Zoom, 6:00 PM)</p>
+    <p>Due: By Tuesday, April 14 class</p>
+  </div>
+  <div class="info-card">
+    <strong>Prep Before Tuesday</strong>
+    <p>~1.5 hours of readings and videos on sentence transformers and the embedding Projector. See the Readings page in this module.</p>
+  </div>
+</div>
+
+<!-- ========== THIS WEEK ========== -->
+<h2>This Week</h2>
+
+<div class="week-block">
+  <h3>Before Tuesday</h3>
+  <ul>
+    <li>Complete the readings and watch the assigned videos (~1.5 hours). See the Readings &amp; Prep page.</li>
+    <li>Post your ethics discussion response (due by Tuesday class).</li>
+    <li>Finish the lab, push to GitHub, and prepare your demo.</li>
+    <li>Your Module 2 presentation is on Tuesday. Practice once to stay within the 3&ndash;5 minute window. <span data-concurrent="true">(5&ndash;7 minutes for the combined presentation)</span></li>
+  </ul>
+</div>
+
+<div class="week-block">
+  <h3>Tuesday April 7 <span class="tag tag-tue">Zoom</span></h3>
+  <ul>
+    <li><strong>Presentations:</strong> You present what you built in Module 2 (3&ndash;5 minutes). Come ready to show your results and take a question or two.</li>
+    <li>We discuss this week's concepts: what a sentence transformer actually computes, how cosine similarity measures direction rather than magnitude, and what 384 dimensions means in practice.</li>
+    <li>New readings assigned for next week.</li>
+    <li>After class, start the Readings &amp; Prep page for next week at your own pace.</li>
+  </ul>
+</div>
+
+<div class="week-block">
+  <h3>Thursday April 9 <span class="tag tag-thu">Zoom</span></h3>
+  <ul>
+    <li>We work through the embedding pipeline together: loading the model, generating vectors, querying by cosine similarity, and rendering the t-SNE plot.</li>
+    <li>This is also when you'll likely hit your first real prompting challenge. Come with Cell 1 attempted so we can debug together.</li>
+  </ul>
+</div>
+
+<!-- ========== WHAT'S IN THIS MODULE ========== -->
+<h2>What's in This Module</h2>
+
+<div class="week-block">
+  <ol>
+    <li style="margin-bottom:0.5rem;"><strong>Readings &amp; Prep:</strong> StatQuest on word embeddings, the Illustrated Word2Vec, the Sentence Transformers quickstart, and the Google Embedding Projector. Together, these explain what an embedding is, how sentence transformers build on word embedding ideas, and what the vector space looks like when you explore it interactively.</li>
+    <li style="margin-bottom:0.5rem;"><strong>Module 3 Lab: Sentence Embeddings &amp; Semantic Search.</strong> Generate embeddings with <code>all-MiniLM-L6-v2</code>, build a semantic search system, compare it against TF-IDF on the same queries, and visualize the embedding space with t-SNE. No code scaffold this week: you write every cell using an LLM, document your prompts, and explain any fixes.</li>
+    <li style="margin-bottom:0.5rem;" data-concurrent="true"><strong>Combined Lab: How Machines Represent Text and Images.</strong> For dual-enrolled students taking both NLP and CV. One notebook covering sentence embeddings and image embeddings side by side, submitted to both courses.</li>
+    <li style="margin-bottom:0.5rem;"><strong>Assignment Sheet:</strong> Deliverable details, abbreviated rubrics with Canvas links, and the due date for Tuesday, April 14.</li>
+    <li style="margin-bottom:0.5rem;"><strong>Ethics Discussion:</strong> This week's ethics prompt. Post your response (150&ndash;250 words) and reply to a classmate.</li>
+  </ol>
+</div>
+
+<div class="warning">
+  <strong>No code scaffold this week.</strong> The lab sheet gives you specification boxes: each one describes exactly what a cell must do, what it receives, and what it must produce. You give that specification to an LLM and write the code from its output. For each cell, include a markdown cell with the prompt you used. This is the workflow for the rest of the semester.
+</div>
+
+<div class="tip" style="margin-top:1rem;">
+  <strong>Tip:</strong> The readings take about 1.5 hours. Do the StatQuest video first — it gives you the vocabulary (vector, similarity, embedding space) that everything else assumes. The Embedding Projector is the most satisfying part: spend at least 15 minutes exploring it and you'll have concrete examples to reference in your demo.
+</div>
+
+</body>
+</html>

@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Module 2 Lab (Challenge): HOG Features &amp; Image Similarity | AIML 2013</title>
+<link rel="stylesheet" href="../../course-styles.css">
+</head>
+<body>
+
+<h1>Module 2 Lab (Challenge Version): HOG Features &amp; Image Similarity</h1>
+<p class="subtitle">Build a visual feature extractor, then find where it breaks.</p>
+
+<!-- ========== CHALLENGE FRAMING ========== -->
+<div class="warning">
+  <strong>No training wheels here: 10 bonus points if you earn them.</strong>
+  <p style="margin: 0.75rem 0 0;">This version of the lab gives you the specification for each cell, not the code. Each section below tells you exactly what a cell must do, what variables it must receive, and what variables it must produce. Your job is to write the code yourself, using an LLM (Gemini, Claude, ChatGPT, or any tool you like) to help you generate it.</p>
+  <p style="margin: 0.75rem 0 0;"><strong>To earn the 10 bonus points:</strong> include a markdown cell directly above each code cell containing the prompt you gave the LLM and a one-sentence note on whether the generated code worked as-is or what you had to fix. Nine cells &times; one prompt note each.</p>
+  <p style="margin: 0.75rem 0 0;">If you would rather use the training wheels version, it&rsquo;s on the other lab page. Both versions are graded the same way on the standard rubric. Only this version is eligible for the bonus.</p>
+</div>
+
+<!-- ========== THE TASK ========== -->
+<div class="section-card">
+  <h3>The Task</h3>
+  <p>In the readings and in class, you learned that edge detection kernels find boundaries by measuring how quickly pixel values change. This week you will build on that: instead of applying a single kernel to visualize one image, you will extract a compact feature descriptor from every image in a dataset and use those descriptors to retrieve visually similar images.</p>
+  <p>The descriptor is called HOG (Histogram of Oriented Gradients). It works by dividing an image into small cells, computing gradient direction and magnitude in each cell, and summarizing those orientations as a histogram. The result is a fixed-length vector that encodes the local edge structure of the image in a way that is partially robust to small changes in lighting or position.</p>
+  <p>You will build HOG descriptors, use them for similarity retrieval, and systematically find where the approach fails. Those failures are the lab. They tell you what HOG can and cannot represent, and that is exactly what you need to know before next week.</p>
+</div>
+
+<!-- ========== DATASET ========== -->
+<h2>Your Dataset</h2>
+
+<div class="section-card">
+  <h3>Choose Your Image Set</h3>
+  <p>Pick one option before you start. Both work; your choice affects the richness of HOG features, not whether the code runs.</p>
+
+  <h4>Option A: CIFAR-10 (easiest setup)</h4>
+  <p>60,000 images across 10 classes, loadable in one line via Keras. Images are 32&times;32 pixels, small, but sufficient. Use this if you want to minimize setup time and spend your effort on the analysis.</p>
+
+  <h4>Option B: Your own images (more work, richer results)</h4>
+  <p>Collect 4&ndash;5 categories of images, at least 8&ndash;10 per category, at least 128&times;128 pixels each. Where to find them:</p>
+  <ul>
+    <li><strong>Unsplash</strong> (<a href="https://unsplash.com" target="_blank">unsplash.com</a>): free, no account required.</li>
+    <li><strong>Wikimedia Commons</strong> (<a href="https://commons.wikimedia.org" target="_blank">commons.wikimedia.org</a>): public domain images.</li>
+    <li><strong>Google Images</strong>: save individually or use the &ldquo;FatKun Batch Download Image&rdquo; extension.</li>
+    <li><strong>Kaggle Datasets</strong> (<a href="https://www.kaggle.com/datasets" target="_blank">kaggle.com/datasets</a>): many small, pre-sorted image sets. Free account required.</li>
+    <li><strong>Oxford 102 Flowers</strong> (<a href="https://www.robots.ox.ac.uk/~vgg/data/flowers/102/" target="_blank">robots.ox.ac.uk</a>): 8,189 high-quality photos, free download.</li>
+  </ul>
+  <p>Organize images into subfolders by category and upload via the Colab Files panel (left sidebar &rarr; Upload to session storage), or mount Google Drive.</p>
+</div>
+
+<!-- ========== HOW TO READ THIS PAGE ========== -->
+<div class="section-card">
+  <h3>How to read this page</h3>
+  <p>Each cell below follows the same format. The gray <code># Cell N</code> header is what you will put at the top of your code cell. Below it:</p>
+  <ul>
+    <li><strong>What it does</strong>: plain English description of the cell&rsquo;s purpose.</li>
+    <li><strong>Takes in</strong>: variables already in the notebook that this cell uses.</li>
+    <li><strong>Must produce</strong>: the exact variable names, types, and shapes this cell must create. These are binding contracts. Use these exact names.</li>
+    <li><strong>Notes</strong>: constraints, pitfalls, and things to watch for.</li>
+  </ul>
+  <p>Give the LLM the &ldquo;What it does,&rdquo; &ldquo;Takes in,&rdquo; and &ldquo;Must produce&rdquo; sections as your prompt. If the generated code does not match the output contract, fix it before moving on. The next cell depends on it.</p>
+</div>
+
+<!-- ==================== PART 1: LOAD IMAGES ==================== -->
+<h2>Part 1: Load Your Image Dataset</h2>
+
+<!-- CELL 1 -->
+<pre># Cell 1: Setup</pre>
+<div class="section-card">
+  <p><strong>What it does:</strong> Imports all libraries needed for the entire lab. Nothing else (no data loading, no computation).</p>
+
+  <p><strong>Takes in:</strong> Nothing. This is the first cell.</p>
+
+  <p><strong>Must produce:</strong></p>
+  <ul>
+    <li><code>numpy</code> as <code>np</code> — for array operations and numerical computation on HOG features and image pixels.</li>
+    <li><code>matplotlib.pyplot</code> as <code>plt</code> — for displaying images, HOG visualizations, and similarity retrieval grids.</li>
+    <li><code>hog</code> from <code>skimage.feature</code> — the function that computes HOG descriptors from grayscale images.</li>
+    <li><code>rgb2gray</code> from <code>skimage.color</code> — to convert color images to grayscale (required before HOG computation).</li>
+    <li><code>transform</code> from <code>skimage</code> — for the <code>resize()</code> function to standardize image dimensions.</li>
+    <li><code>cosine_similarity</code> from <code>sklearn.metrics.pairwise</code> — to compute similarity between HOG feature vectors.</li>
+    <li><code>Counter</code> from <code>collections</code> — to count confusion patterns in Cell 7.</li>
+    <li><code>defaultdict</code> from <code>collections</code> — to aggregate per-class statistics in Cell 8.</li>
+    <li>A printed confirmation line confirming setup is complete.</li>
+  </ul>
+
+  <p><strong>Notes:</strong> All of these packages are pre-installed in Google Colab. No <code>!pip install</code> needed. Import <code>Counter</code> and <code>defaultdict</code> now even though you&rsquo;ll use them later in Cells 7 and 8.</p>
+</div>
+
+<!-- CELL 2A -->
+<pre># Cell 2A: Load CIFAR-10  (use this OR Cell 2B — not both)</pre>
+<div class="section-card">
+  <p><strong>What it does:</strong> Loads the CIFAR-10 training set via Keras, takes a fixed number of images per class, and displays a sample grid with one image per class.</p>
+
+  <p><strong>Takes in:</strong> Nothing external. You may need to import <code>tensorflow.keras.datasets</code> here if it was not imported in Cell 1.</p>
+
+  <p><strong>Must produce:</strong></p>
+  <ul>
+    <li><code>images</code>: numpy array, shape <code>(150, 32, 32, 3)</code>, dtype <code>uint8</code>. Contains 15 images from each of the 10 CIFAR-10 classes, stacked class by class: indices 0&ndash;14 are &lsquo;airplane&rsquo;, 15&ndash;29 are &lsquo;automobile&rsquo;, and so on.</li>
+    <li><code>img_labels</code>: Python list of 150 integers. Each value is the class index (0&ndash;9) matching the corresponding image in <code>images</code>.</li>
+    <li><code>img_names</code>: Python list of 150 strings. Human-readable class names parallel to <code>img_labels</code>. Use exactly this list (repeated 15 times each): <code>['airplane', 'automobile', 'bird', 'cat', 'deer', 'dog', 'frog', 'horse', 'ship', 'truck']</code>.</li>
+    <li><code>N_PER_CLASS</code>: integer, set to <code>15</code>.</li>
+    <li>A printed line showing how many images were loaded and their shape.</li>
+    <li>A displayed 2&times;5 grid of sample images, one per class, with class name as title.</li>
+  </ul>
+
+  <p><strong>Notes:</strong> Call <code>tf.keras.datasets.cifar10.load_data()</code> to download and unpack; use only the training data. Loop through class indices 0&ndash;9 and take the first <code>N_PER_CLASS</code> (15) images from each. Stack them into the <code>images</code> array in order so class boundaries align with multiples of 15. The grid should have 2 rows and 5 columns, with one representative image per class.</p>
+</div>
+
+<!-- CELL 2B -->
+<pre># Cell 2B: Load your own images  (use this OR Cell 2A — not both)</pre>
+<div class="section-card">
+  <p><strong>What it does:</strong> Walks a directory of category subfolders, opens each image file as RGB, and displays one sample per category.</p>
+
+  <p><strong>Takes in:</strong> Image files organized in subfolders under <code>/content/images/</code> (or mounted Google Drive). Each subfolder name is a category; all <code>.jpg</code>, <code>.png</code>, etc. files inside are images for that category. Mount Google Drive before this cell if needed.</p>
+
+  <p><strong>Must produce:</strong></p>
+  <ul>
+    <li><code>images</code>: Python list of numpy arrays (dtype <code>uint8</code>), one per image file. Each array is the image&rsquo;s pixel data in RGB, any original size (HOG will standardize in Cell 3).</li>
+    <li><code>img_labels</code>: Python list of integers, same length as <code>images</code>. Each value is the category index (0, 1, 2, &hellip;) for the corresponding image, assigned by alphabetical folder order.</li>
+    <li><code>img_names</code>: Python list of strings, same length as <code>images</code>. The category folder name for each image.</li>
+    <li><code>N_PER_CLASS</code>: integer. The count of images in the largest single category (used by later cells for indexing).</li>
+    <li>A printed summary: number of categories found, images per category.</li>
+    <li>A displayed row of images, one per category, titled with the category name.</li>
+  </ul>
+
+  <p><strong>Notes:</strong> Use <code>os.listdir()</code> to find category folders; sort them alphabetically to ensure consistent indices. For each folder, use <code>PIL.Image.open(filepath).convert(&lsquo;RGB&rsquo;)</code> to load and convert to RGB, then wrap in <code>try/except</code> to skip files that don&rsquo;t load (corrupt files, etc.). Append the image as <code>np.array(pil_image)</code>. Print the count per category before displaying the grid.</p>
+</div>
+
+<!-- ==================== PART 2: HOG ==================== -->
+<h2>Part 2: Build HOG Feature Descriptors</h2>
+
+<div class="tip">
+  <strong>Inline display note:</strong> All images in this lab display inline via matplotlib. You do not need to save images as files. <code>ax.imshow()</code> renders them directly in your notebook output.
+</div>
+
+<div class="tip">
+  <strong>Markdown cell:</strong> Before running Cell 3, write a short answer to this question: what information would you include in a fixed-length description of an image if you could only use numbers? What would you measure, and what would you throw away? Keep this. You will compare your answer to what HOG actually does.
+</div>
+
+<!-- CELL 3 -->
+<pre># Cell 3: Compute HOG feature vectors</pre>
+<div class="section-card">
+  <p><strong>What it does:</strong> Defines a function that converts a single color image to a HOG descriptor, applies it to every image, and collects the descriptors and visualizations into matrices.</p>
+
+  <p><strong>Takes in:</strong> <code>images</code>, <code>hog</code>, <code>rgb2gray</code>, <code>transform</code> (from Cells 1 and 2).</p>
+
+  <p><strong>Must produce:</strong></p>
+  <ul>
+    <li><code>TARGET_SIZE</code>: integer, set to <code>64</code>. (If you used Cell 2B with full-size images, you may increase this to <code>128</code> for richer HOG features.)</li>
+    <li><code>image_to_hog(image)</code>: a function. Takes a color image (numpy array, any input size). Call <code>skimage.transform.resize(image, (TARGET_SIZE, TARGET_SIZE), anti_aliasing=True)</code> to standardize size, then <code>rgb2gray()</code> to convert to grayscale. Compute HOG with <code>hog(grayscale_image, orientations=8, pixels_per_cell=(8, 8), cells_per_block=(2, 2), visualize=True)</code>. The <code>visualize=True</code> argument makes <code>hog()</code> return a tuple <code>(feature_vector, visualization_image)</code> instead of just the features. Return this tuple.</li>
+    <li><code>hog_features</code>: Python list of 1D numpy arrays (each dtype float64). Length equals the number of images. Element <code>i</code> is the HOG descriptor from <code>image_to_hog(images[i])[0]</code>. Each descriptor is a 1D array encoding the full histogram of oriented gradients for that image.</li>
+    <li><code>hog_visuals</code>: Python list of 2D numpy arrays (each dtype float64). Length equals the number of images. Element <code>i</code> is the HOG visualization (gradient map) from <code>image_to_hog(images[i])[1]</code>, displayable with <code>plt.imshow(..., cmap='gray')</code>.</li>
+    <li><code>hog_matrix</code>: numpy array of shape <code>(n_images, n_hog_features)</code>, dtype float64. Create this by stacking all feature vectors: <code>np.array(hog_features)</code>. Row <code>i</code> corresponds to <code>images[i]</code>. This matrix is used by Cell 6 for cosine similarity retrieval.</li>
+    <li>A printed line showing the shape of <code>hog_matrix</code> and the sparsity (fraction of zero values in the matrix).</li>
+  </ul>
+
+  <p><strong>Notes:</strong> Always resize and convert to grayscale before HOG. The <code>hog()</code> function from <code>skimage.feature</code> requires a 2D grayscale array. The <code>visualize=True</code> parameter returns two outputs; unpack them as <code>features, visualization = hog(...)</code> and store each in the corresponding list. Building <code>hog_features</code> as a list first makes it easy to later stack into a 2D matrix.</p>
+</div>
+
+<!-- CELL 4 -->
+<pre># Cell 4: Visualize HOG descriptors</pre>
+<div class="section-card">
+  <p><strong>What it does:</strong> Displays a 3&times;3 figure showing the original image, grayscale, and HOG visualization for three sample images (one from each of the first three classes).</p>
+
+  <p><strong>Takes in:</strong> <code>images</code>, <code>img_names</code>, <code>N_PER_CLASS</code>, <code>hog_visuals</code>, <code>TARGET_SIZE</code>, <code>rgb2gray</code>, <code>transform</code> (from Cells 1&ndash;3).</p>
+
+  <p><strong>Must produce:</strong></p>
+  <ul>
+    <li>A matplotlib figure with 3 rows and 3 columns. Each row shows one image from a different class (indices <code>0</code>, <code>N_PER_CLASS</code>, <code>N_PER_CLASS * 2</code>). Columns are:
+      <ol>
+        <li><strong>Original:</strong> The color image from <code>images[idx]</code> displayed with <code>imshow()</code>. Title: <code>'Original: {class_name}'</code> where <code>class_name</code> is from <code>img_names[idx]</code>.</li>
+        <li><strong>Grayscale:</strong> The resized, grayscale version. To display it, compute <code>rgb2gray(transform.resize(np.array(images[idx]), (TARGET_SIZE, TARGET_SIZE), anti_aliasing=True))</code> and display with <code>cmap='gray'</code>. Title: <code>'Grayscale\n(HOG discards color)'</code>.</li>
+        <li><strong>HOG:</strong> The HOG visualization from <code>hog_visuals[idx]</code>, displayed with <code>cmap='gray'</code>. Title: <code>'HOG visualization\n(gradient directions)'</code>.</li>
+      </ol>
+    </li>
+    <li>Set figure supertitle to <code>'Image &rarr; Grayscale &rarr; HOG Gradient Map'</code>.</li>
+    <li>Turn off all axis labels and ticks (call <code>ax.axis('off')</code> for each subplot).</li>
+  </ul>
+
+  <p><strong>Notes:</strong> This cell is display-only; do not save new variables. The grayscale computation in column 2 replicates the logic from Cell 3 for visualization purposes only. Use <code>plt.subplots(3, 3, figsize=(12, 10))</code> to create the grid.</p>
+</div>
+
+<div class="tip">
+  <strong>Markdown cell:</strong> Look at the HOG visualizations. The bright lines show where gradients are strongest and in which direction. For each of the three examples: what has HOG kept, and what has it thrown away? Now look back at what you wrote before Cell 3: how does HOG compare to your own proposal?
+</div>
+
+<!-- CELL 5 -->
+<pre># Cell 5: Inspect a single HOG vector</pre>
+<div class="section-card">
+  <p><strong>What it does:</strong> Prints raw HOG values from the first image and visualizes the orientation histogram for the first spatial cell alongside the source image.</p>
+
+  <p><strong>Takes in:</strong> <code>images</code>, <code>img_names</code>, <code>hog_features</code> (from Cells 2&ndash;3).</p>
+
+  <p><strong>Must produce:</strong></p>
+  <ul>
+    <li>Printed lines for <code>hog_features[0]</code> (the first image&rsquo;s HOG descriptor):
+      <ul>
+        <li>The class name from <code>img_names[0]</code>.</li>
+        <li>The total length of <code>hog_features[0]</code> (the total number of HOG feature values).</li>
+        <li>The first 24 values from <code>hog_features[0]</code>, rounded to 4 decimal places. (These represent the first 3 spatial cells, each with 8 orientation bins.)</li>
+      </ul>
+    </li>
+    <li>A matplotlib figure with 1 row and 2 columns:
+      <ol>
+        <li><strong>Bar chart:</strong> The first 8 values of <code>hog_features[0]</code>, plotted as a bar chart. X-axis: gradient orientations at <code>np.arange(0, 180, 22.5)</code> (i.e., 0&deg;, 22.5&deg;, 45&deg;, &hellip;, 157.5&deg;). Y-axis: magnitude of each bin. Title: <code>'Orientation histogram (first cell): {class_name}'</code>.</li>
+        <li><strong>Source image:</strong> Display <code>images[0]</code> with <code>imshow()</code>. Title: <code>'Source image: {class_name}'</code>. Axes off.</li>
+      </ol>
+    </li>
+    <li>A printed line: <code>&ldquo;The dominant orientation in this cell: X degrees&rdquo;</code>, where X is the angle (from <code>np.arange(0, 180, 22.5)</code>) at the position of the maximum value in the first 8 bins.</li>
+  </ul>
+
+  <p><strong>Notes:</strong> The HOG descriptor is a long 1D array where the first 8 values are the orientation histogram for the top-left spatial cell. Find the dominant orientation with <code>angles[np.argmax(hog_features[0][:8])]</code> where <code>angles = np.arange(0, 180, 22.5)</code>. This cell is inspectional; no new variables persist.</p>
+</div>
+
+<div class="tip">
+  <strong>Markdown cell:</strong> Look at the orientation histogram. Which gradient direction dominates? Does that match what you see in that part of the image? What would the histogram look like for a cell that falls entirely within a flat, textureless region?
+</div>
+
+<!-- ==================== PART 3: RETRIEVAL ==================== -->
+<h2>Part 3: Similarity Retrieval</h2>
+
+<!-- CELL 6 -->
+<pre># Cell 6: Find visually similar images using HOG cosine similarity</pre>
+<div class="section-card">
+  <p><strong>What it does:</strong> Defines a function that retrieves the most similar images by comparing HOG descriptors using cosine similarity, then demonstrates it on three query images.</p>
+
+  <p><strong>Takes in:</strong> <code>hog_matrix</code>, <code>images</code>, <code>img_names</code>, <code>N_PER_CLASS</code>, <code>cosine_similarity</code> (from Cells 1&ndash;3).</p>
+
+  <p><strong>Must produce:</strong></p>
+  <ul>
+    <li><code>find_similar(query_idx, n=5)</code>: a function. Takes an integer image index (into <code>images</code>). Computes cosine similarity by calling <code>cosine_similarity(hog_matrix[query_idx:query_idx+1], hog_matrix)</code>. (Note the 2D slice <code>[query_idx:query_idx+1]</code> instead of <code>[query_idx]</code>, because <code>cosine_similarity</code> expects 2D inputs.) Set the score at position <code>query_idx</code> to <code>&minus;1</code> to prevent the query from matching itself. Return a tuple <code>(top_indices, top_scores)</code> where <code>top_indices</code> is a 1D numpy array of the <code>n</code> image indices with highest cosine similarity and <code>top_scores</code> is their corresponding similarity scores, both sorted highest first. Use <code>np.argsort()</code> and array slicing to get the top <code>n</code>.</li>
+    <li>Three displayed image grids, one per query. Each grid shows 6 images in a row: the query on the left (labeled &ldquo;QUERY&rdquo; in bold white text), followed by the 5 most similar retrievals. For each retrieval, show: a checkmark &checkmark; if it matches the query&rsquo;s class, or a cross &times; if not, followed by the class name and the cosine score rounded to 3 decimal places. Example title: <code>&checkmark; airplane (0.872)</code> or <code>&times; cat (0.631)</code>.</li>
+  </ul>
+
+  <p><strong>Query indices:</strong> Use <code>0</code>, <code>N_PER_CLASS</code>, and <code>N_PER_CLASS * 2</code>. (If you used Cell 2B with your own images, recalculate <code>N_PER_CLASS</code> first as <code>len(images) // len(set(img_names))</code>.)</p>
+
+  <p><strong>Notes:</strong> <code>cosine_similarity()</code> from sklearn returns a 2D array of shape <code>(1, n_images)</code>; flatten it to 1D before using. After setting the query position to <code>&minus;1</code>, use <code>np.argsort()</code> in descending order (or reverse the ascending sort). Prepare a 1&times;6 subplot grid for each query using <code>plt.subplots(1, 6, figsize=(18, 3))</code>.</p>
+</div>
+
+<div class="tip">
+  <strong>Markdown cell:</strong> For each of the three queries: how many of the top 5 are the same class? Find at least one wrong result and examine both images. What do they share visually that fooled HOG? What does a human use to tell them apart that HOG cannot see?
+</div>
+
+<!-- CELL 7 -->
+<pre># Cell 7: Systematic failure analysis</pre>
+<div class="section-card">
+  <p><strong>What it does:</strong> Loops through the first 40 images (or fewer if the dataset is smaller), retrieves the single most similar match for each, and records every case where the match belongs to a different class. Summarizes the failure patterns and displays the highest-confidence mistake in detail.</p>
+
+  <p><strong>Takes in:</strong> <code>find_similar</code>, <code>images</code>, <code>img_names</code>, <code>hog_visuals</code>, <code>TARGET_SIZE</code>, <code>rgb2gray</code>, <code>transform</code>, <code>Counter</code> (from Cells 1&ndash;3).</p>
+
+  <p><strong>Must produce:</strong></p>
+  <ul>
+    <li><code>failures</code>: Python list of dicts. Each dict records one retrieval failure and must have exactly these keys:
+      <ul>
+        <li><code>&lsquo;query_idx&rsquo;</code>: integer image index of the query.</li>
+        <li><code>&lsquo;query_class&rsquo;</code>: string class name of the query.</li>
+        <li><code>&lsquo;match_idx&rsquo;</code>: integer image index of the retrieved match.</li>
+        <li><code>&lsquo;match_class&rsquo;</code>: string class name of the retrieved match (different from query class).</li>
+        <li><code>&lsquo;score&rsquo;</code>: float cosine similarity between query and match.</li>
+      </ul>
+      Sort the list by <code>&lsquo;score&rsquo;</code> in descending order, so <code>failures[0]</code> is the most confident wrong prediction.
+    </li>
+    <li>Printed output:
+      <ul>
+        <li>Total failure count and total queries run (e.g., &ldquo;4 failures out of 40 queries&rdquo;).</li>
+        <li>Error rate as a percentage.</li>
+        <li>The top 5 most commonly confused class pairs, formatted as: <code>&lsquo;X&rsquo; matched to &lsquo;Y&rsquo; (Nsx)</code>, sorted by frequency descending. Use <code>Counter</code> on the list of <code>(query_class, match_class)</code> tuples from <code>failures</code>.</li>
+      </ul>
+    </li>
+    <li>A 2&times;3 matplotlib figure displaying the highest-confidence failure (<code>failures[0]</code>). Layout:
+      <ul>
+        <li><strong>Row 0 (Query):</strong> original color image, resized grayscale, HOG visualization from <code>hog_visuals</code>.</li>
+        <li><strong>Row 1 (Retrieved Match):</strong> original color image, resized grayscale, HOG visualization from <code>hog_visuals</code>.</li>
+      </ul>
+      Titles: <code>&lsquo;Query: {query_class}&rsquo;</code>, <code>&lsquo;Grayscale (query)&rsquo;</code>, <code>&lsquo;HOG (query)&rsquo;</code> and similarly for row 1. Figure supertitle: <code>&lsquo;Failure: {query_class} → {match_class} (score: {score:.3f})&rsquo;</code>.
+    </li>
+  </ul>
+
+  <p><strong>Notes:</strong> Loop over <code>range(min(40, len(images)))</code>. For each query, call <code>find_similar(q_idx, n=1)</code> to get only the top match. Check if <code>img_names[retrieved_idx] != img_names[q_idx]</code> to detect failure. To display the grayscale: <code>rgb2gray(transform.resize(np.array(images[idx]), (TARGET_SIZE, TARGET_SIZE), anti_aliasing=True))</code>. If <code>failures</code> is empty (no mistakes found), print &ldquo;No failures detected&rdquo; and skip the figure.</p>
+</div>
+
+<div class="tip">
+  <strong>Markdown cell:</strong> Look at the HOG visualizations for the failure pair. The gradient maps likely look similar even though the objects are different. Describe specifically what edge pattern HOG detected in both images. What would a feature extractor need to represent in order to tell them apart?
+</div>
+
+<!-- ==================== PART 4: ANALYSIS ==================== -->
+<h2>Part 4: What HOG Knows and Doesn&rsquo;t Know</h2>
+
+<!-- CELL 8 -->
+<pre># Cell 8: Compare retrieval accuracy across classes</pre>
+<div class="section-card">
+  <p><strong>What it does:</strong> Runs top-1 retrieval on every image in the full dataset, tracks per-class success rate, and prints a summary table with an ASCII bar chart.</p>
+
+  <p><strong>Takes in:</strong> <code>images</code>, <code>img_names</code>, <code>find_similar</code>, <code>defaultdict</code> (from Cells 1&ndash;6).</p>
+
+  <p><strong>Must produce:</strong></p>
+  <ul>
+    <li><code>class_correct</code>: a <code>defaultdict(lambda: {&lsquo;correct&rsquo;: 0, &lsquo;total&rsquo;: 0})</code> where keys are class names. Each value is a dict with keys <code>&lsquo;correct&rsquo;</code> (count of images whose top-1 match was same class) and <code>&lsquo;total&rsquo;</code> (total images in that class queried).</li>
+    <li><code>sorted_classes</code>: a list of <code>(class_name, counts_dict)</code> tuples, sorted by per-class top-1 accuracy in descending order. Compute accuracy as <code>counts_dict[&lsquo;correct&rsquo;] / counts_dict[&lsquo;total&rsquo;]</code>.</li>
+    <li><code>best_cls</code>: string, the class name from <code>sorted_classes[0][0]</code> (highest accuracy).</li>
+    <li><code>worst_cls</code>: string, the class name from <code>sorted_classes[-1][0]</code> (lowest accuracy).</li>
+    <li>Printed table with one row per class:
+      <ul>
+        <li>Class name, left-aligned in a 16-character column.</li>
+        <li>Accuracy as a percentage (e.g., &ldquo;80%&rdquo;).</li>
+        <li>An ASCII bar using the Unicode block character &block; (<code>&lsquo;\u2588&rsquo;</code>), scaled so 100% accuracy = 20 blocks. E.g., 80% = 16 blocks.</li>
+      </ul>
+      After the table, print one line: <code>&ldquo;Best: {best_cls}&rdquo;</code> and another: <code>&ldquo;Worst: {worst_cls}&rdquo;.
+    </li>
+  </ul>
+
+  <p><strong>Notes:</strong> Loop over <code>range(len(images))</code> to test every image (unlike Cell 7, which uses only the first 40). For each query index <code>q_idx</code>, call <code>find_similar(q_idx, n=1)</code> and compare <code>img_names[top_indices[0]]</code> to <code>img_names[q_idx]</code>. Increment <code>class_correct[img_names[q_idx]][&lsquo;total&rsquo;]</code> and conditionally <code>[&lsquo;correct&rsquo;]</code>. To print the bar: <code>&lsquo;\u2588&rsquo; * int(accuracy * 20)</code>.</p>
+</div>
+
+<div class="tip">
+  <strong>Markdown cell 1: Why some classes are easier:</strong> Look at the per-class accuracy. Which class does HOG retrieve most reliably? Which does it confuse most often? What visual property makes the easy class easy and the hard class hard? Think about the edge structure of each category.
+</div>
+
+<div class="tip">
+  <strong>Markdown cell 2: What HOG cannot represent:</strong> HOG captures local gradient orientations. List three types of visual information that HOG cannot represent. For each, give a specific example of a retrieval failure it would cause.
+</div>
+
+<div class="tip">
+  <strong>Markdown cell 3: What comes next:</strong> Based on HOG&rsquo;s failures, describe in one sentence what a better image feature would need to capture. You do not need to know how to build it. Just describe what it would need to <em>know</em>. You will find out next week whether your intuition is right.
+</div>
+
+<!-- ========== BONUS ========== -->
+<h2>Bonus (10 extra credit points; see note above)</h2>
+
+<p>Experiment with the HOG parameters and measure the effect on retrieval accuracy.</p>
+
+<pre># Bonus Cell: HOG parameter experiments</pre>
+<div class="section-card">
+  <p><strong>What it does:</strong> Tests multiple HOG parameter combinations, computes error rates for each variant, and prints a comparison table showing how parameter choices affect dimensionality and retrieval accuracy.</p>
+
+  <p><strong>Takes in:</strong> <code>images</code>, <code>img_names</code>, <code>TARGET_SIZE</code>, <code>image_to_hog</code>, <code>hog</code>, <code>rgb2gray</code>, <code>transform</code>, plus the original <code>find_similar</code> function (from Cells 1&ndash;6).</p>
+
+  <p><strong>Must produce:</strong></p>
+  <ul>
+    <li><code>compute_hog_variant(orientations, pixels_per_cell, cells_per_block)</code>: a function that takes three HOG parameters and returns a new HOG feature matrix (shape <code>(n_images, n_features)</code>) computed with those parameters. Use the same resizing, grayscaling, and image list as Cell 3, but swap the three parameters.</li>
+    <li><code>error_rate(hog_matrix_variant)</code>: a function that takes a HOG matrix, redefines <code>find_similar</code> internally to use this matrix, runs retrieval on the first 40 images, and returns the top-1 error rate as a float (e.g., 0.15 for 15% error).</li>
+    <li>A printed table comparing parameter variants. Rows should include:
+      <ul>
+        <li><strong>Baseline:</strong> <code>orientations=8, pixels_per_cell=(8, 8), cells_per_block=(2, 2)</code>.</li>
+        <li><strong>16 orientations:</strong> <code>orientations=16</code>, rest baseline.</li>
+        <li><strong>Fine cells:</strong> <code>pixels_per_cell=(4, 4)</code>, rest baseline.</li>
+        <li><strong>Coarse cells:</strong> <code>pixels_per_cell=(16, 16)</code>, rest baseline.</li>
+        <li><strong>No normalization:</strong> <code>cells_per_block=(1, 1)</code>, rest baseline.</li>
+      </ul>
+      Columns: parameter description, feature vector length (shape[1] of the resulting matrix), error rate as a percentage.
+    </li>
+  </ul>
+
+  <p><strong>Notes:</strong> Do not update the global <code>hog_matrix</code> or <code>find_similar</code>. Define variants in local variables only. The feature vector length varies with <code>pixels_per_cell</code> and <code>cells_per_block</code> because they control the number of spatial cells in the image, which changes the descriptor size. Include the feature length in your table so you can analyze the accuracy&ndash;dimensionality trade-off.</p>
+</div>
+
+<!-- ========== PRESENTATION PREP ========== -->
+<h2>Presentation Prep</h2>
+
+<div class="section-card">
+  <p>Your notebook is your presentation. There is no separate written reflection. Your presentation serves as the reflection.</p>
+  <p>In three to five minutes, walk the class through:</p>
+  <p data-concurrent="true" style="font-size:0.9em; color:#5e35b1;"><strong>Dual-enrolled students:</strong> Your presentation covers both the CV and NLP labs in one 5&ndash;7 minute presentation. See the combined lab for guidance.</p>
+  <ol>
+    <li><strong>What HOG sees:</strong> Show the original &rarr; grayscale &rarr; HOG visualization for one interesting image from Cell 4. Explain in plain language what the gradient map is showing.</li>
+    <li><strong>Your best failure:</strong> Show the failure pair from Cell 7. Walk through the HOG visualizations side by side and explain specifically what edge pattern fooled the descriptor.</li>
+    <li><strong>Per-class results:</strong> Show the accuracy table from Cell 8. Which class was hardest? Connect its visual properties to why HOG struggles with it. What would a better feature need to capture?</li>
+  </ol>
+  <p>See the assignment sheet for submission details and the rubric.</p>
+</div>
+
+<!-- ========== BRIDGE BOX ========== -->
+<div class="bridge-box" data-concurrent="true">
+  <strong>Taking AIML 2003 too?</strong> This week, NLP students built TF-IDF feature vectors for text and found where word-frequency features fail. HOG and TF-IDF are both hand-engineered extractors that encode local patterns and discard context. If you&rsquo;re doing the combined lab, you&rsquo;re building both pipelines in one notebook and presenting the parallel. See the combined lab sheet for instructions.
+</div>
+
+</body>
+</html>

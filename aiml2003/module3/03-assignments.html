@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Module 3 Deliverables: Learned Embeddings (NLP) | AIML 2003</title>
+<link rel="stylesheet" href="../../course-styles.css">
+</head>
+<body>
+
+<h1>Module 3 Deliverables: Learned Embeddings</h1>
+<p class="subtitle">AIML 2003: Introduction to Natural Language Processing</p>
+<div class="due-banner">All deliverables due: By Tuesday, April 14 (by class time).</div>
+
+<!-- ========== OVERVIEW ========== -->
+<div class="overview-card">
+  <strong>This week you will submit three things:</strong>
+  <table class="overview-table" style="margin-top: 0.75rem;">
+    <thead>
+      <tr>
+        <th>Deliverable</th>
+        <th>Type</th>
+        <th>Weight</th>
+        <th>Where</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Module 3 Lab: Sentence Embeddings &amp; Semantic Search</td>
+        <td>Colab notebook via GitHub</td>
+        <td>Repos (25%)</td>
+        <td>GitHub + link in Canvas</td>
+      </tr>
+      <tr>
+        <td>Module 3 Demo</td>
+        <td>3&ndash;5 minute live demo</td>
+        <td>Demos (25%)</td>
+        <td>In class, Tuesday April 14</td>
+      </tr>
+      <tr>
+        <td>Ethics Discussion</td>
+        <td>Discussion post</td>
+        <td>Participation (20%)</td>
+        <td>Canvas Discussion</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- =====================================================================
+     DELIVERABLE 1: LAB
+     ===================================================================== -->
+<h2>Deliverable 1: Module 3 Lab <span class="tag tag-lab">Lab</span></h2>
+
+<div class="section-card">
+  <h3>Overview</h3>
+  <p>In the readings and in class, you learned that sentence transformers encode entire sentences as dense vectors, placing semantically similar sentences close together in 384-dimensional space regardless of surface-level word overlap. This lab puts that into practice. You'll generate embeddings for a dataset of sentences using <code>all-MiniLM-L6-v2</code>, build a semantic search system using cosine similarity, compare it directly against your Module 2 TF-IDF baseline, and use t-SNE to visualize what the embedding space actually looks like.</p>
+  <p>The comparison with Module 2 is the point. TF-IDF can't recognize that "I loved it" and "absolutely fantastic film" belong together; the embedding model can. Finding where the improvement is real, and finding where it isn't, is what the lab is about.</p>
+
+  <h3>About This Lab</h3>
+  <p>This lab has no code scaffold. You write every cell yourself, using an LLM to help you generate the implementation. The lab sheet gives you specification boxes: each one tells you exactly what a cell must do, what it takes in, and what it must produce. Your job is to give those specifications to Gemini (or another LLM) and turn the output into working code.</p>
+  <p>For each code cell you generate, include a markdown cell documenting the prompt you used and one sentence describing any fix you had to make. This process is the core skill of the module.</p>
+
+  <h3>What to Submit</h3>
+  <ul>
+    <li>A completed Colab notebook (<code>.ipynb</code>) saved to your GitHub repo at <code>week4/lab3_embeddings.ipynb</code>.</li>
+    <li>All cells executed with visible outputs (don't clear outputs; I need to see your results).</li>
+    <li>Each code cell preceded by a markdown cell with your prompt and fix note.</li>
+    <li>No API keys or secrets anywhere in the notebook.</li>
+    <li>Submit the GitHub link in Canvas. The notebook in GitHub IS your submission — if it's not in the repo, it doesn't exist for grading.</li>
+  </ul>
+</div>
+
+<div class="tip">
+  <strong>Start this in Thursday lab.</strong> We'll work through the embedding pipeline together: loading the model, generating vectors, building the similarity search. Come with the readings done so you already know what a sentence transformer is doing before you write the first cell.
+</div>
+
+<div class="rubric-section">
+  <h4>Repository Rubric (Summary)</h4>
+  <p style="font-size:0.85rem; margin-bottom:0.75rem;">100 points possible. Each criterion is scored on a 4-level scale (Full Credit &rarr; No Credit). <a href="https://rose.instructure.com/courses/26943/rubrics/66034" target="_blank"><strong>View the full rubric with detailed scoring &rarr;</strong></a></p>
+  <p style="font-size:0.85rem; color: var(--muted); margin-bottom:0.75rem;">Criteria marked <strong>WEEKLY</strong> change per assignment; criteria marked <strong>STANDARD</strong> stay the same all semester.</p>
+  <table class="rubric-table">
+    <thead>
+      <tr><th style="width:30%">Criterion</th><th style="width:10%">Points</th><th style="width:10%">Type</th><th>Description</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Notebook Runs</td><td>/25</td><td>STANDARD</td><td>Notebook is in the correct week folder. Cells execute top-to-bottom without errors. All outputs visible.</td></tr>
+      <tr style="background:#fff3e0;"><td>Task Requirements</td><td>/40</td><td>WEEKLY</td><td><strong>This week:</strong>
+        <ul style="margin: 0.4rem 0 0 1rem; padding: 0;">
+          <li>Sentence embeddings generated using <code>all-MiniLM-L6-v2</code>.</li>
+          <li>Cosine similarity search implemented and demonstrated on at least one query.</li>
+          <li>Direct comparison against TF-IDF baseline on the same queries (minimum 3 examples).</li>
+          <li>t-SNE visualization of the embedding space with at least one cluster identified and explained.</li>
+          <li>Prompt documentation: one markdown cell per code cell with the prompt used and a one-sentence fix note.</li>
+        </ul></td></tr>
+      <tr><td>Reflection</td><td>/20</td><td>STANDARD</td><td>200&ndash;400 words. Connects results to the readings. Addresses what worked, what didn't, and what you'd change.</td></tr>
+      <tr><td>Repo Hygiene</td><td>/15</td><td>STANDARD</td><td>No active (unrevoked) secrets. README updated. Descriptive commit message. Files in the right folder.</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<hr>
+
+<!-- =====================================================================
+     DELIVERABLE 3: DEMO
+     ===================================================================== -->
+<h2>Deliverable 2: Module 3 Demo <span class="tag tag-demo">Demo</span></h2>
+
+<div class="section-card">
+  <h3>Overview</h3>
+  <p>A <strong>three- to five-minute</strong> live demo during Tuesday's class (April 14, 5:30 PM). Your notebook is your demo — no separate slides required. Walk the class through your results, make a live modification, and explain what changed.</p>
+
+  <h3>What to Cover</h3>
+  <p>In three to five minutes, walk the class through a live demonstration:</p>
+  <ol>
+    <li><strong>The win:</strong> Show one query where semantic search found genuinely similar sentences that TF-IDF missed. Navigate to that cell in your notebook and explain why the embedding model got it right.</li>
+    <li><strong>The t-SNE plot:</strong> Show your visualization and point to one cluster that surprised you. Explain what the model considers "similar" that you wouldn't have expected.</li>
+    <li><strong>Live modification:</strong> Change a query or a parameter, run the cell live, and explain what changed and why. This is the core of the demo — don't skip it.</li>
+    <li><strong>Your takeaway:</strong> Based on your results, what does the shift from TF-IDF to embeddings actually buy you, and what does it cost?</li>
+  </ol>
+
+  <h3>Format</h3>
+  <p>Share your screen and run your notebook live. If you attend via Zoom, be prepared to share your screen and have your notebook open and ready to run.</p>
+
+  <div class="tip">
+    <strong>Tip:</strong> The t-SNE plot is usually the most interesting visual. Spend time with it before class and find something worth pointing to. A cluster that makes sense is less interesting than one that doesn't.
+  </div>
+</div>
+
+<div class="rubric-section">
+  <h4>Demo Rubric (Summary)</h4>
+  <p style="font-size:0.85rem; margin-bottom:0.75rem;">100 points possible. Each criterion is scored on a 4-level scale (Full Credit &rarr; No Credit). <a href="https://rose.instructure.com/courses/26943/rubrics/65794" target="_blank"><strong>View the full rubric with detailed scoring &rarr;</strong></a></p>
+  <table class="rubric-table">
+    <thead>
+      <tr><th style="width:35%">Criterion</th><th style="width:12%">Points</th><th>What I'm Looking For</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Live Demo</td><td>25</td><td>Notebook runs cleanly. You navigate to your results and explain what you see.</td></tr>
+      <tr><td>Explanation of Approach</td><td>25</td><td>You explain what the embedding model does and why your implementation choices make sense.</td></tr>
+      <tr><td>Baseline Comparison</td><td>25</td><td>You show and explain where embeddings outperform TF-IDF — and where they don't.</td></tr>
+      <tr><td>Live Modification</td><td>25</td><td>You change a query or parameter live, run the cell, and explain what changed and why.</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<hr>
+
+<!-- ========== COMBINED ASSIGNMENT NOTE ========== -->
+<div class="bridge-box" data-concurrent="true">
+  <strong>Taking AIML 2013 (Computer Vision) too?</strong>
+  <p>A combined lab is available: <a href="lab3-combined-embeddings.html">How Machines Represent Text and Images</a>. It covers both sentence embeddings (NLP) and image embeddings (CV) in one notebook. You submit the same GitHub URL to both courses. If you do the combined lab, it replaces the individual NLP lab. Do not submit both. Your demo this week is also combined: plan for 5&ndash;7 minutes instead of 3&ndash;5 to cover both domains.</p>
+</div>
+
+<hr>
+
+<!-- =====================================================================
+     DELIVERABLE 3: ETHICS DISCUSSION
+     ===================================================================== -->
+<h2>Deliverable 3: Ethics Discussion <span class="tag tag-ethics">Ethics</span></h2>
+
+<div class="section-card">
+  <h3>Overview</h3>
+  <p>Complete the ethics discussion thread for this module. The full prompt and context are on the <a href="04-ethics.html">Ethics Thread page</a> in this module.</p>
+
+  <h3>Requirements</h3>
+  <ul>
+    <li>Initial post: 150&ndash;250 words. Take a position: don&rsquo;t just summarize the question.</li>
+    <li>Reply to a classmate: at least one substantive reply (not just &ldquo;I agree&rdquo;).</li>
+    <li>Initial post due by Tuesday class (April 14). Reply due by the following Tuesday class (April 21).</li>
+  </ul>
+  <p style="margin-top:0.75rem; font-size:0.9rem; color:var(--muted);">The ethics discussion is worth 20% of your weekly Participation grade. Whether you attend in person or via Zoom, this post is required every week.</p>
+</div>
+
+<!-- ========== SUBMISSION CHECKLIST ========== -->
+<div class="overview-card" style="margin-top:1.5rem;">
+  <strong>Submission Checklist</strong>
+  <ul>
+    <li>Module 3 Lab notebook runs cleanly top-to-bottom with all outputs visible</li>
+    <li>Each code cell has a preceding markdown cell with your LLM prompt and fix note</li>
+    <li>No API keys exposed in any committed file</li>
+    <li>Notebook saved to GitHub at <code>week4/lab3_embeddings.ipynb</code></li>
+    <li>README updated to reflect Module 3 contents</li>
+    <li>GitHub repo link submitted in Canvas</li>
+    <li>Demo prepared and notebook ready to run for Tuesday class (April 14)</li>
+    <li>Ethics discussion post submitted in Canvas by Tuesday class (April 14)</li>
+  </ul>
+</div>
+
+<div class="warning" style="margin-top:1.5rem;">
+  <strong>Reminder:</strong> If it's not in your GitHub repo, it doesn't exist for grading. Save your final work before the deadline.
+</div>
+
+<div class="tip" style="margin-top: 1rem;">
+  <strong>Need help?</strong> Start your work during Thursday lab (April 9, Zoom, 6:00 PM): that's what lab time is for. If you get stuck after lab, email me before the weekend so I can help. Don't wait until Monday night.
+</div>
+
+</body>
+</html>

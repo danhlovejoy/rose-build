@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Getting Started with NotebookLM | AIML 2003</title>
+<link rel="stylesheet" href="../../course-styles.css">
+</head>
+<body>
+
+<h1>Getting Started with NotebookLM</h1>
+<p class="subtitle">AIML 2003: Setup Guide. Your AI-powered research and study tool</p>
+
+<p class="intro">NotebookLM is a free tool from Google that lets you upload documents, articles, videos, and other sources, then ask an AI questions grounded in that material. Unlike a general chatbot, NotebookLM only answers based on the sources you give it, which makes it far less likely to hallucinate. We'll use it throughout this course as a study companion and research tool.</p>
+
+<!-- ========== WHAT IT DOES ========== -->
+<h2>What NotebookLM Does</h2>
+
+<p>Think of NotebookLM as a personal research assistant that has read exactly the documents you care about and nothing else. You upload sources, and then you can:</p>
+<ul>
+  <li><strong>Ask questions</strong> about your sources and get answers with citations pointing to the exact passage.</li>
+  <li><strong>Generate summaries</strong> of long documents or across multiple sources at once.</li>
+  <li><strong>Create study guides, outlines, and FAQs</strong> from your material.</li>
+  <li><strong>Generate Audio Overviews:</strong> NotebookLM turns your sources into a podcast-style audio discussion, so you can review material on the go.</li>
+  <li><strong>Discover connections</strong> between ideas across different sources that you might not have noticed.</li>
+</ul>
+
+<!-- ========== GETTING SET UP ========== -->
+<h2>Setting Up NotebookLM</h2>
+
+<div class="step">
+  <span class="step-number">1</span>
+  <p class="step-title">Go to NotebookLM</p>
+  <p>Navigate to <a href="https://notebooklm.google.com" target="_blank">notebooklm.google.com</a> and sign in with your Google account (the same one you use for Colab).</p>
+</div>
+
+<div class="step">
+  <span class="step-number">2</span>
+  <p class="step-title">Create a new notebook</p>
+  <p>Click <strong>Create new</strong>. Give it a descriptive name; for example, "AIML 2003: Week 1." You'll likely want a separate notebook for each week or topic so your sources stay organized.</p>
+</div>
+
+<div class="step">
+  <span class="step-number">3</span>
+  <p class="step-title">Add your first sources</p>
+  <p>You'll immediately see a prompt to add sources. Click <strong>Upload source</strong> and choose from the options below. You can add up to <strong>50 sources</strong> per notebook on the free tier.</p>
+</div>
+
+<!-- ========== SUPPORTED SOURCES ========== -->
+<h2>What You Can Upload</h2>
+
+<div class="source-grid">
+  <div class="source-item">
+    <strong>PDFs</strong>
+    Upload research papers, textbook chapters, or any PDF document. Up to 200 MB per file.
+  </div>
+  <div class="source-item">
+    <strong>Google Docs</strong>
+    Link directly from your Google Drive. The content stays synced.
+  </div>
+  <div class="source-item">
+    <strong>Google Slides:</strong>
+    Upload presentation decks as a source. NotebookLM reads the text from every slide.
+  </div>
+  <div class="source-item">
+    <strong>Web URLs</strong>
+    Paste a link to any public web page. NotebookLM reads the text content. Paywalled pages won't work.
+  </div>
+  <div class="source-item">
+    <strong>YouTube Videos</strong>
+    Paste a YouTube URL. NotebookLM imports the transcript (auto-generated or uploaded captions). The video must be public.
+  </div>
+  <div class="source-item">
+    <strong>Text &amp; Markdown</strong>
+    Upload <code>.txt</code> or <code>.md</code> files, or copy-paste text directly.
+  </div>
+  <div class="source-item">
+    <strong>Audio Files</strong>
+    Upload MP3, WAV, and other audio formats. NotebookLM transcribes them automatically.
+  </div>
+  <div class="source-item">
+    <strong>Google Sheets</strong>
+    Link a spreadsheet as a source for data-grounded questions.
+  </div>
+</div>
+
+<!-- ========== USING IT ========== -->
+<h2>Asking Questions &amp; Generating Content</h2>
+
+<div class="step">
+  <span class="step-number">4</span>
+  <p class="step-title">Ask a question in the chat panel</p>
+  <p>Once your sources are loaded, you'll see a chat panel on the right. NotebookLM will automatically generate a summary and suggest some starting questions. You can also type your own. For example:</p>
+  <ul>
+    <li>"What is the attention mechanism and why is it important?"</li>
+    <li>"Summarize the key differences between pretraining and fine-tuning."</li>
+    <li>"What does Karpathy say about hallucination?"</li>
+  </ul>
+  <p>NotebookLM will answer based on your sources and include <strong>numbered citations</strong> that link back to the exact passage. Click a citation to jump to that spot in the source.</p>
+</div>
+
+<div class="step">
+  <span class="step-number">5</span>
+  <p class="step-title">Use the built-in generation tools</p>
+  <p>Look for the generation options in the notebook (these may appear as buttons or in a menu, depending on the interface version):</p>
+  <ul>
+    <li><strong>Study Guide:</strong> Generates a structured study guide from your sources with key concepts and review questions.</li>
+    <li><strong>Briefing Doc:</strong> Creates a concise summary document pulling from all your sources.</li>
+    <li><strong>FAQ:</strong> Auto-generates frequently asked questions and answers from your material.</li>
+    <li><strong>Timeline:</strong> Extracts events in chronological order (useful for history-heavy topics).</li>
+    <li><strong>Table of Contents:</strong> Outlines the structure of your sources.</li>
+  </ul>
+</div>
+
+<div class="step">
+  <span class="step-number">6</span>
+  <p class="step-title">Generate an Audio Overview</p>
+  <p>Click <strong>Audio Overview</strong> (or "Generate audio") and NotebookLM will create a podcast-style conversation between two AI voices discussing your sources. It takes a few minutes to generate. Once ready, you can listen anywhere: during your commute, at the gym, while cooking.</p>
+  <p>The audio often surfaces connections between your sources that you'd miss by reading alone.</p>
+</div>
+
+<div class="tip">
+  <strong>Pro tip:</strong> Before generating an Audio Overview, you can add a prompt to guide the discussion. For example: "Focus on comparing zero-shot and few-shot prompting and explain why few-shot works better for ambiguous tasks." This steers the conversation toward what matters most for your study goals.
+</div>
+
+<!-- ========== HOW WE'LL USE IT ========== -->
+<h2>How We'll Use NotebookLM in This Course</h2>
+
+<div class="use-case">
+  <strong>Study companion for weekly readings.</strong> Each week, upload the assigned readings and videos into a notebook. Then ask it questions to test your understanding before class. This is especially effective for the Karpathy and 3Blue1Brown videos: upload the YouTube URLs and ask NotebookLM to explain specific concepts in different ways.
+</div>
+
+<div class="use-case">
+  <strong>Research tool for presentations.</strong> When preparing your 3&ndash;5 minute weekly presentation, upload your lab notebook and readings into NotebookLM. Ask it to help you identify the most interesting finding or to explain a concept you want to present more clearly.
+</div>
+
+<div class="use-case">
+  <strong>Lab companion.</strong> Upload the assignment sheet and any reference documentation. If you get stuck on a concept during the lab, ask NotebookLM rather than searching the whole internet; it will answer from the material you know is reliable.
+</div>
+
+<div class="use-case">
+  <strong>End-of-course portfolio prep.</strong> In Week 8, you can create a master notebook with all your lab notebooks and reflections. Use it to generate a full review of everything you learned, which becomes the foundation for your final reflection and portfolio presentation.
+</div>
+
+<!-- ========== TIPS ========== -->
+<h2>Tips for Getting the Most Out of NotebookLM</h2>
+
+<div class="step">
+  <p class="step-title">Be specific with your questions</p>
+  <p>"Tell me about transformers" will get you a generic summary. "According to the 3Blue1Brown video, what specific problem does the attention mechanism solve that earlier architectures couldn't?" will get you a targeted, cited answer. The more specific your question, the better the response.</p>
+</div>
+
+<div class="step">
+  <p class="step-title">Use it to prepare for class discussions</p>
+  <p>Upload the week's materials, then ask NotebookLM the same discussion questions listed on the Welcome page. Compare its answer to your own thinking. Where do you agree? Where would you push back? This is excellent preparation.</p>
+</div>
+
+<div class="step">
+  <p class="step-title">Keep notebooks focused</p>
+  <p>A notebook works best when the sources are related. "AIML 2003: Week 2 - Prompt Engineering" is better than "Everything for all my classes." The AI gives more relevant answers when the sources are cohesive.</p>
+</div>
+
+<div class="step">
+  <p class="step-title">Save useful notes</p>
+  <p>When NotebookLM gives you a great explanation, you can save it as a note within the notebook. Build up a collection of notes over the semester. They become a personalized study resource.</p>
+</div>
+
+<!-- ========== PRIVACY NOTE ========== -->
+<h2>A Note on Privacy</h2>
+
+<div class="warning">
+  <strong>Reminder:</strong> Do not upload anything containing your school login credentials, API keys, or personal sensitive information into NotebookLM (or any AI tool). Upload course materials, readings, and your own notes &mdash; not passwords or personal data. Review the course GenAI policy in the syllabus.
+</div>
+
+<!-- ========== TRY IT NOW ========== -->
+<h2>Try It Right Now</h2>
+
+<div class="info-box">
+  <p><strong>Quick exercise (5 minutes):</strong></p>
+  <ol>
+    <li>Go to <a href="https://notebooklm.google.com" target="_blank">notebooklm.google.com</a> and create a new notebook called "AIML 2003: Week 1."</li>
+    <li>Add the Karpathy video as a source by pasting this URL: <code>https://youtube.com/watch?v=zjkBMFhNj_g</code></li>
+    <li>Add the 3Blue1Brown video: <code>https://youtube.com/watch?v=wjZofJX0v4M</code></li>
+    <li>Once both are loaded, ask: "What is the attention mechanism and why does it matter?"</li>
+    <li>Check the citations. Click one to see exactly where in the transcript the answer came from.</li>
+    <li>Try generating an Audio Overview and listen to it later.</li>
+  </ol>
+</div>
+
+<!-- ========== FAQ ========== -->
+<h2>Common Questions</h2>
+
+<div class="faq">
+  <p class="faq-q">Is NotebookLM free?</p>
+  <p class="faq-a">Yes. The free tier gives you up to 50 sources per notebook, which is plenty for this course. There are paid tiers with higher limits, but you won't need them.</p>
+</div>
+
+<div class="faq">
+  <p class="faq-q">Does NotebookLM use my uploads to train its models?</p>
+  <p class="faq-a">According to Google, your personal data in NotebookLM is not used to train their AI models. However, always follow the course GenAI policy: don't upload anything you wouldn't want to be public.</p>
+</div>
+
+<div class="faq">
+  <p class="faq-q">Can it access information beyond my sources?</p>
+  <p class="faq-a">No. NotebookLM only answers from the sources you upload, which is what makes it more reliable than a general chatbot for studying specific material. If the answer isn't in your sources, it will tell you.</p>
+</div>
+
+<div class="faq">
+  <p class="faq-q">How is this different from just using ChatGPT or Gemini?</p>
+  <p class="faq-a">General chatbots draw from their entire training data and can hallucinate freely. NotebookLM is grounded in your specific sources and cites its answers. When you need to study particular readings or papers, NotebookLM is the better tool. When you need general knowledge or creative brainstorming, a general chatbot may be more useful.</p>
+</div>
+
+<div class="faq">
+  <p class="faq-q">Can I share a notebook with classmates?</p>
+  <p class="faq-a">Yes, NotebookLM supports sharing. But for this course, build your own notebooks; the act of choosing sources and formulating questions is part of the learning.</p>
+</div>
+
+</body>
+</html>

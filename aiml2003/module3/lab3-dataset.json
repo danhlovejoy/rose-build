@@ -1,0 +1,278 @@
+{
+  "_description": "Curated text dataset for AIML 2003 Module 3: Text Embeddings lab. 60 texts across 4 categories (15 each) plus 5 cross-category edge cases for failure analysis.",
+  "_categories": ["technology", "sports", "cooking", "travel"],
+
+  "texts": [
+    {
+      "text": "The new chip uses a 3-nanometer process, which means more transistors in the same space and better power efficiency for mobile devices.",
+      "category": "technology"
+    },
+    {
+      "text": "Version control saves every change you make to your code, so you can always roll back if something breaks after an update.",
+      "category": "technology"
+    },
+    {
+      "text": "The phone's battery lasts two full days because the screen only refreshes at 60Hz when displaying static content.",
+      "category": "technology"
+    },
+    {
+      "text": "Open-source contributors fixed a critical security vulnerability in the library within six hours of the initial report.",
+      "category": "technology"
+    },
+    {
+      "text": "Cloud storage means your files exist on servers in a data center somewhere, not physically on your laptop.",
+      "category": "technology"
+    },
+    {
+      "text": "The keyboard uses mechanical switches that register a keypress halfway through the travel, so you don't have to bottom out each key.",
+      "category": "technology"
+    },
+    {
+      "text": "Noise-canceling headphones use tiny microphones to sample outside sound and generate an inverse wave that cancels it out.",
+      "category": "technology"
+    },
+    {
+      "text": "The router broadcasts on both 2.4 GHz and 5 GHz bands. The lower frequency carries farther but the higher one moves data faster.",
+      "category": "technology"
+    },
+    {
+      "text": "Solid-state drives have no moving parts, which makes them faster and more durable than traditional spinning hard drives.",
+      "category": "technology"
+    },
+    {
+      "text": "Two-factor authentication adds a second step beyond your password, usually a code sent to your phone, to prove you are who you say you are.",
+      "category": "technology"
+    },
+    {
+      "text": "The compiler translates human-readable code into machine instructions that the processor can execute directly.",
+      "category": "technology"
+    },
+    {
+      "text": "E-ink displays reflect ambient light like paper instead of emitting their own, which is why e-readers are comfortable to read in direct sunlight.",
+      "category": "technology"
+    },
+    {
+      "text": "Containerization packages an application with all its dependencies so it runs the same way on every machine, from a developer's laptop to a production server.",
+      "category": "technology"
+    },
+    {
+      "text": "The graphics card renders frames by calculating the color of millions of pixels sixty times per second.",
+      "category": "technology"
+    },
+    {
+      "text": "Bluetooth Low Energy uses a fraction of the power of classic Bluetooth, which is why fitness trackers can run for weeks on a tiny battery.",
+      "category": "technology"
+    },
+
+    {
+      "text": "She crossed the finish line with a personal best of 10.87 seconds, shaving a full tenth off her previous record.",
+      "category": "sports"
+    },
+    {
+      "text": "The goalkeeper read the penalty kick early, diving left before the striker's foot made contact with the ball.",
+      "category": "sports"
+    },
+    {
+      "text": "Free throws are the only uncontested shots in basketball, and yet league-wide accuracy has hovered around 77 percent for decades.",
+      "category": "sports"
+    },
+    {
+      "text": "The cycling team used a rotating pace line to share wind resistance across all eight riders over the 200-kilometer stage.",
+      "category": "sports"
+    },
+    {
+      "text": "A tennis serve that lands in the corner of the service box gives the opponent less than half a second to react.",
+      "category": "sports"
+    },
+    {
+      "text": "The referee awarded a red card after reviewing the tackle on the sideline monitor, overturning the original yellow.",
+      "category": "sports"
+    },
+    {
+      "text": "Marathon runners hit the wall around kilometer 32 when glycogen reserves run out and the body switches to burning fat.",
+      "category": "sports"
+    },
+    {
+      "text": "The pitcher's fastball registered 98 miles per hour on the stadium radar gun, but his slider was the pitch that struck out the side.",
+      "category": "sports"
+    },
+    {
+      "text": "Olympic swimmers shave their entire bodies before competition because even fine hair creates measurable drag in the water.",
+      "category": "sports"
+    },
+    {
+      "text": "The defensive line shifted to a 3-4 formation in the second half, which pressured the quarterback into three consecutive incomplete passes.",
+      "category": "sports"
+    },
+    {
+      "text": "Rock climbers chalk their hands to absorb moisture and improve grip on small holds, especially during long routes in warm conditions.",
+      "category": "sports"
+    },
+    {
+      "text": "The ice hockey team pulled their goalie with two minutes left, adding an extra skater to push for the tying goal.",
+      "category": "sports"
+    },
+    {
+      "text": "A regulation soccer match is 90 minutes, but professional players only have the ball for an average of two minutes total.",
+      "category": "sports"
+    },
+    {
+      "text": "Weightlifters wear flat-soled shoes because a raised heel shifts balance forward and reduces power transfer through the floor.",
+      "category": "sports"
+    },
+    {
+      "text": "The rowing crew synchronized their stroke rate at 36 per minute for the final 500 meters, gaining half a boat length on the leaders.",
+      "category": "sports"
+    },
+
+    {
+      "text": "Caramelization starts around 170 degrees Celsius, when sugar molecules break apart and reform into hundreds of new flavor compounds.",
+      "category": "cooking"
+    },
+    {
+      "text": "A sharp knife is safer than a dull one because it requires less force, giving you more control over each cut.",
+      "category": "cooking"
+    },
+    {
+      "text": "Resting a steak for five minutes after cooking lets the juices redistribute, so they stay in the meat instead of pooling on the plate.",
+      "category": "cooking"
+    },
+    {
+      "text": "Sourdough bread relies on wild yeast captured from the air rather than commercial packets, which is why every starter tastes slightly different.",
+      "category": "cooking"
+    },
+    {
+      "text": "Deglazing the pan with wine lifts the caramelized bits from the bottom, turning them into the foundation of a rich sauce.",
+      "category": "cooking"
+    },
+    {
+      "text": "Blind baking means pre-baking a pie crust without filling so it stays crisp when you add a wet filling later.",
+      "category": "cooking"
+    },
+    {
+      "text": "Searing chicken skin-side down in a cold pan lets the fat render slowly, producing a crispier result than starting in hot oil.",
+      "category": "cooking"
+    },
+    {
+      "text": "Kosher salt has larger, flatter crystals than table salt, which makes it easier to pinch and distribute evenly by hand.",
+      "category": "cooking"
+    },
+    {
+      "text": "The Maillard reaction is not caramelization. It happens between amino acids and sugars, and it is responsible for the brown crust on bread and grilled meat.",
+      "category": "cooking"
+    },
+    {
+      "text": "Emulsification binds oil and vinegar into a stable dressing. Mustard acts as the emulsifier by holding the two liquids together.",
+      "category": "cooking"
+    },
+    {
+      "text": "Mise en place means measuring and arranging every ingredient before you start cooking, which prevents scrambling mid-recipe.",
+      "category": "cooking"
+    },
+    {
+      "text": "Blanching vegetables in boiling water for 30 seconds and then plunging them in ice water preserves their bright color and crisp texture.",
+      "category": "cooking"
+    },
+    {
+      "text": "A cast-iron skillet retains heat so well that it keeps cooking food even after you remove it from the burner.",
+      "category": "cooking"
+    },
+    {
+      "text": "The acid in lemon juice cooks raw fish in ceviche by denaturing the proteins, changing the texture without any heat.",
+      "category": "cooking"
+    },
+    {
+      "text": "Bread dough needs time to rise because the yeast produces carbon dioxide gas, which gets trapped in the gluten network and creates air pockets.",
+      "category": "cooking"
+    },
+
+    {
+      "text": "The overnight train from Bangkok to Chiang Mai costs less than a budget flight and arrives in time for breakfast.",
+      "category": "travel"
+    },
+    {
+      "text": "Packing cubes compress clothing into tight bundles that fit together like puzzle pieces, which is how frequent travelers fit a week into a carry-on.",
+      "category": "travel"
+    },
+    {
+      "text": "Jet lag hits harder when you fly east because your body has to advance its clock, which is biologically harder than delaying it.",
+      "category": "travel"
+    },
+    {
+      "text": "The hostel had a rooftop terrace overlooking the old city, and the breakfast was better than some of the restaurants we tried.",
+      "category": "travel"
+    },
+    {
+      "text": "Travel insurance seems expensive until you need emergency medical evacuation from a remote island, which can cost fifty thousand dollars without coverage.",
+      "category": "travel"
+    },
+    {
+      "text": "The ancient aqueduct still stands after two thousand years, its arches carrying water across the valley on the same gravity-fed principle the original engineers intended.",
+      "category": "travel"
+    },
+    {
+      "text": "Currency exchange kiosks at airports charge a 10 to 15 percent markup. Withdrawing from a local ATM with a no-fee card is almost always cheaper.",
+      "category": "travel"
+    },
+    {
+      "text": "The altitude in La Paz sits above 3,600 meters, so most visitors spend their first day moving slowly and drinking coca tea.",
+      "category": "travel"
+    },
+    {
+      "text": "A window seat on the left side of the plane gives you the best view of the Alps on the flight from London to Rome.",
+      "category": "travel"
+    },
+    {
+      "text": "The night market stretched for six blocks, with vendors selling everything from grilled skewers to handmade leather sandals.",
+      "category": "travel"
+    },
+    {
+      "text": "Off-season rates at the resort were 40 percent cheaper than peak summer, and the beaches were nearly empty.",
+      "category": "travel"
+    },
+    {
+      "text": "Learning even five phrases in the local language changes how people respond to you. A greeting and a thank-you go a long way.",
+      "category": "travel"
+    },
+    {
+      "text": "The ferry crossing takes four hours, but the scenery along the fjord makes it feel like the highlight of the trip rather than just transportation.",
+      "category": "travel"
+    },
+    {
+      "text": "Global Entry membership includes TSA PreCheck, so you skip the long security line on domestic flights and the customs line on international arrivals.",
+      "category": "travel"
+    },
+    {
+      "text": "The guidebook recommended a restaurant that closed two years ago, which is why checking recent online reviews matters more than print editions.",
+      "category": "travel"
+    }
+  ],
+
+  "edge_cases": [
+    {
+      "text": "The team's nutritionist designed a meal plan with precise macronutrient ratios to fuel the athletes through their pre-season training camp.",
+      "categories_present": ["sports", "cooking"],
+      "note": "Nutrition bridges sports and cooking. Embeddings will likely place this closer to sports (athlete context) while TF-IDF might split on food vocabulary."
+    },
+    {
+      "text": "The food blog's server crashed after a viral recipe post generated ten million page views in twelve hours.",
+      "categories_present": ["cooking", "technology"],
+      "note": "Server infrastructure meets food content. The dominant nouns pull in different directions."
+    },
+    {
+      "text": "GPS navigation has made it nearly impossible to get genuinely lost, which some backpackers say has taken the adventure out of travel.",
+      "categories_present": ["travel", "technology"],
+      "note": "Technology applied to travel. Embeddings should catch the travel sentiment; TF-IDF may weight 'GPS' and 'navigation' toward technology."
+    },
+    {
+      "text": "The stadium concourse served artisanal tacos and craft beer from a rotating selection of local vendors.",
+      "categories_present": ["sports", "cooking"],
+      "note": "Food at a sporting event. Neither the sports nor the cooking angle dominates."
+    },
+    {
+      "text": "She documented her cycling tour through Tuscany, posting daily photos of hilltop villages and roadside trattoria meals.",
+      "categories_present": ["sports", "travel", "cooking"],
+      "note": "Triple overlap: cycling (sports), Tuscany (travel), trattoria meals (cooking). A genuine edge case for any embedding model."
+    }
+  ]
+}

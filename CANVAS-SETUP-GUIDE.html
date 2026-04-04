@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Canvas Module Setup Guide | AIML 2003: Instructor Reference</title>
+<link rel="stylesheet" href="course-styles.css">
+</head>
+<body>
+
+<h1>Canvas Module Setup Guide</h1>
+<p class="subtitle">Instructor reference. NOT for students. Step-by-step instructions for building Module 1 in Canvas.</p>
+
+<!-- ========== STEP 0 ========== -->
+<h2>Step 0: One-Time Course Setup</h2>
+
+<p>Do these once before building any modules.</p>
+
+<h3>A. Set Up Assignment Groups (for grade weights)</h3>
+<div class="inst">
+  <strong>Canvas path:</strong> Assignments &rarr; top-right gear icon &rarr; Assignment Groups
+</div>
+<p>Create these groups with these weights. This matches your syllabus exactly:</p>
+<table>
+  <thead><tr><th>Group Name</th><th>Weight</th></tr></thead>
+  <tbody>
+    <tr><td>Participation</td><td>20%</td></tr>
+    <tr><td>GitHub Repos</td><td>25%</td></tr>
+    <tr><td>In-Class Presentations</td><td>15%</td></tr>
+    <tr><td>Demos</td><td>25%</td></tr>
+    <tr><td>Final Reflection</td><td>5%</td></tr>
+    <tr><td>Final Portfolio Presentation</td><td>10%</td></tr>
+  </tbody>
+</table>
+
+<div class="inst">
+  <strong>Important:</strong> After creating the groups, go to Assignments → gear icon → check "Weight final grade based on assignment groups." Otherwise the weights won't apply to the final grade.
+</div>
+
+<h3>B. Build Your Reusable Rubrics</h3>
+<div class="inst">
+  <strong>Canvas path:</strong> Rubrics (left sidebar) &rarr; + Rubric
+</div>
+<p>Create three rubrics you'll reuse across the course. You can attach them to assignments later.</p>
+
+<table>
+  <thead><tr><th>Rubric Name</th><th>Criteria</th><th>Used For</th></tr></thead>
+  <tbody>
+    <tr>
+      <td><strong>Repo Rubric</strong></td>
+      <td>Notebook Runs (/25, standard), Task Requirements (/40, changes weekly per assignment sheet), Reflection (/20, standard), Repo Hygiene (/15, standard, no active secrets policy)</td>
+      <td>Weeks 2&ndash;7 repo submissions</td>
+    </tr>
+    <tr>
+      <td><strong>Presentation Rubric</strong></td>
+      <td>Content clarity (30%), Technical understanding (30%), Insight/reflection (25%), Time management (15%)</td>
+      <td>Weeks 2, 3, 6 presentations</td>
+    </tr>
+    <tr>
+      <td><strong>Demo Rubric</strong></td>
+      <td>Working code (30%), Live explanation (25%), Technical depth (25%), Q&amp;A handling (20%)</td>
+      <td>Weeks 4, 5, 7 demos</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="tip">
+  <strong>Tip:</strong> In Canvas, rubrics can be scored as points or left unscored for qualitative feedback. Unscored rubrics work well as structured feedback; you can then enter the final grade manually.
+</div>
+
+<h3>C. Hide Unused Navigation Items</h3>
+<div class="inst">
+  <strong>Canvas path:</strong> Settings &rarr; Navigation tab
+</div>
+<p>Drag these to the hidden section so students see a clean sidebar: BigBlueButton, Collaborations, Proctoru, LockDown Browser, Chat, Tutor.com, Course Analytics, Panorama, Simple Syllabus, Studio, Insights, Lucid, YuJa, Parchment Badges, Microsoft Education. Keep visible: Home, Announcements, Assignments, Discussions, Grades, People, Pages, Files, Simple Syllabus, Modules, Quizzes, Rubrics. Hide the built-in "Syllabus" tab (the actual syllabus lives in Simple Syllabus).</p>
+
+<hr>
+
+<!-- ========== MODULE STRUCTURE ========== -->
+<h2>Step 1: Create the Module</h2>
+
+<div class="inst">
+  <strong>Canvas path:</strong> Modules → + Module → Name it "Module 1: Weeks 1–2 | Prompt to Context Engineering"
+</div>
+
+<p>Here's the exact structure. Add items in this order using the <strong>+</strong> button at the bottom of the module:</p>
+
+<div class="module-tree">Module 1: Weeks 1–2 | Prompt to Context Engineering
+│
+├── Welcome to AIML 2003                     <span class="type t-page">Page</span>
+├── Student Background & Tech-Vibe Survey    <span class="type t-quiz">Quiz</span>
+│
+├── ── SETUP GUIDES ──                       <span class="type t-head">Header</span>
+├── Getting Started with Google Colab        <span class="type t-page">Page</span>
+├── Setting Up Your Gemini API Key           <span class="type t-page">Page</span>
+├── Creating Your GitHub Account             <span class="type t-page">Page</span>
+├── Connecting Google Colab to GitHub        <span class="type t-page">Page</span>
+├── Getting Started with NotebookLM          <span class="type t-page">Page</span>
+│
+├── ── WEEK 1: SETUP & FOUNDATIONS ──        <span class="type t-head">Header</span>
+├── 3Blue1Brown: Visual Intro to Transformers<span class="type t-link">Link</span>
+├── Karpathy: Intro to Large Language Models <span class="type t-link">Link</span>
+├── Ethics Thread: Where Does the Data Come… <span class="type t-disc">Discussion</span>
+│
+├── ── WEEK 2: FROM PROMPT TO CONTEXT ENGINEERING ──     <span class="type t-head">Header</span>
+├── Week 2 Readings & Prep                   <span class="type t-page">Page</span>
+├── Week 2 Assignment Sheet                  <span class="type t-page">Page</span>
+├── Lab 1: GitHub Repo Submission            <span class="type t-assign">Assignment</span>
+└── Week 2: Presentation                     <span class="type t-assign">Assignment</span></div>
+
+<hr>
+
+<!-- ========== STEP 2: PAGES ========== -->
+<h2>Step 2: Create the Pages</h2>
+
+<p>For each HTML file, create a Canvas Page and paste in the HTML source.</p>
+
+<div class="inst">
+  <strong>Canvas path:</strong> Pages &rarr; + Page &rarr; Enter title &rarr; Click the <strong>HTML Editor</strong> button (looks like <code>&lt;/&gt;</code>) &rarr; Paste the HTML content (everything between <code>&lt;body&gt;</code> and <code>&lt;/body&gt;</code>, NOT the full document) &rarr; Save
+</div>
+
+<table>
+  <thead><tr><th>Page Title</th><th>Source File</th></tr></thead>
+  <tbody>
+    <tr><td>Welcome to AIML 2003</td><td><code>00-welcome.html</code></td></tr>
+    <tr><td>Getting Started with Google Colab</td><td><code>03-google-colab-setup.html</code></td></tr>
+    <tr><td>Setting Up Your Gemini API Key</td><td><code>03a-gemini-api-setup.html</code></td></tr>
+    <tr><td>Creating Your GitHub Account</td><td><code>04-github-account-setup.html</code></td></tr>
+    <tr><td>Connecting Google Colab to GitHub</td><td><code>05-colab-github-integration.html</code></td></tr>
+    <tr><td>Getting Started with NotebookLM</td><td><code>03b-notebooklm-setup.html</code></td></tr>
+    <tr><td>Week 2: Readings &amp; Prep</td><td><code>02-week2-readings.html</code></td></tr>
+    <tr><td>Week 2: Assignment Sheet</td><td><code>06-week2-assignments.html</code></td></tr>
+    <tr><td>Lab 1 Option A: Fact-Check the LLM</td><td><code>lab1-option-a-factcheck.html</code></td></tr>
+    <tr><td>Lab 1 Option B: Tone Detector</td><td><code>lab1-option-b-tone.html</code></td></tr>
+    <tr><td>Lab 1 Option C: Structured Extraction</td><td><code>lab1-option-c-extraction.html</code></td></tr>
+  </tbody>
+</table>
+
+<div class="tip">
+  <strong>Canvas HTML tip:</strong> When pasting into the Canvas HTML editor, paste only the content inside the <code>&lt;body&gt;</code> tags, including the <code>&lt;style&gt;</code> block. Don't include the <code>&lt;!DOCTYPE&gt;</code>, <code>&lt;html&gt;</code>, <code>&lt;head&gt;</code>, or <code>&lt;body&gt;</code> tags themselves. Canvas provides its own wrapper. The inline <code>&lt;style&gt;</code> block should go at the very top of the HTML editor content.
+</div>
+
+<hr>
+
+<!-- ========== STEP 3: QUIZ ========== -->
+<h2>Step 3: Import the Survey Quiz</h2>
+
+<div class="inst">
+  <strong>Canvas path:</strong> Settings &rarr; Import Course Content &rarr; Content Type: <strong>"QTI .zip file"</strong> &rarr; Choose File: <code>01-survey-quiz.qti.zip</code> &rarr; Import
+</div>
+
+<p>After import, go to <strong>Quizzes</strong> and find "Student Background &amp; Tech-Vibe Survey." Edit it:</p>
+<ol>
+  <li>Set Quiz Type to <strong>Graded Survey</strong> (this awards completion points regardless of answers)</li>
+  <li>Assign it to the <strong>Participation</strong> assignment group</li>
+  <li>Set Available from / Until dates as appropriate</li>
+  <li>Preview it to make sure all 40 questions look right</li>
+</ol>
+
+<hr>
+
+<!-- ========== STEP 4: DISCUSSION ========== -->
+<h2>Step 4: Create the Discussion</h2>
+
+<div class="inst">
+  <strong>Canvas path:</strong> Discussions &rarr; + Discussion
+</div>
+
+<ol>
+  <li>Title: <strong>"Ethics Thread: Where Does the Data Come From?"</strong></li>
+  <li>Switch to the HTML editor and paste the content from <code>07-discussion-ethics-week1.html</code> (body content only)</li>
+  <li>Check <strong>"Graded"</strong>: assign to the <strong>Participation</strong> group</li>
+  <li>Points: <strong>10</strong> (or whatever slice of participation you want)</li>
+  <li>Check <strong>"Users must post before seeing replies"</strong> (prevents students from copying each other)</li>
+  <li>Set Available from: March 25 / Due: March 27 at 6:00 PM (initial post) / reply due: March 31 at 11:59 PM</li>
+</ol>
+
+<div class="tip">
+  <strong>Tip:</strong> Canvas only lets you set one due date on a Discussion. Set it to the initial post deadline (March 27, 6 PM). Mention the reply deadline in the prompt itself and grade replies when you grade the initial posts.
+</div>
+
+<hr>
+
+<!-- ========== STEP 5: ASSIGNMENTS ========== -->
+<h2>Step 5: Create the Assignments</h2>
+
+<h3>Assignment 1: Lab 1, GitHub Repo Submission</h3>
+<div class="inst">
+  <strong>Canvas path:</strong> Assignments &rarr; + Assignment
+</div>
+<table>
+  <tbody>
+    <tr><td><strong>Name</strong></td><td>Lab 1: Zero-Shot vs. Few-Shot Classification (GitHub Repo)</td></tr>
+    <tr><td><strong>Assignment Group</strong></td><td>GitHub Repos</td></tr>
+    <tr><td><strong>Points</strong></td><td>100</td></tr>
+    <tr><td><strong>Submission Type</strong></td><td>Online &rarr; Website URL</td></tr>
+    <tr><td><strong>Due Date</strong></td><td>March 31, 11:59 PM</td></tr>
+    <tr><td><strong>Rubric</strong></td><td>Attach your "Repo Rubric"</td></tr>
+    <tr><td><strong>Description</strong></td><td>Submit the URL to your <code>aiml2003-nlp</code> GitHub repository. Make sure your <code>week2/lab1_classification.ipynb</code> notebook is committed with all outputs visible. See the Week 2 Assignment Sheet for full requirements.</td></tr>
+  </tbody>
+</table>
+
+<h3>Assignment 2: Week 2 Presentation</h3>
+<table>
+  <tbody>
+    <tr><td><strong>Name</strong></td><td>Week 2: Presentation, Zero-Shot vs. Few-Shot</td></tr>
+    <tr><td><strong>Assignment Group</strong></td><td>In-Class Presentations</td></tr>
+    <tr><td><strong>Points</strong></td><td>100</td></tr>
+    <tr><td><strong>Submission Type</strong></td><td>On Paper (graded in class, no online submission)</td></tr>
+    <tr><td><strong>Due Date</strong></td><td>April 1 (Tuesday class)</td></tr>
+    <tr><td><strong>Rubric</strong></td><td>Attach your "Presentation Rubric"</td></tr>
+    <tr><td><strong>Description</strong></td><td>3&ndash;5 minute in-class presentation about what you learned in Lab 1. See the Week 2 Assignment Sheet for what to cover.</td></tr>
+  </tbody>
+</table>
+
+<hr>
+
+<!-- ========== STEP 6: EXTERNAL LINKS ========== -->
+<h2>Step 6: Add External Links to the Module</h2>
+
+<div class="inst">
+  <strong>In the Module:</strong> Click + &rarr; <strong>External URL</strong>
+</div>
+
+<table>
+  <tbody>
+    <tr><td><strong>3Blue1Brown: Visual Intro to Transformers</strong></td><td><code>https://youtube.com/watch?v=wjZofJX0v4M</code></td></tr>
+    <tr><td><strong>Karpathy: Intro to Large Language Models</strong></td><td><code>https://youtube.com/watch?v=zjkBMFhNj_g</code></td></tr>
+  </tbody>
+</table>
+<p>Check <strong>"Load in a new tab"</strong> so students don't leave Canvas accidentally.</p>
+
+<hr>
+
+<!-- ========== STEP 7: MODULE SETTINGS ========== -->
+<h2>Step 7: Module Settings &amp; Prerequisites</h2>
+
+<div class="inst">
+  <strong>In the Module:</strong> Click the three-dot menu on the module header &rarr; Edit
+</div>
+
+<ol>
+  <li><strong>Lock until:</strong> Set to the date you want students to access it (e.g., March 24 if you want them to start the day before first class).</li>
+  <li><strong>Prerequisites:</strong> For future modules (Module 2, etc.), you can require Module 1 to be completed first. For Module 1, no prerequisites needed.</li>
+  <li><strong>Requirement:</strong> Optionally, you can require students to complete items in order (sequential). This ensures they take the survey before jumping to Week 2 assignments. Click "Add requirement" and mark the survey as "must submit."</li>
+</ol>
+
+<hr>
+
+<!-- ========== STEP 8: PUBLISH ========== -->
+<h2>Step 8: Publish</h2>
+
+<p>Nothing is visible to students until you publish. When you're ready:</p>
+<ol>
+  <li>In the Module, click the <strong>cloud icon</strong> next to each item to publish individual items, or</li>
+  <li>Click the three-dot menu on the module header &rarr; <strong>"Publish All Items and Module"</strong> to publish everything at once</li>
+</ol>
+
+<div class="tip">
+  <strong>Pre-flight check:</strong> Before publishing, use <strong>Student View</strong> (Settings &rarr; Student View) to see exactly what students will see. Make sure all pages render correctly, the quiz works, and the assignment submission types are right.
+</div>
+
+<hr>
+
+<!-- ========== FIRST ANNOUNCEMENT ========== -->
+<h2>Bonus: Your First Announcement</h2>
+
+<p>Post this as an Announcement the day Module 1 goes live:</p>
+
+<div style="background: var(--light-bg); border: 1px solid var(--border); border-radius: 8px; padding: 1.5rem; margin: 1rem 0; font-size: 0.9rem;">
+  <p><strong>Subject: Welcome to AIML 2003: Start Here</strong></p>
+  <p style="margin-top:0.5rem;">Welcome to Introduction to Natural Language Processing. Module 1 is now live in Canvas.</p>
+  <p style="margin-top:0.5rem;">Before our first class on Tuesday (March 25), please:</p>
+  <ol>
+    <li>Read the Welcome page in Module 1</li>
+    <li>Take the Tech-Vibe Survey (10 min, completion credit)</li>
+    <li>Watch the two required videos (3Blue1Brown + Karpathy, ~85 min total)</li>
+  </ol>
+  <p style="margin-top:0.5rem;">We'll do all the tool setup together during Thursday lab (March 27, Zoom), but if you want a head start, the setup guides are there.</p>
+  <p style="margin-top:0.5rem;">See you Tuesday. - Prof. Lovejoy</p>
+</div>
+
+</body>
+</html>

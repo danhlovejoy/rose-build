@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Module 3 Ethics Thread | AIML 2013</title>
+<link rel="stylesheet" href="../../course-styles.css">
+</head>
+<body>
+
+<h1>Ethics Thread: What ImageNet Thinks the World Looks Like</h1>
+<p class="subtitle">AIML 2013: Module 3 Discussion. Post by Tuesday, April 14 (before class)</p>
+
+<div class="prompt-box">
+  <h2>The Prompt</h2>
+  <p>The embeddings you extracted this week came from MobileNetV2, a network trained on ImageNet: 1.2 million labeled images across 1,000 categories. The network learned to place visually similar images close together in 1,280-dimensional space because doing so helped it predict the correct label. You didn't choose those 1.2 million images. Neither did most of the people whose images they contain.</p>
+  <p>ImageNet was assembled primarily from internet image searches in the early 2010s. The images it contains, the categories it defines, and the people who labeled them all reflect a particular slice of the world: mostly English-speaking, mostly Western, built from what was findable on the web at the time. When you use MobileNetV2 embeddings to compare images, you're using a definition of "similarity" that came from that slice.</p>
+  <p>In your post, address at least one of the following:</p>
+  <ul>
+    <li>ImageNet's 1,000 categories include fine-grained distinctions between 120 dog breeds but far fewer categories for foods, clothing, and everyday objects from non-Western cultures. When MobileNetV2 embeddings are used in a product recommendation system or a content moderation filter, what populations are systematically underserved by that category structure?</li>
+    <li>In 2019, researchers showed that ImageNet contained images labeled with offensive slurs applied to people in specific occupations and demographic groups. The labels were eventually removed, but the network had already been trained on them. The weights you are using may carry traces of those labels. How should a practitioner think about the legacy of a dataset they can no longer fully inspect?</li>
+    <li>Transfer learning assumes the source task (ImageNet classification) and the target task (your images) are similar enough that the learned features transfer. Your dataset is CIFAR-10. Consider a deployment context where the target dataset is satellite imagery, medical scans, or images from a specific geographic region. When does the "similarity" assumption break down, and what are the consequences?</li>
+    <li>Your lab gives you a concrete comparison: HOG retrieval vs. MobileNetV2 retrieval. HOG is a deterministic formula you can inspect and explain. MobileNetV2 is a black box trained on a dataset you didn't collect. For a high-stakes application (medical triage, criminal evidence, hiring), which would you prefer to rely on, and why?</li>
+  </ul>
+</div>
+
+<div class="requirements">
+  <strong>Requirements</strong>
+  <ul>
+    <li><strong>Your post:</strong> 150&ndash;250 words. Take a position. Don't just summarize the question.</li>
+    <li><strong>Reply to a classmate:</strong> At least one substantive reply (not just "I agree"). Engage with their reasoning: push back, build on it, or offer a different angle.</li>
+    <li><strong>Deadline:</strong> Initial post by Tuesday, April 14 (before class). Reply by the following Tuesday class (April 21).</li>
+  </ul>
+</div>
+
+<p>This is one of a recurring ethics thread that runs alongside the technical content all semester. The lab gives you a concrete system to reason about: you've seen the retrieval comparisons, you know the 1,280-dimensional vector came from ImageNet-trained weights, and you've observed where learned embeddings win and where they still fail. Use that specificity. I'm looking for evidence that you've connected the ethical question to what you observed in the lab, not that you've landed on the "correct" position.</p>
+
+<p class="note">The weekly ethics discussion is worth 20% of your weekly Participation grade (the other 80% comes from attendance and in-class engagement). Whether you attend in person or via Zoom, this post is required every week.</p>
+
+</body>
+</html>

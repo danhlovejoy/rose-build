@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Creating Your GitHub Account | AIML 2003</title>
+<link rel="stylesheet" href="../../course-styles.css">
+</head>
+<body>
+
+<h1>Creating Your GitHub Account</h1>
+<p class="subtitle">AIML 2003: Setup Guide. Your code portfolio starts here</p>
+
+<p class="intro">GitHub is where you'll store, version-control, and present your code for this course. Each week you'll push your completed lab notebook to a GitHub repository. By the end of the semester, your GitHub profile will serve as a portfolio of NLP projects you can show to employers.</p>
+
+<!-- ========== CREATE ACCOUNT ========== -->
+<h2>Step-by-Step: Create Your Account</h2>
+
+<div class="step">
+  <span class="step-number">1</span>
+  <p class="step-title">Go to GitHub</p>
+  <p>Navigate to <a href="https://github.com" target="_blank">github.com</a> and click <strong>Sign up</strong> in the upper right.</p>
+</div>
+
+<div class="step">
+  <span class="step-number">2</span>
+  <p class="step-title">Choose a username</p>
+  <p>Pick something professional. This will be visible to anyone who views your repos. Your real name or a clean variation works well (e.g., <code>jsmith-dev</code>, <code>jane-smith</code>). Avoid memes, inside jokes, or anything you wouldn't put on a resume.</p>
+</div>
+
+<div class="step">
+  <span class="step-number">3</span>
+  <p class="step-title">Enter your email and create a password</p>
+  <p>You can use your personal email or your Rose State email; either works. You can always add more emails to your account later.</p>
+</div>
+
+<div class="step">
+  <span class="step-number">4</span>
+  <p class="step-title">Verify your account</p>
+  <p>GitHub will ask you to solve a quick puzzle and then verify your email. Check your inbox (and spam folder) for the verification email and click the link.</p>
+</div>
+
+<div class="step">
+  <span class="step-number">5</span>
+  <p class="step-title">Skip the personalization (or don't)</p>
+  <p>GitHub will ask you some onboarding questions about how you plan to use it. You can fill these out or skip them. They don't affect your account.</p>
+</div>
+
+<div class="tip">
+  <strong>Already have a GitHub account?</strong> Great. You can skip the creation steps. Just make sure you remember your login and that your username is something you'd be comfortable sharing professionally.
+</div>
+
+<!-- ========== SET UP YOUR PROFILE ========== -->
+<h2>Set Up Your Profile</h2>
+
+<div class="step">
+  <span class="step-number">6</span>
+  <p class="step-title">Add a profile photo and bio</p>
+  <p>Go to <a href="https://github.com/settings/profile" target="_blank">github.com/settings/profile</a>. Add a photo (it doesn't have to be a headshot—just something recognizable) and write a one-line bio, like: "AI/ML student at Rose State College. Learning NLP."</p>
+</div>
+
+<!-- ========== CREATE YOUR FIRST REPO ========== -->
+<h2>Create Your Course Repository</h2>
+
+<div class="step">
+  <span class="step-number">7</span>
+  <p class="step-title">Create a new repository</p>
+  <p>Click the <strong>+</strong> icon in the top-right corner and select <strong>New repository</strong>. Fill in the following:</p>
+  <ul>
+    <li><strong>Repository name:</strong> <code>aiml2003-nlp</code></li>
+    <li><strong>Description:</strong> "Labs and projects for AIML 2003: Introduction to NLP"</li>
+    <li><strong>Visibility:</strong> <strong>Public</strong> (so I can review your work and so it's visible to future employers)</li>
+    <li><strong>Initialize with:</strong> Check <strong>"Add a README file"</strong></li>
+  </ul>
+  <p>Click <strong>Create repository</strong>.</p>
+</div>
+
+<div class="step">
+  <span class="step-number">8</span>
+  <p class="step-title">Edit the README</p>
+  <p>Click the pencil icon on the README.md file to edit it. Replace the default text with something like:</p>
+  <pre># AIML 2003: Introduction to Natural Language Processing
+Spring 2026 | Rose State College
+
+This repository contains my labs, notebooks, and projects
+for AIML 2003: Introduction to NLP.
+
+## Contents
+- Week 2: Context Engineering
+- (more to come each week)</pre>
+  <p>Click <strong>Commit changes</strong> when done. You'll update this README each week as you add new work.</p>
+</div>
+
+<!-- ========== API KEY WARNING ========== -->
+<h2>The Golden Rule of GitHub</h2>
+
+<div class="warning">
+  <strong>Never commit API keys, passwords, or secrets to GitHub.</strong> Automated bots scan public repositories constantly. If you accidentally push a file containing your Gemini API key, it can be stolen and used within minutes, burning through your quota or, worse, racking up charges if you ever enable billing.
+</div>
+
+<div class="step">
+  <p class="step-title">How to stay safe</p>
+  <p>Before committing any notebook to GitHub, check that you are not hardcoding secrets. Instead of this:</p>
+  <pre># BAD - never do this
+api_key = "AIzaSy..."</pre>
+  <p>Do this (using Colab's Secrets Manager):</p>
+  <pre># GOOD - key stays out of the file
+from google.colab import userdata
+api_key = userdata.get('GEMINI_API_KEY')</pre>
+  <p>We'll cover this in detail during the Week 1 lab.</p>
+</div>
+
+<!-- ========== WHAT IS GIT? ========== -->
+<h2>A Quick Word About Git vs. GitHub</h2>
+
+<div class="info-box">
+  <p><strong>Git</strong> is a version control system: a tool that tracks changes to files over time. <strong>GitHub</strong> is a website that hosts Git repositories online. Think of Git as the engine and GitHub as the garage where you park your car.</p>
+  <p style="margin-top:0.5rem;">In this course, we'll interact with GitHub primarily through Google Colab's built-in integration (covered in the next setup guide). You won't need to install Git on your computer or use the command line unless you want to.</p>
+</div>
+
+<!-- ========== NEXT STEP ========== -->
+<div class="tip" style="margin-top:2rem;">
+  <strong>Next step:</strong> Now that you have both Google Colab and a GitHub account, the final setup guide will show you how to connect them so you can save your Colab notebooks directly to your GitHub repo.
+</div>
+
+</body>
+</html>

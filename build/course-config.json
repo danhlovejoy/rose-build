@@ -1,0 +1,94 @@
+{
+  "_comment": "Course configuration for the Rose State AIML build pipeline. Canvas page slugs are keys; file paths are relative to build_output_dir.",
+  "canvas_base_url": "https://rose.instructure.com",
+  "courses": {
+    "aiml2003": {
+      "course_id": 26943,
+      "name": "AIML 2003 — Introduction to Natural Language Processing",
+      "short_name": "NLP",
+      "glossary_filter": "nlp",
+      "build_source": "aiml2003",
+      "build_output_dir": "build/output/aiml2003",
+      "glossary_page_slug": "glossary",
+      "glossary_canvas_url": "https://rose.instructure.com/courses/26943/pages/glossary",
+      "pages": {
+        "glossary":                                          "glossary.html",
+        "missed-class-participation-makeup-assignment":      "makeup-participation.html",
+        "welcome":                                           "welcome.html",
+
+        "welcome-to-aiml-2003":                             "module1/00-welcome.html",
+        "readings-and-prep":                                "module1/02-week2-readings.html",
+        "setup-google-colab":                               "module1/03-google-colab-setup.html",
+        "setup-gemini-api-key":                             "module1/03a-gemini-api-setup.html",
+        "setup-notebooklm":                                 "module1/03b-notebooklm-setup.html",
+        "setup-github-account":                             "module1/04-github-account-setup.html",
+        "setup-connect-colab-to-github":                    "module1/05-colab-github-integration.html",
+        "week-2-deliverables":                              "module1/06-week2-assignments.html",
+        "ethics-discussion-where-does-the-data-come-from":  "module1/07-discussion-ethics-week1.html",
+        "lab-1-option-a-fact-check-the-llm":                "module1/lab1-option-a-factcheck.html",
+        "lab-1-option-b-tone-detector":                     "module1/lab1-option-b-tone.html",
+        "lab-1-option-c-structured-extraction":             "module1/lab1-option-c-extraction.html",
+
+        "module-2-readings-tf-idf":                         "module2/02-readings.html",
+        "lab-2-nlp-sentiment-analysis":                     "module2/lab2-nlp-sentiment.html",
+        "lab-2-nlp-sentiment-analysis-challenge":           "module2/lab2-nlp-sentiment-challenge.html",
+        "lab-2-combined-how-machines-read-text-and-images": "module2/lab2-combined-how-machines-read.html",
+        "lab-2-combined-challenge":                         "module2/lab2-combined-challenge.html",
+
+        "module-2-overview-tf-idf":                          "module2/01-overview.html",
+        "week-3-deliverables":                               "module2/06-assignments.html",
+        "ethics-discussion-who-decides-whats-positive":      "module2/07-ethics.html",
+
+        "module-3-overview-embeddings":                      "module3/01-overview.html",
+        "module-3-readings-embeddings":                      "module3/02-readings.html",
+        "week-4-deliverables":                               "module3/03-assignments.html",
+        "lab-3-nlp-sentence-embeddings":                     "module3/lab3-nlp-embeddings.html",
+        "lab-3-combined-embeddings":                         "module3/lab3-combined-embeddings.html",
+        "ethics-discussion-whose-meanings-are-encoded":      "module3/04-ethics.html"
+      }
+    },
+    "aiml2013": {
+      "course_id": 26944,
+      "name": "AIML 2013 — Introduction to Computer Vision",
+      "short_name": "CV",
+      "glossary_filter": "cv",
+      "build_source": "aiml2013",
+      "build_output_dir": "build/output/aiml2013",
+      "glossary_page_slug": "glossary",
+      "glossary_canvas_url": "https://rose.instructure.com/courses/26944/pages/glossary",
+      "pages": {
+        "glossary":                                                    "glossary.html",
+        "missed-class-participation-makeup-assignment":                "makeup-participation.html",
+        "welcome":                                                     "welcome.html",
+
+        "welcome-to-aiml-2013":                                       "module1/01-welcome.html",
+        "setup-google-colab":                                         "module1/03-setup-google-colab.html",
+        "setup-gemini-api-key":                                       "module1/04-setup-gemini-api.html",
+        "setup-notebooklm":                                           "module1/05-setup-notebooklm.html",
+        "setup-github-account":                                       "module1/06-setup-github.html",
+        "setup-connect-colab-to-github":                              "module1/07-setup-colab-github.html",
+        "readings-and-prep":                                          "module1/08-readings-week1.html",
+        "week-2-deliverables":                                        "module1/09-assignments-week2.html",
+        "lab-1-edge-detection-and-blurring-kernels":                  "module1/10-lab1-edge-detection.html",
+        "ethics-discussion-whose-images-train-the-machine":           "module1/11-ethics-week1.html",
+
+        "module-2-readings-hog":                                      "module2/02-readings.html",
+        "lab-2-cv-hog-feature-extraction":                            "module2/lab2-cv-hog.html",
+        "lab-2-cv-hog-feature-extraction-challenge":                  "module2/lab2-cv-hog-challenge.html",
+        "lab-2-combined-how-machines-read-text-and-images":           "module2/lab2-combined-how-machines-read.html",
+        "lab-2-combined-challenge":                                   "module2/lab2-combined-challenge.html",
+
+        "module-2-overview-hog":                                      "module2/01-overview.html",
+        "week-3-deliverables":                                        "module2/06-assignments.html",
+        "ethics-discussion-humans-as-objects-to-be-detected":         "module2/07-ethics.html",
+
+        "module-3-overview-embeddings":                               "module3/01-overview.html",
+        "module-3-readings-embeddings":                               "module3/02-readings.html",
+        "week-4-deliverables":                                        "module3/03-assignments.html",
+        "lab-3-cv-image-embeddings":                                  "module3/lab3-cv-embeddings.html",
+        "lab-3-combined-embeddings":                                   "module3/lab3-combined-embeddings.html",
+        "ethics-discussion-what-imagenet-thinks-the-world-looks-like": "module3/04-ethics.html"
+      }
+    }
+  }
+}

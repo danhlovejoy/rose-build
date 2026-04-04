@@ -1,0 +1,565 @@
+<!-- concurrent-only: requires dual enrollment in AIML 2003 + AIML 2013 -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Module 2 Lab (Combined): How Machines Read | AIML 2003 + AIML 2013</title>
+<link rel="stylesheet" href="../../course-styles.css">
+</head>
+<body>
+
+<h1>Module 2 Lab (Combined): How Machines Read</h1>
+<p class="subtitle">TF-IDF and HOG as parallel feature extraction pipelines</p>
+
+<!-- ========== DUAL ENROLLMENT NOTICE ========== -->
+<div class="bridge-box">
+  <strong>Dual-enrollment lab: AIML 2003 + AIML 2013</strong>
+  <p style="margin: 0.5rem 0 0;">This lab is for students enrolled in both AIML 2003 (NLP) and AIML 2013 (CV). You will build one notebook covering both courses&rsquo; Module 2 content, give one 5&ndash;7 minute presentation, and submit the same GitHub repo link to both Canvas assignments. If you are enrolled in only one course, use that course&rsquo;s standalone lab instead.</p>
+</div>
+
+<!-- ========== THE TASK ========== -->
+<div class="section-card">
+  <h3>The Task</h3>
+  <p>In AIML 2003, you have been working with text. In AIML 2013, you have been working with images. This week you will build the same pipeline twice: once for each modality, and compare what you find.</p>
+  <p>The pipeline: take raw input (a sentence, or a photograph), reduce it to a fixed-length feature vector, then use that vector to retrieve the most similar items from a corpus. You will run each pipeline, look at where it works, and, more importantly, find where it fails. The failures are the insight.</p>
+  <p>In the readings and in class, you learned that both language and vision pipelines face the same fundamental problem: how do you turn something a human understands into numbers a machine can compute on? TF-IDF and HOG are two answers, both hand-crafted, both transparent, and both limited in exactly the same direction. By the end of this lab, you will know what that shared limitation is, and you will have a clear idea of what comes next.</p>
+</div>
+
+<!-- ========== DATASETS ========== -->
+<h2>Your Datasets</h2>
+
+<div class="section-card">
+  <h3>NLP: NLTK Movie Reviews</h3>
+  <p>2,000 labeled movie reviews (positive and negative), built into Google Colab via NLTK. No download or account required. You will use these as your text corpus for similarity retrieval.</p>
+</div>
+
+<div class="section-card">
+  <h3>CV: Image Dataset (Your Choice)</h3>
+  <p>Pick one of the two options below before you start the CV section. Both work. Your choice affects the depth of HOG features you can extract, not whether the lab works.</p>
+
+  <h4>Option A: CIFAR-10 (easiest setup)</h4>
+  <p>CIFAR-10 is a standard benchmark: 60,000 images across 10 categories (airplane, automobile, bird, cat, deer, dog, frog, horse, ship, truck). It loads in one line via Keras. The images are small (32&times;32 pixels), which limits HOG feature resolution, but the dataset is clean and requires zero preparation. Use this if you want to get to the comparison section quickly and invest your time in the analysis.</p>
+
+  <h4>Option B: Your own images (more work, better presentation)</h4>
+  <p>Collect 4&ndash;5 categories of images, at least 8&ndash;10 per category. Aim for images that are at least 128&times;128 pixels; anything smaller produces weak HOG descriptors. Some category ideas: animals (dog, cat, bird), vehicles (car, bicycle, bus), foods, landscapes, indoor vs. outdoor scenes.</p>
+
+  <p>Where to find images:</p>
+  <ul>
+    <li><strong>Unsplash</strong> (<a href="https://unsplash.com" target="_blank">unsplash.com</a>): free, high-quality photos, no account required. Download individually from the site.</li>
+    <li><strong>Wikimedia Commons</strong> (<a href="https://commons.wikimedia.org" target="_blank">commons.wikimedia.org</a>): public domain images in many categories. Search by subject and filter to photos.</li>
+    <li><strong>Google Images</strong>: right-click to save individual images, or use the &ldquo;FatKun Batch Download Image&rdquo; browser extension to save many at once.</li>
+    <li><strong>Kaggle Datasets</strong> (<a href="https://www.kaggle.com/datasets" target="_blank">kaggle.com/datasets</a>): search for small image classification datasets. Many are under 100 MB and come pre-sorted by class. Requires a free account.</li>
+    <li><strong>Oxford 102 Flower Dataset</strong> (<a href="https://www.robots.ox.ac.uk/~vgg/data/flowers/102/" target="_blank">robots.ox.ac.uk</a>): 8,189 photos of 102 flower categories, free download. Excellent image quality.</li>
+  </ul>
+
+  <p>However you collect them, organize your images into subfolders by category before uploading to Colab:</p>
+  <pre>images/
+  category_a/
+    photo_01.jpg
+    photo_02.jpg
+  category_b/
+    photo_01.jpg
+    ...</pre>
+
+  <p>Upload the folder via the Colab Files panel (left sidebar &rarr; Upload to session storage), or mount Google Drive if your images are stored there (<code>from google.colab import drive; drive.mount('/content/drive')</code>).</p>
+</div>
+
+<!-- ========== CODE SCAFFOLD ========== -->
+<h2>Code Scaffold</h2>
+
+<div class="warning">
+  <strong>Training wheels alert:</strong> This code scaffold is here to get you started. In later labs, you won&rsquo;t have one. You&rsquo;ll be writing your own code from scratch, using Gemini or another AI assistant to help you build it. So don&rsquo;t just copy-paste and run. Read each cell, understand what it does, and experiment with changing things. The more comfortable you get now, the easier it will be when the training wheels come off.
+</div>
+
+<!-- ==================== PART 1: NLP ==================== -->
+<h3>Part 1: NLP Pipeline (Text as Feature Vectors)</h3>
+
+<pre># Cell 1: Setup
+!pip install nltk scikit-learn -q
+
+import nltk
+nltk.download('movie_reviews', quiet=True)
+nltk.download('stopwords', quiet=True)
+
+import numpy as np
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.metrics.pairwise import cosine_similarity
+import matplotlib.pyplot as plt
+from nltk.corpus import movie_reviews
+
+print("Setup complete.")</pre>
+
+<pre># Cell 2: Load the corpus
+documents = []
+labels = []
+
+for category in movie_reviews.categories():
+    for fileid in movie_reviews.fileids(category):
+        documents.append(movie_reviews.raw(fileid))
+        labels.append(category)
+
+print(f"Corpus: {len(documents)} reviews")
+print(f"Categories: {set(labels)}")
+print(f"\nSample review (first 400 characters):\n{documents[0][:400]}")</pre>
+
+<div class="tip">
+  <strong>Markdown cell:</strong> Before running the next cell, write 2&ndash;3 sentences describing what TF-IDF is in your own words. Don&rsquo;t look it up. Write your best current understanding. You&rsquo;ll be able to correct it after you see the output.
+</div>
+
+<pre># Cell 3: Build TF-IDF feature vectors
+vectorizer = TfidfVectorizer(
+    max_features=5000,
+    stop_words='english',
+    ngram_range=(1, 2)   # single words AND two-word phrases
+)
+
+tfidf_matrix = vectorizer.fit_transform(documents)
+
+print(f"Matrix shape: {tfidf_matrix.shape}")
+print(f"  {tfidf_matrix.shape[0]} documents")
+print(f"  {tfidf_matrix.shape[1]} features per document")
+
+density = tfidf_matrix.nnz / (tfidf_matrix.shape[0] * tfidf_matrix.shape[1])
+print(f"\nSparsity: {100*(1-density):.1f}% of values are zero")
+print(f"  (Only {density*100:.2f}% of the matrix is non-zero)")
+
+# Inspect one document's most important terms
+feature_names = vectorizer.get_feature_names_out()
+doc_vec = tfidf_matrix[0].toarray()[0]
+top_idx = doc_vec.argsort()[-12:][::-1]
+print(f"\nTop 12 TF-IDF terms for document 0 [{labels[0]}]:")
+for i in top_idx:
+    print(f"  {feature_names[i]:<30} {doc_vec[i]:.4f}")</pre>
+
+<div class="tip">
+  <strong>Markdown cell:</strong> Look at the top terms. Do they reveal whether the review is positive or negative? What is TF-IDF measuring? What kind of information does this vector <em>not</em> contain?
+</div>
+
+<pre># Cell 4: Similarity retrieval
+def find_similar_texts(query, n=5):
+    """Return the n reviews most similar to query by TF-IDF cosine similarity."""
+    query_vec = vectorizer.transform([query])
+    scores = cosine_similarity(query_vec, tfidf_matrix)[0]
+    top_idx = scores.argsort()[-n:][::-1]
+    return [(documents[i][:220], labels[i], scores[i]) for i in top_idx]
+
+
+# Run your first retrieval
+query = "This film was a total waste of time. Terrible acting, boring plot."
+print(f"Query: '{query}'")
+print(f"(We know this is negative.)\n")
+
+for rank, (text, label, score) in enumerate(find_similar_texts(query), 1):
+    print(f"  #{rank}  [{label.upper():<3}]  cos={score:.3f}")
+    print(f"       {text[:200]}...")
+    print()</pre>
+
+<div class="tip">
+  <strong>Markdown cell:</strong> How many of the top 5 results are negative reviews? Did any positive reviews surface? If so, look at the text: what words do they share with your query?
+</div>
+
+<pre># Cell 5: Find the failures
+# These queries are designed to expose where TF-IDF breaks down.
+# Run all four, then write a markdown cell explaining each result.
+
+failure_queries = [
+    (
+        "This movie was absolutely not a waste of time.",
+        "Same words as Cell 4 query, but 'not' reverses the meaning entirely."
+    ),
+    (
+        "I watched this film three times in one weekend.",
+        "Strongly positive — but contains zero sentiment words."
+    ),
+    (
+        "I can't imagine anyone not enjoying this.",
+        "Positive — but two negatives that TF-IDF may misread."
+    ),
+    (
+        "A masterpiece. Stunning cinematography, a perfect score.",
+        "Unambiguously positive — all strong positive adjectives."
+    ),
+]
+
+for query, note in failure_queries:
+    results = find_similar_texts(query, n=5)
+    counts = {'pos': sum(1 for _, lbl, _ in results if lbl == 'pos'),
+              'neg': sum(1 for _, lbl, _ in results if lbl == 'neg')}
+    print(f"Query:   '{query}'")
+    print(f"Note:    {note}")
+    print(f"Top 5:   {counts['pos']} positive, {counts['neg']} negative")
+    print()</pre>
+
+<div class="tip">
+  <strong>Markdown cell:</strong> For each of the four queries, explain in one sentence <em>why</em> TF-IDF got it wrong (or right). Focus on what TF-IDF is measuring versus what you would need to measure to get the correct answer.
+</div>
+
+<!-- ==================== PART 2: CV ==================== -->
+<h3>Part 2: CV Pipeline (Images as Feature Vectors)</h3>
+
+<pre># Cell 6A: Load CIFAR-10
+# Use this cell OR Cell 6B — not both.
+
+import tensorflow as tf
+
+(x_train, y_train), _ = tf.keras.datasets.cifar10.load_data()
+
+class_names = ['airplane', 'automobile', 'bird', 'cat', 'deer',
+               'dog', 'frog', 'horse', 'ship', 'truck']
+
+# Use 15 images per class (150 total) — enough to get interesting failures
+N_PER_CLASS = 15
+images, img_labels, img_names = [], [], []
+
+for cls_idx in range(10):
+    mask = (y_train.flatten() == cls_idx)
+    for img in x_train[mask][:N_PER_CLASS]:
+        images.append(img)
+        img_labels.append(cls_idx)
+        img_names.append(class_names[cls_idx])
+
+images = np.array(images)
+print(f"Loaded {len(images)} images  ({N_PER_CLASS} per class, {len(class_names)} classes)")
+print(f"Image shape: {images[0].shape}  — 32×32 pixels, 3 color channels")
+print(f"\nNote: CIFAR-10 images are intentionally small. HOG features will be coarser")
+print(f"than they would be on full-size photos, but the comparison still works.")
+
+fig, axes = plt.subplots(2, 5, figsize=(12, 5))
+for i, ax in enumerate(axes.flatten()):
+    ax.imshow(images[i * N_PER_CLASS])
+    ax.set_title(class_names[i], fontsize=9)
+    ax.axis('off')
+plt.suptitle('One sample image per CIFAR-10 class')
+plt.tight_layout()
+plt.show()</pre>
+
+<pre># Cell 6B: Load your own images
+# Use this cell OR Cell 6A — not both.
+# Your images should be organized in subfolders by category:
+#   /content/images/dogs/photo01.jpg
+#   /content/images/cats/photo01.jpg
+#   etc.
+
+import os
+from PIL import Image
+
+IMAGE_DIR = '/content/images'   # Change this if your folder is named differently
+
+images, img_labels, img_names = [], [], []
+label_map = {}
+
+for category in sorted(os.listdir(IMAGE_DIR)):
+    cat_path = os.path.join(IMAGE_DIR, category)
+    if not os.path.isdir(cat_path):
+        continue
+    if category not in label_map:
+        label_map[category] = len(label_map)
+    count = 0
+    for fname in sorted(os.listdir(cat_path)):
+        fpath = os.path.join(cat_path, fname)
+        try:
+            img = Image.open(fpath).convert('RGB')
+            images.append(np.array(img))
+            img_labels.append(label_map[category])
+            img_names.append(category)
+            count += 1
+        except Exception as e:
+            print(f"  Skipped {fname}: {e}")
+    print(f"  {category}: {count} images loaded")
+
+images = np.array(images, dtype=object)   # object array handles variable sizes
+print(f"\nTotal: {len(images)} images, {len(label_map)} categories")
+
+# Show one sample per category
+n_cats = len(label_map)
+fig, axes = plt.subplots(1, n_cats, figsize=(3 * n_cats, 3))
+if n_cats == 1:
+    axes = [axes]
+for cat, idx in label_map.items():
+    first = [i for i, l in enumerate(img_labels) if l == idx][0]
+    axes[idx].imshow(images[first])
+    axes[idx].set_title(cat, fontsize=9)
+    axes[idx].axis('off')
+plt.tight_layout()
+plt.show()</pre>
+
+<div class="tip">
+  <strong>Markdown cell:</strong> Before computing HOG features, describe what you think a &ldquo;feature vector for an image&rdquo; should capture. If you had to describe an image with only 1,500 numbers, which 1,500 numbers would you choose? Write your answer now. You&rsquo;ll compare it to what HOG actually does.
+</div>
+
+<pre># Cell 7: Compute HOG feature vectors
+from skimage.feature import hog
+from skimage.color import rgb2gray
+from skimage import transform
+
+# If you used Cell 6B with your own images, you can increase TARGET_SIZE to 128
+# for richer HOG features. CIFAR-10 images are already small, so 64 is fine.
+TARGET_SIZE = 64
+
+def image_to_hog(image):
+    """Convert a color image to a HOG feature vector + a visualization image."""
+    img = transform.resize(np.array(image), (TARGET_SIZE, TARGET_SIZE),
+                           anti_aliasing=True)
+    img_gray = rgb2gray(img)
+    features, hog_vis = hog(
+        img_gray,
+        orientations=8,           # 8 gradient direction bins (0°–180°)
+        pixels_per_cell=(8, 8),   # each cell covers 8×8 pixels
+        cells_per_block=(2, 2),   # normalize over 2×2 blocks of cells
+        visualize=True
+    )
+    return features, hog_vis
+
+hog_features, hog_visuals = [], []
+for img in images:
+    feats, vis = image_to_hog(img)
+    hog_features.append(feats)
+    hog_visuals.append(vis)
+
+hog_matrix = np.array(hog_features)
+print(f"HOG feature matrix: {hog_matrix.shape}")
+print(f"  {hog_matrix.shape[0]} images")
+print(f"  {hog_matrix.shape[1]} features per image")
+print(f"\nTF-IDF had {tfidf_matrix.shape[1]} features per document — "
+      f"{tfidf_matrix.shape[1] / hog_matrix.shape[1]:.1f}× more dimensions")
+print(f"\nTF-IDF sparsity:  {100*(1 - tfidf_matrix.nnz/(tfidf_matrix.shape[0]*tfidf_matrix.shape[1])):.1f}% zeros")
+print(f"HOG sparsity:     {100*(hog_matrix == 0).mean():.1f}% zeros")
+
+# Visualize: original → grayscale → HOG gradient map
+N_PER_CLASS = len(images) // len(set(img_names))   # recalculate in case you used 6B
+sample_idx = [0, N_PER_CLASS, N_PER_CLASS * 2]
+
+fig, axes = plt.subplots(len(sample_idx), 3, figsize=(10, 3.5 * len(sample_idx)))
+for row, idx in enumerate(sample_idx):
+    axes[row, 0].imshow(images[idx])
+    axes[row, 0].set_title(f'Original: {img_names[idx]}', fontsize=9)
+    axes[row, 0].axis('off')
+
+    axes[row, 1].imshow(rgb2gray(transform.resize(np.array(images[idx]),
+                        (TARGET_SIZE, TARGET_SIZE))), cmap='gray')
+    axes[row, 1].set_title('Grayscale (HOG input)', fontsize=9)
+    axes[row, 1].axis('off')
+
+    axes[row, 2].imshow(hog_visuals[idx], cmap='gray')
+    axes[row, 2].set_title('HOG visualization\n(gradient directions)', fontsize=9)
+    axes[row, 2].axis('off')
+
+plt.suptitle('Image → Grayscale → HOG Feature Visualization', fontsize=12)
+plt.tight_layout()
+plt.show()</pre>
+
+<div class="tip">
+  <strong>Markdown cell:</strong> Look at the HOG visualizations. The bright lines show where gradients are strongest and in which direction. What has HOG kept from the original image? What has it thrown away (color, texture, absolute brightness)? Compare this to what TF-IDF kept and discarded from text. What is the same about both transformations?
+</div>
+
+<pre># Cell 8: Visual similarity retrieval
+def find_similar_images(query_idx, n=5):
+    """Return the n images most similar to query by HOG cosine similarity."""
+    query_vec = hog_matrix[query_idx:query_idx + 1]
+    scores = cosine_similarity(query_vec, hog_matrix)[0]
+    scores[query_idx] = -1   # exclude the query itself
+    top_idx = scores.argsort()[-n:][::-1]
+    return top_idx, scores[top_idx]
+
+
+# Run retrieval on three query images from different classes
+N_PER_CLASS = len(images) // len(set(img_names))
+query_indices = [0, N_PER_CLASS, N_PER_CLASS * 2]
+
+for q_idx in query_indices:
+    similar_idx, sim_scores = find_similar_images(q_idx)
+
+    fig, axes = plt.subplots(1, 6, figsize=(15, 3))
+    axes[0].imshow(images[q_idx])
+    axes[0].set_title(f'QUERY\n{img_names[q_idx]}', fontweight='bold', fontsize=9)
+    axes[0].axis('off')
+
+    for i, (idx, score) in enumerate(zip(similar_idx[:5], sim_scores[:5])):
+        correct = img_names[idx] == img_names[q_idx]
+        marker = "\u2713" if correct else "\u2717"
+        axes[i + 1].imshow(images[idx])
+        axes[i + 1].set_title(f'{marker} {img_names[idx]}\ncos={score:.3f}', fontsize=8)
+        axes[i + 1].axis('off')
+
+    plt.tight_layout()
+    plt.show()</pre>
+
+<div class="tip">
+  <strong>Markdown cell:</strong> For each retrieval: how many of the top 5 results are the same class as the query? Find at least one case where HOG retrieved a wrong-category image. Look at both images: what do they visually share that fooled HOG?
+</div>
+
+<pre># Cell 9: Locate the failures systematically
+n_queries = min(30, len(images))
+failures = []
+
+for q_idx in range(n_queries):
+    similar_idx, sim_scores = find_similar_images(q_idx, n=3)
+    top = similar_idx[0]
+    if img_names[top] != img_names[q_idx]:
+        failures.append({
+            'query_idx':    q_idx,
+            'query_class':  img_names[q_idx],
+            'match_idx':    top,
+            'match_class':  img_names[top],
+            'score':        sim_scores[0]
+        })
+
+print(f"HOG top-1 failures: {len(failures)} out of {n_queries} queries\n")
+for f in failures[:5]:
+    print(f"  {f['query_class']:<14} → {f['match_class']:<14} (cos={f['score']:.3f})")
+
+# Visualize the most interesting failure
+if failures:
+    f = failures[0]
+    fig, axes = plt.subplots(1, 3, figsize=(9, 3))
+    axes[0].imshow(images[f['query_idx']])
+    axes[0].set_title(f"Query: {f['query_class']}")
+    axes[0].axis('off')
+
+    axes[1].imshow(hog_visuals[f['query_idx']], cmap='gray')
+    axes[1].set_title("Query — HOG")
+    axes[1].axis('off')
+
+    axes[2].imshow(images[f['match_idx']])
+    axes[2].set_title(f"HOG says: {f['match_class']}")
+    axes[2].axis('off')
+
+    plt.suptitle(f"Failure: '{f['query_class']}' matched to '{f['match_class']}'")
+    plt.tight_layout()
+    plt.show()</pre>
+
+<div class="tip">
+  <strong>Markdown cell:</strong> For your best failure example, describe in plain language what HOG noticed about both images and why it treated them as similar. A human would not make this mistake. What does a human use that HOG does not have access to?
+</div>
+
+<!-- ==================== PART 3: COMPARISON ==================== -->
+<h3>Part 3: The Comparison</h3>
+
+<pre># Cell 10: Side-by-side summary
+tfidf_sparsity = 1 - tfidf_matrix.nnz / (tfidf_matrix.shape[0] * tfidf_matrix.shape[1])
+hog_sparsity   = (hog_matrix == 0).mean()
+
+print("=" * 68)
+print(f"{'Property':<32}  {'TF-IDF (NLP)':<16}  {'HOG (CV)'}")
+print("=" * 68)
+print(f"{'Input':<32}  {'text (tokens)':<16}  {'image (pixels)'}")
+print(f"{'Feature dimensions':<32}  {tfidf_matrix.shape[1]:<16}  {hog_matrix.shape[1]}")
+print(f"{'Sparsity':<32}  {tfidf_sparsity*100:.1f}% sparse    {hog_sparsity*100:.1f}% sparse")
+print(f"{'What it encodes':<32}  {'word frequency':<16}  {'edge gradients'}")
+print(f"{'What it ignores':<32}  {'word order':<16}  {'color, texture'}")
+print(f"{'Core weakness':<32}  {'no semantics':<16}  {'no objects'}")
+print("=" * 68)
+print()
+print("Both: hand-designed by humans to capture something specific.")
+print("Both: replaced by neural methods when the task demands richer representations.")</pre>
+
+<div class="tip">
+  <strong>Markdown cell 1: Sparsity:</strong> TF-IDF vectors are very sparse; HOG vectors are denser. What does sparsity tell you about how information is distributed across the feature space? Which representation is easier to interpret by hand?
+</div>
+
+<div class="tip">
+  <strong>Markdown cell 2: What each throws away:</strong> TF-IDF ignores word order. HOG ignores color. List at least two other things each extractor discards. For each one, give a specific example of a retrieval that would have gone differently if that information had been kept.
+</div>
+
+<div class="tip">
+  <strong>Markdown cell 3: The shared limitation:</strong> Both TF-IDF and HOG were designed by humans who decided in advance what mattered in text or images. What is the fundamental problem with that approach? What kind of feature representation would not have this limitation?
+</div>
+
+<div class="tip">
+  <strong>Markdown cell 4: Looking ahead:</strong> Based on your failures, what would a better NLP feature look like? What would a better image feature look like? Write one sentence for each. (There is no wrong answer here. You will find out next week whether your intuition was right.)
+</div>
+
+<!-- ========== BONUS ========== -->
+<h2>Bonus (10 extra credit points)</h2>
+
+<p>Replace TF-IDF with Gemini embeddings in your NLP pipeline and rerun the four failure queries from Cell 5.</p>
+
+<p>Gemini&rsquo;s embedding model returns a dense 768-dimensional vector for any text, one that encodes meaning, not just word frequency. Use the same cosine similarity retrieval function, but substitute the embedding vector for the TF-IDF vector.</p>
+
+<pre># Bonus Cell: Gemini embedding retrieval (optional)
+# You already have the Gemini client configured from Lab 1.
+# Work with a subset of 200 reviews to stay within free-tier rate limits.
+
+from google.colab import userdata
+from google import genai
+import time
+
+client = genai.Client(api_key=userdata.get('GEMINI_API_KEY'))
+
+SUBSET_SIZE = 200
+subset_docs   = documents[:SUBSET_SIZE]
+subset_labels = labels[:SUBSET_SIZE]
+
+def get_embedding(text):
+    """Get a Gemini text embedding. Retries once on rate limit."""
+    try:
+        response = client.models.embed_content(
+            model="models/text-embedding-004",
+            contents=[text[:2000]]   # truncate very long reviews
+        )
+        return np.array(response.embeddings[0].values)
+    except Exception as e:
+        time.sleep(2)
+        response = client.models.embed_content(
+            model="models/text-embedding-004",
+            contents=[text[:2000]]
+        )
+        return np.array(response.embeddings[0].values)
+
+# Embed the corpus (this takes ~2 minutes for 200 documents)
+print("Embedding corpus... (one dot per 10 documents)")
+embedding_matrix = []
+for i, doc in enumerate(subset_docs):
+    embedding_matrix.append(get_embedding(doc))
+    if (i + 1) % 10 == 0:
+        print(".", end="", flush=True)
+        time.sleep(0.5)   # stay within rate limits
+
+embedding_matrix = np.array(embedding_matrix)
+print(f"\n\nEmbedding matrix shape: {embedding_matrix.shape}")
+print(f"(Dense: {100*(embedding_matrix != 0).mean():.1f}% non-zero)")
+
+def find_similar_by_embedding(query, n=5):
+    query_vec = get_embedding(query).reshape(1, -1)
+    scores = cosine_similarity(query_vec, embedding_matrix)[0]
+    top_idx = scores.argsort()[-n:][::-1]
+    return [(subset_docs[i][:220], subset_labels[i], scores[i]) for i in top_idx]
+
+# Compare TF-IDF vs. Gemini embeddings on the failure queries
+for query, note in failure_queries:
+    tfidf_results    = find_similar_texts(query, n=3)
+    embedding_results = find_similar_by_embedding(query, n=3)
+
+    tfidf_counts = {'pos': sum(1 for _, l, _ in tfidf_results if l == 'pos'),
+                    'neg': sum(1 for _, l, _ in tfidf_results if l == 'neg')}
+    embed_counts = {'pos': sum(1 for _, l, _ in embedding_results if l == 'pos'),
+                    'neg': sum(1 for _, l, _ in embedding_results if l == 'neg')}
+
+    print(f"Query:     '{query}'")
+    print(f"Note:      {note}")
+    print(f"TF-IDF:    {tfidf_counts['pos']} pos, {tfidf_counts['neg']} neg")
+    print(f"Embedding: {embed_counts['pos']} pos, {embed_counts['neg']} neg")
+    print()</pre>
+
+<div class="tip">
+  <strong>Markdown cell:</strong> For each query, did Gemini embeddings do better, worse, or about the same as TF-IDF? Find one specific example where the improvement was meaningful and explain what the embedding captured that TF-IDF missed. This is the preview of Week 4.
+</div>
+
+<!-- ========== PRESENTATION PREP ========== -->
+<h2>Presentation Prep</h2>
+
+<div class="section-card">
+  <p>Your notebook is your presentation. There is no separate written reflection. Your presentation serves as the reflection.</p>
+  <p>In five to seven minutes, walk the class through:</p>
+  <ol>
+    <li><strong>One retrieval result that worked</strong>: from either the NLP or CV side. Show the query, the top results, and explain briefly why TF-IDF or HOG got it right.</li>
+    <li><strong>One failure from each side</strong>: your NLP failure and your CV failure. Explain in plain language what each extractor missed and why.</li>
+    <li><strong>The comparison:</strong> What do TF-IDF and HOG have in common? What is the shared limitation of human-designed features? What does that imply about what you&rsquo;ll need next?</li>
+  </ol>
+  <p>You are the only student in either class who ran both pipelines. Your comparison is firsthand, not borrowed from a textbook. That is what makes the presentation worth hearing.</p>
+  <p>See the assignment sheet for submission details and the rubric.</p>
+</div>
+
+</body>
+</html>

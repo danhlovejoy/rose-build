@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Module 2 Lab (Challenge): Sentiment Analysis | AIML 2003</title>
+<link rel="stylesheet" href="../../course-styles.css">
+</head>
+<body>
+
+<h1>Module 2 Lab (Challenge Version): Sentiment Analysis</h1>
+<p class="subtitle">Build a classifier two ways, then find out where each one breaks.</p>
+
+<!-- ========== CHALLENGE FRAMING ========== -->
+<div class="warning">
+  <strong>No training wheels here: 10 bonus points if you earn them.</strong>
+  <p style="margin: 0.75rem 0 0;">This version of the lab gives you the specification for each cell, not the code. Each section below tells you exactly what a cell must do, what variables it must receive, and what variables it must produce. Your job is to write the code yourself, using an LLM (Gemini, Claude, ChatGPT, or any tool you like) to help you generate it.</p>
+  <p style="margin: 0.75rem 0 0;"><strong>To earn the 10 bonus points:</strong> include a markdown cell directly above each code cell containing the prompt you gave the LLM and a one-sentence note on whether the generated code worked as-is or what you had to fix. Ten cells &times; one prompt note each.</p>
+  <p style="margin: 0.75rem 0 0;">If you would rather use the training wheels version, it&rsquo;s on the other lab page. Both versions are graded the same way on the standard rubric. Only this version is eligible for the bonus.</p>
+</div>
+
+<!-- ========== THE TASK ========== -->
+<div class="section-card">
+  <h3>The Task</h3>
+  <p>In the readings and in class, you learned that text must become numbers before any machine learning model can process it. This week you will see what that looks like in practice. You will build a sentiment classifier that decides whether a movie review is positive or negative twice: once using TF-IDF feature vectors and logistic regression, and once using the Gemini API with progressively stronger prompts.</p>
+  <p>The comparison is the point. TF-IDF turns text into a sparse vector by counting word frequencies. Gemini encodes meaning in a completely different way. Both can reach similar accuracy on this task, but they fail on different kinds of examples. Finding those differences tells you something important about what each approach actually understands.</p>
+</div>
+
+<!-- ========== DATASET ========== -->
+<h2>Your Dataset</h2>
+
+<div class="section-card">
+  <h3>NLTK Movie Reviews</h3>
+  <p>2,000 movie reviews (1,000 positive, 1,000 negative), built into NLTK. No download or account required. You will split it 80/20 into training and test sets. The TF-IDF vectorizer is fitted only on the training set. The Gemini classifier sees reviews one at a time and is never fitted on anything. Both are evaluated on the same held-out test set.</p>
+</div>
+
+<!-- ========== HOW TO READ THIS PAGE ========== -->
+<div class="section-card">
+  <h3>How to read this page</h3>
+  <p>Each cell below follows the same format. The gray <code># Cell N</code> header is what you will put at the top of your code cell. Below it:</p>
+  <ul>
+    <li><strong>What it does</strong>: plain English description of the cell&rsquo;s purpose.</li>
+    <li><strong>Takes in</strong>: variables already in the notebook that this cell uses.</li>
+    <li><strong>Must produce</strong>: the exact variable names, types, and shapes this cell must create. These are binding contracts. Use these exact names.</li>
+    <li><strong>Notes</strong>: constraints, pitfalls, and things to watch for.</li>
+  </ul>
+  <p>Give the LLM the &ldquo;What it does,&rdquo; &ldquo;Takes in,&rdquo; and &ldquo;Must produce&rdquo; sections as your prompt. If the generated code does not match the output contract, fix it before moving on. The next cell depends on it.</p>
+</div>
+
+<!-- ==================== PART 1: TF-IDF ==================== -->
+<h2>Part 1: TF-IDF + Logistic Regression</h2>
+
+<!-- CELL 1 -->
+<pre># Cell 1: Setup</pre>
+<div class="section-card">
+  <p><strong>What it does:</strong> Installs required packages, imports all libraries needed for the entire lab, and downloads the NLTK movie review corpus.</p>
+
+  <p><strong>Takes in:</strong> Nothing. This is the first cell.</p>
+
+  <p><strong>Must produce:</strong></p>
+  <ul>
+    <li><code>numpy</code> imported as <code>np</code> — for array operations and indexing.</li>
+    <li><code>time</code> imported — for rate-limit pauses between API calls in later cells.</li>
+    <li><code>json</code> imported — for parsing JSON responses from Gemini in Cell 8 and beyond.</li>
+    <li><code>matplotlib.pyplot</code> imported as <code>plt</code> — for plotting term importance and t-SNE visualizations.</li>
+    <li><code>TfidfVectorizer</code> imported from <code>sklearn.feature_extraction.text</code> — turns text documents into sparse TF-IDF vectors (word frequency weighted by inverse document frequency).</li>
+    <li><code>LogisticRegression</code> imported from <code>sklearn.linear_model</code> — trains a binary classification model on TF-IDF vectors.</li>
+    <li><code>train_test_split</code> imported from <code>sklearn.model_selection</code> — splits your dataset into training and test sets while preserving class balance.</li>
+    <li><code>accuracy_score</code> and <code>classification_report</code> imported from <code>sklearn.metrics</code> — <code>accuracy_score</code> computes the percentage of correct predictions; <code>classification_report</code> prints precision, recall, and F1 for each class.</li>
+    <li><code>TSNE</code> imported from <code>sklearn.manifold</code> — reduces high-dimensional feature spaces to 2D for visualization.</li>
+    <li><code>movie_reviews</code> imported from <code>nltk.corpus</code> — the NLTK corpus object that allows you to iterate over labeled movie reviews.</li>
+    <li><code>genai</code> imported (Google Generative AI library) — provides the client for calling the Gemini API.</li>
+    <li>A printed confirmation that setup is complete.</li>
+  </ul>
+
+  <p><strong>Notes:</strong> All listed modules except <code>genai</code> are pre-installed in Colab. Install <code>google-generativeai</code> with <code>!pip install google-generativeai</code>. Use <code>nltk.download('movie_reviews', quiet=True)</code> to suppress verbose output. The NLTK movie review corpus contains 2,000 labeled reviews (positive and negative) that you will load in Cell 2.</p>
+</div>
+
+<!-- CELL 2 -->
+<pre># Cell 2: Load corpus and split train / test</pre>
+<div class="section-card">
+  <p><strong>What it does:</strong> Iterates over both categories of the NLTK movie review corpus, loads each document as a raw string, assigns it a numeric label, and splits the full set into training and test subsets. Prints the size of each split with positive/negative counts.</p>
+
+  <p><strong>Takes in:</strong> <code>movie_reviews</code> (from Cell 1).</p>
+
+  <p><strong>Must produce:</strong></p>
+  <ul>
+    <li><code>X_train</code>: Python list of strings, length 1,600. Each string is the full text of one movie review. Extract from <code>movie_reviews.raw(fileid)</code> for each file in the corpus.</li>
+    <li><code>X_test</code>: Python list of strings, length 400. The held-out test reviews.</li>
+    <li><code>y_train</code>: Python list of integers (0 or 1), length 1,600. Label encoding: <code>1</code> for positive reviews, <code>0</code> for negative.</li>
+    <li><code>y_test</code>: Python list of integers (0 or 1), length 400. Same encoding as <code>y_train</code>.</li>
+    <li><code>label_str</code>: Python dict with two keys: <code>0</code> maps to the string <code>'negative'</code> and <code>1</code> maps to the string <code>'positive'</code>. Used later to convert numeric predictions to readable text.</li>
+  </ul>
+
+  <p><strong>Notes:</strong> Loop over <code>movie_reviews.categories()</code> (which returns <code>['neg', 'pos']</code>) and then loop over <code>movie_reviews.fileids(categories=cat)</code> to get each file. Call <code>movie_reviews.raw(fileid)</code> to get the raw text. Use <code>train_test_split()</code> with <code>test_size=0.2</code>, <code>stratify=y_labels</code>, and <code>random_state=42</code> to ensure the class balance is preserved in both splits (800 positive and 800 negative in training, 200 of each in test) and results are reproducible across runs.</p>
+</div>
+
+<div class="tip">
+  <strong>Markdown cell:</strong> Why do we fit the vectorizer only on training data? What would go wrong if we fit it on the full 2,000-review corpus before splitting?
+</div>
+
+<!-- CELL 3 -->
+<pre># Cell 3: Build TF-IDF feature vectors</pre>
+<div class="section-card">
+  <p><strong>What it does:</strong> Creates and fits a TF-IDF vectorizer on the training data only, then transforms both the training and test sets. Prints the matrix shape, sparsity percentage, and the top 10 TF-IDF terms for one sample positive review and one sample negative review.</p>
+
+  <p><strong>Takes in:</strong> <code>X_train</code>, <code>X_test</code>, <code>y_train</code>, <code>label_str</code> (from Cell 2).</p>
+
+  <p><strong>Must produce:</strong></p>
+  <ul>
+    <li><code>vectorizer</code>. A <code>TfidfVectorizer</code> instance (from <code>sklearn.feature_extraction.text</code>) instantiated with parameters <code>max_features=5000</code> (keep only the 5,000 most frequent terms), <code>stop_words='english'</code> (ignore common words like &ldquo;the&rdquo;, &ldquo;and&rdquo;), and <code>ngram_range=(1, 2)</code> (track individual words and pairs of consecutive words). Call <code>.fit_transform(X_train)</code> to learn the vocabulary and transform in one step.</li>
+    <li><code>X_train_tfidf</code>: scipy sparse matrix, shape <code>(1600, 5000)</code>. Result of <code>vectorizer.fit_transform(X_train)</code>. Each row is one review; each column is one term (word or bigram). Cell values are TF-IDF scores (higher = term is distinctive for that review and corpus).</li>
+    <li><code>X_test_tfidf</code>: scipy sparse matrix, shape <code>(400, 5000)</code>. Result of <code>vectorizer.transform(X_test)</code>. <strong>Critical:</strong> use <code>.transform()</code>, not <code>.fit_transform()</code>, to apply the <strong>same vocabulary</strong> learned from training data.</li>
+    <li><code>feature_names</code>: numpy array of strings, length 5,000. The word/bigram vocabulary in feature-index order. Get from <code>vectorizer.get_feature_names_out()</code>.</li>
+    <li>Printed output: matrix shapes, sparsity percentage, and top 10 highest TF-IDF terms for one positive and one negative sample review.</li>
+  </ul>
+
+  <p><strong>Notes:</strong> Sparsity (percentage of zero values) is computed as <code>1 - (nnz / (rows * cols))</code> where <code>nnz</code> is the number of non-zero values. To print top terms for a sample: find one positive review using <code>next(i for i, l in enumerate(y_train) if l == 1)</code> and one negative using <code>l == 0</code>. Convert that row to a dense array with <code>.toarray()[0]</code>, then use <code>np.argsort()</code> to sort indices by score, take the last 10 (highest scores), reverse the order, and index into <code>feature_names</code>.</p>
+</div>
+
+<div class="tip">
+  <strong>Markdown cell:</strong> Look at the top terms for each review. Do they give away the sentiment? What kind of information does this vector <em>not</em> contain that a human reader would use?
+</div>
+
+<!-- CELL 4 -->
+<pre># Cell 4: Train the classifier</pre>
+<div class="section-card">
+  <p><strong>What it does:</strong> Trains a logistic regression classifier on the TF-IDF training matrix, runs it against the test matrix, and prints accuracy and a full classification report.</p>
+
+  <p><strong>Takes in:</strong> <code>X_train_tfidf</code>, <code>X_test_tfidf</code>, <code>y_train</code>, <code>y_test</code> (from Cells 2&ndash;3).</p>
+
+  <p><strong>Must produce:</strong></p>
+  <ul>
+    <li><code>clf</code>. A <code>LogisticRegression</code> instance (from <code>sklearn.linear_model</code>) instantiated with <code>max_iter=1000</code> (number of iterations to converge) and <code>random_state=42</code> (for reproducibility). Call <code>.fit(X_train_tfidf, y_train)</code> to train it on the TF-IDF vectors and their labels.</li>
+    <li><code>y_pred_tfidf</code>: numpy array of integers (0 or 1), length 400. The predicted class labels for the test set. Get from <code>clf.predict(X_test_tfidf)</code>.</li>
+    <li><code>tfidf_accuracy</code>: float between 0 and 1. The fraction of test set predictions that match the true labels. Compute using <code>accuracy_score(y_test, y_pred_tfidf)</code>.</li>
+    <li>Printed output: the accuracy as a percentage (e.g., &ldquo;Accuracy: 82.5%&rdquo;), followed by a <code>classification_report(y_test, y_pred_tfidf, target_names=['negative', 'positive'])</code>. This report shows precision (how many predicted positives were actually positive), recall (how many actual positives were found), and F1 (harmonic mean) for each class.</li>
+  </ul>
+
+  <p><strong>Notes:</strong> The <code>classification_report</code> output includes per-class metrics. For a balanced dataset like this, precision and recall should be roughly equal. If recall is much lower than precision for one class, it means the model is conservative about predicting that class. If precision is much lower, the model makes false positive predictions for that class. Note any significant imbalance in your markdown reflection.</p>
+</div>
+
+<div class="tip">
+  <strong>Markdown cell:</strong> 80%+ accuracy on this dataset is a strong result for a bag-of-words model. Did you beat that? The report also shows precision and recall: are they balanced, or does the model favor one class? What would it mean in practice if a sentiment model had high precision but low recall for the negative class?
+</div>
+
+<!-- CELL 5 -->
+<pre># Cell 5: What did the model actually learn?</pre>
+<div class="section-card">
+  <p><strong>What it does:</strong> Extracts the logistic regression coefficients to reveal which terms the model associates most strongly with positive or negative sentiment, then plots them as two horizontal bar charts side by side.</p>
+
+  <p><strong>Takes in:</strong> <code>clf</code>, <code>feature_names</code> (from Cells 3&ndash;4).</p>
+
+  <p><strong>Must produce:</strong></p>
+  <ul>
+    <li><code>coef</code>: 1D numpy array, length 5,000. The logistic regression coefficient for each of the 5,000 features. Get from <code>clf.coef_[0]</code>. Positive coefficients increase the predicted probability of the positive class; negative coefficients increase the probability of the negative class. The magnitude tells you how strongly that term influences the prediction.</li>
+    <li>Printed output: (1) the top 20 terms with the highest coefficients (most strongly associated with positive reviews), printed with their coefficient values; (2) the top 20 terms with the lowest coefficients (most strongly associated with negative reviews), also with values.</li>
+    <li>A matplotlib figure with two horizontal bar charts side by side: (left) the 15 terms with highest coefficients in green, (right) the 15 terms with lowest coefficients in red. Bar length = absolute value of coefficient. Y-axis labels = term names, x-axis = coefficient magnitude. Arrange so the strongest term appears at the top of each chart.</li>
+  </ul>
+
+  <p><strong>Notes:</strong> Use <code>np.argsort(coef)</code> to sort indices by coefficient value. Take the last 20 with <code>[-20:]</code>, then reverse with <code>[::-1]</code> to get descending order (most positive first). For most negative, take the first 20: <code>[:20]</code>. For the visualization, use <code>plt.barh()</code> (horizontal bars) and set colors appropriately. Make sure both charts are visible side-by-side using <code>plt.subplots(1, 2)</code>.</p>
+</div>
+
+<div class="tip">
+  <strong>Markdown cell:</strong> Scan both lists. Are there any terms that surprise you, words you&rsquo;d expect in the positive list that appear in the negative list, or vice versa? Write down at least one surprise and explain why the model might have learned it that way. Think about which films those reviewers were describing.
+</div>
+
+<!-- CELL 6 -->
+<pre># Cell 6: Find the high-confidence failures</pre>
+<div class="section-card">
+  <p><strong>What it does:</strong> Uses the classifier&rsquo;s predicted probabilities to identify the test examples it got wrong with the highest confidence, then prints the five most confident mistakes in detail.</p>
+
+  <p><strong>Takes in:</strong> <code>clf</code>, <code>X_test_tfidf</code>, <code>X_test</code>, <code>y_test</code>, <code>y_pred_tfidf</code>, <code>label_str</code> (from Cells 2&ndash;4).</p>
+
+  <p><strong>Must produce:</strong></p>
+  <ul>
+    <li><code>mistakes</code>: Python list of tuples, where each tuple is <code>(confidence, true_label, predicted_label, review_text)</code>. Build by iterating over test examples, calling <code>clf.predict_proba(X_test_tfidf)</code> to get predicted probabilities for each example, finding the maximum probability (the confidence of the predicted class), and including only examples where the prediction is wrong (<code>y_pred_tfidf[i] != y_test[i]</code>). Sort the list by confidence descending (most confident mistakes first).</li>
+    <li>Printed output: (1) total number of errors and error rate as a percentage; (2) for each of the five most confident mistakes: true sentiment label (from <code>label_str</code>), predicted label, confidence formatted as a percentage, and the first 280 characters of the original review text.</li>
+  </ul>
+
+  <p><strong>Notes:</strong> Call <code>clf.predict_proba(X_test_tfidf)</code> once to get all probabilities. The returned array has shape <code>(400, 2)</code>: each row is one test example, column 0 is probability of class 0 (negative), column 1 is probability of class 1 (positive). For each row, the max value is the model&rsquo;s confidence in whatever class it predicted. Loop over indices, check if the prediction is wrong, and if so, add the tuple to the list. Then sort by confidence (descending) and print the top 5.</p>
+</div>
+
+<div class="tip">
+  <strong>Markdown cell:</strong> For each high-confidence failure, explain in one sentence what fooled the model. Look for patterns: negation (&ldquo;not bad&rdquo;), sarcasm, genre-specific language (&ldquo;terrifying&rdquo; in a horror film), or reviews that describe flaws while ultimately recommending the film.
+</div>
+
+<!-- ==================== PART 2: GEMINI ==================== -->
+<h2>Part 2: Gemini API Classification</h2>
+
+<div class="tip">
+  <strong>Rate limits:</strong> The free tier allows 15 requests per minute. Each cell below runs 50 reviews and pauses between batches to stay within the limit. The two cells together take about 8 minutes. Start them and do something else.
+</div>
+
+<!-- CELL 7 -->
+<pre># Cell 7: Gemini (zero-shot)</pre>
+<div class="section-card">
+  <p><strong>What it does:</strong> Initializes the Gemini client, selects a fixed random sample of 50 test reviews, classifies each one with a minimal zero-shot prompt, and compares accuracy against TF-IDF on the same 50 examples.</p>
+
+  <p><strong>Takes in:</strong> <code>X_test</code>, <code>y_test</code>, <code>y_pred_tfidf</code> (from Cells 2 and 4). A Gemini API key stored in Colab secrets as <code>GEMINI_API_KEY</code>.</p>
+
+  <p><strong>Must produce:</strong></p>
+  <ul>
+    <li><code>client</code>: an initialized Gemini client. Import <code>google.generativeai</code> as <code>genai</code>, configure it with <code>genai.configure(api_key=secret_api_key)</code>, and create a client with <code>genai.Client()</code>.</li>
+    <li><code>sample_idx</code>: numpy array of 50 integer indices randomly selected from the test set without replacement. Use <code>np.random.default_rng(42).choice(len(X_test), size=50, replace=False)</code>. The seed <code>42</code> ensures all students and all Gemini cells in this notebook use the same 50 reviews for fair comparison.</li>
+    <li><code>sample_texts</code>: Python list of 50 review texts. Index <code>X_test</code> using <code>sample_idx</code>.</li>
+    <li><code>sample_labels</code>: Python list of 50 true labels (0 or 1). Index <code>y_test</code> using <code>sample_idx</code>.</li>
+    <li><code>zs_preds</code>: Python list of 50 integers (0 or 1). For each review, send the zero-shot prompt to Gemini, parse the response: if it contains the string <code>'positive'</code> (case-insensitive), store <code>1</code>; otherwise store <code>0</code>.</li>
+    <li><code>zs_accuracy</code>: float. Compute accuracy of <code>zs_preds</code> against <code>sample_labels</code> using <code>accuracy_score(sample_labels, zs_preds)</code>.</li>
+    <li><code>tfidf_50</code>: numpy array of 50 integers. Extract TF-IDF predictions for the same 50 indices: <code>y_pred_tfidf[sample_idx]</code>.</li>
+    <li><code>tfidf_50_acc</code>: float. Accuracy of <code>tfidf_50</code> against <code>sample_labels</code>.</li>
+    <li>Printed output: side-by-side accuracy comparison (e.g., &ldquo;Zero-shot Gemini: 82%, TF-IDF on same 50: 80%&rdquo;).</li>
+  </ul>
+
+  <p><strong>Zero-shot prompt:</strong> The exact text is &ldquo;Is this movie review positive or negative? Reply with only the word &lsquo;positive&rsquo; or &lsquo;negative&rsquo;.&rdquo; followed by the review (truncated to 1,500 characters). This minimal prompt is intentionally vague to establish baseline performance.</p>
+
+  <p><strong>Notes:</strong> Use the <code>gemini-2.0-flash</code> model. Call <code>client.models.generate_content()</code> for each request. Implement rate limiting: pause for 4 seconds after every 15 API calls to stay within Colab&rsquo;s free tier (15 requests per minute). Print progress every 10 reviews so you can monitor progress. The prompt wording must stay exactly as specified because Cell 8 compares zero-shot vs. context-engineered performance.</p>
+</div>
+
+<!-- CELL 8 -->
+<pre># Cell 8: Gemini (context-engineered prompt)</pre>
+<div class="section-card">
+  <p><strong>What it does:</strong> Classifies the same 50 reviews using a fully context-engineered prompt that applies the anatomy-of-a-prompt structure from Module 1: system instruction, task definition, output format, calibration examples, and constraints. Parses structured JSON from the response.</p>
+
+  <p><strong>Takes in:</strong> <code>client</code>, <code>sample_texts</code>, <code>sample_labels</code> (from Cell 7).</p>
+
+  <p><strong>Must produce:</strong></p>
+  <ul>
+    <li><code>SENTIMENT_PROMPT</code>: A multi-line string containing the complete context-engineered prompt. It must include all five components listed below, with a <code>{review}</code> placeholder at the end where the actual review text is interpolated before sending to the API.</li>
+    <li><code>ce_preds</code>: Python list of 50 integers (0 or 1). For each review, send the context-engineered prompt to Gemini, attempt to parse the response as JSON, and look for the <code>"sentiment"</code> key: if its value is <code>"positive"</code>, store <code>1</code>; otherwise store <code>0</code>. If JSON parsing fails (response is not valid JSON), use a fallback string-matching approach: search the raw response text for <code>'positive'</code> (case-insensitive) and map accordingly.</li>
+    <li><code>ce_accuracy</code>: float. Accuracy of <code>ce_preds</code> against <code>sample_labels</code> using <code>accuracy_score(sample_labels, ce_preds)</code>.</li>
+    <li>Printed output: the context-engineered accuracy formatted as a percentage.</li>
+  </ul>
+
+  <p><strong>Required prompt components:</strong></p>
+  <ol>
+    <li><strong>System instruction:</strong> &ldquo;You are a professional film critic classifying reviews for a sentiment analysis system. Focus on the reviewer&rsquo;s overall conclusion, not their description of the plot or comparisons to other films.&rdquo;</li>
+    <li><strong>Task:</strong> &ldquo;Classify the review as positive or negative.&rdquo;</li>
+    <li><strong>Output format:</strong> &ldquo;Valid JSON only, with three keys: <code>&quot;sentiment&quot;</code> (string, either <code>&quot;positive&quot;</code> or <code>&quot;negative&quot;</code>), <code>&quot;confidence&quot;</code> (string, one of <code>&quot;high&quot;</code>, <code>&quot;medium&quot;</code>, or <code>&quot;low&quot;</code>), and <code>&quot;signal&quot;</code> (string, the specific phrase from the review that most clearly indicates the sentiment).&rdquo;</li>
+    <li><strong>Calibration examples:</strong> Include at least three examples: (1) a clearly positive review with expected JSON output; (2) a clearly negative review with expected output; (3) an ambiguous review (overall negative but acknowledges some positives) with expected output showing how sarcasm or mixed signals should be classified. Each example should show the review text followed by the desired JSON response.</li>
+    <li><strong>Constraints:</strong> &ldquo;Classify based on the reviewer&rsquo;s final opinion only. If a review is sarcastic, classify the underlying sentiment, not the surface statement. Use <code>&quot;confidence&quot;: &quot;low&quot;</code> if genuinely uncertain between classes.&rdquo;</li>
+  </ol>
+
+  <p><strong>Notes:</strong> Parse each response with <code>json.loads(response_text)</code> wrapped in a try/except block. If parsing succeeds, extract the <code>"sentiment"</code> value; if it fails, use string matching on the raw text as a fallback. Gemini sometimes wraps JSON in markdown code fences (````json ... ```), so the fallback is important. Use the same rate-limit pause (4 seconds after every 15 requests) as Cell 7.</p>
+</div>
+
+<div class="tip">
+  <strong>Markdown cell:</strong> Look at your context-engineered prompt. Which component do you think made the biggest difference compared to zero-shot? The system instruction? The calibration examples? The constraint about sarcasm? If you had to cut one component to save tokens, which would you cut and why?
+</div>
+
+<!-- ==================== PART 3: COMPARISON ==================== -->
+<h2>Part 3: The Comparison</h2>
+
+<!-- CELL 9 -->
+<pre># Cell 9: Summary table + failure analysis</pre>
+<div class="section-card">
+  <p><strong>What it does:</strong> Prints a formatted accuracy comparison table for all four methods, then finds and prints two kinds of disagreements: cases where TF-IDF was wrong and Gemini (context-engineered) was right, and cases where Gemini was wrong and TF-IDF was right.</p>
+
+  <p><strong>Takes in:</strong> <code>tfidf_accuracy</code>, <code>tfidf_50_acc</code>, <code>zs_accuracy</code>, <code>ce_accuracy</code>, <code>sample_texts</code>, <code>sample_labels</code>, <code>tfidf_50</code>, <code>ce_preds</code>, <code>label_str</code> (from Cells 2&ndash;8).</p>
+
+  <p><strong>Must produce:</strong></p>
+  <ul>
+    <li>A printed comparison table with exactly these four rows in this order, showing method name and right-aligned accuracy:
+      <ol>
+        <li>&ldquo;TF-IDF + Logistic Regression (full 400 test set)&rdquo; with <code>tfidf_accuracy</code> formatted as a percentage</li>
+        <li>&ldquo;TF-IDF (same 50 reviews as Gemini)&rdquo; with <code>tfidf_50_acc</code> formatted as a percentage</li>
+        <li>&ldquo;Gemini: zero-shot&rdquo; with <code>zs_accuracy</code> formatted as a percentage</li>
+        <li>&ldquo;Gemini: context-engineered&rdquo; with <code>ce_accuracy</code> formatted as a percentage</li>
+      </ol>
+    </li>
+    <li>A section titled &ldquo;TF-IDF wrong, Gemini right&rdquo; containing up to 2 printed examples. For each: (1) the true label from <code>label_str[sample_labels[i]]</code>, (2) the TF-IDF prediction from <code>label_str[tfidf_50[i]]</code>, (3) the Gemini prediction from <code>label_str[ce_preds[i]]</code>, (4) the first 300 characters of <code>sample_texts[i]</code>.</li>
+    <li>A section titled &ldquo;Gemini wrong, TF-IDF right&rdquo; containing up to 2 printed examples in the same format.</li>
+  </ul>
+
+  <p><strong>Notes:</strong> Loop over <code>range(50)</code>. For each index <code>i</code>, check if <code>tfidf_50[i] != sample_labels[i]</code> AND <code>ce_preds[i] == sample_labels[i]</code> (TF-IDF wrong, Gemini right). Collect these, and stop after finding 2. Then loop again for the opposite condition: <code>ce_preds[i] != sample_labels[i]</code> AND <code>tfidf_50[i] == sample_labels[i]</code> (Gemini wrong, TF-IDF right), collecting up to 2 more. If either category has zero examples, print a message like &ldquo;No examples found where TF-IDF was wrong and Gemini was right.&rdquo;</p>
+</div>
+
+<div class="tip">
+  <strong>Markdown cell 1: The numbers:</strong> Which method performed best? Was it the one you expected? What does the gap (or lack of one) between zero-shot and context-engineered Gemini tell you about this particular task?
+</div>
+
+<div class="tip">
+  <strong>Markdown cell 2: TF-IDF wrong, Gemini right:</strong> For the examples you found, what did TF-IDF miss? Name the linguistic phenomenon if you can: negation, sarcasm, indirect sentiment, or something else.
+</div>
+
+<div class="tip">
+  <strong>Markdown cell 3: Gemini wrong, TF-IDF right:</strong> Find at least one example where Gemini got it wrong and TF-IDF got it right. Why might a model that &ldquo;understands language&rdquo; still make a mistake here?
+</div>
+
+<div class="tip">
+  <strong>Markdown cell 4: What this means:</strong> TF-IDF is a 1990s algorithm. Gemini is trained on hundreds of billions of tokens. They land in a similar accuracy range on this dataset. What does that tell you about the benchmark itself? What kind of task would make the gap much larger?
+</div>
+
+<!-- ========== BONUS ========== -->
+<h2>Bonus (10 extra credit points; see note above)</h2>
+
+<p>Apply LLM-assisted prompt refinement to your context-engineered classifier. The same technique from Lab 1. Feed Gemini a structured report of its wrong predictions and ask it to diagnose and fix the prompt. Then evaluate the revised prompt on the same 50 examples.</p>
+
+<pre># Bonus Cell: LLM-assisted prompt refinement</pre>
+<div class="section-card">
+  <p><strong>What it does:</strong> Builds a structured error report from the context-engineered failures, sends it to Gemini with the original prompt and asks for a diagnosis and revised prompt, then evaluates the revised prompt on the same 50 reviews and compares results.</p>
+
+  <p><strong>Takes in:</strong> <code>client</code>, <code>SENTIMENT_PROMPT</code>, <code>ce_preds</code>, <code>sample_texts</code>, <code>sample_labels</code>, <code>label_str</code> (from earlier cells).</p>
+
+  <p><strong>Must produce:</strong></p>
+  <ul>
+    <li><code>error_report</code>: A string documenting all predictions where <code>ce_preds[i] != sample_labels[i]</code>. For each error, include the review text (first 300 characters), the true label (from <code>label_str</code>), and the predicted label (from <code>label_str</code>). Format clearly with line breaks between examples. If there are no errors, the string should be &ldquo;No errors. All predictions correct.&rdquo;</li>
+    <li><code>refined_prompt</code>: A string containing the revised prompt text returned by Gemini. This should be the complete, ready-to-use prompt (not wrapped in any explanation).</li>
+    <li><code>refined_preds</code>: Python list of 50 integers (0 or 1). Run all 50 reviews through the API using <code>refined_prompt</code> instead of <code>SENTIMENT_PROMPT</code>, using the same JSON parsing and fallback logic as Cell 8.</li>
+    <li><code>refined_accuracy</code>: float. Accuracy of <code>refined_preds</code> against <code>sample_labels</code> using <code>accuracy_score(sample_labels, refined_preds)</code>.</li>
+    <li>Printed output: (1) the refined prompt text; (2) a comparison table showing original context-engineered accuracy, refined accuracy, and the difference (absolute change).</li>
+  </ul>
+
+  <p><strong>Meta-prompt to send to Gemini:</strong> &ldquo;You are a prompt optimization specialist. Below is a sentiment classification prompt and the reviews it got wrong. Diagnose why each mistake happened and return a revised prompt that fixes these errors without breaking the examples that already work. Return only the complete revised prompt with no explanation.&rdquo; followed by the original <code>SENTIMENT_PROMPT</code> and the structured <code>error_report</code>.</p>
+
+  <p><strong>Notes:</strong> Structure the error report clearly with headers and consistent formatting so Gemini can parse it easily. A well-organized report produces more useful revisions. If <code>refined_accuracy</code> is lower than <code>ce_accuracy</code>, that is a valid and interesting result: document it in a markdown cell explaining what the refinement changed and why it may have backfired (e.g., over-correction on minority cases). Use the same rate-limit pause as previous API cells.</p>
+</div>
+
+<!-- ========== PRESENTATION PREP ========== -->
+<h2>Presentation Prep</h2>
+
+<div class="section-card">
+  <p>Your notebook is your presentation. There is no separate written reflection. Your presentation serves as the reflection.</p>
+  <p>In three to five minutes, walk the class through:</p>
+  <p data-concurrent="true" style="font-size:0.9em; color:#5e35b1;"><strong>Dual-enrolled students:</strong> Your presentation covers both the NLP and CV labs in one 5&ndash;7 minute presentation. See the combined lab for guidance.</p>
+  <ol>
+    <li><strong>What TF-IDF learned:</strong> Show the most positive and most negative terms from Cell 5. Pick one that surprises you and explain why the model learned it.</li>
+    <li><strong>The best failure:</strong> Show one high-confidence TF-IDF mistake from Cell 6. Explain in plain language what fooled it.</li>
+    <li><strong>The comparison:</strong> Show the accuracy table from Cell 9. Find one example where Gemini did better and one where TF-IDF did better. What does each win tell you about what each approach actually understands?</li>
+  </ol>
+  <p>See the assignment sheet for submission details and the rubric.</p>
+</div>
+
+</body>
+</html>

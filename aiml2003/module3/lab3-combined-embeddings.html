@@ -1,0 +1,330 @@
+<!-- concurrent-only: requires dual enrollment in AIML 2003 + AIML 2013 -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lab 3 (Combined): How Machines Represent Text and Images | AIML 2003 + AIML 2013</title>
+<link rel="stylesheet" href="../../course-styles.css">
+</head>
+<body>
+
+<h1>Lab 3 (Combined): How Machines Represent Text and Images</h1>
+<p class="subtitle">Two modalities, one idea: compress raw data into vectors where "close" means "similar."</p>
+
+<!-- ========== DUAL ENROLLMENT NOTICE ========== -->
+<div class="bridge-box">
+  <strong>Dual-enrollment lab: AIML 2003 + AIML 2013</strong>
+  <p style="margin: 0.5rem 0 0;">This lab is for students enrolled in both AIML 2003 (NLP) and AIML 2013 (CV). You will build one notebook covering both courses&rsquo; Module 3 content, give one 5&ndash;7 minute presentation or demo, and submit the same GitHub repo link to both Canvas assignments. If you are enrolled in only one course, use that course&rsquo;s standalone lab instead.</p>
+</div>
+
+<!-- ========== LAB FRAMING ========== -->
+<div class="warning">
+  <strong>How this lab works.</strong>
+  <p style="margin: 0.75rem 0 0;">This lab gives you the specification for each cell, not the code. Your job is to write the code yourself, using an LLM to help you generate it.</p>
+  <p style="margin: 0.75rem 0 0;">Give the LLM the spec box as your prompt. If the generated code does not match the output contract, fix it before moving on. The next cell depends on it.</p>
+</div>
+
+<!-- ========== THE TASK ========== -->
+<div class="section-card">
+  <h3>The Task</h3>
+  <p>In Module 2, both courses built hand-crafted feature vectors: TF-IDF for text, HOG for images. Both were fixed recipes that encode local patterns and discard context. This week both courses replace those hand-crafted features with learned embeddings from pre-trained neural networks.</p>
+  <p>This combined lab puts both pipelines in one notebook. You will generate text embeddings with a sentence transformer and image embeddings with MobileNetV2, build retrieval systems for each, and then compare the two vector spaces side by side. The comparison is the point: text and images are fundamentally different kinds of data, yet both can be compressed into dense vectors where cosine similarity measures "closeness." What does "close" mean in each space? Where does the analogy hold, and where does it break?</p>
+</div>
+
+<!-- ========== HOW TO READ THIS PAGE ========== -->
+<div class="section-card">
+  <h3>How to read this page</h3>
+  <p>Same format as the standalone labs. Each cell: <strong>What it does</strong>, <strong>Takes in</strong>, <strong>Must produce</strong>, <strong>Notes</strong>. Variable name contracts are binding. The next cell depends on the previous one&rsquo;s output.</p>
+</div>
+
+<!-- ==================== PART 1: SETUP ==================== -->
+<h2>Part 1: Setup</h2>
+
+<!-- CELL 1 -->
+<pre># Cell 1: Setup</pre>
+<div class="section-card">
+  <p><strong>What it does:</strong> Installs <code>sentence-transformers</code>, imports all libraries for both pipelines, loads the text embedding model and the image feature extraction model. Prints both model names and their output dimensions.</p>
+
+  <p><strong>Takes in:</strong> Nothing. This is the first cell.</p>
+
+  <p><strong>Must produce:</strong></p>
+  <ul>
+    <li><strong>Install:</strong> Run <code>!pip install -q sentence-transformers</code> to install the library for text embeddings. Everything else (tensorflow/keras, numpy, matplotlib, sklearn, scikit-image) is pre-installed in Colab.</li>
+    <li><strong>Imports (pre-installed):</strong>
+      <ul>
+        <li><code>import numpy as np</code> — numerical arrays and linear algebra</li>
+        <li><code>import matplotlib.pyplot as plt</code> — plotting and visualization</li>
+        <li><code>from sklearn.metrics.pairwise import cosine_similarity</code> — compute similarity between vectors</li>
+        <li><code>from sklearn.manifold import TSNE</code> — dimensionality reduction for visualization</li>
+        <li><code>from sklearn.feature_extraction.text import TfidfVectorizer</code> — text vectorization (reference from Module 2)</li>
+        <li><code>from skimage.feature import hog</code> — histogram of oriented gradients (reference from Module 2)</li>
+        <li><code>from skimage.color import rgb2gray</code> — convert color images to grayscale</li>
+        <li><code>from skimage import transform</code> — image resizing and transformations</li>
+        <li><code>import tensorflow as tf</code> — deep learning framework</li>
+        <li><code>from tensorflow.keras.applications.mobilenet_v2 import preprocess_input</code> — prepare images for MobileNetV2</li>
+        <li><code>from collections import Counter, defaultdict</code> — count and group items</li>
+        <li><code>import json</code> — load structured data</li>
+      </ul>
+    </li>
+    <li><strong><code>text_model</code>:</strong> Call <code>SentenceTransformer('all-MiniLM-L6-v2')</code> and assign to <code>text_model</code>. This model encodes text strings into vectors of dimension 384. It learns similarity by context and semantic meaning.</li>
+    <li><strong><code>image_model</code>:</strong> Call <code>tf.keras.applications.MobileNetV2(include_top=False, weights='imagenet', pooling='avg', input_shape=(224, 224, 3))</code> and assign to <code>image_model</code>. Explain what each parameter does: <code>include_top=False</code> removes the classification head, leaving only feature extraction layers; <code>weights='imagenet'</code> loads parameters trained on 1.2 million ImageNet images; <code>pooling='avg'</code> collapses spatial dimensions (height and width) into a single vector via average pooling; <code>input_shape=(224, 224, 3)</code> expects 224&times;224 RGB images. Output dimension: 1,280.</li>
+    <li><strong>Printed output:</strong> Print the name <code>'all-MiniLM-L6-v2'</code> and dimension 384 for text. Print <code>'MobileNetV2'</code> and dimension 1,280 for images. Add a sentence explaining that despite very different input formats (text vs. image), both produce fixed-length numeric vectors where cosine similarity measures "closeness."</li>
+  </ul>
+
+  <p><strong>Notes:</strong> Install <code>sentence-transformers</code> first with <code>!pip install -q sentence-transformers</code>. All other dependencies are pre-installed in Colab.</p>
+</div>
+
+<!-- ==================== PART 2: NLP PIPELINE ==================== -->
+<h2>Part 2: NLP Pipeline (Text as Vectors)</h2>
+
+<!-- CELL 2 -->
+<pre># Cell 2: Load text dataset</pre>
+<div class="section-card">
+  <p><strong>What it does:</strong> Loads or defines the 60-text dataset (15 per category: technology, sports, cooking, travel) plus 5 edge cases. Same dataset as the NLP standalone lab. Prints category counts.</p>
+
+  <p><strong>Takes in:</strong> The dataset (provided as a JSON file or Python data structure).</p>
+
+  <p><strong>Must produce:</strong></p>
+  <ul>
+    <li><strong><code>texts</code>:</strong> Python list of 60 strings. Each is a short text snippet. The list is ordered by category: first 15 are technology, next 15 are sports, next 15 are cooking, last 15 are travel. Name this variable exactly <code>texts</code>.</li>
+    <li><strong><code>text_categories</code>:</strong> Python list of 60 strings. <code>text_categories[i]</code> is the category name (one of <code>'technology'</code>, <code>'sports'</code>, <code>'cooking'</code>, or <code>'travel'</code>) for the text at <code>texts[i]</code>. The list is parallel to <code>texts</code> — they must have the same length and order. Name this variable exactly <code>text_categories</code>.</li>
+    <li><strong><code>text_cat_names</code>:</strong> Python list <code>['technology', 'sports', 'cooking', 'travel']</code> — the four category names in order.</li>
+    <li><strong><code>edge_texts</code>:</strong> Python list of 5 short text strings that are ambiguous or cross-category (e.g., "I cooked a robot" spans cooking and technology).</li>
+    <li><strong><code>edge_labels</code>:</strong> Python list of 5 lists. <code>edge_labels[i]</code> is a list of category names that apply to <code>edge_texts[i]</code> (e.g., <code>['cooking', 'technology']</code>).</li>
+    <li><strong>Printed output:</strong> Use <code>Counter(text_categories)</code> to print how many texts belong to each of the four categories. You should see 15 in each.</li>
+  </ul>
+
+  <p><strong>Notes:</strong> Load from the JSON file provided (using <code>json.load(open(...))</code>) or define the data inline as Python lists. The key constraint is that <code>text_categories[i]</code> must correspond to <code>texts[i]</code> — the embedding pipeline depends on this alignment.</p>
+</div>
+
+<!-- CELL 3 -->
+<pre># Cell 3: Generate text embeddings</pre>
+<div class="section-card">
+  <p><strong>What it does:</strong> Encodes all 60 texts into dense vectors using the sentence transformer. Prints shape and sample values.</p>
+
+  <p><strong>Takes in:</strong> <code>text_model</code> (SentenceTransformer instance from Cell 1), <code>texts</code> (list of 60 strings from Cell 2).</p>
+
+  <p><strong>Must produce:</strong></p>
+  <ul>
+    <li><strong><code>text_embeddings</code>:</strong> Call the method <code>text_model.encode(texts, show_progress_bar=True)</code>. This encodes every string in <code>texts</code> into a numeric vector. The result is a numpy array of shape <code>(60, 384)</code> — 60 texts, each represented as a 384-dimensional vector. Name this variable exactly <code>text_embeddings</code>.</li>
+    <li><strong>Printed output:</strong> Print the shape: <code>text_embeddings.shape</code>. Print the first 10 values of the first embedding: <code>text_embeddings[0][:10]</code>. This shows you what the raw numeric representation looks like.</li>
+  </ul>
+
+  <p><strong>Notes:</strong> The <code>show_progress_bar=True</code> argument displays a progress bar while encoding (it takes a few seconds). The sentence transformer learns to encode semantically similar texts close together in 384-dimensional space.</p>
+</div>
+
+<!-- CELL 4 -->
+<pre># Cell 4: Text retrieval demo</pre>
+<div class="section-card">
+  <p><strong>What it does:</strong> Builds a text retrieval function that finds the most similar texts to a query. Tests it on two examples. Prints the query, the top matches, their cosine similarity scores, and whether each match is in the same category.</p>
+
+  <p><strong>Takes in:</strong> <code>text_embeddings</code> (shape 60&times;384, from Cell 3), <code>texts</code> (list of 60 strings, from Cell 2), <code>text_categories</code> (list of 60 category names, from Cell 2).</p>
+
+  <p><strong>Must produce:</strong></p>
+  <ul>
+    <li><strong><code>find_similar_text(query_idx, n=5)</code>:</strong> A function with these steps:
+      <ul>
+        <li>Extract the query embedding from <code>text_embeddings[query_idx]</code> — one row vector of dimension 384.</li>
+        <li>Use <code>cosine_similarity([query_embedding], text_embeddings)</code> to score the query against all 60 embeddings. Result is a shape (1, 60) array; flatten it to a 1D array of 60 scores.</li>
+        <li>Set the query&rsquo;s own score to &minus;1 (to exclude it from results).</li>
+        <li>Use <code>np.argsort(scores)[::-1]</code> to get indices sorted by score, highest first.</li>
+        <li>Return the top <code>n</code> indices, scores, and (for printing) the texts, categories, and category-match booleans.</li>
+      </ul>
+    </li>
+    <li><strong>Test with two queries:</strong> Call <code>find_similar_text(0, n=5)</code> (a technology text) and <code>find_similar_text(30, n=5)</code> (a cooking text). For each, print the query text, then a table of the 5 nearest matches with their cosine scores and a check mark if the category matches.</li>
+  </ul>
+
+  <p><strong>Notes:</strong> Same logic as the NLP standalone lab. The function returns the indices and scores; you format the output for readability. Note which matches are in the same category and which are surprises — this tells you how well the embedding space organizes texts by semantic meaning.</p>
+</div>
+
+<!-- ==================== PART 3: CV PIPELINE ==================== -->
+<h2>Part 3: CV Pipeline (Images as Vectors)</h2>
+
+<!-- CELL 5 -->
+<pre># Cell 5: Load image dataset</pre>
+<div class="section-card">
+  <p><strong>What it does:</strong> Loads the same image dataset from Module 2 (CIFAR-10 or custom images). Same structure and variables as the CV standalone lab. Displays a sample grid.</p>
+
+  <p><strong>Takes in:</strong> Nothing external; loads from disk or API.</p>
+
+  <p><strong>Must produce:</strong></p>
+  <ul>
+    <li><strong><code>images</code>:</strong> A numpy array of shape <code>(n_images, height, width, 3)</code> or a Python list of arrays. Use the same dataset you loaded in Module 2 (CIFAR-10 with <code>tf.keras.datasets.cifar10.load_data()</code>, or custom images via <code>os.walk()</code> and <code>PIL.Image</code> or <code>tf.io.read_file()</code> / <code>tf.image.decode_jpeg()</code>). Store pixel values as integers (0&ndash;255) or floats (0.0&ndash;1.0) — you will rescale before feeding to MobileNetV2.</li>
+    <li><strong><code>img_labels</code>:</strong> Python list of integers, one per image. For CIFAR-10, labels are 0&ndash;9. For custom datasets, create a mapping (e.g., files in folder 0 get label 0). <code>img_labels[i]</code> corresponds to <code>images[i]</code>.</li>
+    <li><strong><code>img_names</code>:</strong> Python list of string class names in order. For CIFAR-10, use <code>['airplane', 'automobile', 'bird', 'cat', 'deer', 'dog', 'frog', 'horse', 'ship', 'truck']</code>. For custom data, create a list matching your folder names. <code>img_names[label]</code> gives the human-readable class name for an image with <code>img_labels[i] = label</code>.</li>
+    <li><strong><code>N_PER_CLASS</code>:</strong> Integer. For CIFAR-10, this is 5,000 (10,000 images ÷ 10 classes). For custom data, the number of images per class (assuming equal distribution; adjust if unbalanced).</li>
+    <li><strong>Display a sample grid:</strong> Use <code>plt.subplots()</code> to show a 2&times;5 or 3&times;3 grid of random images, one from each class or a representative selection. Include class names as titles or labels.</li>
+  </ul>
+
+  <p><strong>Notes:</strong> Use the same loading method (CIFAR-10 or custom) that you used in Module 2. Ensure <code>img_labels[i]</code> matches <code>images[i]</code> — the embedding pipeline depends on this alignment. If you loaded custom images, preserve the same order.</p>
+</div>
+
+<!-- CELL 6 -->
+<pre># Cell 6: Extract image embeddings</pre>
+<div class="section-card">
+  <p><strong>What it does:</strong> Resizes every image to 224&times;224 (MobileNetV2&rsquo;s required input size), preprocesses pixel values for the model, and extracts feature vectors. Prints shape, sample values, and sparsity.</p>
+
+  <p><strong>Takes in:</strong> <code>image_model</code> (MobileNetV2 instance from Cell 1), <code>images</code> (array or list from Cell 5), <code>preprocess_input</code> (function imported in Cell 1).</p>
+
+  <p><strong>Must produce:</strong></p>
+  <ul>
+    <li><strong>Resize and preprocess:</strong> Loop over <code>images</code> and for each image:
+      <ul>
+        <li>Call <code>tf.image.resize(image, (224, 224))</code> or <code>skimage.transform.resize(image, (224, 224), preserve_range=True)</code> to resize to 224&times;224.</li>
+        <li>If pixel values are in the range 0&ndash;1, scale them to 0&ndash;255 first (multiply by 255).</li>
+        <li>Call <code>preprocess_input(image)</code> to normalize the image for MobileNetV2 (this applies ImageNet mean-variance normalization).</li>
+        <li>Collect all preprocessed images into a batch array of shape <code>(n_images, 224, 224, 3)</code>.</li>
+      </ul>
+    </li>
+    <li><strong><code>image_embeddings</code>:</strong> Call <code>image_model.predict(batch)</code> on the full batch. This applies the MobileNetV2 feature extractor to all images at once and returns a numpy array of shape <code>(n_images, 1280)</code>. Each row is a 1,280-dimensional feature vector. Name this variable exactly <code>image_embeddings</code>.</li>
+    <li><strong>Printed output:</strong> Print <code>image_embeddings.shape</code> to confirm shape <code>(n_images, 1280)</code>. Print the first 10 values: <code>image_embeddings[0][:10]</code>. Compute and print the percentage of exact zeros in the matrix using <code>(image_embeddings == 0).sum() / image_embeddings.size * 100</code> — this measures sparsity from ReLU activation (many features are inactive for any given image).</li>
+  </ul>
+
+  <p><strong>Notes:</strong> Use <code>tf.image.resize()</code> for batch processing or <code>skimage.transform.resize()</code> if working image-by-image. The <code>preprocess_input()</code> function is crucial — it ensures pixel normalization matches the ImageNet distribution that MobileNetV2 was trained on. Using <code>model.predict()</code> on the full batch is much faster than calling it once per image.</p>
+</div>
+
+<!-- CELL 7 -->
+<pre># Cell 7: Image retrieval demo</pre>
+<div class="section-card">
+  <p><strong>What it does:</strong> Builds an image retrieval function that finds visually similar images to a query. Tests it on two examples. Displays the query and top matches as image grids with class names and cosine similarity scores.</p>
+
+  <p><strong>Takes in:</strong> <code>image_embeddings</code> (shape n_images&times;1280, from Cell 6), <code>images</code> (array or list from Cell 5), <code>img_labels</code> (from Cell 5), <code>img_names</code> (from Cell 5), <code>N_PER_CLASS</code> (from Cell 5).</p>
+
+  <p><strong>Must produce:</strong></p>
+  <ul>
+    <li><strong><code>find_similar_image(query_idx, n=5)</code>:</strong> A function with these steps:
+      <ul>
+        <li>Extract the query embedding from <code>image_embeddings[query_idx]</code> — one row vector of dimension 1,280.</li>
+        <li>Use <code>cosine_similarity([query_embedding], image_embeddings)</code> to score the query against all embeddings. Flatten to a 1D array of scores.</li>
+        <li>Set the query&rsquo;s own score to &minus;1 (to exclude it).</li>
+        <li>Use <code>np.argsort(scores)[::-1]</code> to get indices sorted by score, highest first.</li>
+        <li>Return the top <code>n</code> indices and scores.</li>
+      </ul>
+    </li>
+    <li><strong>Test with two queries:</strong> Call <code>find_similar_image(0, n=5)</code> (first image) and <code>find_similar_image(N_PER_CLASS, n=5)</code> (first image of the second class). For each query:
+      <ul>
+        <li>Use <code>plt.subplots(1, n+1)</code> to create a 1&times;6 figure (query on the left, 5 matches on the right).</li>
+        <li>Display the query image with title showing its class name and a bold outline or label.</li>
+        <li>For each of the 5 matches, display the image with its class name and cosine similarity score. Highlight or mark matches where the class differs from the query.</li>
+      </ul>
+    </li>
+  </ul>
+
+  <p><strong>Notes:</strong> Same logic as the text retrieval function. Use <code>ax.imshow(image)</code> to display each image. Add a check mark or "✓" for same-class matches and an "✗" or different marker for cross-class matches. This visual comparison helps you see what "similar" means to the image model — does it group by visual features or by semantic content?</p>
+</div>
+
+<!-- ==================== PART 4: THE COMPARISON ==================== -->
+<h2>Part 4: Comparing Vector Spaces</h2>
+
+<!-- CELL 8 -->
+<pre># Cell 8: Dimensionality and structure</pre>
+<div class="section-card">
+  <p><strong>What it does:</strong> Computes and prints a detailed side-by-side comparison of the text and image embedding spaces: their shape, numeric ranges, sparsity, and clustering quality. Measures how well each space separates same-class items from different-class items.</p>
+
+  <p><strong>Takes in:</strong> <code>text_embeddings</code> (60&times;384 array from Cell 3), <code>text_categories</code> (list from Cell 2), <code>text_cat_names</code> (list from Cell 2), <code>image_embeddings</code> (n_images&times;1280 array from Cell 6), <code>img_labels</code> (list from Cell 5), <code>img_names</code> (list from Cell 5).</p>
+
+  <p><strong>Must produce:</strong></p>
+  <ul>
+    <li><strong>For each embedding space (text and image):</strong>
+      <ul>
+        <li><strong>Compute the full pairwise cosine similarity matrix:</strong> Call <code>cosine_similarity(embeddings, embeddings)</code> to get a matrix of shape (n, n) where (i, j) is the cosine similarity between items i and j.</li>
+        <li><strong>Separate intra-class and inter-class pairs:</strong> Use boolean masking. For each row i and column j:
+          <ul>
+            <li><code>intra_class</code>: pairs where i ≠ j but <code>label[i] == label[j]</code> (same class, different items).</li>
+            <li><code>inter_class</code>: pairs where <code>label[i] != label[j]</code> (different classes).</li>
+          </ul>
+        </li>
+        <li><strong>Compute statistics:</strong>
+          <ul>
+            <li><strong>Embedding dimension:</strong> 384 for text, 1,280 for images.</li>
+            <li><strong>Value range:</strong> Min and max of the entire embedding matrix (using <code>np.min()</code> and <code>np.max()</code>).</li>
+            <li><strong>Sparsity:</strong> Percentage of exact zeros (same calculation as Cell 6).</li>
+            <li><strong>Mean intra-class cosine similarity:</strong> Average of <code>similarity[intra_class]</code>.</li>
+            <li><strong>Mean inter-class cosine similarity:</strong> Average of <code>similarity[inter_class]</code>.</li>
+            <li><strong>Separation gap:</strong> Mean intra-class minus mean inter-class. A larger gap means the space clusters same-class items tightly and spreads different-class items apart.</li>
+          </ul>
+        </li>
+      </ul>
+    </li>
+    <li><strong>Print a formatted table or side-by-side comparison:</strong> Show all six metrics for text and images in columns. Example format:
+      <blockquote>
+        Metric | Text Embeddings | Image Embeddings<br>
+        Dimension | 384 | 1,280<br>
+        [etc.]
+      </blockquote>
+    </li>
+  </ul>
+
+  <p><strong>Notes:</strong> The separation gap is a key metric for clustering quality. For text, "class" means the four categories (technology, sports, cooking, travel). For images, "class" means the CIFAR-10 classes (airplane, automobile, etc.). A larger gap in one modality suggests that embeddings for that modality cluster more cleanly by meaning. Compare the gaps: does text separate better than images, or vice versa? This reflects the relative difficulty of organizing each modality.</p>
+</div>
+
+<div class="tip">
+  <strong>Markdown cell:</strong> The text embeddings have 384 dimensions. The image embeddings have 1,280. Yet both encode "meaning" well enough to retrieve similar items. What does this tell you about the relationship between dimensionality and representational power? Why might images need more dimensions than text?
+</div>
+
+<!-- CELL 9 -->
+<pre># Cell 9: Dual t-SNE</pre>
+<div class="section-card">
+  <p><strong>What it does:</strong> Reduces both embedding spaces from their high dimensions (384 for text, 1,280 for images) down to 2 dimensions using t-SNE, then displays them as scatter plots side by side. This is the visual centerpiece: you see how the model organizes texts by category and images by class in 2D space.</p>
+
+  <p><strong>Takes in:</strong> <code>text_embeddings</code> (from Cell 3), <code>text_categories</code> (from Cell 2), <code>text_cat_names</code> (from Cell 2), <code>image_embeddings</code> (from Cell 6), <code>img_labels</code> (from Cell 5), <code>img_names</code> (from Cell 5), <code>TSNE</code> (imported in Cell 1).</p>
+
+  <p><strong>Must produce:</strong></p>
+  <ul>
+    <li><strong><code>text_2d</code>:</strong> Instantiate <code>TSNE(n_components=2, random_state=42, perplexity=10)</code> and call its <code>.fit_transform(text_embeddings)</code> method. Result is a numpy array of shape <code>(60, 2)</code>. Name this variable exactly <code>text_2d</code>. The reduced 384 dimensions are now represented as (x, y) coordinates for visualization.</li>
+    <li><strong><code>image_2d</code>:</strong> Instantiate <code>TSNE(n_components=2, random_state=42, perplexity=15)</code> and call its <code>.fit_transform(image_embeddings)</code> method. Result is a numpy array of shape <code>(n_images, 2)</code>. Name this variable exactly <code>image_2d</code>. Use <code>perplexity=15</code> instead of 10 because you have more images (typically 150) than texts (60).</li>
+    <li><strong>Create a figure with two subplots:</strong> Call <code>fig, (ax_text, ax_img) = plt.subplots(1, 2, figsize=(14, 6))</code> to create one row, two columns. Set <code>fig.suptitle("Text Embedding Space vs. Image Embedding Space")</code>.
+      <ul>
+        <li><strong>Left subplot (text t-SNE):</strong> Plot <code>text_2d</code> as a scatter plot. Color each point by its category from <code>text_categories</code>. Use a colormap (e.g., <code>cmap='tab10'</code>) or manually assign colors to the four categories. Add a legend showing the category names. Label axes: <code>ax_text.set_xlabel('t-SNE 1')</code>, <code>ax_text.set_ylabel('t-SNE 2')</code>, <code>ax_text.set_title('Text Categories')</code>.</li>
+        <li><strong>Right subplot (image t-SNE):</strong> Plot <code>image_2d</code> as a scatter plot. Color each point by its class from <code>img_labels</code>. Use the same colormap for consistency. Add a legend showing class names from <code>img_names</code>. Label axes: <code>ax_img.set_xlabel('t-SNE 1')</code>, <code>ax_img.set_ylabel('t-SNE 2')</code>, <code>ax_img.set_title('Image Classes')</code>.</li>
+      </ul>
+    </li>
+  </ul>
+
+  <p><strong>Notes:</strong> Use different perplexity values (10 for text, 15 for images) because the datasets have different sizes. t-SNE is slow — it may take 30&ndash;60 seconds to run. Set <code>random_state=42</code> on both to ensure reproducibility. When you look at the plots, look for clusters (tightly grouped points of the same color) and overlaps (colors mixed together). A well-separated plot has clear clusters per category or class.</p>
+</div>
+
+<div class="tip">
+  <strong>Markdown cell:</strong> Look at both plots. How many distinct clusters can you count in each? Are the text categories more cleanly separated than the image classes, or the other way around? What does this tell you about the relative difficulty of text categorization vs. image classification for these particular datasets?
+</div>
+
+<!-- CELL 10 -->
+<pre># Cell 10: Failure comparison</pre>
+<div class="section-card">
+  <p><strong>What it does:</strong> Searches both modalities to find the single most confident mistake each one made: a top-1 retrieval that matched the wrong class with high confidence. Displays the text failure as text and the image failure as a visual side-by-side comparison. This reveals how each modality is confused.</p>
+
+  <p><strong>Takes in:</strong> <code>find_similar_text</code> (function from Cell 4), <code>find_similar_image</code> (function from Cell 7), <code>text_embeddings</code>, <code>texts</code>, <code>text_categories</code>, <code>text_cat_names</code>, <code>image_embeddings</code>, <code>images</code>, <code>img_labels</code>, <code>img_names</code> (from earlier cells).</p>
+
+  <p><strong>Must produce:</strong></p>
+  <ul>
+    <li><strong>Text failure search:</strong> Loop over all 60 texts. For each, call <code>find_similar_text(i, n=1)</code> to get the top-1 match. Check if the match&rsquo;s category differs from the query&rsquo;s category. If it does, record the query index, match index, and cosine score. After the loop, identify the highest-scoring wrong match.</li>
+    <li><strong>Image failure search:</strong> Loop over all images. For each, call <code>find_similar_image(i, n=1)</code> to get the top-1 match. Check if the match&rsquo;s class (from <code>img_labels</code>) differs from the query&rsquo;s class. If it does, record indices and score. Identify the highest-scoring wrong match.</li>
+    <li><strong>Print text failure:</strong> Print a summary line: &ldquo;Text failure: {query_text[:80]}... | Matched to: {match_text[:80]}... | Query category: {query_cat} | Matched category: {match_cat} | Score: {score:.3f}&rdquo;. Show the first 80 characters of each text (they are short).</li>
+    <li><strong>Display image failure:</strong> Use <code>plt.subplots(1, 2, figsize=(10, 5))</code> to show the query image and wrong match side by side. Label the left image with query class and right with matched class. Include the cosine score in the title or caption. Mark the mismatch clearly (e.g., bold text, red border, or explicit &ldquo;WRONG&rdquo; label).</li>
+  </ul>
+
+  <p><strong>Notes:</strong> The goal is to understand <em>how</em> each modality is confused. Text confusions reveal semantic similarity gaps (e.g., cooking and technology both mention heat). Image confusions reveal visual similarity gaps (e.g., cats and dogs both have fur and eyes). By comparing the two, you see the fundamental difference between reading text and seeing images.</p>
+</div>
+
+<div class="tip">
+  <strong>Markdown cell:</strong> What kind of confusion did the text model produce? What kind did the image model produce? Text models tend to confuse topics that share abstract themes. Image models tend to confuse objects that share visual structure. Describe one specific difference between the two failure modes. How does this reflect the fundamental difference between reading text and seeing images?
+</div>
+
+<!-- ========== DEMO PREP ========== -->
+<h2>Demo Prep</h2>
+
+<div class="section-card">
+  <p>Your notebook is your presentation and your demo. You have 5&ndash;7 minutes because you are covering both courses in one session.</p>
+  <p>Walk the class through:</p>
+  <ol>
+    <li><strong>The parallel:</strong> Show Cell 8&rsquo;s comparison table. Text embeddings are 384 dimensions; image embeddings are 1,280. Both achieve category separation. What does this tell you about learned representations?</li>
+    <li><strong>The dual t-SNE:</strong> Show Cell 9. Point to the tightest cluster in each plot. Why is that category or class easy for the model? Point to the messiest region. Why is it hard?</li>
+    <li><strong>The failures:</strong> Show Cell 10. One text failure and one image failure. How are they different? What does each tell you about how its modality defines "similarity"?</li>
+    <li><strong>Live modification:</strong> Change something (a query, a parameter, or a dataset element), rerun the cell, and explain the result. The demo rubric scores this under Live Modification.</li>
+  </ol>
+  <p>See the assignment sheet for submission details and rubrics for both courses.</p>
+</div>
+
+</body>
+</html>

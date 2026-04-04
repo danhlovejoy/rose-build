@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lab 1 Option C: Structured Extraction | AIML 2003</title>
+<link rel="stylesheet" href="../../course-styles.css">
+</head>
+<body>
+
+<h1>Lab 1, Option C: Structured Extraction</h1>
+<p class="subtitle">Extract structured JSON data from unstructured text using context-engineered prompts.</p>
+
+<div class="section-card">
+  <h3>The Task</h3>
+  <p>Real-world text is messy. Job postings, event listings, recipe blogs, product descriptions: they contain useful structured information buried in natural language. You'll feed unstructured text into Gemini and extract structured JSON fields, then measure how context engineering affects both the accuracy of extracted values and the consistency of the output format.</p>
+  <p>This is one of the most common production uses of LLMs. If you've ever wished you could turn a wall of text into a spreadsheet, that's what you're building here.</p>
+</div>
+
+<h2>Pick a Domain</h2>
+
+<p>Choose one domain and stick with it. Collect or write 10-15 examples of unstructured text. Here are three good options:</p>
+
+<div class="section-card">
+  <h3>Domain options</h3>
+  <ul>
+    <li><strong>Job postings:</strong> Extract title, company, location, salary range (if mentioned), required skills, experience level, remote/hybrid/onsite. These are easy to find on LinkedIn or Indeed. The challenge: salary is often missing, location is inconsistent ("Remote" vs. "Anywhere in US" vs. "NYC with hybrid"), and skills are buried in paragraphs.</li>
+    <li><strong>Event listings:</strong> Extract event name, date, time, location, price, organizer, description. Copy from Eventbrite, Meetup, or local event pages. The challenge: dates come in dozens of formats, prices might say "free" or "$10-25" or "donation-based," and some fields are just absent.</li>
+    <li><strong>Recipe descriptions:</strong> Extract dish name, cuisine, prep time, cook time, servings, difficulty, dietary tags (vegan, gluten-free, etc.), key ingredients. Copy the intro paragraph from recipe blogs (before the actual recipe card). The challenge: recipe bloggers bury useful info in long personal stories, and dietary info is often implicit rather than stated.</li>
+  </ul>
+</div>
+
+<h2>Code Scaffold</h2>
+
+<div class="warning">
+  <strong>Training wheels alert:</strong> This code scaffold is here to get you started. In later labs, you won't have one &mdash; you'll be writing your own code from scratch, using Gemini or another AI assistant to help you build it. So don't just copy-paste and run. Read each cell, understand what it does, and experiment with changing things. The more comfortable you get now, the easier it will be when the training wheels come off.
+</div>
+
+<pre># Cell 1: Setup
+!pip install google-genai -q
+
+from google.colab import userdata
+from google import genai
+
+client = genai.Client(api_key=userdata.get('GEMINI_API_KEY'))</pre>
+
+<pre># Cell 2: Your dataset (job posting example - adapt for your domain)
+texts = [
+    {
+        "raw": """Senior Machine Learning Engineer - TechCorp
+        San Francisco, CA (Hybrid - 3 days in office)
+        $180,000 - $220,000 + equity
+        We're looking for an experienced ML engineer to join our
+        NLP team. You'll work on large-scale language models,
+        build training pipelines, and ship production inference
+        systems. 5+ years experience with Python, PyTorch, and
+        distributed training required. Experience with RLHF and
+        LLM fine-tuning strongly preferred.""",
+        "expected": {
+            "title": "Senior Machine Learning Engineer",
+            "company": "TechCorp",
+            "location": "San Francisco, CA",
+            "work_mode": "hybrid",
+            "salary_min": 180000,
+            "salary_max": 220000,
+            "experience_years": 5,
+            "required_skills": ["Python", "PyTorch", "distributed training"],
+            "preferred_skills": ["RLHF", "LLM fine-tuning"]
+        }
+    },
+    # Add 10-15 total examples
+]</pre>
+
+<pre># Cell 3: Approach 1 - Zero-shot
+def extract_zero_shot(text):
+    response = client.models.generate_content(
+        model="gemini-2.0-flash",
+        contents=f"Extract structured data from this job posting as JSON.\n\n{text}"
+    )
+    return response.text
+
+# Run and print raw output to see what shape it takes
+for t in texts[:3]:
+    result = extract_zero_shot(t["raw"])
+    print(result)
+    print("---")</pre>
+
+<pre># Cell 4: Approach 2 - Few-shot with schema hint
+def extract_few_shot(text):
+    prompt = """Extract structured data from job postings as JSON with these fields:
+title, company, location, work_mode, salary_min, salary_max, experience_years, required_skills, preferred_skills.
+
+Input: "Data Analyst at Acme Inc, Remote, $90k-110k. 2+ years with SQL and Tableau required."
+Output: {{"title": "Data Analyst", "company": "Acme Inc", "location": "Remote", "work_mode": "remote", "salary_min": 90000, "salary_max": 110000, "experience_years": 2, "required_skills": ["SQL", "Tableau"], "preferred_skills": []}}
+
+Input: "{text}"
+Output:"""
+    response = client.models.generate_content(
+        model="gemini-2.0-flash",
+        contents=prompt.format(text=text.replace('"', '\\"'))
+    )
+    return response.text
+
+few_shot_results = [extract_few_shot(t["raw"]) for t in texts]</pre>
+
+<pre># Cell 5: Approach 3 - Context-engineered prompt
+import json
+
+EXTRACTION_PROMPT = """## System Instruction
+You are a data extraction specialist. Your job is to parse
+unstructured job postings into clean, consistent structured
+data. You are precise about types (numbers are numbers, not
+strings) and honest about missing data (use null, never guess).
+
+## Task
+Extract the following fields from the job posting below.
+
+## Schema
+Respond with ONLY valid JSON matching this exact schema:
+{{
+  "title": "string - job title, stripped of seniority prefixes if they're separate",
+  "company": "string - company name, or null if not stated",
+  "location": "string - city/state or 'Remote', or null if not stated",
+  "work_mode": "'remote' | 'hybrid' | 'onsite' | null",
+  "salary_min": "integer - annual salary floor in USD, or null if not stated",
+  "salary_max": "integer - annual salary ceiling in USD, or null if not stated",
+  "experience_years": "integer - minimum years required, or null if not stated",
+  "required_skills": ["array of strings - explicitly required skills"],
+  "preferred_skills": ["array of strings - nice-to-haves, 'preferred', 'bonus'"]
+}}
+
+## Extraction Rules
+- Salary: convert hourly to annual (×2080). Convert "k" to thousands.
+  If only one number given, use it for both min and max.
+- Experience: "senior" without a number = null (don't guess).
+  "5+ years" = 5. "3-5 years" = 3 (use the minimum).
+- Skills: only include skills explicitly named. Don't infer
+  skills from the job title or description.
+- work_mode: "flexible" or "optional remote" = "hybrid".
+- If a field genuinely isn't present in the text, use null.
+  Never fabricate a value.
+
+## Calibration Example
+Input: "Marketing Coordinator, BigBrand, NYC. $55k. Must know
+HubSpot and Google Analytics. Photoshop a plus."
+Output:
+{{"title": "Marketing Coordinator", "company": "BigBrand",
+  "location": "NYC", "work_mode": null, "salary_min": 55000,
+  "salary_max": 55000, "experience_years": null,
+  "required_skills": ["HubSpot", "Google Analytics"],
+  "preferred_skills": ["Photoshop"]}}
+
+## Job Posting to Extract
+{posting}"""
+
+def extract_context(text):
+    response = client.models.generate_content(
+        model="gemini-2.0-flash",
+        contents=EXTRACTION_PROMPT.format(posting=text)
+    )
+    try:
+        return json.loads(response.text)
+    except json.JSONDecodeError:
+        return {"parse_error": response.text}
+
+context_results = [extract_context(t["raw"]) for t in texts]</pre>
+
+<pre># Cell 6: Approach 4 - LLM-assisted refinement
+# Compare context-engineered results against expected values
+errors = []
+for t, result in zip(texts, context_results):
+    expected = t["expected"]
+    mismatches = []
+    for key in expected:
+        if key in result and result[key] != expected[key]:
+            mismatches.append(f"  {key}: got {result[key]}, expected {expected[key]}")
+        elif key not in result:
+            mismatches.append(f"  {key}: missing from output, expected {expected[key]}")
+    if mismatches:
+        short = t["raw"][:80].replace("\n", " ")
+        errors.append(f'Posting: "{short}..."\n' + "\n".join(mismatches))
+
+error_report = "\n\n".join(errors) if errors else "All extractions matched."
+
+meta_prompt = f"""You optimize prompts for structured data extraction.
+Below is an extraction prompt and the fields it got wrong.
+
+## Current Prompt
+{EXTRACTION_PROMPT}
+
+## Extraction Errors
+{error_report}
+
+## Your Task
+1. Diagnose why each error occurred (type mismatch? missing
+   field? wrong interpretation of the text?).
+2. Propose a revised prompt that fixes these errors.
+3. Return ONLY the complete revised prompt."""
+
+refinement = client.models.generate_content(
+    model="gemini-2.0-flash",
+    contents=meta_prompt
+)
+print("=== SUGGESTED REFINEMENTS ===")
+print(refinement.text)</pre>
+
+<pre># Cell 7: Evaluation - measure both accuracy and parse rate
+parse_success = sum(1 for r in context_results if "parse_error" not in r)
+print(f"Parse rate: {parse_success}/{len(texts)} outputs were valid JSON")
+
+# Field-level accuracy
+if texts[0].get("expected"):
+    fields = list(texts[0]["expected"].keys())
+    print(f"\n{'Field':<20} {'Correct':<10} {'Total':<10} {'Accuracy':<10}")
+    print("-" * 50)
+    for field in fields:
+        correct = sum(
+            1 for t, r in zip(texts, context_results)
+            if field in r and r[field] == t["expected"].get(field)
+        )
+        print(f"{field:<20} {correct:<10} {len(texts):<10} "
+              f"{100*correct/len(texts):.0f}%")</pre>
+
+<h2>What Makes This Option Interesting</h2>
+
+<p>Extraction has a unique property: success and failure are unambiguous. The JSON either parses or it doesn't. The salary is either correct or it isn't. This makes evaluation straightforward in a way that classification (where you might argue about labels) isn't. You'll likely find that zero-shot extraction produces inconsistent field names and formats across different inputs, while the context-engineered prompt with an explicit schema produces clean, uniform output.</p>
+
+<p>The extraction rules section of the context-engineered prompt is where most of the value lives. Rules like "convert hourly to annual" and "if only one salary number, use it for both min and max" encode domain knowledge the model doesn't have on its own. When the LLM refines its own prompt, watch for whether it adds new rules you didn't think of or tightens existing ones.</p>
+
+<div class="tip">
+  <strong>For your reflection:</strong> Compare the parse success rate across all four approaches. How often did zero-shot produce valid JSON vs. the context-engineered version? Also look at the field-level accuracy table. Which fields were hardest to extract consistently? Salary and experience_years are typically the trickiest because they appear in so many formats.
+</div>
+
+</body>
+</html>

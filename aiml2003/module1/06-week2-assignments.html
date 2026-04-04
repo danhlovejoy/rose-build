@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Week 2 Deliverables | AIML 2003</title>
+<link rel="stylesheet" href="../../course-styles.css">
+</head>
+<body>
+
+<h1>Week 2 Deliverables: Prompt Engineering to Context Engineering</h1>
+<p class="subtitle">AIML 2003: Introduction to Natural Language Processing</p>
+<div class="due-banner">All deliverables due: Tuesday, March 31 (by class time)</div>
+
+<!-- ========== OVERVIEW ========== -->
+<div class="overview-card">
+  <strong>This week you will submit three things:</strong>
+  <table class="overview-table" style="margin-top: 0.75rem;">
+    <thead>
+      <tr>
+        <th>Deliverable</th>
+        <th>Type</th>
+        <th>Weight</th>
+        <th>Submit Via</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Lab 1: Zero-Shot vs. Few-Shot Classification</td>
+        <td>Colab Notebook</td>
+        <td>GitHub Repo (25%)</td>
+        <td>GitHub link in Canvas</td>
+      </tr>
+      <tr>
+        <td>GitHub Repository</td>
+        <td>Code repo</td>
+        <td>(part of Repo grade)</td>
+        <td>Link in Canvas</td>
+      </tr>
+      <tr>
+        <td>Week 2 Presentation</td>
+        <td>3&ndash;5 minute presentation</td>
+        <td>Presentations (15%)</td>
+        <td>In class, Tuesday April 1</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- =====================================================================
+     DELIVERABLE 1: LAB 1
+     ===================================================================== -->
+<h2>Deliverable 1: Lab 1, Context Engineering in Practice <span class="tag tag-lab">Lab</span></h2>
+
+<div class="section-card">
+  <h3>Overview</h3>
+  <p>Every option follows the same structure: you'll run a task through four prompting approaches (zero-shot, few-shot, context-engineered, LLM-refined) using the Gemini API, compare results, and write a reflection connecting your findings to the readings. The difference is the task itself. Pick the one that interests you most.</p>
+</div>
+
+<div class="section-card">
+  <h3>Choose Your Task</h3>
+
+  <p style="margin-bottom: 1rem;"><strong>Option A: <a href="lab1-option-a-factcheck.html">Fact-Check the LLM</a></strong><br>
+  Assemble 10-15 claims (true, false, half-true, and fabricated) and ask Gemini to verdict each one. The fabricated claims are especially revealing: zero-shot prompts accept plausible fake citations at face value, while context-engineered prompts with explicit instructions about fabrication patterns catch them. Connects directly to Week 6 (hallucination testing).</p>
+
+  <p style="margin-bottom: 1rem;"><strong>Option B: <a href="lab1-option-b-tone.html">Tone Detector for Social Media</a></strong><br>
+  Classify social media posts by tone: sarcastic, sincere, promotional, rage-bait, or informational. Tone is harder than sentiment because it's subjective and context-dependent. A sarcastic tweet and a sincere tweet can both be "negative" in sentiment, but the model needs to distinguish what the author is doing. The ambiguous cases produce the most interesting presentations.</p>
+
+  <p style="margin-bottom: 1rem;"><strong>Option C: <a href="lab1-option-c-extraction.html">Structured Data Extraction</a></strong><br>
+  Turn messy unstructured text (job postings, event listings, or recipe descriptions) into clean JSON. Extraction has binary success metrics: the JSON either parses or it doesn't, the salary is correct or it isn't. You'll see context engineering earn its keep through explicit schemas, type rules, and handling instructions for missing data.</p>
+
+  <p>Each option page includes the full task description, dataset guidelines, and a complete code scaffold. Pick one and follow those instructions.</p>
+</div>
+
+<div class="section-card">
+  <h3>What All Options Share</h3>
+  <p>Regardless of which task you pick, your notebook must include:</p>
+  <ol>
+    <li><strong>Setup and dataset</strong> (10-15 examples with your own labels for comparison). Your labels stay in a Python variable and are only used after the API returns its answer. They're never sent to the model in the prompt.</li>
+    <li><strong>Zero-shot and few-shot baselines</strong> run on the full dataset</li>
+    <li><strong>A context-engineered prompt</strong> using the anatomy-of-a-prompt framework from the readings: system instruction, task definition, output schema, calibration examples, and constraints</li>
+    <li><strong>LLM-assisted refinement</strong> where you feed Gemini its errors and ask it to diagnose and fix the prompt</li>
+    <li><strong>Comparison table</strong> with accuracy across all four approaches</li>
+    <li><strong>Reflection</strong> (200-400 words) addressing:
+      <ul>
+        <li>How much did structured context improve over the baselines? On which examples?</li>
+        <li>What did the LLM change when it refined its own prompt? Was the change something you'd have thought of?</li>
+        <li>How do your results connect to the readings on context engineering?</li>
+        <li>What would you change if you ran this experiment again?</li>
+      </ul>
+    </li>
+  </ol>
+</div>
+
+<div class="section-card">
+  <h3>Submission Requirements</h3>
+  <ul>
+    <li>Notebook runs top-to-bottom without errors (<strong>Runtime > Run all</strong> to verify before saving)</li>
+    <li>All output cells visible (don't clear outputs; I need to see your results)</li>
+    <li>No API keys or secrets anywhere in the notebook</li>
+    <li>All four approaches run on the same dataset with results stored</li>
+    <li>Comparison table and accuracy numbers visible</li>
+    <li>Reflection complete (200-400 words)</li>
+    <li>Saved to your GitHub repo at <code>week2/lab1.ipynb</code></li>
+  </ul>
+
+  <div class="warning">
+    <strong>Grading note:</strong> I review your notebook by opening it in your GitHub repo, where .ipynb files render with all code, prompts, and outputs visible. Save your final version to GitHub before the deadline. If it's not in your repo, it doesn't exist for grading purposes.
+  </div>
+</div>
+
+<div class="tip">
+  <strong>API costs:</strong> We're using <code>gemini-2.0-flash</code> on the free tier; no credit card, no charges. The free tier allows 15 requests per minute and 1,500 per day. The meta-prompting step uses one extra call per refinement cycle. You won't come close to the limits.
+</div>
+
+<!-- =====================================================================
+     DELIVERABLE 2: GITHUB REPO
+     ===================================================================== -->
+<h2>Deliverable 2: GitHub Repository <span class="tag tag-repo">Repo</span></h2>
+
+<div class="section-card">
+  <h3>Overview</h3>
+  <p>Your GitHub repo is your running portfolio for the entire course. Each week you'll add to it. I grade everything through your GitHub repo, including the notebook itself (GitHub renders .ipynb files). What's in your repo is what counts. This week, I'm checking that your repo is set up correctly and that Lab 1 is organized and documented.</p>
+
+  <h3>What I'm Looking For</h3>
+  <ul>
+    <li><strong>Repository structure:</strong> Your <code>aiml2003-nlp</code> repo should have a clear folder structure. At minimum:
+      <pre>aiml2003-nlp/
+  README.md
+  week1/
+    week1_setup.ipynb      (from setup lab)
+  week2/
+    lab1_classification.ipynb</pre>
+    </li>
+    <li><strong>README:</strong> Updated to describe what's in the repo and what Lab 1 does (2&ndash;3 sentences is fine).</li>
+    <li><strong>Clean commits:</strong> Your commit messages should be descriptive. "Add Lab 1 notebook" is good. "asdf" or "update" is not.</li>
+    <li><strong>No active secrets:</strong> No live API keys, tokens, or credentials in your committed files. If you accidentally commit a key, revoke it in Google AI Studio before submitting and you won't be penalized.</li>
+  </ul>
+</div>
+
+<div class="rubric-section">
+  <h4>Repo Rubric (Summary)</h4>
+  <p style="font-size:0.85rem; margin-bottom:0.75rem;">100 points possible. Each criterion is scored on a 4-level scale (Full Credit &rarr; No Credit). <a href="https://rose.instructure.com/courses/26943/assignments/808736" target="_blank"><strong>View the full rubric on the assignment page &rarr;</strong></a></p>
+  <p style="font-size:0.85rem; color: var(--muted); margin-bottom:0.75rem;">Criteria marked <strong>WEEKLY</strong> change per assignment; criteria marked <strong>STANDARD</strong> stay the same all semester.</p>
+  <table class="rubric-table">
+    <thead>
+      <tr><th style="width:30%">Criterion</th><th style="width:10%">Points</th><th style="width:10%">Type</th><th>Description</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Notebook Runs</td><td>/25</td><td>STANDARD</td><td>Notebook is in the correct week folder. Cells execute top-to-bottom without errors. All outputs visible.</td></tr>
+      <tr style="background:#fff3e0;"><td>Task Requirements</td><td>/40</td><td>WEEKLY</td><td><strong>This week:</strong> All four approaches present (zero-shot, few-shot, context-engineered, LLM-refined). Context-engineered prompt uses structured components (system instruction, output schema, calibration examples, constraints). Comparison table with accuracy across approaches.</td></tr>
+      <tr><td>Reflection</td><td>/20</td><td>STANDARD</td><td>200-400 words. Connects results to the readings. Addresses what worked, what didn't, and what you'd change.</td></tr>
+      <tr><td>Repo Hygiene</td><td>/15</td><td>STANDARD</td><td>No active (unrevoked) secrets. README updated. Descriptive commit message. Files in the right folder. Accidentally committed a key? Revoke it before submitting and no penalty applies.</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- =====================================================================
+     DELIVERABLE 3: PRESENTATION
+     ===================================================================== -->
+<h2>Deliverable 3: Week 2 Presentation <span class="tag tag-pres">Presentation</span></h2>
+
+<div class="section-card">
+  <h3>Overview</h3>
+  <p>A <strong>three- to five-minute</strong> presentation during Tuesday's class (April 1) about what you learned this week. This is not a formal slide deck; think of it as a short show-and-tell for your classmates.</p>
+
+  <h3>What to Cover</h3>
+  <p>In three to five minutes, walk us through:</p>
+  <ol>
+    <li><strong>The jump:</strong> Show one specific example where your context-engineered prompt outperformed the simple baselines. What did structured context give you that a bare prompt didn't?</li>
+    <li><strong>The LLM's self-diagnosis:</strong> When you asked Gemini to improve its own prompt, what did it change? Was it a change you would have thought of?</li>
+    <li><strong>Your takeaway:</strong> Based on your results and the readings, what does "context engineering" mean to you in practice? What would you do differently next time?</li>
+  </ol>
+
+  <h3>Format</h3>
+  <p>You can share your screen and walk through your notebook, use a few slides, or just talk: whatever communicates your points clearly in three to five minutes. If you attend via Zoom, be prepared to share your screen.</p>
+
+  <div class="tip">
+    <strong>Tip:</strong> Practice timing yourself. Five minutes is shorter than you think. Focus on one or two good insights rather than trying to cover everything.
+  </div>
+</div>
+
+<div class="rubric-section">
+  <h4>Presentation Rubric (Summary)</h4>
+  <p style="font-size:0.85rem; margin-bottom:0.75rem;">100 points possible. Each criterion is scored on a 4-level scale (Full Credit &rarr; No Focus/Absent). <a href="https://rose.instructure.com/courses/26943/assignments/808737" target="_blank"><strong>View the full rubric on the assignment page &rarr;</strong></a></p>
+  <table class="rubric-table">
+    <thead>
+      <tr><th style="width:35%">Criterion</th><th style="width:12%">Points</th><th>What I'm Looking For</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Focus &amp; Clarity</td><td>25</td><td>Topic is clearly stated early and the presentation stays on it throughout.</td></tr>
+      <tr><td>Key Takeaways</td><td>25</td><td>You share what you learned &mdash; insights or implications, not just facts.</td></tr>
+      <tr><td>Visual Aid Effectiveness</td><td>20</td><td>Your visual is relevant, legible, and actively used &mdash; not just displayed.</td></tr>
+      <tr><td>Verbal Delivery</td><td>20</td><td>You speak clearly, engage the audience, and don't simply read from the slide.</td></tr>
+      <tr><td>Time Management</td><td>10</td><td>Presentation falls between 3:00 and 5:00. Content feels paced, not rushed or padded.</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<hr>
+
+<!-- ========== COMBINED ASSIGNMENT NOTE ========== -->
+<div class="section-card" style="border-left: 4px solid #5e35b1;" data-concurrent="true">
+  <h3 style="color: #5e35b1;">Taking AIML 2013 (Computer Vision) too?</h3>
+  <p>Week 2 does <strong>not</strong> have a combined assignment. Complete this week's NLP deliverables and the CV deliverables separately. The next combined option is Module 2 ("Feature Extraction").</p>
+</div>
+
+<!-- ========== SUBMISSION CHECKLIST ========== -->
+<div class="overview-card">
+  <strong>Submission Checklist</strong>
+  <ul>
+    <li>Lab 1 notebook runs cleanly top-to-bottom with all outputs visible</li>
+    <li>No API keys exposed in any committed file</li>
+    <li>Notebook saved to GitHub at <code>week2/lab1_classification.ipynb</code></li>
+    <li>README updated to reflect Week 2 contents</li>
+    <li>GitHub repo link submitted in Canvas</li>
+    <li>Presentation prepared and ready for Tuesday class (April 1)</li>
+  </ul>
+</div>
+
+<!-- ========== GETTING HELP ========== -->
+<div class="tip" style="margin-top: 1.5rem;">
+  <strong>Need help?</strong> Start your work during Thursday lab (March 27, Zoom): that's what lab time is for. If you get stuck after lab, email me or text me before the weekend so I can help. Don't wait until Monday night.
+</div>
+
+</body>
+</html>

@@ -1,0 +1,13 @@
+# Credentials
+.env
+
+# Build output (generated, not source)
+build/output/
+
+# Standalone build temp files (should be cleaned up, but just in case)
+*.standalone.tmp
+
+# OS files
+.DS_Store
+.venv/
+__pycache__/

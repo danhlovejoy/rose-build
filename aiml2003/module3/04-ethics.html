@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Module 3 Ethics Thread | AIML 2003</title>
+<link rel="stylesheet" href="../../course-styles.css">
+</head>
+<body>
+
+<h1>Ethics Thread: Whose Meanings Are Encoded?</h1>
+<p class="subtitle">AIML 2003: Module 3 Discussion. Post by Tuesday, April 14 (before class)</p>
+
+<div class="prompt-box">
+  <h2>The Prompt</h2>
+  <p>This week you replaced TF-IDF word counts with sentence transformer embeddings. The model you used, <code>all-MiniLM-L6-v2</code>, was trained on hundreds of millions of sentence pairs scraped from the web. It learned to place similar sentences close together in 384-dimensional space not because someone wrote rules about what "similar" means, but because that relationship was implicit in the training data.</p>
+  <p>The problem is that the web is not a neutral document. It overrepresents certain languages, communities, and ways of talking about the world. When the model learned that "delicious pasta" and "tasty noodles" are similar, it also learned patterns about gender, race, occupation, and social class that were embedded in billions of human-written sentences. Those patterns are now part of what your model considers "similar."</p>
+  <p>In your post, address at least one of the following:</p>
+  <ul>
+    <li>In 2016, researchers at Princeton published a study showing that word embeddings trained on web text associated "woman" with "homemaker" and "man" with "professional" at rates reflecting historical bias rather than current reality. Sentence transformers were trained on the same kind of web text. What does this mean for applications that use semantic similarity to match job candidates to job descriptions, or to rank customer support queries by priority?</li>
+    <li>The embeddings your model produces have no human-readable explanation. You can say that two sentences are 87% cosine-similar, but you cannot easily say why. Compare this to TF-IDF, where you could look at the coefficients and name the words driving a prediction. What do you lose, and what do you gain, when interpretability disappears?</li>
+    <li>Your lab retrieves sentences semantically similar to a query. This technology underlies search engines, recommendation systems, and content moderation filters. If the embedding model encodes biases about which kinds of language are "professional" or "relevant," what groups are systematically disadvantaged by systems built on it?</li>
+    <li>Transfer learning means you are using a model trained by someone else, on data you did not collect, for a task it was not specifically designed for. As the person deploying it, how much responsibility do you bear for the biases it carries? What, if anything, can you do?</li>
+  </ul>
+</div>
+
+<div class="requirements">
+  <strong>Requirements</strong>
+  <ul>
+    <li><strong>Your post:</strong> 150&ndash;250 words. Take a position. Don't just summarize the question.</li>
+    <li><strong>Reply to a classmate:</strong> At least one substantive reply (not just "I agree"). Engage with their reasoning: push back, build on it, or offer a different angle.</li>
+    <li><strong>Deadline:</strong> Initial post by Tuesday, April 14 (before class). Reply by the following Tuesday class (April 21).</li>
+  </ul>
+</div>
+
+<p>This is one of a recurring ethics thread that runs alongside the technical content all semester. The lab gives you a concrete system to reason about: you've seen the cosine similarity scores, you've compared the embedding retrieval against the TF-IDF baseline, and you know that <code>all-MiniLM-L6-v2</code> is a black box trained on web text you didn't choose. Use that specificity. I'm looking for evidence that you've connected the ethical question to what you observed in the lab, not that you've landed on the "correct" position.</p>
+
+<p class="note">The weekly ethics discussion is worth 20% of your weekly Participation grade (the other 80% comes from attendance and in-class engagement). Whether you attend in person or via Zoom, this post is required every week.</p>
+
+</body>
+</html>

@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Week 2 Readings: Prompt Engineering and Context Engineering | AIML 2003</title>
+<link rel="stylesheet" href="../../course-styles.css">
+</head>
+<body>
+
+<h1>Week 2: Prompt Engineering and Context Engineering</h1>
+<p class="subtitle">Readings &amp; Prep: Complete before Tuesday, April 1</p>
+
+<div class="time-box">
+  <strong>Estimated prep time:</strong> ~2 hours of reading/watching (required materials). The optional sources go deep; use NotebookLM to help you navigate them. All materials are free.
+</div>
+
+<!-- ========== FRAMING ========== -->
+<div class="framing-box">
+  <p><strong>The big picture:</strong> If you've used ChatGPT, Claude, or Gemini, you've already done prompt engineering: you've written instructions trying to get the model to do what you want. This week, we'll cover the foundations (zero-shot, few-shot, chain-of-thought) but then focus on the core trend of 2025&ndash;2026: automated optimization and the shift toward context engineering.</p>
+  <p style="margin-top:0.5rem;">Prompts have shifted from hand-crafted artifacts to <strong>automatically optimized programs.</strong> Leading AI labs now frame the discipline as <strong>"context engineering"</strong>: designing the optimal configuration of system prompts, tool definitions, examples, retrieved documents, and conversation history within a finite attention budget. Understanding this shift is essential for anyone building with LLMs today.</p>
+</div>
+
+<!-- ========== NOTEBOOKLM REMINDER ========== -->
+<div class="nlm-box">
+  <strong>NotebookLM is your friend here.</strong> Some of these readings are dense research material. Create a NotebookLM notebook for Week 2, upload the readings and paper URLs as sources, and use it to ask questions, generate summaries, and check your understanding. Try generating an Audio Overview of the required readings before class. Listening to an AI-generated discussion of the material is a surprisingly effective way to prepare.
+</div>
+
+<!-- ================================================================
+     LAYER 1: THE FOUNDATIONS
+     ================================================================ -->
+<h2>Layer 1: The Foundations (What You Need to Know First)</h2>
+<p>These techniques are the vocabulary of the field. Everything that follows builds on them.</p>
+
+<div class="resource-card">
+  <div class="resource-header">
+    <span class="resource-title">Andrej Karpathy: Intro to Large Language Models</span>
+    <span class="tag tag-required">Required</span>
+    <span class="tag tag-video">Video</span>
+    <span class="tag tag-time">~60 min</span>
+  </div>
+  <p class="resource-meta">Andrej Karpathy (former OpenAI, Tesla AI) &bull; YouTube</p>
+  <p class="resource-desc">The single best overview of how LLMs work, from training data to inference. Karpathy explains what happens when massive amounts of internet text are compressed into a neural network, how the model generates text by predicting tokens, and why these systems behave the way they do. Essential context for everything we build this semester.</p>
+  <p class="resource-link"><a href="https://www.youtube.com/watch?v=zjkBMFhNj_g" target="_blank">Watch: Intro to Large Language Models &rarr;</a></p>
+</div>
+
+<div class="resource-card">
+  <div class="resource-header">
+    <span class="resource-title">3Blue1Brown: But What Is a GPT?</span>
+    <span class="tag tag-required">Required</span>
+    <span class="tag tag-video">Video</span>
+    <span class="tag tag-time">~27 min</span>
+  </div>
+  <p class="resource-meta">3Blue1Brown (Grant Sanderson) &bull; YouTube</p>
+  <p class="resource-desc">A visual introduction to transformer architecture. Shows how text is converted to numbers, how attention mechanisms work, and how the model builds internal representations of language. The animations make abstract concepts concrete. Pairs well with the Karpathy video: Karpathy gives you the big picture, 3Blue1Brown shows you what's happening inside.</p>
+  <p class="resource-link"><a href="https://www.youtube.com/watch?v=wjZofJX0v4M" target="_blank">Watch: But What Is a GPT? &rarr;</a></p>
+</div>
+
+<div class="resource-card">
+  <div class="resource-header">
+    <span class="resource-title">Prompt Engineering Guide: Zero-Shot &amp; Few-Shot Prompting</span>
+    <span class="tag tag-required">Required</span>
+    <span class="tag tag-read">Read</span>
+    <span class="tag tag-time">~15 min</span>
+  </div>
+  <p class="resource-meta">promptingguide.ai (DAIR.AI / Elvis Saravia)</p>
+  <p class="resource-desc">Zero-shot means giving an LLM a task with no examples. Few-shot means providing 2&ndash;3 labeled examples before your request. These baseline techniques form the foundation for everything else in prompt design. Read both pages.</p>
+  <p class="resource-link">
+    <a href="https://www.promptingguide.ai/techniques/zeroshot" target="_blank">Read: Zero-Shot Prompting &rarr;</a> &nbsp;|&nbsp;
+    <a href="https://www.promptingguide.ai/techniques/fewshot" target="_blank">Read: Few-Shot Prompting &rarr;</a>
+  </p>
+</div>
+
+<div class="resource-card">
+  <div class="resource-header">
+    <span class="resource-title">Prompt Engineering Guide: Chain-of-Thought (CoT) Prompting</span>
+    <span class="tag tag-required">Required</span>
+    <span class="tag tag-read">Read</span>
+    <span class="tag tag-time">~10 min</span>
+  </div>
+  <p class="resource-meta">promptingguide.ai</p>
+  <p class="resource-desc">Asking a model to "think step by step" before answering improves reasoning on math, logic, and multi-step problems. It serves as the foundation for more sophisticated reasoning architectures covered later.</p>
+  <p class="resource-link"><a href="https://www.promptingguide.ai/techniques/cot" target="_blank">Read: Chain-of-Thought Prompting &rarr;</a></p>
+  <div class="focus-box">
+    <strong>Key takeaway:</strong> Zero-shot, few-shot, and CoT are still useful, but as you'll see in the next layers, they are now the <em>starting point</em> for automated optimization, not the end product.
+  </div>
+</div>
+
+<div class="resource-card">
+  <div class="resource-header">
+    <span class="resource-title">Google: Prompt Design Strategies (Gemini API)</span>
+    <span class="tag tag-required">Required</span>
+    <span class="tag tag-read">Read</span>
+    <span class="tag tag-time">~15 min</span>
+  </div>
+  <p class="resource-meta">ai.google.dev</p>
+  <p class="resource-desc">Google's official guide to prompting Gemini. Covers clear instructions, examples, step-by-step thinking, and iteration. Directly applicable to the course labs.</p>
+  <p class="resource-link"><a href="https://ai.google.dev/gemini-api/docs/prompting-strategies" target="_blank">Read: Prompt Design Strategies &rarr;</a></p>
+</div>
+
+<!-- ================================================================
+     LAYER 2: THE PARADIGM SHIFT
+     ================================================================ -->
+<h2>Layer 2: Context Engineering</h2>
+<p>The core shift: from optimizing words to optimizing information architecture.</p>
+
+<div class="resource-card key-reading">
+  <div class="resource-header">
+    <span class="resource-title">Anthropic: Effective Context Engineering for AI Agents</span>
+    <span class="tag tag-critical">CRITICAL</span>
+    <span class="tag tag-guide">Guide</span>
+    <span class="tag tag-time">~25 min</span>
+  </div>
+  <p class="resource-meta">anthropic.com/engineering &bull; September 2025</p>
+  <p class="resource-desc">The essay that defined the shift. Anthropic argues the challenge is designing the right <strong>configuration of context</strong>: system prompts, tool definitions, few-shot examples, retrieved documents, and conversation history as a finite "attention budget." Introduces concepts like "context rot" and just-in-time retrieval. This framing applies to all work later in the semester.</p>
+  <p class="resource-link"><a href="https://www.anthropic.com/engineering/effective-context-engineering-for-ai-agents" target="_blank">Read: Context Engineering for AI Agents &rarr;</a></p>
+  <div class="focus-box">
+    <strong>This is the most important reading this week.</strong> If you read one thing carefully, make it this one. Everything we do in Weeks 4&ndash;7 (RAG, evaluation, agents) connects back to this framing.
+  </div>
+</div>
+
+<div class="resource-card">
+  <div class="resource-header">
+    <span class="resource-title">Anthropic: Interactive Prompt Engineering Tutorial</span>
+    <span class="tag tag-required">Required</span>
+    <span class="tag tag-interactive">Interactive</span>
+    <span class="tag tag-time">~30 min</span>
+  </div>
+  <p class="resource-meta">github.com/anthropics &bull; 2025 &bull; CC BY-NC-SA 4.0</p>
+  <p class="resource-desc">A 9-chapter interactive tutorial with exercises and answer keys. Teaches a structured 5-step progression: clarity, examples, chain-of-thought, XML structuring, and role prompting, then extends to prompt chaining, extended thinking, and evaluation. Jupyter notebooks allow you to modify and test prompts directly.</p>
+  <p class="resource-link"><a href="https://github.com/anthropics/prompt-eng-interactive-tutorial" target="_blank">View: Interactive Tutorial on GitHub &rarr;</a></p>
+  <div class="focus-box">
+    <strong>Focus on:</strong> Chapters 1&ndash;4 this week (basics through structuring). We'll return to the later chapters on chaining and evaluation in Weeks 5&ndash;6.
+  </div>
+</div>
+
+<!-- ================================================================
+     LAYER 3: AUTOMATION & REASONING
+     ================================================================ -->
+<h2>Layer 3: Automated Optimization and Adaptive Reasoning</h2>
+<p>Read at least one resource from each group below to understand current research directions.</p>
+
+<h3>Automated Optimization (pick at least one)</h3>
+
+<div class="resource-card">
+  <div class="resource-header">
+    <span class="resource-title">A Systematic Survey of Automatic Prompt Optimization</span>
+    <span class="tag tag-required">Pick 1</span>
+    <span class="tag tag-paper">Paper</span>
+    <span class="tag tag-time">~30 min</span>
+  </div>
+  <p class="resource-meta">Ramnath, Zhou et al. &bull; EMNLP 2025 Main Conference &bull; 20+ authors</p>
+  <p class="resource-desc">The best entry point for the automated optimization landscape. Defines a formal framework with a 5-part taxonomy: search strategy, prompt component optimized, feedback mechanisms, evaluation approaches, and stopping criteria. Covers all major methods (OPRO, EvoPrompt, TextGrad, DSPy).</p>
+  <p class="resource-link"><a href="https://arxiv.org/abs/2502.16923" target="_blank">Read: Survey of Automatic Prompt Optimization &rarr;</a></p>
+</div>
+
+<div class="resource-card">
+  <div class="resource-header">
+    <span class="resource-title">Is It Time to Treat Prompts as Code? (DSPy Multi-Use Case Study)</span>
+    <span class="tag tag-required">Pick 1</span>
+    <span class="tag tag-paper">Paper</span>
+    <span class="tag tag-time">~25 min</span>
+  </div>
+  <p class="resource-meta">Lemos, Alves, Ferraz (University of Minho) &bull; July 2025</p>
+  <p class="resource-desc">A practical, honest evaluation of DSPy's MIPROv2 optimizer across 5 real use cases. Shows where automated optimization helps dramatically (+17.8 percentage points on prompt evaluation) and where it doesn't (near-zero gains on guardrail enforcement). The gap between those two results tells you when to reach for automated tools and when to stay manual.</p>
+  <p class="resource-link"><a href="https://arxiv.org/html/2507.03620v1" target="_blank">Read: Prompts as Code &rarr;</a></p>
+</div>
+
+<h3>Reasoning Architectures (pick at least one)</h3>
+
+<div class="resource-card">
+  <div class="resource-header">
+    <span class="resource-title">"Prompting Inversion": You Don't Need Prompt Engineering Anymore</span>
+    <span class="tag tag-required">Pick 1</span>
+    <span class="tag tag-paper">Paper</span>
+    <span class="tag tag-time">~20 min</span>
+  </div>
+  <p class="resource-meta">Imran Khan &bull; October 2025</p>
+  <p class="resource-desc">Shows that sophisticated prompting strategies that help mid-tier models (GPT-4o) harm frontier models (GPT-5). Constraints that prevent errors in weaker models induce hyper-literalism in stronger ones. Accessible and challenges assumptions about universal best practices.</p>
+  <p class="resource-link"><a href="https://arxiv.org/abs/2510.22251" target="_blank">Read: Prompting Inversion &rarr;</a></p>
+</div>
+
+<div class="resource-card">
+  <div class="resource-header">
+    <span class="resource-title">Rethinking Prompting Strategies in LLM Test-Time Scaling</span>
+    <span class="tag tag-required">Pick 1</span>
+    <span class="tag tag-paper">Paper</span>
+    <span class="tag tag-time">~25 min</span>
+  </div>
+  <p class="resource-meta">Liu, Li et al. &bull; ACL 2025 Outstanding Paper Award</p>
+  <p class="resource-desc">The most rigorous head-to-head comparison of prompting strategies. Tests 8 strategies across 6 LLMs and 6 benchmarks (288 configurations). Finds that simple CoT with majority voting outperforms complex strategies (Tree-of-Thought, Graph-of-Thought) when given more attempts.</p>
+  <p class="resource-link"><a href="https://aclanthology.org/2025.acl-long.1356/" target="_blank">Read: ACL 2025 Outstanding Paper &rarr;</a></p>
+</div>
+
+<div class="nlm-box">
+  <strong>Using NotebookLM for dense papers:</strong> Upload papers to your Week 2 NotebookLM notebook and ask specific questions: "What's the main finding?", "How does this apply to building NLP systems?", or "How does this relate to the context engineering essay?" NotebookLM answers directly from the source material with citations.
+</div>
+
+<!-- ================================================================
+     LAYER 4: OPTIONAL DEEP DIVES
+     ================================================================ -->
+<h2>Layer 4: Optional Deep Dives</h2>
+<p>Not required. Select based on your interests; return to them as needed throughout the semester.</p>
+
+<div class="resource-card optional">
+  <div class="resource-header">
+    <span class="resource-title">Lilian Weng: "Why We Think"</span>
+    <span class="tag tag-optional">Optional</span>
+    <span class="tag tag-read">Read</span>
+    <span class="tag tag-time">~40 min</span>
+  </div>
+  <p class="resource-meta">lilianweng.github.io &bull; May 2025 &bull; OpenAI researcher</p>
+  <p class="resource-desc">A deep review of test-time compute and CoT reasoning, from "think step by step" through DeepSeek-R1 and o1/o3 models. Bridges practice with theory about why reasoning prompts work. Technical depth for those exploring the science.</p>
+  <p class="resource-link"><a href="https://lilianweng.github.io/posts/2025-05-01-thinking/" target="_blank">Read: Why We Think &rarr;</a></p>
+</div>
+
+<div class="resource-card optional">
+  <div class="resource-header">
+    <span class="resource-title">Anthropic: How We Built Our Multi-Agent Research System</span>
+    <span class="tag tag-optional">Optional</span>
+    <span class="tag tag-guide">Guide</span>
+    <span class="tag tag-time">~20 min</span>
+  </div>
+  <p class="resource-meta">anthropic.com/engineering &bull; June 2025</p>
+  <p class="resource-desc">How Anthropic's multi-agent system (Opus 4 + Sonnet 4) outperformed single-agent baselines by 90.2% on research tasks. Establishes 7 principles for prompting agents. Revisited in Week 7; reading now provides context for later material.</p>
+  <p class="resource-link"><a href="https://www.anthropic.com/engineering/multi-agent-research-system" target="_blank">Read: Multi-Agent Research System &rarr;</a></p>
+</div>
+
+<hr>
+
+<!-- ========== FIVE THEMES ========== -->
+<h2>Five Themes to Take Away</h2>
+<p>These ideas connect the readings and frame Week 2 discussion.</p>
+
+<div class="theme-card">
+  <strong>1. Automation has overtaken artisanship.</strong> Every major advance (GEPA, TextGrad, DSPy, Promptomatix) treats prompt design as an optimization problem with measurable objectives, not a creative writing exercise. The question isn't "how do I phrase this?" but "how do I measure and improve this?"
+</div>
+
+<div class="theme-card">
+  <strong>2. Context engineering has replaced prompt engineering.</strong> The challenge is no longer "what words do I use?" but "what information goes into the context window, in what order, at what time?" This architectural perspective is essential for building agents.
+</div>
+
+<div class="theme-card">
+  <strong>3. The optimal strategy depends on the model.</strong> The Prompting Inversion finding and the ACL Outstanding Paper both show that what works on one model can hurt another. There is no universally best technique.
+</div>
+
+<div class="theme-card">
+  <strong>4. Reasoning structures have become adaptive.</strong> Fixed chain/tree/graph topologies are giving way to dynamic frameworks that allocate reasoning depth based on problem complexity, mirroring how humans think harder about harder problems.
+</div>
+
+<div class="theme-card">
+  <strong>5. Evaluation is now as important as writing prompts.</strong> Benchmarks like LangProBe and the ACL scaling study provide rigorous empirical foundations for choosing strategies. Learning to evaluate prompts systematically is now as important as learning to write them.
+</div>
+
+<hr>
+
+<!-- ========== DISCUSSION PREP ========== -->
+<div class="discussion-box">
+  <strong>Discussion questions for class:</strong>
+  <ol>
+    <li>What's the difference between "prompt engineering" and "context engineering"? Why does the distinction matter?</li>
+    <li>The Prompting Inversion paper found that sophisticated prompting can <em>hurt</em> frontier models. What does that imply about how you should approach prompting for a new model?</li>
+    <li>If automated tools can optimize prompts better than humans, what's the value of learning to write prompts by hand? (Hint: think about what you need to know to <em>use</em> the automated tools effectively.)</li>
+    <li>The ACL Outstanding Paper found that simple CoT + majority voting beats complex strategies as you give the model more attempts. When might complex strategies still be worth the effort?</li>
+    <li>Pick one of the five themes above. Do you agree with it? What's a counterargument?</li>
+  </ol>
+</div>
+
+
+</body>
+</html>

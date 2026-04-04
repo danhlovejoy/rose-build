@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Connecting Google Colab to GitHub | AIML 2013</title>
+<link rel="stylesheet" href="../../course-styles.css">
+</head>
+<body>
+
+<h1>Connecting Google Colab to GitHub</h1>
+<p class="subtitle">AIML 2013: Setup Guide. Save notebooks directly to your repo</p>
+
+<p class="intro">Once Colab is connected to GitHub, you can save your work directly to your repository without downloading files or using the command line. This guide covers two methods: the built-in Colab menu (easiest) and a quick programmatic approach for when you want more control.</p>
+
+<!-- ========== METHOD 1 ========== -->
+<h2>Method 1: Save via the Colab Menu (Recommended)</h2>
+<p style="margin-bottom:1rem; font-size:0.95rem;">This is the simplest approach and the one we'll use for most labs.</p>
+
+<div class="step">
+  <span class="step-number">1</span>
+  <p class="step-title">Open a notebook in Colab</p>
+  <p>Open any notebook. You can use the <code>week1_setup.ipynb</code> you created in the Colab setup guide.</p>
+</div>
+
+<div class="step">
+  <span class="step-number">2</span>
+  <p class="step-title">Go to File &rarr; Save a copy in GitHub</p>
+  <p>In the top menu, click <strong>File</strong> and then <strong>Save a copy in GitHub</strong>.</p>
+</div>
+
+<div class="step">
+  <span class="step-number">3</span>
+  <p class="step-title">Authorize GitHub (first time only)</p>
+  <p>A GitHub authorization window will pop up. Click <strong>Authorize googlecolab</strong>. This grants Colab permission to write to your repositories. You only need to do this once.</p>
+</div>
+
+<div class="step">
+  <span class="step-number">4</span>
+  <p class="step-title">Choose your repository and path</p>
+  <p>In the dialog that appears:</p>
+  <ul>
+    <li><strong>Repository:</strong> Select <code>your-username/aiml2013-cv</code></li>
+    <li><strong>Branch:</strong> Leave as <code>main</code></li>
+    <li><strong>File path:</strong> Type a path like <code>week1/week1_setup.ipynb</code> to organize by week</li>
+    <li><strong>Commit message:</strong> Write something descriptive, like "Add Week 1 setup notebook"</li>
+  </ul>
+</div>
+
+<div class="step">
+  <span class="step-number">5</span>
+  <p class="step-title">Click OK</p>
+  <p>Colab will save a copy of your notebook directly to your GitHub repository. You can verify by visiting your repo on github.com. You should see the new file.</p>
+</div>
+
+<div class="warning">
+  <strong>Before you save:</strong> Double-check that your notebook does not contain any API keys, passwords, or other secrets. Look through all code cells for anything that looks like <code>api_key = "sk-..."</code>. If you used Colab's Secrets Manager (from the Colab setup guide), you're safe.
+</div>
+
+<!-- ========== METHOD 2 ========== -->
+<div class="divider">—OR—</div>
+
+<h2>Method 2: Open a Notebook from GitHub</h2>
+<p style="margin-bottom:1rem; font-size:0.95rem;">You can also go the other direction: open a notebook that's already in your GitHub repo directly in Colab.</p>
+
+<div class="step">
+  <span class="step-number">1</span>
+  <p class="step-title">Go to the Colab GitHub tab</p>
+  <p>Navigate to <a href="https://colab.research.google.com/github/" target="_blank">colab.research.google.com/github/</a>. Sign in with your GitHub account if prompted.</p>
+</div>
+
+<div class="step">
+  <span class="step-number">2</span>
+  <p class="step-title">Search for your repository</p>
+  <p>Type your GitHub username or select your repository from the dropdown. Colab will show all <code>.ipynb</code> files in that repo.</p>
+</div>
+
+<div class="step">
+  <span class="step-number">3</span>
+  <p class="step-title">Click to open</p>
+  <p>Click on any notebook to open it in Colab. When you're done editing, use <strong>File &rarr; Save a copy in GitHub</strong> to push your changes back.</p>
+</div>
+
+<div class="tip">
+  <strong>Pro tip:</strong> You can open any public GitHub notebook directly in Colab by swapping <code>github.com</code> for <code>colab.research.google.com/github</code> in the URL. Transform this URL:
+  <code>github.com/user/repo/blob/main/notebook.ipynb</code>
+  into this:
+  <code>colab.research.google.com/github/user/repo/blob/main/notebook.ipynb</code>
+</div>
+
+<!-- ========== WEEKLY WORKFLOW ========== -->
+<h2>Your Weekly Workflow</h2>
+
+<div class="step">
+  <p>Here's the process you'll follow each week for labs:</p>
+  <ol>
+    <li><strong>Start</strong> a new notebook in Colab (or open the starter notebook I provide).</li>
+    <li><strong>Work</strong> through the lab, running cells and adding your code and notes.</li>
+    <li><strong>Review</strong> your notebook before submitting. Make sure it runs top-to-bottom, your outputs are visible, and there are no exposed secrets.</li>
+    <li><strong>Save</strong> to GitHub using <strong>File &rarr; Save a copy in GitHub</strong>, placing it in the appropriate week folder (e.g., <code>week2/lab1_classification.ipynb</code>).</li>
+    <li><strong>Submit</strong> the GitHub link in Canvas.</li>
+  </ol>
+</div>
+
+<!-- ========== TROUBLESHOOTING ========== -->
+<h2>Troubleshooting</h2>
+
+<div class="step">
+  <p class="step-title">I don't see my repo in the dropdown</p>
+  <p>Make sure you authorized Colab to access your GitHub account (Step 3 above). If you did but still don't see it, go to <a href="https://github.com/settings/applications" target="_blank">github.com/settings/applications</a>, find "Google Colaboratory" in the list, and make sure it has access to your repositories.</p>
+</div>
+
+<div class="step">
+  <p class="step-title">The save failed with an error</p>
+  <p>This usually means the file path has an issue. Make sure folder names don't contain spaces or special characters. Use lowercase and hyphens (e.g., <code>week2/lab1-classification.ipynb</code>).</p>
+</div>
+
+<div class="step">
+  <p class="step-title">I accidentally committed a secret</p>
+  <p>Don't panic, but act fast. Immediately go to <a href="https://aistudio.google.com" target="_blank">Google AI Studio</a> and <strong>revoke/regenerate your key</strong>. Then remove the file from GitHub or edit the file to remove the key and commit again. Deleting the file is not enough. The important thing is to REVOKE the secret. Git history retains old versions. Ask me for help if you have trouble revoking your secret.</p>
+</div>
+
+<!-- ========== CHECKLIST ========== -->
+<div class="checklist">
+  <strong>Setup Complete Checklist</strong>
+  <ul>
+    <li>Google Colab account working</li>
+    <li>GitHub account created with a professional username</li>
+    <li><code>aiml2013-cv</code> repository created (public, with README)</li>
+    <li>Colab authorized to save to GitHub</li>
+    <li>Test notebook saved from Colab to GitHub repo</li>
+    <li>Verified the notebook appears on github.com</li>
+  </ul>
+  <p style="margin-top:0.75rem; font-size:0.9rem; color:var(--muted);">If you've checked all six boxes, you're ready for Week 2.</p>
+</div>
+
+</body>
+</html>

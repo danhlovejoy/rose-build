@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Module 3 Readings: Image Embeddings | AIML 2013</title>
+<link rel="stylesheet" href="../../course-styles.css">
+</head>
+<body>
+
+<h1>Module 3: Image Embeddings</h1>
+<p class="subtitle">Readings &amp; Prep: Complete before Tuesday, April 14</p>
+
+<div class="time-box">
+  <strong>Estimated prep time:</strong> ~1.5 hours (required materials). Two optional sources for those who want to go further. All materials are free.
+</div>
+
+<!-- ========== FRAMING ========== -->
+<div class="framing-box">
+  <p><strong>The big picture:</strong> HOG computed a fixed recipe: divide the image into a grid, measure gradient orientations in each cell, concatenate the histograms. Any two engineers given the same image and the same parameters will get the same vector. That determinism is also its limitation: HOG can only encode what the formula was designed to find.</p>
+  <p style="margin-top:0.5rem;">A convolutional neural network trained on 1.2 million labeled images learned its own recipe. Nobody told it to look for edges, then textures, then object parts: it discovered that hierarchy on its own, because that hierarchy is what predicts the correct label. The result is a feature extractor that captures information no hand-designed formula can reach: the difference between a dog and a wolf even when the background is similar, or the similarity between two chairs that share no color, texture, or orientation.</p>
+  <p style="margin-top:0.5rem;">This week you strip the classification head off MobileNetV2, run your Module 2 images through what remains, and compare the resulting embeddings directly against HOG. The retrieval accuracy tables and the dual t-SNE plot in Cells 6 and 9 will show you exactly where learned features win (and where they still fail).</p>
+</div>
+
+<!-- ========== NOTEBOOKLM ========== -->
+<div class="nlm-box">
+  <strong>NotebookLM tip:</strong> Upload the Szeliski section to a Module 3 notebook. Good questions to try: &ldquo;Why do features learned on ImageNet transfer to other datasets?&rdquo; &ldquo;What does it mean to remove the classification head from a neural network?&rdquo; &ldquo;Why does global average pooling collapse a 3D feature map into a 1D vector?&rdquo;
+</div>
+
+<!-- ================================================================
+     REQUIRED READINGS & VIDEOS
+     ================================================================ -->
+<h2>Required Readings &amp; Videos</h2>
+<p>Work through these in order. Start with the 3Blue1Brown video: it establishes what a neural network is before the rest of the readings assume you already know. Everything after builds on that foundation.</p>
+
+<!-- RESOURCE 1: 3Blue1Brown Neural Networks Ch1 -->
+<div class="resource-card">
+  <div class="resource-header">
+    <span class="resource-title">But what is a neural network? (3Blue1Brown)</span>
+    <span class="tag tag-critical">Critical</span>
+    <span class="tag tag-required">Required</span>
+    <span class="tag tag-video">Video</span>
+    <span class="tag tag-time">~19 min</span>
+  </div>
+  <p class="resource-meta">3Blue1Brown &bull; Grant Sanderson &bull; YouTube</p>
+  <p class="resource-desc">Before diving into convolutional networks, you need a clear mental model of what a neural network is at all. This video (chapter 1 of 3Blue1Brown&rsquo;s Neural Networks series) builds that model from scratch. It covers neurons, layers, weights, biases, and activation functions, using handwritten digit recognition as the running example. The visualizations are exceptional. By the end you will understand what it means for a network to &ldquo;learn&rdquo; and what the numbers inside it actually represent.</p>
+  <p class="resource-desc" style="margin-top:0.5rem;"><em>Watch this first. The Computerphile video and the Szeliski reading both assume you already know what a layer and a neuron are. This video is where you get that foundation.</em></p>
+  <p class="resource-link">
+    <a href="https://www.youtube.com/watch?v=aircAruvnKk" target="_blank">Watch: But what is a neural network? &rarr;</a>
+  </p>
+  <div class="focus-box">
+    <strong>Key concepts to lock in:</strong> A neuron is a number. A layer is a column of numbers. Each number in the next layer is computed from a weighted sum of the previous layer, passed through an activation function. The weights are what the network &ldquo;learns.&rdquo; Everything in the next four resources builds on exactly this.
+  </div>
+</div>
+
+<!-- RESOURCE 2: Computerphile CNN -->
+<div class="resource-card">
+  <div class="resource-header">
+    <span class="resource-title">Neural Network that Changes Everything (Computerphile)</span>
+    <span class="tag tag-required">Required</span>
+    <span class="tag tag-video">Video</span>
+    <span class="tag tag-time">~13 min</span>
+  </div>
+  <p class="resource-meta">Computerphile &bull; Dr Mike Pound &bull; YouTube</p>
+  <p class="resource-desc">Dr Mike Pound explains what made convolutional neural networks a step change in image classification accuracy, and why the features they learn are fundamentally different from anything you could design by hand. The video covers what a convolutional layer computes, how features become hierarchical as you go deeper, and why the same network that learned to classify cats and cars also turns out to be useful for classifying almost anything else. This is the motivation for the entire lab: what you are extracting from MobileNetV2 is exactly the hierarchy Pound describes.</p>
+  <p class="resource-link">
+    <a href="https://www.youtube.com/watch?v=py5byOOHZM8" target="_blank">Watch: Neural Network that Changes Everything &rarr;</a>
+  </p>
+  <div class="focus-box">
+    <strong>Key concept to lock in:</strong> Early layers of a CNN respond to edges and simple textures. Middle layers respond to shapes and object parts. Deep layers respond to whole objects and semantic categories. When you strip off the final classification layer and use the last pooled feature vector, you are using everything the network learned except &ldquo;which of my 1,000 classes is this?&rdquo; That is the 1,280-dimensional vector your lab extracts.
+  </div>
+</div>
+
+<!-- RESOURCE 3: Szeliski -->
+<div class="resource-card">
+  <div class="resource-header">
+    <span class="resource-title">Computer Vision: Algorithms and Applications, §5.4: Deep Convolutional Networks</span>
+    <span class="tag tag-required">Required</span>
+    <span class="tag tag-read">Read</span>
+    <span class="tag tag-time">~25 min</span>
+  </div>
+  <p class="resource-meta">Richard Szeliski &bull; 2nd Edition (2022) &bull; Free online</p>
+  <p class="resource-desc">The textbook treatment of deep convolutional networks: how convolutional layers work, what pooling does, why ReLU activations matter, and how classification architectures are structured. Section 5.4 covers the key architectural families (AlexNet, VGG, ResNet, MobileNet) with enough detail to understand what MobileNetV2 is doing when you call it in the lab. Focus especially on the subsections on feature hierarchies and global average pooling: those concepts connect directly to Cell 3 of the lab.</p>
+  <p class="resource-link">
+    <a href="https://szeliski.org/Book/" target="_blank">Read: Szeliski, Computer Vision (free online) &rarr;</a>
+  </p>
+  <div class="focus-box">
+    <strong>What to focus on:</strong> The description of global average pooling and why it produces a fixed-length vector regardless of input resolution. This is the mechanism behind <code>pooling='avg'</code> in Cell 1 of the lab: it collapses the spatial dimensions of the final feature map into a single 1,280-value vector per image.
+  </div>
+</div>
+
+<!-- ================================================================
+     INTERACTIVE
+     ================================================================ -->
+<h2>Interactive: What Does the Network Actually See?</h2>
+
+<div class="resource-card">
+  <div class="resource-header">
+    <span class="resource-title">Feature Visualization (Distill.pub)</span>
+    <span class="tag tag-required">Required</span>
+    <span class="tag tag-interactive">Interactive</span>
+    <span class="tag tag-time">~20 min</span>
+  </div>
+  <p class="resource-meta">Olah, Mordvintsev, Schubert &bull; Distill &bull; 2017</p>
+  <p class="resource-desc">Distill is a peer-reviewed machine learning journal known for exceptionally clear interactive articles. This one answers the question you should have after watching the Computerphile video: what exactly do those early, middle, and deep layers respond to? The article generates images that maximally activate individual neurons, revealing that early neurons respond to edges and colors, middle neurons respond to textures and patterns, and deep neurons respond to object parts (eyes, fur, wheels). The interactive diagrams let you explore individual neurons at each layer depth.</p>
+  <p class="resource-desc" style="margin-top:0.5rem;">Scroll slowly and interact with the diagrams. This article is the closest thing to actually opening up a neural network and looking inside.</p>
+  <p class="resource-link">
+    <a href="https://distill.pub/2017/feature-visualization/" target="_blank">Explore: Feature Visualization &rarr;</a>
+  </p>
+  <div class="focus-box">
+    <strong>What to notice:</strong> The features that emerge in the deepest layers look like recognizable object parts even though nobody told the network to learn them. This is the hierarchy that makes transfer learning work: those learned features are genuinely useful for describing visual content, not just for classifying ImageNet categories.
+  </div>
+</div>
+
+<!-- ================================================================
+     OPTIONAL
+     ================================================================ -->
+<h2>Optional: Deeper Background</h2>
+
+<div class="resource-card optional">
+  <div class="resource-header">
+    <span class="resource-title">Gradient Descent, How Neural Networks Learn (3Blue1Brown)</span>
+    <span class="tag tag-optional">Optional</span>
+    <span class="tag tag-video">Video</span>
+    <span class="tag tag-time">~21 min</span>
+  </div>
+  <p class="resource-meta">3Blue1Brown &bull; Grant Sanderson &bull; YouTube</p>
+  <p class="resource-desc">Chapter 2 of the same Neural Networks series. Where the required video explains what a network is, this one explains how it learns: gradient descent, the loss function, and the intuition behind backpropagation. Not required for the lab (you are using a pre-trained network, so you don&rsquo;t need to train one yourself) but strongly recommended if you want to understand why the ImageNet weights are good rather than just taking it on faith.</p>
+  <p class="resource-link">
+    <a href="https://www.youtube.com/watch?v=IHZwWFHWa-w" target="_blank">Watch: Gradient Descent, How Neural Networks Learn &rarr;</a>
+  </p>
+</div>
+
+<div class="resource-card optional">
+  <div class="resource-header">
+    <span class="resource-title">Keras: Transfer Learning and Fine-Tuning</span>
+    <span class="tag tag-optional">Optional</span>
+    <span class="tag tag-read">Read</span>
+    <span class="tag tag-time">~20 min</span>
+  </div>
+  <p class="resource-meta">keras.io &bull; Official Keras documentation</p>
+  <p class="resource-desc">The official Keras guide to transfer learning covers both the frozen feature extractor pattern (what your lab uses) and fine-tuning (unfreezing layers and continuing training on your own data). Worth reading if you want to understand the code more deeply, or if you are curious what the next step would look like after this lab. The code examples use the same <code>tf.keras.applications</code> API your lab uses.</p>
+  <p class="resource-link">
+    <a href="https://keras.io/guides/transfer_learning/" target="_blank">Read: Keras Transfer Learning Guide &rarr;</a>
+  </p>
+</div>
+
+<div class="resource-card optional">
+  <div class="resource-header">
+    <span class="resource-title">Linear Transformations and Matrices (3Blue1Brown)</span>
+    <span class="tag tag-optional">Optional</span>
+    <span class="tag tag-video">Video</span>
+    <span class="tag tag-time">~11 min</span>
+  </div>
+  <p class="resource-meta">3Blue1Brown &bull; Grant Sanderson &bull; Essence of Linear Algebra, Chapter 3 &bull; YouTube</p>
+  <p class="resource-desc">Chapter 3 of the Essence of Linear Algebra series. A neural network layer is, at its core, a linear transformation: it takes a vector in one space, multiplies it by a weight matrix, and produces a vector in another space. This video builds the geometric intuition for what that means: what it looks like to move through different vector spaces, and why a matrix is just a record of where basis vectors land. If the phrase &ldquo;1,280-dimensional space&rdquo; feels abstract, this video is the cure.</p>
+  <p class="resource-link">
+    <a href="https://www.youtube.com/watch?v=kYB8IZa5AuE" target="_blank">Watch: Linear Transformations and Matrices &rarr;</a>
+  </p>
+</div>
+
+<hr>
+
+<!-- ========== DISCUSSION PREP ========== -->
+<div class="discussion-box">
+  <strong>Discussion questions for Tuesday class:</strong>
+  <ol>
+    <li>In Module 2 you built HOG descriptors: a formula any engineer could re-derive from first principles. MobileNetV2&rsquo;s weights were learned from 1.2 million images. What do you gain and what do you lose when you replace an interpretable formula with learned weights? Which would you trust more, and in what situation?</li>
+    <li>Transfer learning assumes that features useful for classifying ImageNet images are also useful for classifying your images. Your dataset is either CIFAR-10 (everyday objects) or your own images. How similar is your dataset to ImageNet? Where would you expect the transfer to work well, and where might it break down?</li>
+    <li>The Distill article shows that deep CNN neurons respond to recognizable object parts (eyes, fur, wheel spokes) even though the network was never told to look for those things. What does this tell you about the relationship between the training objective (classify 1,000 categories) and the internal representations the network develops to achieve it?</li>
+  </ol>
+</div>
+
+<!-- ========== BRIDGE BOX ========== -->
+<div class="bridge-box" data-concurrent="true">
+  <strong>Bridge to NLP (AIML 2003):</strong> NLP students this week are replacing TF-IDF word counts with sentence transformer embeddings: the same replacement you are making for images. Both courses swap a hand-crafted feature vector for a dense vector from a pre-trained neural network. Both use cosine similarity to measure closeness. Both compare the learned representation against the Module 2 baseline. If you&rsquo;re doing the combined lab, you will build both pipelines in one notebook and compare the two embedding spaces side by side: text on the left, images on the right.
+</div>
+
+</body>
+</html>

@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Module 3 Lab: Semantic Search with Text Embeddings | AIML 2003</title>
+<link rel="stylesheet" href="../../course-styles.css">
+</head>
+<body>
+
+<h1>Module 3 Lab: Semantic Search with Text Embeddings</h1>
+<p class="subtitle">Turn text into meaning vectors, then find out what "similar" really means.</p>
+
+<!-- ========== LAB FRAMING ========== -->
+<div class="warning">
+  <strong>How this lab works.</strong>
+  <p style="margin: 0.75rem 0 0;">This lab gives you the specification for each cell, not the code. Each section below tells you exactly what a cell must do, what variables it must receive, and what variables it must produce. Your job is to write the code yourself, using an LLM (Gemini, Claude, ChatGPT, or any tool you like) to help you generate it.</p>
+  <p style="margin: 0.75rem 0 0;">Give the LLM the spec box as your prompt. If the generated code does not match the output contract, fix it before moving on. The next cell depends on it.</p>
+</div>
+
+<!-- ========== THE TASK ========== -->
+<div class="section-card">
+  <h3>The Task</h3>
+  <p>In the readings and in class, you learned that TF-IDF represents text as sparse vectors of word counts. Every dimension is a known word; the numbers say how often it appears. That approach cannot tell that "great" and "excellent" mean the same thing, because they occupy different dimensions with no connection between them.</p>
+  <p>This week you replace word counts with dense embeddings: vectors where each dimension encodes abstract meaning learned from millions of texts. Two sentences about cooking will land close together even if they share zero words. You will build a semantic retrieval system, search it with your own queries, and then run the same texts through TF-IDF to see exactly where sparse features fail and dense representations succeed.</p>
+</div>
+
+<!-- ========== DATASET ========== -->
+<h2>Your Dataset</h2>
+
+<div class="section-card">
+  <h3>Curated Text Collection</h3>
+  <p>65 short texts across four categories: technology (15), sports (15), cooking (15), and travel (15), plus 5 cross-category edge cases. Each text is one to two sentences of factual content. The dataset is provided as a JSON file (<code>lab3-dataset.json</code>) on the lab resources page.</p>
+  <p>The categories were chosen so that TF-IDF and embeddings disagree on interesting examples: cooking and technology share process vocabulary ("batch," "reduce," "process"), sports and cooking share body-related terms, and the edge cases deliberately span two or three categories.</p>
+</div>
+
+<!-- ========== HOW TO READ THIS PAGE ========== -->
+<div class="section-card">
+  <h3>How to read this page</h3>
+  <p>Each cell below follows the same format. The gray <code># Cell N</code> header is what you will put at the top of your code cell. Below it:</p>
+  <ul>
+    <li><strong>What it does</strong>: plain English description of the cell&rsquo;s purpose.</li>
+    <li><strong>Takes in</strong>: variables already in the notebook that this cell uses.</li>
+    <li><strong>Must produce</strong>: the exact variable names, types, and shapes this cell must create. These are binding contracts. Use these exact names.</li>
+    <li><strong>Notes</strong>: constraints, pitfalls, and things to watch for.</li>
+  </ul>
+  <p>If the generated code does not match the output contract, fix it before moving on. The next cell depends on it.</p>
+</div>
+
+<!-- ==================== PART 1: BUILD THE EMBEDDING SPACE ==================== -->
+<h2>Part 1: Build the Embedding Space</h2>
+
+<!-- CELL 1 -->
+<pre># Cell 1: Setup</pre>
+<div class="section-card">
+  <p><strong>What it does:</strong> Installs the <code>sentence-transformers</code> library, imports all packages needed for the entire lab, and loads a pre-trained embedding model into memory. Prints the model name and the dimensionality of its output vectors.</p>
+
+  <p><strong>Takes in:</strong> Nothing. This is the first cell.</p>
+
+  <p><strong>Must produce:</strong></p>
+  <ul>
+    <li><code>model</code>: a <code>SentenceTransformer</code> object. Create it by calling <code>SentenceTransformer()</code> with <code>'all-MiniLM-L6-v2'</code> as the argument. This downloads the model on first run and returns an object you use to encode text into vectors.</li>
+    <li>All of the following imported and ready to use:
+      <ul>
+        <li><em>Needs installing:</em> <code>sentence_transformers</code> — the library that provides <code>SentenceTransformer</code>. Install with <code>!pip install -q sentence-transformers</code>. The <code>-q</code> flag suppresses most output.</li>
+        <li><em>Pre-installed in Colab:</em> <code>numpy</code> as <code>np</code> — numerical arrays; you&rsquo;ll use it to store and manipulate the embedding matrix.</li>
+        <li><em>Pre-installed in Colab:</em> <code>matplotlib.pyplot</code> as <code>plt</code> — plotting; used for the heatmap and t-SNE charts in later cells.</li>
+        <li><em>Pre-installed in Colab:</em> <code>cosine_similarity</code> from <code>sklearn.metrics.pairwise</code> — measures how similar two vectors are on a scale from &minus;1 (opposite) to 1 (identical). You&rsquo;ll use this to find the nearest texts in embedding space.</li>
+        <li><em>Pre-installed in Colab:</em> <code>TfidfVectorizer</code> from <code>sklearn.feature_extraction.text</code> — builds the word-count baseline you&rsquo;ll compare against in Part 3.</li>
+        <li><em>Pre-installed in Colab:</em> <code>TSNE</code> from <code>sklearn.manifold</code> — an algorithm that compresses high-dimensional vectors down to 2 dimensions for scatter-plot visualization in Cell 9.</li>
+      </ul>
+    </li>
+    <li>Printed output: the model&rsquo;s name (accessible as a string attribute on the <code>model</code> object) and its embedding dimension. The embedding dimension is the number of values in every vector this model produces — call <code>model.get_sentence_embedding_dimension()</code> to retrieve it. For <code>all-MiniLM-L6-v2</code> this is 384, meaning every sentence becomes a list of exactly 384 numbers. Print both with descriptive labels.</li>
+  </ul>
+
+  <p><strong>Notes:</strong> The <code>sentence-transformers</code> package is approximately 80 MB and downloads on first use. The installation cell should run <code>!pip install -q sentence-transformers</code> before importing. All other imports (numpy, sklearn, matplotlib) are pre-installed and ready without pip.</p>
+</div>
+
+<!-- CELL 2 -->
+<pre># Cell 2: Load the dataset</pre>
+<div class="section-card">
+  <p><strong>What it does:</strong> Loads or defines the 65-text dataset as Python lists. Separates the 60 core texts (15 per category) from the 5 edge cases. Prints category counts and one sample text from each category.</p>
+
+  <p><strong>Takes in:</strong> The dataset file <code>lab3-dataset.json</code> (provided on the lab resources page). You may also manually define the data as Python lists if you prefer.</p>
+
+  <p><strong>Must produce:</strong></p>
+  <ul>
+    <li><code>texts</code>: Python list of 60 strings. The core dataset, ordered by category: the first 15 are technology, the next 15 are sports, then cooking, then travel. Load from JSON using <code>json.load()</code> with <code>open()</code>, or define as a Python list directly.</li>
+    <li><code>categories</code>: Python list of 60 strings, parallel to <code>texts</code>. Name this variable exactly <code>categories</code>. Each element is one of <code>'technology'</code>, <code>'sports'</code>, <code>'cooking'</code>, or <code>'travel'</code>. Build this in parallel with <code>texts</code> so that <code>categories[i]</code> is the category for <code>texts[i]</code>.</li>
+    <li><code>cat_names</code>: Python list with exactly four strings: <code>['technology', 'sports', 'cooking', 'travel']</code> in that order.</li>
+    <li><code>edge_texts</code>: Python list of 5 strings. The cross-category edge case texts.</li>
+    <li><code>edge_labels</code>: Python list of 5 lists, each containing the category names present in that edge case. For example, an athlete&rsquo;s nutrition plan might be <code>['sports', 'cooking']</code>.</li>
+  </ul>
+
+  <p><strong>Notes:</strong> The dataset is provided as <code>lab3-dataset.json</code> in the lab resources. If loading from JSON, the file structure is <code>{"texts": [...], "categories": [...], "edge_texts": [...], "edge_labels": [...]}</code>. Keep texts ordered by category — all technology first, then all sports, etc. This ordering makes the similarity heatmap in Cell 4 visually readable: you will see a block-diagonal pattern where texts in the same category cluster together.</p>
+</div>
+
+<!-- CELL 3 -->
+<pre># Cell 3: Generate embeddings</pre>
+<div class="section-card">
+  <p><strong>What it does:</strong> Encodes all 60 core texts into dense embedding vectors using the pre-trained model. Prints the shape of the resulting matrix and the first 10 values of the first embedding to show what a dense vector looks like.</p>
+
+  <p><strong>Takes in:</strong> <code>model</code> (from Cell 1), <code>texts</code> (from Cell 2).</p>
+
+  <p><strong>Must produce:</strong></p>
+  <ul>
+    <li><code>embeddings</code>: numpy array, shape <code>(60, 384)</code>. Name this variable exactly <code>embeddings</code>. Each row is one text&rsquo;s embedding, so row <code>i</code> corresponds to <code>texts[i]</code>. Each column is one of the 384 dimensions learned by the model. Generate this by calling <code>model.encode()</code> with <code>texts</code> as the argument and setting <code>show_progress_bar=True</code> to see the progress. The method returns a numpy array directly (no conversion needed).</li>
+    <li>Printed output: the shape of <code>embeddings</code> (using <code>.shape</code>), the first 10 values of <code>embeddings[0]</code> (rounded to 4 decimal places for readability), and a brief interpretation of what "384 dimensions" means conceptually compared to TF-IDF&rsquo;s sparse thousands.</li>
+  </ul>
+
+  <p><strong>Notes:</strong> Call <code>model.encode(texts, show_progress_bar=True)</code> to get the embeddings. Encoding 60 short texts takes under 2 seconds on a Colab GPU runtime. If you are on a CPU runtime, it may take 5&ndash;10 seconds. The output is already a 2D numpy array; no reshaping needed.</p>
+</div>
+
+<div class="tip">
+  <strong>Markdown cell:</strong> You just compressed 60 texts into 60 rows of 384 numbers each. In Module 2, TF-IDF produced vectors with 5,000 dimensions (one per word or bigram), and most values were zero. These embeddings have 384 dimensions and no zeros. What does it mean that the vector is dense? What kind of information could a single dimension encode when it is no longer tied to one specific word?
+</div>
+
+<!-- CELL 4 -->
+<pre># Cell 4: Similarity heatmap</pre>
+<div class="section-card">
+  <p><strong>What it does:</strong> Computes the full 60&times;60 cosine similarity matrix and displays it as a color-coded heatmap with category boundaries marked. The block-diagonal pattern reveals that texts in the same category are more similar to each other than to texts in other categories.</p>
+
+  <p><strong>Takes in:</strong> <code>embeddings</code>, <code>cat_names</code> (from Cells 2&ndash;3).</p>
+
+  <p><strong>Must produce:</strong></p>
+  <ul>
+    <li><code>sim_matrix</code>: numpy array, shape <code>(60, 60)</code>. Compute this by calling <code>cosine_similarity(embeddings)</code>. This returns a square matrix where entry <code>[i, j]</code> is the cosine similarity between <code>embeddings[i]</code> and <code>embeddings[j]</code>. Values range from approximately &minus;1 to 1, with 1 on the diagonal (each text is identical to itself).</li>
+    <li>A matplotlib figure: display the similarity matrix as a heatmap using <code>plt.imshow()</code> or <code>ax.imshow()</code> with the colormap <code>'RdYlBu_r'</code> (red for high similarity, blue for low). Draw white grid lines at row/column indices 15, 30, and 45 using <code>ax.axhline()</code> and <code>ax.axvline()</code> to mark category boundaries. Place tick labels at the midpoint of each block (7.5, 22.5, 37.5, 52.5) showing the category names in <code>cat_names</code>. Include a colorbar on the right side.</li>
+    <li>Printed output: two numbers. First, the mean intra-category similarity — the average of all off-diagonal similarities within each of the four category blocks. Second, the mean inter-category similarity — the average of all similarities outside those four blocks. These numbers quantify how well the embedding space separates the categories.</li>
+  </ul>
+
+  <p><strong>Notes:</strong> Use <code>cosine_similarity(embeddings)</code> to compute the full 60&times;60 matrix in one call. For intra-category mean: loop over the four 15-element blocks (indices 0&ndash;15, 15&ndash;30, 30&ndash;45, 45&ndash;60), extract the off-diagonal entries from each block, and average them all together. For inter-category mean: create a boolean mask for all entries outside the four blocks and average those. Use <code>matplotlib.pyplot.subplots()</code> to create a figure and axis, then <code>ax.imshow(sim_matrix)</code>, <code>ax.axhline()</code>, and <code>ax.axvline()</code> for the grid lines.</p>
+</div>
+
+<div class="tip">
+  <strong>Markdown cell:</strong> Look at the heatmap. The bright squares along the diagonal are the four categories clustering internally. But some off-diagonal regions are warmer than others. Which two categories are most similar to each other in this embedding space? Pick two specific texts from different categories that have a surprisingly high similarity score and explain why the model sees them as related.
+</div>
+
+<!-- ==================== PART 2: SEMANTIC RETRIEVAL ==================== -->
+<h2>Part 2: Semantic Retrieval</h2>
+
+<!-- CELL 5 -->
+<pre># Cell 5: Find similar texts</pre>
+<div class="section-card">
+  <p><strong>What it does:</strong> Defines a retrieval function that finds the most similar texts by cosine similarity, then runs it on one query text from each of the four categories. Displays results with category-match indicators.</p>
+
+  <p><strong>Takes in:</strong> <code>embeddings</code>, <code>texts</code>, <code>categories</code>, <code>cat_names</code> (from Cells 2&ndash;3).</p>
+
+  <p><strong>Must produce:</strong></p>
+  <ul>
+    <li><code>find_similar(query_idx, n=5)</code>: a function. Name it exactly <code>find_similar</code>. It takes two arguments: <code>query_idx</code> (an integer index into <code>texts</code>) and <code>n</code> (default 5, the number of results to return). Inside the function:
+      <ol>
+        <li>Call <code>cosine_similarity(embeddings[query_idx:query_idx+1], embeddings)[0]</code> to get a 1D array of similarity scores between the query embedding and all 60 texts.</li>
+        <li>Set the query&rsquo;s own score to <code>&minus;1</code> using <code>scores[query_idx] = -1</code> to exclude self-matches.</li>
+        <li>Use <code>np.argsort(scores)</code> to get indices sorted by score (lowest to highest), then reverse with <code>[::-1]</code> to get highest-first. Take the first <code>n</code> with <code>[:n]</code>.</li>
+        <li>Return two parallel lists or arrays: <code>top_indices</code> (the indices of the <code>n</code> most similar texts) and <code>top_scores</code> (their similarity values).</li>
+      </ol>
+    </li>
+    <li>Printed output for four test queries (indices <code>0</code>, <code>15</code>, <code>30</code>, <code>45</code>&nbsp;—one from each category): the query text and its category, then the top 5 results formatted as a list. For each result: the result text, the category, the similarity score, and a checkmark (✓) if the result category matches the query category, or an X (✗) if it does not.</li>
+  </ul>
+
+  <p><strong>Notes:</strong> The function uses array slicing <code>[query_idx:query_idx+1]</code> (not <code>[query_idx]</code>) to keep the query embedding 2D, which is required by <code>cosine_similarity()</code>. Set the query&rsquo;s own score to &minus;1 (not 0) to ensure it sorts to the bottom even if there are other very low scores. The returned <code>top_indices</code> and <code>top_scores</code> must be parallel — <code>scores[i]</code> is the score for text at index <code>indices[i]</code>.</p>
+</div>
+
+<div class="tip">
+  <strong>Markdown cell:</strong> For each of the four queries, count how many of the top 5 are from the same category. If any result is from a different category, look at both texts. Do they share a topic, a structure, or a reasoning pattern? Remember: the embedding model has never seen your category labels. It groups texts by meaning, not by your folder names.
+</div>
+
+<!-- CELL 6 -->
+<pre># Cell 6: Free-text semantic search</pre>
+<div class="section-card">
+  <p><strong>What it does:</strong> Encodes a query string that you write (not from the dataset), finds the 5 most similar texts in the dataset, and prints the results. This is the "semantic search" moment: the query does not need to share any words with the results to find relevant matches.</p>
+
+  <p><strong>Takes in:</strong> <code>model</code>, <code>embeddings</code>, <code>texts</code>, <code>categories</code> (from earlier cells).</p>
+
+  <p><strong>Must produce:</strong></p>
+  <ul>
+    <li><code>query_text</code>: a Python string. Write a query that is clearly related to one of the four categories but uses completely different vocabulary. For example: &ldquo;What are the best ways to get around in Southeast Asia without flying?&rdquo; (travel category, but avoids words like &ldquo;travel&rdquo; or &ldquo;tourism&rdquo;).</li>
+    <li><code>query_embed</code>: numpy array, shape <code>(1, 384)</code>. Encode <code>query_text</code> using <code>model.encode([query_text])</code> (note: pass a list containing the string, not the string itself). The result is a 2D array with one row and 384 columns.</li>
+    <li>Printed output: the query text, followed by the 5 most similar dataset texts formatted as a list. For each result: the text (first 100 characters), the category, and the similarity score. Then a summary line noting how many of the 5 match your intended category.</li>
+  </ul>
+
+  <p><strong>Notes:</strong> The <code>model.encode()</code> method requires a list of strings, even for a single string, so wrap <code>query_text</code> in brackets: <code>[query_text]</code>. Then use <code>cosine_similarity(query_embed, embeddings)[0]</code> to get a 1D array of similarity scores between the query and all 60 dataset texts. Find the top 5 indices using <code>np.argsort(scores)[::-1][:5]</code>. Try at least two different queries: one where the results are clearly correct and one where the model returns something unexpected or surprising. Keep both in the cell output for your demo, with explanatory markdown cells comparing what you expected versus what you got.</p>
+</div>
+
+<div class="tip">
+  <strong>Markdown cell:</strong> What happened when you used a query with no overlapping words? Did the model still find the right category? Try a deliberately misleading query: something that uses cooking words but is actually about technology (e.g., &ldquo;the recipe for a fast compiler&rdquo;). Which category does the model place it in? Why?
+</div>
+
+<!-- CELL 7 -->
+<pre># Cell 7: Edge cases</pre>
+<div class="section-card">
+  <p><strong>What it does:</strong> Encodes the 5 cross-category edge case texts and finds the 3 most similar core texts for each one. The edge cases are deliberately ambiguous (e.g., a text about an athlete&rsquo;s nutrition plan spans both sports and cooking). This cell reveals where the embedding model places texts that belong to multiple categories.</p>
+
+  <p><strong>Takes in:</strong> <code>model</code>, <code>embeddings</code>, <code>texts</code>, <code>categories</code>, <code>edge_texts</code>, <code>edge_labels</code> (from earlier cells).</p>
+
+  <p><strong>Must produce:</strong></p>
+  <ul>
+    <li><code>edge_embeds</code>: numpy array, shape <code>(5, 384)</code>. Encode the edge case texts by calling <code>model.encode(edge_texts, show_progress_bar=True)</code>. Each row is one edge text&rsquo;s embedding.</li>
+    <li>Printed output for each of the 5 edge cases: the edge case text, the expected categories (from <code>edge_labels[i]</code>), the top 3 most similar core texts with their similarity scores and categories, and a verdict indicating which category "won" (appeared most frequently in the top 3 results).</li>
+    <li><code>edge_results</code>: Python list of 5 dictionaries. Name it exactly <code>edge_results</code>. Each dict has four keys: <code>'text'</code> (the edge case string), <code>'expected'</code> (the list of expected categories from <code>edge_labels[i]</code>), <code>'retrieved_cats'</code> (a list of the 3 categories from the top 3 matches), and <code>'top_score'</code> (the highest similarity score from that edge case&rsquo;s results).</li>
+  </ul>
+
+  <p><strong>Notes:</strong> Call <code>cosine_similarity(edge_embeds, embeddings)</code> to get a <code>(5, 60)</code> matrix of scores. For each row, use <code>np.argsort(scores)[::-1][:3]</code> to get the indices of the top 3 most similar core texts. The "winning" category is the one that appears most frequently in the categories of those 3 texts (the mode). If two categories are tied, list both.</p>
+</div>
+
+<div class="tip">
+  <strong>Markdown cell:</strong> Pick the edge case you find most interesting. The model had to choose a primary category for a text that genuinely belongs to two or three. What signal in the text do you think tipped the balance? If you were writing a search engine, how would you handle queries that span multiple categories?
+</div>
+
+<!-- ==================== PART 3: THE TF-IDF COMPARISON ==================== -->
+<h2>Part 3: The TF-IDF Comparison</h2>
+
+<!-- CELL 8 -->
+<pre># Cell 8: TF-IDF retrieval on the same texts</pre>
+<div class="section-card">
+  <p><strong>What it does:</strong> Builds TF-IDF feature vectors for the same 60 core texts, runs the same four category queries from Cell 5, and displays the results side by side with the embedding results. Computes a per-query agreement score (how many of the top 5 match between methods).</p>
+
+  <p><strong>Takes in:</strong> <code>texts</code>, <code>categories</code>, <code>cat_names</code>, <code>find_similar</code> (from earlier cells).</p>
+
+  <p><strong>Must produce:</strong></p>
+  <ul>
+    <li><code>vectorizer</code>: a fitted <code>TfidfVectorizer</code> instance. Name it exactly <code>vectorizer</code>. Instantiate it with parameters <code>max_features=5000</code>, <code>stop_words='english'</code>, and <code>ngram_range=(1, 2)</code>. Then call <code>.fit_transform(texts)</code> on it to fit to the dataset and generate the TF-IDF matrix in one step.</li>
+    <li><code>tfidf_matrix</code>: a scipy sparse matrix, shape <code>(60, 5000)</code>. This is the output of <code>vectorizer.fit_transform(texts)</code>. It contains the TF-IDF weights for all 60 texts across the 5,000 most common unigrams and bigrams.</li>
+    <li><code>find_similar_tfidf(query_idx, n=5)</code>: a function. Name it exactly <code>find_similar_tfidf</code>. It has the same signature and behavior as <code>find_similar()</code> (takes <code>query_idx</code> and <code>n</code>, returns top indices and scores), but uses <code>cosine_similarity(tfidf_matrix[query_idx:query_idx+1], tfidf_matrix)[0]</code> instead of the embedding similarity.</li>
+    <li>Printed output for each of the four test queries (indices <code>0</code>, <code>15</code>, <code>30</code>, <code>45</code>): display a side-by-side comparison. Left column: the embedding top 5 (from <code>find_similar()</code>). Right column: the TF-IDF top 5 (from <code>find_similar_tfidf()</code>). For each result: the text (first 80 characters, truncated with ellipsis), the category, and the similarity score. Highlight or mark results that appear in one method but not the other.</li>
+    <li><code>agreement</code>: Python list of exactly 4 integers. For each of the four queries (indices <code>0</code>, <code>15</code>, <code>30</code>, <code>45</code>), compute how many of the top-5 indices from <code>find_similar()</code> also appear in the top 5 from <code>find_similar_tfidf()</code>. Use set intersection: <code>len(set(embed_indices) &amp; set(tfidf_indices))</code>.</li>
+  </ul>
+
+  <p><strong>Notes:</strong> The <code>TfidfVectorizer</code> parameters match Module 2 exactly. Sparse matrix slicing works the same way as dense arrays: <code>tfidf_matrix[query_idx:query_idx+1]</code> returns a 2D sparse matrix with one row. Convert to dense only if needed for operations like <code>np.argsort()</code> — call <code>.toarray()[0]</code> on the scores array if necessary. Agreement scores measure how much the two methods agree; high agreement means both methods found similar patterns, while low agreement reveals where embeddings and word counts diverge.</p>
+</div>
+
+<div class="tip">
+  <strong>Markdown cell 1:</strong> Look at the agreement scores. When the two methods agree, what does that tell you about those texts? When they disagree, which method returned the more "sensible" results to a human reader?
+</div>
+
+<div class="tip">
+  <strong>Markdown cell 2:</strong> Find a specific case where TF-IDF retrieved a text that shares words with the query but is about a different topic. Then find a case where embeddings retrieved a text that shares the topic but uses completely different words. These two failures define the boundary between lexical and semantic similarity.
+</div>
+
+<!-- CELL 9 -->
+<pre># Cell 9: Dual t-SNE visualization</pre>
+<div class="section-card">
+  <p><strong>What it does:</strong> Reduces both the embedding vectors and the TF-IDF vectors to 2 dimensions using t-SNE, then displays them as side-by-side scatter plots colored by category. The comparison reveals how much better (or worse) each representation separates the four categories in low-dimensional space.</p>
+
+  <p><strong>Takes in:</strong> <code>embeddings</code>, <code>tfidf_matrix</code>, <code>categories</code>, <code>cat_names</code> (from earlier cells).</p>
+
+  <p><strong>Must produce:</strong></p>
+  <ul>
+    <li><code>embed_2d</code>: numpy array, shape <code>(60, 2)</code>. Compress the embedding vectors to 2D using t-SNE. Instantiate <code>TSNE(n_components=2, random_state=42, perplexity=10)</code>, then call <code>.fit_transform(embeddings)</code>. The result is a 2D projection suitable for scatter plotting.</li>
+    <li><code>tfidf_2d</code>: numpy array, shape <code>(60, 2)</code>. Compress the TF-IDF vectors using the same t-SNE parameters. First convert the sparse matrix to dense: <code>tfidf_matrix.toarray()</code>. Then instantiate <code>TSNE(n_components=2, random_state=42, perplexity=10)</code> and call <code>.fit_transform()</code> on the dense array.</li>
+    <li>A matplotlib figure with 1 row and 2 columns. Left subplot: scatter plot of <code>embed_2d</code>, with each point colored according to its category in <code>categories</code>. Right subplot: scatter plot of <code>tfidf_2d</code>, also colored by category. Assign one color per category (e.g., using <code>plt.cm.Set1</code> or a manual list of four hex colors: one per category in <code>cat_names</code>). Include a shared legend with category names. Add a figure title: &ldquo;Embedding Space vs. TF-IDF Space&rdquo;. Ensure both subplots use the same color scale so comparisons are straightforward.</li>
+  </ul>
+
+  <p><strong>Notes:</strong> Use <code>perplexity=10</code> for 60 points (the default of 30 is too high for this dataset size and will trigger a warning). The sparse TF-IDF matrix must be converted to dense before t-SNE: use <code>tfidf_matrix.toarray()</code>. For coloring, map each text&rsquo;s category to a color index — use a loop: <code>colors = [color_map[cat_names.index(categories[i])] for i in range(60)]</code>. The embedding plot should show tighter, more separated clusters by category than the TF-IDF plot. If it does not, that is a meaningful finding worth discussing in your markdown notes.</p>
+</div>
+
+<div class="tip">
+  <strong>Markdown cell 1:</strong> Compare the two plots. Which one has tighter clusters? Which has more overlap between categories? Pick the messiest cluster in the TF-IDF plot and the cleanest cluster in the embedding plot. What does this tell you about how each method defines "similar"?
+</div>
+
+<div class="tip">
+  <strong>Markdown cell 2:</strong> t-SNE is a visualization tool, not a similarity metric. The relative positions of clusters can change between runs (even with the same seed). Does this change what you can conclude from these plots? What is t-SNE actually good for, and what claims would be overreach?
+</div>
+
+<!-- CELL 10 -->
+<pre># Cell 10: Bias probe</pre>
+<div class="section-card">
+  <p><strong>What it does:</strong> Encodes three words as individual embeddings and computes the cosine similarity between "nurse" and "woman" versus "nurse" and "man." A meaningful gap between these two scores is evidence that gendered associations from the training corpus are encoded in the embedding space. Runs a second probe with "doctor" to see whether the pattern holds or reverses across occupational roles.</p>
+
+  <p><strong>Takes in:</strong> <code>model</code> (from Cell 1). The <code>cosine_similarity</code> function is already imported.</p>
+
+  <p><strong>Must produce:</strong></p>
+  <ul>
+    <li>Three encoded vectors: encode the strings <code>'nurse'</code>, <code>'woman'</code>, and <code>'man'</code> individually using <code>model.encode(['nurse'])</code> (note the list brackets). Each call returns a numpy array of shape <code>(1, 384)</code>. Assign them to variables named <code>nurse_emb</code>, <code>woman_emb</code>, and <code>man_emb</code>.</li>
+    <li>Two similarity scores: compute <code>cosine_similarity(nurse_emb, woman_emb)[0][0]</code> and <code>cosine_similarity(nurse_emb, man_emb)[0][0]</code>. Assign them to <code>sim_nurse_woman</code> and <code>sim_nurse_man</code>.</li>
+    <li>A second probe with "doctor": encode <code>'doctor'</code> into <code>doctor_emb</code> and compute <code>sim_doctor_woman</code> and <code>sim_doctor_man</code> the same way.</li>
+    <li>Printed output: a clearly labeled table showing all four scores (two for "nurse," two for "doctor"), formatted to 4 decimal places. Include a line for each occupation stating which gendered word is closer and by how much (the absolute difference in similarity scores).</li>
+  </ul>
+
+  <p><strong>Notes:</strong> Do not reuse the embeddings from earlier cells — encode the individual words fresh here. <code>model.encode(['word'])</code> already returns a 2D array of shape <code>(1, 384)</code>, so no reshaping is needed before passing to <code>cosine_similarity()</code>. The <code>[0][0]</code> indexing extracts a scalar from the <code>(1, 1)</code> matrix that <code>cosine_similarity()</code> returns for a single pair. A difference of 0.02 or more between the two scores is meaningful and worth discussing.</p>
+</div>
+
+<div class="tip">
+  <strong>Markdown cell:</strong> Report your four scores. Which word is the model's nearest neighbor for "nurse" — "woman" or "man"? Does the pattern reverse for "doctor"? These numbers are not bugs. The model was trained on billions of sentences from the web; the associations it learned reflect the associations present in that text. Now connect this to the ethics thread for this module: what does it mean for an embedding model to encode bias? Who is harmed if a hiring tool, a search engine, or a resume screener uses these embeddings as-is?
+</div>
+
+<!-- ========== DEMO PREP ========== -->
+<h2>Demo Prep</h2>
+
+<div class="section-card">
+  <p>Your notebook is your demo. There is no separate written reflection. Your demo serves as the reflection.</p>
+  <p>In three to five minutes, walk the class through a live demonstration:</p>
+  <p data-concurrent="true" style="font-size:0.9em; color:#5e35b1;"><strong>Dual-enrolled students:</strong> Your demo covers both the NLP and CV labs in one 5&ndash;7 minute demo. See the combined lab for guidance.</p>
+  <ol>
+    <li><strong>Show the search working:</strong> Type a new query (not one you used before) into Cell 6 and run it live. Walk the class through the results. Did the model find what you expected?</li>
+    <li><strong>Modify something:</strong> Change a parameter, swap a query, or adjust the TF-IDF vectorizer settings. Run the cell again and explain what changed and why. The demo rubric scores this under Live Modification (25 points).</li>
+    <li><strong>The TF-IDF comparison:</strong> Show the dual t-SNE from Cell 9. Point to the tightest embedding cluster and the messiest TF-IDF cluster. Explain in one sentence what embeddings capture that word counts cannot.</li>
+  </ol>
+  <p>See the assignment sheet for submission details and the rubric.</p>
+</div>
+
+<!-- ========== BRIDGE BOX ========== -->
+<div class="bridge-box" data-concurrent="true">
+  <strong>Taking AIML 2013 too?</strong> This week, CV students are extracting image embeddings from a pre-trained neural network and comparing them against HOG features. The parallel is direct: both courses replace hand-crafted feature vectors with learned representations, and both use cosine similarity to measure closeness. If you&rsquo;re doing the combined lab, you&rsquo;re building both pipelines in one notebook and showing the comparison. See the combined lab sheet for instructions.
+</div>
+
+</body>
+</html>

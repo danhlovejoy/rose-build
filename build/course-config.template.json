@@ -1,0 +1,19 @@
+{
+  "_comment": "Template — copy to course-config.json and fill in your values. Remove this _comment field.",
+  "canvas_base_url": "https://YOUR_INSTITUTION.instructure.com",
+  "courses": {
+    "COURSE_CODE": {
+      "course_id": 00000,
+      "name": "Full Course Name — As It Appears in Canvas",
+      "short_name": "Abbreviation",
+      "glossary_filter": "nlp_or_cv_or_your_tag",
+      "build_source": "COURSE_CODE",
+      "build_output_dir": "build/output/COURSE_CODE",
+      "glossary_page_slug": "glossary",
+      "glossary_canvas_url": "https://YOUR_INSTITUTION.instructure.com/courses/00000/pages/glossary",
+      "pages": {
+        "canvas-page-slug": "relative/path/from/build_output_dir.html"
+      }
+    }
+  }
+}

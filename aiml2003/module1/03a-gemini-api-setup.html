@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Setting Up Your Gemini API Key | AIML 2003</title>
+<link rel="stylesheet" href="../../course-styles.css">
+</head>
+<body>
+
+<h1>Setting Up Your Gemini API Key</h1>
+<p class="subtitle">AIML 2003: Setup Guide. Free access to Google's LLM for the course</p>
+
+<p class="intro">In this course we'll use Google's Gemini API to interact with large language models programmatically. The Gemini API has a <strong>free tier</strong> that requires no credit card and is more than sufficient for every lab in this course. This guide walks you through getting your API key and using it safely in Google Colab.</p>
+
+<!-- ========== PART 1: API KEY ========== -->
+<h2>Part 1: Get Your Gemini API Key</h2>
+
+<p style="font-size:0.95rem; margin-bottom:1rem;">Your API key is what lets your Python code talk to Google's Gemini models. Creating one takes about two minutes and requires no credit card.</p>
+
+<div class="step">
+  <span class="step-number">1</span>
+  <p class="step-title">Open Google AI Studio</p>
+  <p>Go to <a href="https://aistudio.google.com" target="_blank">aistudio.google.com</a> and sign in with your Google account.</p>
+</div>
+
+<div class="step">
+  <span class="step-number">2</span>
+  <p class="step-title">Navigate to API Keys</p>
+  <p>In the left sidebar, click <strong>"Get API Key"</strong> (or look for the key icon).</p>
+</div>
+
+<div class="step">
+  <span class="step-number">3</span>
+  <p class="step-title">Create your key</p>
+  <p>Click <strong>"Create API Key in new project"</strong>. Google will generate a key that looks something like: <code>AIzaSy...</code></p>
+</div>
+
+<div class="step">
+  <span class="step-number">4</span>
+  <p class="step-title">Copy your key immediately</p>
+  <p>Copy the key and save it somewhere safe (a password manager or a private note, NOT a Google Doc or text file on your desktop). Google AI Studio may not show the full key again after you leave this page.</p>
+</div>
+
+<div class="warning">
+  <strong>Treat your API key like a password:</strong> Anyone who has your key can make API calls that count against your quota. Do not share it, post it online, put it in a Google Doc, or paste it into a notebook cell. We'll store it securely using Colab's Secrets Manager in the next section.
+</div>
+
+<!-- ========== PART 2: STORE IN COLAB ========== -->
+<h2>Part 2: Store Your Key in Google Colab</h2>
+
+<div class="step">
+  <span class="step-number">1</span>
+  <p class="step-title">Open Colab's Secrets Manager</p>
+  <p>In any Colab notebook, click the <strong>key icon</strong> in the left sidebar (or go to <strong>Tools &rarr; Secrets</strong>).</p>
+</div>
+
+<div class="step">
+  <span class="step-number">2</span>
+  <p class="step-title">Add your Gemini API key</p>
+  <p>Click <strong>Add new secret</strong> and enter:</p>
+  <ul>
+    <li><strong>Name:</strong> <code>GEMINI_API_KEY</code></li>
+    <li><strong>Value:</strong> Paste your API key</li>
+  </ul>
+  <p>Toggle <strong>"Notebook access"</strong> to ON for your current notebook.</p>
+</div>
+
+<div class="step">
+  <span class="step-number">3</span>
+  <p class="step-title">Test it in a code cell</p>
+  <p>Run this code to verify everything is working:</p>
+  <pre>!pip install google-genai -q
+
+from google.colab import userdata
+from google import genai
+
+client = genai.Client(api_key=userdata.get('GEMINI_API_KEY'))
+
+response = client.models.generate_content(
+    model="gemini-2.0-flash",
+    contents="Say hello to AIML 2003!"
+)
+print(response.text)</pre>
+  <p>If you see a friendly greeting from Gemini, you're all set.</p>
+</div>
+
+<div class="tip">
+  <strong>Here's what that did:</strong> You installed Google's <code>google-genai</code> Python library, loaded your API key securely from Colab's Secrets Manager so it never appears in your code, created a client connection, and sent a prompt to the Gemini 2.0 Flash model. You'll use this pattern in every lab.
+</div>
+
+<!-- ========== FREE TIER LIMITS ========== -->
+<h2>Free Tier Limits</h2>
+
+<div class="info-box">
+  <p>The Gemini API free tier is generous and more than enough for this course:</p>
+  <ul>
+    <li><strong>15 requests per minute</strong></li>
+    <li><strong>1,500 requests per day</strong></li>
+    <li><strong>No credit card required</strong></li>
+  </ul>
+  <p style="margin-top:0.5rem;">For context, even the most intensive lab in this course will use fewer than 100 API calls. You won't come close to hitting these limits unless you're running code in an infinite loop.</p>
+</div>
+
+<!-- ========== MODEL WE'LL USE ========== -->
+<h2>The Model We'll Use</h2>
+
+<div class="step">
+  <p>For most labs we'll use <strong><code>gemini-2.0-flash</code></strong>: it's fast, capable, and free. It handles classification, summarization, sentiment analysis, and all the tasks we'll tackle this semester.</p>
+  <p style="margin-top:0.5rem;">Later in the course, you may experiment with other models (like <code>gemini-2.0-flash-lite</code> for speed or larger models for complex reasoning). We'll discuss trade-offs as they come up.</p>
+</div>
+
+<!-- ========== FAQs ========== -->
+<h2>Common Questions</h2>
+
+<div class="faq">
+  <p class="faq-q">Do I need a credit card?</p>
+  <p class="faq-a">No. The free tier works without any billing setup. Do not enable billing unless you know what you're doing.</p>
+</div>
+
+<div class="faq">
+  <p class="faq-q">Can I use a different LLM (ChatGPT, Claude, etc.) for labs?</p>
+  <p class="faq-a">For graded labs, please use the Gemini API so we're all on the same platform and I can help debug issues. You're welcome to experiment with other models on your own time.</p>
+</div>
+
+<div class="faq">
+  <p class="faq-q">My key isn't working / I'm getting an error</p>
+  <p class="faq-a">Common fixes: (1) Make sure you copied the full key with no extra spaces. (2) Check that "Notebook access" is toggled ON in Colab's Secrets Manager. (3) Try creating a new key in Google AI Studio. If you're still stuck, bring it to Thursday lab.</p>
+</div>
+
+<div class="faq">
+  <p class="faq-q">I already have a Gemini API key from another project</p>
+  <p class="faq-a">You can reuse it. Just make sure it's stored in Colab's Secrets Manager with the name <code>GEMINI_API_KEY</code>.</p>
+</div>
+
+<div class="faq">
+  <p class="faq-q">What's the difference between the Gemini app and the Gemini API?</p>
+  <p class="faq-a">The Gemini app (gemini.google.com) is the chat interface (like ChatGPT's website). The Gemini API is the programmatic interface that lets you send prompts from Python code. In this course, we use the API so we can automate, iterate, and build real applications.</p>
+</div>
+
+</body>
+</html>

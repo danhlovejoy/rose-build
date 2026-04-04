@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Module 2 Deliverables: Hand-Crafted Features (TF-IDF) | AIML 2003</title>
+<link rel="stylesheet" href="../../course-styles.css">
+</head>
+<body>
+
+<h1>Module 2 Deliverables: Hand-Crafted Features (TF-IDF)</h1>
+<p class="subtitle">AIML 2003: Introduction to Natural Language Processing</p>
+<div class="due-banner">All deliverables due: By Tuesday, April 7 (by class time).</div>
+
+<!-- ========== OVERVIEW ========== -->
+<div class="overview-card">
+  <strong>This week you will submit three things:</strong>
+  <table class="overview-table" style="margin-top: 0.75rem;">
+    <thead>
+      <tr>
+        <th>Deliverable</th>
+        <th>Type</th>
+        <th>Weight</th>
+        <th>Where</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Module 2 Lab: Sentiment Analysis (TF-IDF vs. Gemini)</td>
+        <td>Colab notebook via GitHub</td>
+        <td>Repos (25%)</td>
+        <td>GitHub + link in Canvas</td>
+      </tr>
+      <tr>
+        <td>Module 2 Presentation</td>
+        <td>3&ndash;5 minute presentation</td>
+        <td>Presentations (15%)</td>
+        <td>In class, Tuesday April 7</td>
+      </tr>
+      <tr>
+        <td>Ethics Discussion</td>
+        <td>Discussion post</td>
+        <td>Participation (20%)</td>
+        <td>Canvas Discussion</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- =====================================================================
+     DELIVERABLE 1: LAB
+     ===================================================================== -->
+<h2>Deliverable 1: Module 2 Lab <span class="tag tag-lab">Lab</span></h2>
+
+<div class="section-card">
+  <h3>Overview</h3>
+  <p>In the readings and in class, you learned that TF-IDF converts raw text into sparse numerical vectors by weighing word frequency against document frequency. This lab puts that idea into practice. You'll build a TF-IDF + logistic regression sentiment classifier on the NLTK movie reviews corpus, then compare it head-to-head against Gemini zero-shot and context-engineered classification on the same 50 test examples.</p>
+  <p>The comparison is the point. TF-IDF counts words; Gemini encodes meaning in a completely different way. Both can reach similar accuracy on this task, but they fail on different kinds of reviews, and those differences tell you something about what each approach actually understands about language.</p>
+
+  <h3>Choose Your Version</h3>
+  <p>Two versions of the lab are available:</p>
+  <ul>
+    <li><strong><a href="lab2-nlp-sentiment.html">Training Wheels Version:</a></strong> Full code scaffold with all cells provided. Read each cell, run it, and write your analysis in the markdown prompts.</li>
+    <li><strong><a href="lab2-nlp-sentiment-challenge.html">Challenge Version:</a></strong> Specification boxes replace the code cells. You generate the code using an LLM, document your prompts, and earn 10 bonus points. Same analysis requirements; you write the implementation.</li>
+  </ul>
+
+  <h3>What to Submit</h3>
+  <ul>
+    <li>A completed Colab notebook (<code>.ipynb</code>) saved to your GitHub repo at <code>week3/lab2_sentiment.ipynb</code>.</li>
+    <li>All cells executed with visible outputs (don't clear outputs; I need to see your results).</li>
+    <li>No API keys or secrets anywhere in the notebook.</li>
+    <li>Submit the GitHub link in Canvas. The notebook in GitHub IS your submission — if it's not in the repo, it doesn't exist for grading.</li>
+  </ul>
+</div>
+
+<div class="tip">
+  <strong>Start this in Thursday lab.</strong> We'll work through the TF-IDF pipeline together. Come with the readings done so you already know what <code>fit_transform</code> vs. <code>transform</code> means.
+</div>
+
+<div class="rubric-section">
+  <h4>Repository Rubric (Summary)</h4>
+  <p style="font-size:0.85rem; margin-bottom:0.75rem;">100 points possible. Each criterion is scored on a 4-level scale (Full Credit &rarr; No Credit). <a href="https://rose.instructure.com/courses/26943/rubrics/66034" target="_blank"><strong>View the full rubric with detailed scoring &rarr;</strong></a></p>
+  <p style="font-size:0.85rem; color: var(--muted); margin-bottom:0.75rem;">Criteria marked <strong>WEEKLY</strong> change per assignment; criteria marked <strong>STANDARD</strong> stay the same all semester.</p>
+  <table class="rubric-table">
+    <thead>
+      <tr><th style="width:30%">Criterion</th><th style="width:10%">Points</th><th style="width:10%">Type</th><th>Description</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Notebook Runs</td><td>/25</td><td>STANDARD</td><td>Notebook is in the correct week folder (<code>week3/</code>). Cells execute top-to-bottom without errors. All outputs visible.</td></tr>
+      <tr style="background:#fff3e0;"><td>Task Requirements</td><td>/40</td><td>WEEKLY</td><td><strong>This week:</strong>
+        <ul style="margin: 0.4rem 0 0 1rem; padding: 0;">
+          <li>TF-IDF pipeline built with correct train/test discipline: <code>fit_transform</code> on training data only, <code>transform</code> on test data.</li>
+          <li>Coefficient bar chart showing the top positive and negative words the classifier learned.</li>
+          <li>Gemini comparison run on the same 50-example test set as the TF-IDF classifier.</li>
+          <li>Failure analysis: at least one example where each approach gets it wrong, with a written explanation of why.</li>
+        </ul></td></tr>
+      <tr><td>Reflection</td><td>/20</td><td>STANDARD</td><td>200&ndash;400 words. Connects results to the readings. Addresses what worked, what didn't, and what you'd change.</td></tr>
+      <tr><td>Repo Hygiene</td><td>/15</td><td>STANDARD</td><td>No active (unrevoked) secrets. README updated. Descriptive commit message. Files in the right folder.</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<hr>
+
+<!-- =====================================================================
+     DELIVERABLE 2: PRESENTATION
+     ===================================================================== -->
+<h2>Deliverable 2: Module 2 Presentation <span class="tag tag-pres">Presentation</span></h2>
+
+<div class="section-card">
+  <h3>Overview</h3>
+  <p>A <strong>three- to five-minute</strong> presentation during Tuesday's class (April 7, 5:30 PM) about what you learned building the sentiment classifier. This is not a formal slide deck; think of it as a short show-and-tell for your classmates.</p>
+
+  <h3>What to Cover</h3>
+  <p>In three to five minutes, walk us through:</p>
+  <ol>
+    <li><strong>The comparison:</strong> Show one specific example where TF-IDF and Gemini disagreed on a review. What does each approach "see" that the other misses?</li>
+    <li><strong>The coefficients:</strong> Show your coefficient bar chart. Pick one word with a high positive or negative coefficient and explain what it means about the training data.</li>
+    <li><strong>The failure:</strong> Show a review where one or both classifiers were confidently wrong. Why did it fail?</li>
+    <li><strong>Your takeaway:</strong> Based on your results and the readings, what does this experiment tell you about the difference between counting words and understanding language?</li>
+  </ol>
+
+  <h3>Format</h3>
+  <p>You can share your screen and walk through your notebook, use a few slides, or just talk: whatever communicates your points clearly in three to five minutes. If you attend via Zoom, be prepared to share your screen.</p>
+
+  <div class="tip">
+    <strong>Tip:</strong> Practice timing yourself. Five minutes is shorter than you think. Focus on one or two good insights rather than trying to cover everything.
+  </div>
+</div>
+
+<div class="rubric-section">
+  <h4>Presentation Rubric (Summary)</h4>
+  <p style="font-size:0.85rem; margin-bottom:0.75rem;">100 points possible. Each criterion is scored on a 4-level scale (Full Credit &rarr; No Focus/Absent). <a href="https://rose.instructure.com/courses/26943/rubrics/65800" target="_blank"><strong>View the full rubric with detailed scoring &rarr;</strong></a></p>
+  <table class="rubric-table">
+    <thead>
+      <tr><th style="width:35%">Criterion</th><th style="width:12%">Points</th><th>What I'm Looking For</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Focus &amp; Clarity</td><td>25</td><td>Topic is clearly stated early and the presentation stays on it throughout.</td></tr>
+      <tr><td>Key Takeaways</td><td>25</td><td>You share what you learned: insights or implications, not just facts.</td></tr>
+      <tr><td>Visual Aid Effectiveness</td><td>20</td><td>Your visual is relevant, legible, and actively used (not just displayed).</td></tr>
+      <tr><td>Verbal Delivery</td><td>20</td><td>You speak clearly, engage the audience, and don't simply read from the slide.</td></tr>
+      <tr><td>Time Management</td><td>10</td><td>Presentation falls between 2:30 and 5:30. Content feels paced, not rushed or padded.</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<hr>
+
+<!-- ========== COMBINED ASSIGNMENT NOTE ========== -->
+<div class="bridge-box" data-concurrent="true">
+  <strong>Taking AIML 2013 (Computer Vision) too?</strong>
+  <p>A combined lab is available: <a href="lab2-combined-how-machines-read.html">How Machines Read Text and Images</a>. It covers both TF-IDF (NLP) and HOG (CV) in one notebook. You submit the same GitHub URL to both courses. A <a href="lab2-combined-challenge.html">challenge version</a> is also available for 10 bonus points. If you do the combined lab, it replaces the individual NLP lab. Do not submit both. Your presentation this week is also combined: plan for 5&ndash;7 minutes instead of 3&ndash;5 to cover both domains.</p>
+</div>
+
+<hr>
+
+<!-- =====================================================================
+     DELIVERABLE 3: ETHICS DISCUSSION
+     ===================================================================== -->
+<h2>Deliverable 3: Ethics Discussion <span class="tag tag-ethics">Ethics</span></h2>
+
+<div class="section-card">
+  <h3>Overview</h3>
+  <p>Complete the ethics discussion thread for this module. The full prompt and context are on the <a href="07-ethics.html">Ethics Thread page</a> in this module.</p>
+
+  <h3>Requirements</h3>
+  <ul>
+    <li>Initial post: 150&ndash;250 words. Take a position — don't just summarize the question.</li>
+    <li>Reply to a classmate: at least one substantive reply (not just "I agree").</li>
+    <li>Initial post due by Tuesday class (April 7). Reply due by the following Tuesday class (April 14).</li>
+  </ul>
+  <p style="margin-top:0.75rem; font-size:0.9rem; color:var(--muted);">The ethics discussion is worth 20% of your weekly Participation grade. Whether you attend in person or via Zoom, this post is required every week.</p>
+</div>
+
+<!-- ========== SUBMISSION CHECKLIST ========== -->
+<div class="overview-card" style="margin-top:1.5rem;">
+  <strong>Submission Checklist</strong>
+  <ul>
+    <li>Module 2 Lab notebook runs cleanly top-to-bottom with all outputs visible</li>
+    <li>No API keys exposed in any committed file</li>
+    <li>Notebook saved to GitHub at <code>week3/lab2_sentiment.ipynb</code></li>
+    <li>README updated to reflect Module 2 contents</li>
+    <li>GitHub repo link submitted in Canvas</li>
+    <li>Presentation prepared and ready for Tuesday class (April 7)</li>
+    <li>Ethics discussion post submitted in Canvas by Tuesday class (April 7)</li>
+  </ul>
+</div>
+
+<div class="warning" style="margin-top:1.5rem;">
+  <strong>Reminder:</strong> If it's not in your GitHub repo, it doesn't exist for grading. Save your final work before the deadline.
+</div>
+
+<div class="tip" style="margin-top: 1rem;">
+  <strong>Need help?</strong> Start your work during Thursday lab (April 2, Zoom, 6:00 PM): that's what lab time is for. If you get stuck after lab, email me before the weekend so I can help. Don't wait until Monday night.
+</div>
+
+</body>
+</html>

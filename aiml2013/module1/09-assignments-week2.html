@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Week 2 Deliverables: Classic Filters | AIML 2013</title>
+<link rel="stylesheet" href="../../course-styles.css">
+</head>
+<body>
+
+<h1>Week 2 Deliverables: Classic Filters</h1>
+<p class="subtitle">AIML 2013: Introduction to Computer Vision</p>
+<div class="due-banner">All deliverables due: Tuesday, March 31 (by class time)</div>
+
+<!-- ========== OVERVIEW ========== -->
+<div class="overview-card">
+  <strong>This week you will submit three things:</strong>
+  <table class="overview-table" style="margin-top: 0.75rem;">
+    <thead>
+      <tr>
+        <th>Deliverable</th>
+        <th>Type</th>
+        <th>Weight</th>
+        <th>Where</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Lab 1: Edge Detection &amp; Blurring Kernels</td>
+        <td>Colab notebook</td>
+        <td>Repos (25%)</td>
+        <td>GitHub + link in Canvas</td>
+      </tr>
+      <tr>
+        <td>GitHub Repository</td>
+        <td>Code repo</td>
+        <td>(part of Repo grade)</td>
+        <td>Link in Canvas</td>
+      </tr>
+      <tr>
+        <td>Week 2 Presentation</td>
+        <td>3&ndash;5 minute presentation</td>
+        <td>Presentations (15%)</td>
+        <td>In class, Tuesday March 31</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- =====================================================================
+     DELIVERABLE 1: LAB
+     ===================================================================== -->
+<h2>Deliverable 1: Lab 1 &mdash; Edge Detection &amp; Blurring Kernels <span class="tag tag-lab">Lab</span></h2>
+
+<div class="section-card">
+  <h3>Overview</h3>
+  <p>In the readings and in class, you learned that images are arrays of numbers. Now you'll learn that <strong>filters</strong> &mdash; small matrices called <strong>kernels</strong> &mdash; are how computers extract meaningful features from those arrays. A blurring kernel smooths noise. An edge-detection kernel finds boundaries between objects. These are the building blocks of every vision pipeline, from Instagram filters to self-driving cars.</p>
+
+  <h3>What to Build</h3>
+  <p>Create a Colab notebook that loads an image and applies a series of filters to it. Your notebook should include:</p>
+
+  <ol>
+    <li style="margin-bottom:0.75rem;">
+      <strong>Load and display an image as a NumPy array.</strong> Choose a photograph with clear structure (not a blurry phone selfie). Display it, print its shape and dtype, and show a single-channel (grayscale) version.
+    </li>
+    <li style="margin-bottom:0.75rem;">
+      <strong>Apply at least three blurring filters:</strong> box blur, Gaussian blur, and median blur. Use OpenCV (<code>cv2</code>) or equivalent. Display the results side-by-side with the original. In a markdown cell, explain what each kernel is doing mathematically &mdash; what does "convolving a kernel over an image" mean?
+    </li>
+    <li style="margin-bottom:0.75rem;">
+      <strong>Apply edge detection:</strong> Use a Sobel filter (horizontal and vertical separately), then apply Canny edge detection. Display the results. In a markdown cell, explain why edge detection works &mdash; what is the kernel measuring in the pixel values?
+    </li>
+    <li style="margin-bottom:0.75rem;">
+      <strong>Experiment with kernel size.</strong> Run the same filter (e.g., Gaussian blur) with at least three different kernel sizes (e.g., 3&times;3, 7&times;7, 15&times;15). Display the results and comment on how kernel size affects the output.
+    </li>
+    <li style="margin-bottom:0.75rem;">
+      <strong>Reflection</strong> (200&ndash;400 words in a markdown cell at the end): Connect your results to the readings. What did the filters reveal about the image that wasn't obvious to your eye? How does this relate to how machines "see" differently from humans? What would you do differently next time?
+    </li>
+  </ol>
+
+  <h3>What to Submit</h3>
+  <ul>
+    <li>A completed Colab notebook (<code>.ipynb</code>) saved to your GitHub repo under <code>week2/</code>.</li>
+    <li>All cells executed with visible outputs (images must render in GitHub's notebook viewer).</li>
+    <li>Submit the GitHub link in Canvas.</li>
+  </ul>
+</div>
+
+<div class="tip">
+  <strong>Start this in Thursday lab.</strong> We'll work through loading images and applying your first kernel together. Come with OpenCV installed in your Colab environment and a test image ready.
+</div>
+
+<div class="warning">
+  <strong>Don't just run the code &mdash; explain it.</strong> The rubric weights understanding heavily. If your notebook has code but no markdown cells explaining what's happening and why, you'll lose points on both the Task Requirements and Reflection criteria.
+</div>
+
+<!-- =====================================================================
+     DELIVERABLE 2: GITHUB REPO
+     ===================================================================== -->
+<h2>Deliverable 2: GitHub Repository <span class="tag tag-repo">Repo</span></h2>
+
+<div class="section-card">
+  <h3>What I'm Looking For</h3>
+  <ul>
+    <li>Notebook is in your course repo under <code>week2/</code>.</li>
+    <li>All cells run top-to-bottom without errors.</li>
+    <li>Outputs are saved (GitHub renders <code>.ipynb</code> files with outputs visible).</li>
+    <li>Code is reasonably commented or uses markdown cells to explain your approach.</li>
+  </ul>
+</div>
+
+<div class="rubric-section">
+  <h4>Repository Rubric (Summary)</h4>
+  <p style="font-size:0.85rem; margin-bottom:0.75rem;">100 points possible. Each criterion is scored on a 4-level scale (Full Credit &rarr; No Credit). <a href="https://rose.instructure.com/courses/26944/assignments/808739" target="_blank"><strong>View the full rubric on the assignment page &rarr;</strong></a></p>
+  <table class="rubric-table">
+    <thead>
+      <tr><th style="width:35%">Criterion</th><th style="width:12%">Points</th><th>What I'm Looking For</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Notebook Runs</td><td>25</td><td>Notebook is in the correct week folder. Cells execute top-to-bottom without errors. All outputs visible.</td></tr>
+      <tr><td>Task Requirements</td><td>40</td><td>All five tasks above are completed: image loading, three blur filters, edge detection, kernel size experiment, and reflection.</td></tr>
+      <tr><td>Reflection</td><td>20</td><td>200&ndash;400 words. Connects results to the readings. Addresses what worked, what didn't, and what you'd change.</td></tr>
+      <tr><td>Repo Hygiene</td><td>15</td><td>No active secrets. README updated. Descriptive commit message. Files in the right folder.</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<hr>
+
+<!-- =====================================================================
+     DELIVERABLE 3: PRESENTATION
+     ===================================================================== -->
+<h2>Deliverable 3: Week 2 Presentation <span class="tag tag-pres">Presentation</span></h2>
+
+<div class="section-card">
+  <h3>Overview</h3>
+  <p>A <strong>three- to five-minute</strong> presentation during Tuesday's class (March 31) about what you learned building the lab. This is not a formal slide deck; think of it as a short show-and-tell for your classmates.</p>
+
+  <h3>What to Cover</h3>
+  <p>In three to five minutes, walk us through:</p>
+  <ol>
+    <li><strong>The best before-and-after:</strong> Show one specific example where a filter revealed something interesting about your image. What did it look like before, and what did the filter expose?</li>
+    <li><strong>What the kernel is doing:</strong> Pick one filter you applied and explain, in plain language, what the kernel is doing to the pixel values. Don't just say "it blurs the image" &mdash; explain <em>how</em>.</li>
+    <li><strong>Your takeaway:</strong> Based on your lab results and the readings, how does a computer "see" differently from a human? What surprised you about working with images as arrays?</li>
+  </ol>
+
+  <h3>Format</h3>
+  <p>You can share your screen and walk through your notebook, use a few slides, or just talk: whatever communicates your points clearly in three to five minutes. If you attend via Zoom, be prepared to share your screen.</p>
+
+  <div class="tip">
+    <strong>Tip:</strong> Practice timing yourself. Five minutes is shorter than you think. Focus on one or two good insights rather than trying to cover everything.
+  </div>
+</div>
+
+<div class="rubric-section">
+  <h4>Presentation Rubric (Summary)</h4>
+  <p style="font-size:0.85rem; margin-bottom:0.75rem;">100 points possible. Each criterion is scored on a 4-level scale (Full Credit &rarr; No Focus/Absent). <a href="https://rose.instructure.com/courses/26944/assignments/808740" target="_blank"><strong>View the full rubric on the assignment page &rarr;</strong></a></p>
+  <table class="rubric-table">
+    <thead>
+      <tr><th style="width:35%">Criterion</th><th style="width:12%">Points</th><th>What I'm Looking For</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Focus &amp; Clarity</td><td>25</td><td>Topic is clearly stated early and the presentation stays on it throughout.</td></tr>
+      <tr><td>Key Takeaways</td><td>25</td><td>You share what you learned &mdash; insights or implications, not just facts.</td></tr>
+      <tr><td>Visual Aid Effectiveness</td><td>20</td><td>Your visual is relevant, legible, and actively used &mdash; not just displayed.</td></tr>
+      <tr><td>Verbal Delivery</td><td>20</td><td>You speak clearly, engage the audience, and don't simply read from the slide.</td></tr>
+      <tr><td>Time Management</td><td>10</td><td>Presentation falls between 3:00 and 5:00. Content feels paced, not rushed or padded.</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<hr>
+
+<!-- ========== BRIDGE ========== -->
+<div class="bridge-box" data-concurrent="true">
+  <strong>Taking AIML 2003 too?</strong> Module 2 has an optional combined deliverable: a joint presentation comparing how a convolution kernel (CV) and a tokenizer (NLP) reduce raw input into features. If you're planning to do the combined track, start thinking about this connection as you work through the lab. See the Syllabus for details.
+</div>
+
+<div class="warning" style="margin-top:1.5rem;">
+  <strong>Reminder:</strong> If it's not in your GitHub repo, it doesn't exist for grading. Save your final work before the deadline.
+</div>
+
+</body>
+</html>

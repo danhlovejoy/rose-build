@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Module 3 Deliverables: Learned Embeddings (CV) | AIML 2013</title>
+<link rel="stylesheet" href="../../course-styles.css">
+</head>
+<body>
+
+<h1>Module 3 Deliverables: Learned Embeddings</h1>
+<p class="subtitle">AIML 2013: Introduction to Computer Vision</p>
+<div class="due-banner">All deliverables due: By Tuesday, April 14 (by class time).</div>
+
+<!-- ========== OVERVIEW ========== -->
+<div class="overview-card">
+  <strong>This week you will submit three things:</strong>
+  <table class="overview-table" style="margin-top: 0.75rem;">
+    <thead>
+      <tr>
+        <th>Deliverable</th>
+        <th>Type</th>
+        <th>Weight</th>
+        <th>Where</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Module 3 Lab: Image Embeddings &amp; Similarity Retrieval</td>
+        <td>Colab notebook via GitHub</td>
+        <td>Repos (25%)</td>
+        <td>GitHub + link in Canvas</td>
+      </tr>
+      <tr>
+        <td>Module 3 Demo</td>
+        <td>3&ndash;5 minute live demo</td>
+        <td>Demos (25%)</td>
+        <td>In class, Tuesday April 14</td>
+      </tr>
+      <tr>
+        <td>Ethics Discussion</td>
+        <td>Discussion post</td>
+        <td>Participation (20%)</td>
+        <td>Canvas Discussion</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- =====================================================================
+     DELIVERABLE 1: LAB
+     ===================================================================== -->
+<h2>Deliverable 1: Module 3 Lab <span class="tag tag-lab">Lab</span></h2>
+
+<div class="section-card">
+  <h3>Overview</h3>
+  <p>In the readings and in class, you learned that a convolutional neural network trained on ImageNet learns to organize images into a hierarchy of features: edges in early layers, textures and shapes in middle layers, object parts in deep layers. This lab strips the classification head off MobileNetV2 and uses what remains as a feature extractor, producing a 1,280-dimensional embedding for each image. You'll build a similarity retrieval system, compare it head-to-head against your Module 2 HOG baseline, and use t-SNE to visualize how the embedding space clusters images.</p>
+  <p>The HOG comparison is the point. Both systems retrieve images by computing distances between feature vectors. What changes is what the feature vector encodes: a hand-designed gradient histogram versus a representation learned from 1.2 million labeled images. Finding where the gap is real, and finding where it isn't, is what the lab is about.</p>
+
+  <h3>About This Lab</h3>
+  <p>This lab has no code scaffold. You write every cell yourself, using an LLM to help you generate the implementation. The lab sheet gives you specification boxes: each one tells you exactly what a cell must do, what it takes in, and what it must produce. Your job is to give those specifications to Gemini (or another LLM) and turn the output into working code.</p>
+  <p>For each code cell you generate, include a markdown cell documenting the prompt you used and one sentence describing any fix you had to make. This process is the core skill of the module.</p>
+
+  <h3>What to Submit</h3>
+  <ul>
+    <li>A completed Colab notebook (<code>.ipynb</code>) saved to your GitHub repo at <code>week4/lab3_embeddings.ipynb</code>.</li>
+    <li>All cells executed with visible outputs (images must render in GitHub's notebook viewer).</li>
+    <li>Each code cell preceded by a markdown cell with your prompt and fix note.</li>
+    <li>No API keys or secrets anywhere in the notebook.</li>
+    <li>Submit the GitHub link in Canvas. The notebook in GitHub IS your submission — if it's not in the repo, it doesn't exist for grading.</li>
+  </ul>
+</div>
+
+<div class="tip">
+  <strong>Start this in Thursday lab.</strong> We'll work through the MobileNetV2 feature extraction pipeline together: loading the model without the classification head, running images through it, and building the similarity retrieval system. Come with the readings done so you already know what global average pooling produces before you write the first cell.
+</div>
+
+<div class="rubric-section">
+  <h4>Repository Rubric (Summary)</h4>
+  <p style="font-size:0.85rem; margin-bottom:0.75rem;">100 points possible. Each criterion is scored on a 4-level scale (Full Credit &rarr; No Credit). <a href="https://rose.instructure.com/courses/26944/rubrics/66064" target="_blank"><strong>View the full rubric with detailed scoring &rarr;</strong></a></p>
+  <p style="font-size:0.85rem; color: var(--muted); margin-bottom:0.75rem;">Criteria marked <strong>WEEKLY</strong> change per assignment; criteria marked <strong>STANDARD</strong> stay the same all semester.</p>
+  <table class="rubric-table">
+    <thead>
+      <tr><th style="width:30%">Criterion</th><th style="width:10%">Points</th><th style="width:10%">Type</th><th>Description</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Notebook Runs</td><td>/25</td><td>STANDARD</td><td>Notebook is in the correct week folder. Cells execute top-to-bottom without errors. All outputs visible.</td></tr>
+      <tr style="background:#fff3e0;"><td>Task Requirements</td><td>/40</td><td>WEEKLY</td><td><strong>This week:</strong>
+        <ul style="margin: 0.4rem 0 0 1rem; padding: 0;">
+          <li>MobileNetV2 loaded with <code>include_top=False, pooling='avg'</code>.</li>
+          <li>Image embeddings extracted and stored as a matrix.</li>
+          <li>Cosine similarity retrieval demonstrated for at least two query images, with results displayed via matplotlib.</li>
+          <li>Retrieval accuracy comparison against the Module 2 HOG baseline.</li>
+          <li>t-SNE visualization of the embedding space with at least one cluster identified and explained.</li>
+          <li>Prompt documentation: one markdown cell per code cell with the prompt used and a one-sentence fix note.</li>
+        </ul></td></tr>
+      <tr><td>Reflection</td><td>/20</td><td>STANDARD</td><td>200&ndash;400 words. Connects results to the readings. Addresses what worked, what didn't, and what you'd change.</td></tr>
+      <tr><td>Repo Hygiene</td><td>/15</td><td>STANDARD</td><td>No active (unrevoked) secrets. README updated. Descriptive commit message. Files in the right folder.</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<hr>
+
+<!-- =====================================================================
+     DELIVERABLE 3: DEMO
+     ===================================================================== -->
+<h2>Deliverable 2: Module 3 Demo <span class="tag tag-demo">Demo</span></h2>
+
+<div class="section-card">
+  <h3>Overview</h3>
+  <p>A <strong>three- to five-minute</strong> live demo during Tuesday's class (April 14, 7:00 PM). Your notebook is your demo — no separate slides required. Walk the class through your retrieval results, make a live modification, and explain what changed.</p>
+
+  <h3>What to Cover</h3>
+  <p>In three to five minutes, walk the class through a live demonstration:</p>
+  <ol>
+    <li><strong>The win:</strong> Show a query image where MobileNetV2 retrieved semantically similar images that HOG missed. Navigate to that cell in your notebook and explain why the learned embedding got it right when the gradient histogram didn't.</li>
+    <li><strong>The t-SNE plot:</strong> Show your visualization and point to one cluster that surprised you. Explain what the model considers "similar" that you wouldn't have predicted.</li>
+    <li><strong>Live modification:</strong> Swap a query image or adjust a parameter, run the cell live, and explain what changed and why. This is the core of the demo — don't skip it.</li>
+    <li><strong>Your takeaway:</strong> Based on your results, what does the shift from HOG to learned embeddings buy you, and what does it cost?</li>
+  </ol>
+
+  <h3>Format</h3>
+  <p>Share your screen and run your notebook live. If you attend via Zoom, be prepared to share your screen and have your notebook open and ready to run.</p>
+
+  <div class="tip">
+    <strong>Tip:</strong> The dual retrieval comparison (HOG vs. MobileNetV2, same query image, side by side) is your strongest visual. Pick a query where the gap is obvious — that's what you'll modify live.
+  </div>
+</div>
+
+<div class="rubric-section">
+  <h4>Demo Rubric (Summary)</h4>
+  <p style="font-size:0.85rem; margin-bottom:0.75rem;">100 points possible. Each criterion is scored on a 4-level scale (Full Credit &rarr; No Credit). <a href="https://rose.instructure.com/courses/26944/rubrics/66063" target="_blank"><strong>View the full rubric with detailed scoring &rarr;</strong></a></p>
+  <table class="rubric-table">
+    <thead>
+      <tr><th style="width:35%">Criterion</th><th style="width:12%">Points</th><th>What I'm Looking For</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Live Demo</td><td>25</td><td>Notebook runs cleanly. You navigate to your results and explain what you see.</td></tr>
+      <tr><td>Explanation of Approach</td><td>25</td><td>You explain what MobileNetV2 is doing and why your implementation choices make sense.</td></tr>
+      <tr><td>Baseline Comparison</td><td>25</td><td>You show and explain where learned embeddings outperform HOG — and where they don't.</td></tr>
+      <tr><td>Live Modification</td><td>25</td><td>You swap a query image or change a parameter live, run the cell, and explain what changed and why.</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<hr>
+
+<!-- ========== COMBINED ASSIGNMENT NOTE ========== -->
+<div class="bridge-box" data-concurrent="true">
+  <strong>Taking AIML 2003 (NLP) too?</strong>
+  <p>A combined lab is available: <a href="lab3-combined-embeddings.html">How Machines Represent Text and Images</a>. It covers both image embeddings (CV) and sentence embeddings (NLP) in one notebook. You submit the same GitHub URL to both courses. If you do the combined lab, it replaces the individual CV lab. Do not submit both. Your demo this week is also combined: plan for 5&ndash;7 minutes instead of 3&ndash;5 to cover both domains.</p>
+</div>
+
+<hr>
+
+<!-- =====================================================================
+     DELIVERABLE 3: ETHICS DISCUSSION
+     ===================================================================== -->
+<h2>Deliverable 3: Ethics Discussion <span class="tag tag-ethics">Ethics</span></h2>
+
+<div class="section-card">
+  <h3>Overview</h3>
+  <p>Complete the ethics discussion thread for this module. The full prompt and context are on the <a href="04-ethics.html">Ethics Thread page</a> in this module.</p>
+
+  <h3>Requirements</h3>
+  <ul>
+    <li>Initial post: 150&ndash;250 words. Take a position: don&rsquo;t just summarize the question.</li>
+    <li>Reply to a classmate: at least one substantive reply (not just &ldquo;I agree&rdquo;).</li>
+    <li>Initial post due by Tuesday class (April 14). Reply due by the following Tuesday class (April 21).</li>
+  </ul>
+  <p style="margin-top:0.75rem; font-size:0.9rem; color:var(--muted);">The ethics discussion is worth 20% of your weekly Participation grade. Whether you attend in person or via Zoom, this post is required every week.</p>
+</div>
+
+<!-- ========== SUBMISSION CHECKLIST ========== -->
+<div class="overview-card" style="margin-top:1.5rem;">
+  <strong>Submission Checklist</strong>
+  <ul>
+    <li>Module 3 Lab notebook runs cleanly top-to-bottom with all outputs visible</li>
+    <li>Each code cell has a preceding markdown cell with your LLM prompt and fix note</li>
+    <li>No API keys exposed in any committed file</li>
+    <li>Notebook saved to GitHub at <code>week4/lab3_embeddings.ipynb</code></li>
+    <li>README updated to reflect Module 3 contents</li>
+    <li>GitHub repo link submitted in Canvas</li>
+    <li>Demo prepared and notebook ready to run for Tuesday class (April 14)</li>
+    <li>Ethics discussion post submitted in Canvas by Tuesday class (April 14)</li>
+  </ul>
+</div>
+
+<div class="warning" style="margin-top:1.5rem;">
+  <strong>Reminder:</strong> If it's not in your GitHub repo, it doesn't exist for grading. Save your final work before the deadline.
+</div>
+
+<div class="tip" style="margin-top: 1rem;">
+  <strong>Need help?</strong> Start your work during Thursday lab (April 9, Zoom, 6:00 PM): that's what lab time is for. If you get stuck after lab, email me before the weekend so I can help. Don't wait until Monday night.
+</div>
+
+</body>
+</html>

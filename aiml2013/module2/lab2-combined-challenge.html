@@ -1,0 +1,466 @@
+<!-- concurrent-only: requires dual enrollment in AIML 2003 + AIML 2013 -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Module 2 Lab (Combined, Challenge): How Machines Read | AIML 2003 + AIML 2013</title>
+<link rel="stylesheet" href="../../course-styles.css">
+</head>
+<body>
+
+<h1>Module 2 Lab (Combined, Challenge Version): How Machines Read</h1>
+<p class="subtitle">TF-IDF and HOG as parallel feature extraction pipelines</p>
+
+<!-- ========== DUAL ENROLLMENT NOTICE ========== -->
+<div class="bridge-box">
+  <strong>Dual-enrollment lab: AIML 2003 + AIML 2013</strong>
+  <p style="margin: 0.5rem 0 0;">This lab is for students enrolled in both AIML 2003 (NLP) and AIML 2013 (CV). You will build one notebook covering both courses&rsquo; Module 2 content, give one 5&ndash;7 minute presentation, and submit the same GitHub repo link to both Canvas assignments. If you are enrolled in only one course, use that course&rsquo;s standalone lab instead.</p>
+</div>
+
+<!-- ========== CHALLENGE FRAMING ========== -->
+<div class="warning">
+  <strong>No training wheels here: 10 bonus points if you earn them.</strong>
+  <p style="margin: 0.75rem 0 0;">This version of the lab gives you the specification for each cell, not the code. Each section below tells you exactly what a cell must do, what variables it must receive, and what variables it must produce. Your job is to write the code yourself, using an LLM (Gemini, Claude, ChatGPT, or any tool you like) to help you generate it.</p>
+  <p style="margin: 0.75rem 0 0;"><strong>To earn the 10 bonus points:</strong> include a markdown cell directly above each code cell containing the prompt you gave the LLM and a one-sentence note on whether the generated code worked as-is or what you had to fix. Eight cells &times; one prompt note each. That&rsquo;s it.</p>
+  <p style="margin: 0.75rem 0 0;">If you would rather use the training wheels version, it&rsquo;s on the other lab page. Both versions are graded the same way on the standard rubric. Only this version is eligible for the bonus.</p>
+</div>
+
+<!-- ========== THE TASK ========== -->
+<div class="section-card">
+  <h3>The Task</h3>
+  <p>In AIML 2003, you have been working with text. In AIML 2013, you have been working with images. This week you will build the same pipeline twice: once for each modality, and compare what you find.</p>
+  <p>The pipeline: take raw input (a sentence, or a photograph), reduce it to a fixed-length feature vector, then use that vector to retrieve the most similar items from a corpus. You will run each pipeline, find where it succeeds, and, more importantly, find where it fails. The failures are the insight.</p>
+  <p>In the readings and in class, you learned that both language and vision pipelines face the same fundamental problem: how do you turn something a human understands into numbers a machine can compute on? TF-IDF and HOG are two answers, both hand-crafted, both transparent, and both limited in exactly the same direction. By the end of this lab, you will know what that shared limitation is.</p>
+</div>
+
+<!-- ========== DATASETS ========== -->
+<h2>Your Datasets</h2>
+
+<div class="section-card">
+  <h3>NLP: NLTK Movie Reviews</h3>
+  <p>2,000 labeled movie reviews (positive and negative), built into Google Colab via NLTK. No download or account required.</p>
+</div>
+
+<div class="section-card">
+  <h3>CV: Image Dataset (Your Choice)</h3>
+  <p>Choose one option before you start the CV section.</p>
+
+  <h4>Option A: CIFAR-10 (easiest setup)</h4>
+  <p>60,000 images across 10 categories, loadable in one line via Keras. Images are 32&times;32 pixels, small, but sufficient. Use this if you want to minimize setup time.</p>
+
+  <h4>Option B: Your own images (more work, better presentation)</h4>
+  <p>Collect 4&ndash;5 categories of images, at least 8&ndash;10 per category, at least 128&times;128 pixels each. Where to find them:</p>
+  <ul>
+    <li><strong>Unsplash</strong> (<a href="https://unsplash.com" target="_blank">unsplash.com</a>): free, no account required.</li>
+    <li><strong>Wikimedia Commons</strong> (<a href="https://commons.wikimedia.org" target="_blank">commons.wikimedia.org</a>): public domain images.</li>
+    <li><strong>Google Images</strong>: save individually or use the &ldquo;FatKun Batch Download Image&rdquo; extension.</li>
+    <li><strong>Kaggle Datasets</strong> (<a href="https://www.kaggle.com/datasets" target="_blank">kaggle.com/datasets</a>): many small, pre-sorted image classification sets. Free account required.</li>
+    <li><strong>Oxford 102 Flowers</strong> (<a href="https://www.robots.ox.ac.uk/~vgg/data/flowers/102/" target="_blank">robots.ox.ac.uk</a>): 8,189 high-quality photos, free download.</li>
+  </ul>
+  <p>Organize images into subfolders by category and upload via the Colab Files panel (left sidebar &rarr; Upload to session storage), or mount Google Drive.</p>
+</div>
+
+<!-- ========== HOW TO READ THIS PAGE ========== -->
+<div class="section-card">
+  <h3>How to read this page</h3>
+  <p>Each cell below follows the same format. The gray <code># Cell N</code> header is what you will put at the top of your code cell. Below it, you will find:</p>
+  <ul>
+    <li><strong>What it does</strong>: plain English description of the cell&rsquo;s purpose.</li>
+    <li><strong>Takes in</strong>: variables already in the notebook that this cell uses.</li>
+    <li><strong>Must produce</strong>: the exact variable names, types, and shapes this cell must create so the following cells can use them. These are binding contracts. Use these exact names.</li>
+    <li><strong>Notes</strong>: constraints, pitfalls, and things to watch for.</li>
+  </ul>
+  <p>Give the LLM the &ldquo;What it does,&rdquo; &ldquo;Takes in,&rdquo; and &ldquo;Must produce&rdquo; sections as your prompt. If the generated code does not match the output contract, fix it before moving on. The next cell depends on it.</p>
+</div>
+
+<!-- ========== PART 1: NLP ========== -->
+<h2>Part 1: NLP Pipeline (Text as Feature Vectors)</h2>
+
+<!-- CELL 1 -->
+<pre># Cell 1: Setup</pre>
+<div class="section-card">
+  <p><strong>What it does:</strong> Installs nltk and scikit-learn, imports all libraries needed for the NLP section, and downloads the NLTK movie review corpus.</p>
+
+  <p><strong>Takes in:</strong> Nothing. This is the first cell.</p>
+
+  <p><strong>Must produce:</strong></p>
+  <ul>
+    <li>Import <code>numpy</code> and alias it <code>np</code>. You'll use this throughout for array creation and mathematical operations.</li>
+    <li>Import <code>TfidfVectorizer</code> from <code>sklearn.feature_extraction.text</code>. You'll use this to convert text into dense numerical vectors.</li>
+    <li>Import <code>cosine_similarity</code> from <code>sklearn.metrics.pairwise</code>. You'll use this to measure how similar two feature vectors are (1 = identical direction, 0 = perpendicular).</li>
+    <li>Import <code>matplotlib.pyplot</code> and alias it <code>plt</code>. You'll use this to visualize feature spaces.</li>
+    <li>From <code>nltk.corpus</code>, import the <code>movie_reviews</code> dataset (using <code>nltk.download('movie_reviews', quiet=True)</code>). This gives you a corpus of 2,000 labeled movie reviews.</li>
+    <li>Import <code>TSNE</code> from <code>sklearn.manifold</code>. You'll use this in Part 3 to project high-dimensional feature spaces into 2D for visualization.</li>
+    <li>Print a confirmation message stating that setup is complete.</li>
+  </ul>
+
+  <p><strong>Notes:</strong> All packages (numpy, scikit-learn, nltk, matplotlib) are pre-installed in Colab. Use <code>quiet=True</code> on NLTK downloads to suppress verbose output.</p>
+</div>
+
+<!-- CELL 2 -->
+<pre># Cell 2: Load the corpus</pre>
+<div class="section-card">
+  <p><strong>What it does:</strong> Iterates over both categories of the movie review corpus (&lsquo;pos&rsquo; and &lsquo;neg&rsquo;), loads every document as a raw string, and builds two parallel lists. Prints a count and a short excerpt of the first review.</p>
+
+  <p><strong>Takes in:</strong> <code>movie_reviews</code> (from Cell 1).</p>
+
+  <p><strong>Must produce:</strong></p>
+  <ul>
+    <li>Create <code>documents</code> as a Python list of strings by looping over <code>movie_reviews.fileids()</code>. For each file ID, call <code>movie_reviews.raw(fileid)</code> to get the full text of that review. Append each text string to <code>documents</code>. Result: a list of 2,000 review texts, one per file.</li>
+    <li>Create <code>labels</code> as a Python list of strings by extracting the category from each file ID (the category is the prefix before the first slash, e.g., <code>'pos'</code> or <code>'neg'</code>). Append the category string to <code>labels</code> parallel to <code>documents</code>. Result: a list of 2,000 category labels, each either <code>'pos'</code> or <code>'neg'</code>, in the same order as <code>documents</code>.</li>
+    <li>Print the total count of documents loaded and a brief excerpt (first 300 characters) of the first review so you can verify the text is being read correctly.</li>
+  </ul>
+
+  <p><strong>Notes:</strong> The corpus has exactly 1,000 positive and 1,000 negative reviews. File IDs are formatted as <code>'pos/cv001_1.txt'</code> (category/filename). Use <code>fileid.split('/')</code> to extract the category part.</p>
+</div>
+
+<div class="tip">
+  <strong>Markdown cell:</strong> Before running Cell 3, write 2&ndash;3 sentences describing what TF-IDF is in your own words. Don&rsquo;t look it up. Write your best current understanding. You&rsquo;ll be able to correct yourself after you see the output.
+</div>
+
+<!-- CELL 3 -->
+<pre># Cell 3: Build TF-IDF feature vectors</pre>
+<div class="section-card">
+  <p><strong>What it does:</strong> Fits a TF-IDF vectorizer on the full <code>documents</code> list and transforms it into a sparse matrix. Prints the matrix shape and sparsity percentage. Then prints the top 10 TF-IDF terms for the very first document.</p>
+
+  <p><strong>Takes in:</strong> <code>documents</code>, <code>labels</code> (from Cell 2).</p>
+
+  <p><strong>Must produce:</strong></p>
+  <ul>
+    <li>Create <code>vectorizer</code> as an instance of <code>TfidfVectorizer</code> with these parameters: <code>max_features=5000</code> (keep only the 5,000 most frequent terms), <code>stop_words='english'</code> (ignore common words like &ldquo;the&rdquo; and &ldquo;and&rdquo;), <code>ngram_range=(1, 2)</code> (consider both individual words and pairs of consecutive words). Call <code>vectorizer.fit_transform(documents)</code> to learn the vocabulary from all 2,000 reviews and transform them into a sparse matrix in one step. Assign the result to <code>tfidf_matrix</code>.</li>
+    <li><code>tfidf_matrix</code> will be a scipy sparse matrix of shape <code>(2000, 5000)</code> where row <code>i</code> is the TF-IDF vector for <code>documents[i]</code>. Each nonzero entry represents a term that appeared in that review, weighted by how unique it is across the corpus.</li>
+    <li>Extract <code>feature_names</code> by calling <code>vectorizer.get_feature_names_out()</code>. Convert the result to a numpy array. This is an array of 5,000 strings, where index <code>j</code> is the term whose TF-IDF weight is stored at column <code>j</code> in every row of <code>tfidf_matrix</code>.</li>
+    <li>Print the shape of <code>tfidf_matrix</code> and compute sparsity as the percentage of zero values: <code>1.0 - (matrix.nnz / (matrix.shape[0] * matrix.shape[1]))</code>. This is typically 99%+ because most words don't appear in most reviews.</li>
+    <li>For <code>documents[0]</code>, find its top 10 terms by: converting its row to dense (<code>tfidf_matrix[0].toarray().flatten()</code>), getting indices of the top 10 weights (<code>np.argsort()</code> descending), and indexing into <code>feature_names</code> with those indices. Print these terms so you can see what TF-IDF considered most important for the first review.</li>
+  </ul>
+
+  <p><strong>Notes:</strong> A sparse matrix stores only nonzero values, saving memory. The <code>.nnz</code> attribute gives the count of nonzero values. Most reviews will have zero weight for most of the 5,000 terms.</p>
+</div>
+
+<div class="tip">
+  <strong>Markdown cell:</strong> Look at the top terms for document 0. Do they tell you whether the review is positive or negative? What kind of information does this vector <em>not</em> contain that a human reader would use?
+</div>
+
+<!-- CELL 4 -->
+<pre># Cell 4: Similarity retrieval</pre>
+<div class="section-card">
+  <p><strong>What it does:</strong> Defines a retrieval function, then calls it on one test query and prints the top 5 results with their labels and similarity scores.</p>
+
+  <p><strong>Takes in:</strong> <code>vectorizer</code>, <code>tfidf_matrix</code>, <code>documents</code>, <code>labels</code> (from Cells 2&ndash;3).</p>
+
+  <p><strong>Must produce:</strong></p>
+  <ul>
+    <li>Define a function <code>find_similar_texts(query, n=5)</code> that takes a plain-text string and finds the <code>n</code> most similar reviews in the corpus. Inside the function:
+      <ul style="margin-top: 0.5rem;">
+        <li>Transform the query string into a TF-IDF vector by calling <code>vectorizer.transform([query])</code>. This returns a 2D sparse matrix with one row.</li>
+        <li>Compute cosine similarity between the query vector and all 2,000 document vectors by calling <code>cosine_similarity(query_vector, tfidf_matrix)</code>. This returns a <code>(1, 2000)</code> array of similarity scores.</li>
+        <li>Find the indices of the top <code>n</code> scores (excluding the query itself if it appears in the corpus) by using <code>np.argsort()</code> in descending order.</li>
+        <li>For each of the top <code>n</code> indices, create a tuple: <code>(text_excerpt, label, similarity_score)</code> where <code>text_excerpt</code> is the first 220 characters of <code>documents[index]</code>, <code>label</code> is the corresponding element from <code>labels</code>, and <code>similarity_score</code> is the cosine similarity value.</li>
+        <li>Return a list of <code>n</code> tuples sorted from highest to lowest similarity.</li>
+      </ul>
+    </li>
+    <li>Test the function with this query: <code>"This film was a total waste of time. Terrible acting, boring plot."</code></li>
+    <li>Print the results in a readable format showing rank, label (in uppercase), similarity score (to 3 decimal places), and the first 200 characters of each matching review.</li>
+  </ul>
+
+  <p><strong>Notes:</strong> <code>vectorizer.transform([query])</code> expects a list, not a string. The query may not be in the corpus, so you don&rsquo;t need to exclude it. Cosine similarity ranges from 0 (no overlap) to 1 (identical direction in feature space).</p>
+</div>
+
+<div class="tip">
+  <strong>Markdown cell:</strong> How many of the top 5 results are negative reviews? Did any positive reviews surface? If so, what words do they share with the query?
+</div>
+
+<!-- CELL 5 -->
+<pre># Cell 5: Find the failures</pre>
+<div class="section-card">
+  <p><strong>What it does:</strong> Runs four carefully chosen failure queries through <code>find_similar_texts</code> and reports how many positive vs. negative reviews appear in the top 5 for each.</p>
+
+  <p><strong>Takes in:</strong> <code>find_similar_texts</code> (from Cell 4).</p>
+
+  <p><strong>Must produce:</strong></p>
+  <ul>
+    <li>Create a list named <code>failure_queries</code> containing exactly these four tuples (query string, explanatory note) in this order:
+      <ol style="margin-top: 0.5rem;">
+        <li><code>("This movie was absolutely not a waste of time.", "Same words as the Cell 4 query, but 'not' reverses the meaning.")</code></li>
+        <li><code>("I watched this film three times in one weekend.", "Strongly positive, but contains zero sentiment words.")</code></li>
+        <li><code>("I can't imagine anyone not enjoying this.", "Positive, but two negatives TF-IDF may misread.")</code></li>
+        <li><code>("A masterpiece. Stunning cinematography, a perfect score.", "Unambiguously positive: all strong positive adjectives.")</code></li>
+      </ol>
+    </li>
+    <li>Loop through <code>failure_queries</code>. For each tuple <code>(query_string, note)</code>:
+      <ul style="margin-top: 0.5rem;">
+        <li>Call <code>find_similar_texts(query_string, n=5)</code> to retrieve the 5 most similar reviews.</li>
+        <li>Count how many of the top 5 results have <code>label == 'pos'</code> and how many have <code>label == 'neg'</code>.</li>
+        <li>Print the query, the explanatory note, and the positive/negative counts in a clear format.</li>
+      </ul>
+    </li>
+  </ul>
+
+  <p><strong>Notes:</strong> This cell produces no new variables that persist. It is pure analysis and exploration. Format the output so you can easily reference it in your presentation to explain where TF-IDF went wrong.</p>
+</div>
+
+<div class="tip">
+  <strong>Markdown cell:</strong> For each of the four queries, explain in one sentence why TF-IDF got confused (or didn&rsquo;t). What is it measuring that caused the result?
+</div>
+
+<!-- ========== PART 2: CV ========== -->
+<h2>Part 2: CV Pipeline (Images as Feature Vectors)</h2>
+
+<!-- CELL 6A -->
+<pre># Cell 6A: Load CIFAR-10  (use this OR Cell 6B — not both)</pre>
+<div class="section-card">
+  <p><strong>What it does:</strong> Loads the CIFAR-10 training set via Keras, takes 15 images per class (150 total), and displays a grid showing one sample from each class.</p>
+
+  <p><strong>Takes in:</strong> Nothing external. This is the image dataset loader.</p>
+
+  <p><strong>Must produce:</strong></p>
+  <ul>
+    <li>Load CIFAR-10 by calling <code>tf.keras.datasets.cifar10.load_data()</code>. This returns a tuple <code>((train_images, train_labels), (test_images, test_labels))</code>. Use only the training split. Unpack it: <code>train_images</code> and <code>train_labels</code>.</li>
+    <li>Create <code>images</code> by selecting exactly 15 images from each of the 10 classes, ordered class by class. Use numpy indexing to extract rows where <code>train_labels == 0</code> (first 15), then <code>train_labels == 1</code> (next 15), etc. Stack them vertically. Result: numpy array of shape <code>(150, 32, 32, 3)</code>, dtype <code>uint8</code> (pixel values 0&ndash;255).</li>
+    <li>Create <code>img_labels</code> as a Python list of length 150, where the first 15 elements are <code>0</code>, the next 15 are <code>1</code>, etc. up to <code>9</code>. This encodes which class each image belongs to.</li>
+    <li>Create <code>img_names</code> as a Python list of class name strings, exactly: <code>['airplane', 'automobile', 'bird', 'cat', 'deer', 'dog', 'frog', 'horse', 'ship', 'truck']</code>. Length 150, with each name repeated 15 times in order. This is parallel to <code>img_labels</code>.</li>
+    <li>Set <code>N_PER_CLASS = 15</code> as an integer constant. Later cells use this to index the first image from each class.</li>
+    <li>Display a grid showing one representative image from each of the 10 classes. Use <code>plt.subplots(2, 5)</code> to create a 2&times;5 grid, iterate over the 10 class indices, and display the first image of each class with the class name as the title.</li>
+  </ul>
+
+  <p><strong>Notes:</strong> CIFAR-10 is pre-installed in Keras (no download needed in Colab). Each image is 32&times;32 pixels in RGB (3 channels). The class labels in the loaded dataset are integers 0&ndash;9; map them to readable names using <code>img_names</code>.</p>
+</div>
+
+<!-- CELL 6B -->
+<pre># Cell 6B: Load your own images  (use this OR Cell 6A — not both)</pre>
+<div class="section-card">
+  <p><strong>What it does:</strong> Walks a directory of category subfolders, loads each image as a NumPy array, and displays one sample per category.</p>
+
+  <p><strong>Takes in:</strong> Image files organized under <code>/content/images/&lt;category&gt;/&lt;filename&gt;.jpg</code> (or .png). Mount Google Drive first if your images are stored there.</p>
+
+  <p><strong>Must produce:</strong></p>
+  <ul>
+    <li>Walk the directory tree at <code>/content/images/</code> (or your mounted Google Drive path). For each category subfolder:
+      <ul style="margin-top: 0.5rem;">
+        <li>List all image files in that folder (typically .jpg or .png).</li>
+        <li>For each file, open it using <code>PIL.Image.open(filepath)</code>, convert to RGB (in case it&rsquo;s grayscale or RGBA), and convert to a numpy array using <code>np.array(image)</code>. This gives a <code>(height, width, 3)</code> uint8 array.</li>
+        <li>Append the image array to <code>images</code> (a Python list). If opening or converting raises an exception (corrupt file, wrong format), skip that file and continue.</li>
+        <li>Append the class index (integer, 0 for the first category, 1 for the second, etc.) to <code>img_labels</code>.</li>
+        <li>Append the category folder name (string) to <code>img_names</code>.</li>
+      </ul>
+    </li>
+    <li>After loading, convert <code>images</code> to a list if not already. Count how many images you loaded from each category and print this summary so you can verify no category is unexpectedly empty or has very few images.</li>
+    <li>Calculate <code>N_PER_CLASS</code> as the number of images in the largest category. This will be used by later cells to identify the first image from each category.</li>
+  </ul>
+
+  <p><strong>Notes:</strong> Images may have different sizes (e.g., 200&times;300, 500&times;400) at load time. This is fine: Cell 7 (HOG computation) will resize them all to 64&times;64 before extracting features. Use <code>os.walk()</code> or <code>pathlib.Path.rglob()</code> to traverse directories. PIL is pre-installed in Colab.</p>
+</div>
+
+<div class="tip">
+  <strong>Markdown cell:</strong> Before running Cell 7, describe what you think a &ldquo;feature vector for an image&rdquo; should capture. If you could describe an image with only 1,500 numbers, which 1,500 would you choose? Write your answer now. You&rsquo;ll compare it to what HOG actually does.
+</div>
+
+<!-- CELL 7 -->
+<pre># Cell 7: Compute HOG feature vectors</pre>
+<div class="section-card">
+  <p><strong>What it does:</strong> Defines a function that converts a single color image to a HOG feature vector and a visualization image, then applies it to every image in <code>images</code>. Prints the shape of the resulting feature matrix and a comparison to the TF-IDF matrix dimensions. Displays a 3-column grid (original &rarr; grayscale &rarr; HOG visualization) for three sample images.</p>
+
+  <p><strong>Takes in:</strong> <code>images</code>, <code>img_names</code>, <code>N_PER_CLASS</code>, <code>tfidf_matrix</code> (for the dimension comparison printout).</p>
+
+  <p><strong>Must produce:</strong></p>
+  <ul>
+    <li>Define a helper function <code>image_to_hog(image)</code> that:
+      <ul style="margin-top: 0.5rem;">
+        <li>Takes a single image (a numpy array of any size, RGB or grayscale).</li>
+        <li>Resizes it to <code>TARGET_SIZE &times; TARGET_SIZE</code> pixels using <code>skimage.transform.resize(image, (TARGET_SIZE, TARGET_SIZE))</code>.</li>
+        <li>Converts to grayscale using <code>skimage.color.rgb2gray()</code> if the image has 3 channels; if it&rsquo;s already grayscale, use it directly.</li>
+        <li>Calls <code>skimage.feature.hog(grayscale_image, orientations=8, pixels_per_cell=(8, 8), cells_per_block=(2, 2), visualize=True)</code>. This returns a tuple <code>(hog_descriptor, hog_image)</code>.</li>
+        <li>Returns both the descriptor array and the visualization image.</li>
+      </ul>
+    </li>
+    <li>Set a constant <code>TARGET_SIZE = 64</code> (or 128 if using your own large images). This is the uniform size all images will be resized to before HOG computation.</li>
+    <li>Loop over every image in <code>images</code>. For each, call <code>image_to_hog(image)</code>, collect all descriptors into <code>hog_matrix</code> (stacked vertically), and collect all visualization images into <code>hog_visuals</code> (a Python list).
+      <ul style="margin-top: 0.5rem;">
+        <li><code>hog_matrix</code> will be a numpy array of shape <code>(len(images), 1152)</code> for TARGET_SIZE=64 (the number of HOG features depends on the orientation and cell parameters; 1152 is typical for 8 orientations, 8&times;8-pixel cells, 2&times;2-cell blocks on a 64&times;64 image).</li>
+        <li><code>hog_visuals</code> will be a list of 2D grayscale arrays, one per image, suitable for display with <code>plt.imshow(..., cmap='gray')</code>.</li>
+      </ul>
+    </li>
+    <li>Print the shape of <code>hog_matrix</code> and a short comparison: how many features does HOG produce vs. how many does TF-IDF produce? (You have <code>tfidf_matrix</code> from Cell 3, which has shape <code>(2000, 5000)</code>.)</li>
+    <li>Display a 3-column grid showing three example images: original, grayscale, and HOG visualization. Use three sample indices: <code>0</code> (first image from class 0), <code>N_PER_CLASS</code> (first image from class 1), and <code>N_PER_CLASS * 2</code> (first image from class 2).</li>
+  </ul>
+
+  <p><strong>Notes:</strong> HOG stands for Histogram of Oriented Gradients. The <code>visualize=True</code> flag is essential: without it, <code>hog()</code> returns only the descriptor. <code>orientations=8</code> means 8 directions for edges. <code>pixels_per_cell=(8, 8)</code> means the image is divided into 8-pixel &times; 8-pixel cells. <code>cells_per_block=(2, 2)</code> means features are normalized over 2&times;2 blocks of cells. All packages (scikit-image, numpy) are pre-installed in Colab.</p>
+</div>
+
+<div class="tip">
+  <strong>Markdown cell:</strong> Look at the HOG visualizations. The bright lines show where gradients are strongest and in which direction. What has HOG kept from the original image? What has it thrown away? Compare this to what TF-IDF kept and discarded from text: what is the same about both transformations?
+</div>
+
+<!-- CELL 8 -->
+<pre># Cell 8: Visual similarity retrieval</pre>
+<div class="section-card">
+  <p><strong>What it does:</strong> Defines a retrieval function that finds the most visually similar images by HOG cosine similarity, then runs it on three query images and displays the results as image grids.</p>
+
+  <p><strong>Takes in:</strong> <code>hog_matrix</code>, <code>images</code>, <code>img_names</code>, <code>N_PER_CLASS</code> (from Cells 6&ndash;7).</p>
+
+  <p><strong>Must produce:</strong></p>
+  <ul>
+    <li>Define a function <code>find_similar_images(query_idx, n=5)</code> that:
+      <ul style="margin-top: 0.5rem;">
+        <li>Takes an integer index <code>query_idx</code> (into <code>images</code> and <code>hog_matrix</code>).</li>
+        <li>Computes cosine similarity between the query&rsquo;s HOG vector and all HOG vectors by calling <code>cosine_similarity(hog_matrix[query_idx:query_idx+1], hog_matrix)</code>. This returns a <code>(1, n_images)</code> array of similarity scores.</li>
+        <li>Set the query&rsquo;s own similarity score to <code>-1</code> (so it doesn&rsquo;t appear in the results).</li>
+        <li>Find the indices of the top <code>n</code> scores using <code>np.argsort()</code> in descending order.</li>
+        <li>Return two parallel arrays: <code>top_indices</code> (the <code>n</code> indices with the highest similarity, excluding the query) and <code>sim_scores</code> (their corresponding similarity scores).</li>
+      </ul>
+    </li>
+    <li>Test the function on three query indices: <code>0</code>, <code>N_PER_CLASS</code>, and <code>N_PER_CLASS * 2</code>. These are the first image from each of the first three classes.</li>
+    <li>For each query, display a matplotlib figure with 6 subplots in one row:
+      <ul style="margin-top: 0.5rem;">
+        <li>Leftmost (column 0): the query image with title &ldquo;QUERY&rdquo;.</li>
+        <li>Next 5 columns: the 5 most similar images returned by <code>find_similar_images</code>, with titles formatted as: &ldquo;<strong>classname</strong>&rdquo; followed by a checkmark (&ldquo;<code>\u2713</code>&rdquo;) if the retrieved image&rsquo;s class matches the query class, or an X (&ldquo;<code>\u2717</code>&rdquo;) if it does not. Also include the similarity score (to 2 decimal places) below the class name.</li>
+      </ul>
+    </li>
+  </ul>
+
+  <p><strong>Notes:</strong> Cosine similarity ranges from 0 to 1. If a result is visually similar but a different class (e.g., a &ldquo;cat&rdquo; that looks like a &ldquo;dog&rdquo;), mark it with an X. These misclassifications are learning moments: they reveal what HOG can and cannot see.</p>
+</div>
+
+<div class="tip">
+  <strong>Markdown cell:</strong> For each retrieval: how many of the top 5 are the same class as the query? Find at least one wrong result. Look at both images: what do they visually share that fooled HOG?
+</div>
+
+<!-- CELL 9 -->
+<pre># Cell 9: Systematic failure analysis</pre>
+<div class="section-card">
+  <p><strong>What it does:</strong> Loops over the first 30&ndash;40 images, runs retrieval for each, records every case where the top-1 match is a different class than the query. Prints a summary of the most commonly confused class pairs. Then visualizes the single most interesting failure in a 2&times;3 grid: original image, grayscale, and HOG visualization for both the query and the wrong match.</p>
+
+  <p><strong>Takes in:</strong> <code>find_similar_images</code>, <code>images</code>, <code>img_names</code>, <code>hog_visuals</code>, <code>N_PER_CLASS</code>, <code>image_to_hog</code>, <code>TARGET_SIZE</code> (from Cells 6&ndash;7).</p>
+
+  <p><strong>Must produce:</strong></p>
+  <ul>
+    <li>Loop over the first 30&ndash;40 images in the dataset (indices 0 to 39 or 0 to 34, depending on how many images you have per class). For each image:
+      <ul style="margin-top: 0.5rem;">
+        <li>Call <code>find_similar_images(query_idx, n=1)</code> to find the single most similar image.</li>
+        <li>Check if the retrieved image&rsquo;s class (<code>img_names[top_indices[0]]</code>) matches the query&rsquo;s class (<code>img_names[query_idx]</code>).</li>
+        <li>If they do <em>not</em> match, record a failure as a dictionary: <code>{'query_idx': query_idx, 'query_class': img_names[query_idx], 'match_idx': top_indices[0], 'match_class': img_names[top_indices[0]], 'score': sim_scores[0]}</code>.</li>
+      </ul>
+    </li>
+    <li>Create <code>failures</code> as a Python list of these dictionaries, sorted by <code>'score'</code> in descending order (highest-confidence mistakes first).</li>
+    <li>Print a summary: the total number of failures found, and the top-5 most frequently confused class pairs (e.g., &ldquo;cat confused with dog: 3 times&rdquo;).</li>
+    <li>Visualize the single highest-confidence failure (the one at <code>failures[0]</code>) in a 2&times;3 matplotlib grid:
+      <ul style="margin-top: 0.5rem;">
+        <li>Row 0 (query image): original RGB, grayscale, HOG visualization.</li>
+        <li>Row 1 (retrieved image that was wrong): original RGB, grayscale, HOG visualization.</li>
+        <li>Each subplot should have a title identifying the image (e.g., &ldquo;Query (cat)&rdquo; and &ldquo;Retrieved (dog)&rdquo;) and the similarity score.</li>
+      </ul>
+    </li>
+  </ul>
+
+  <p><strong>Notes:</strong> The grayscale version of each image is computed by resizing to <code>(TARGET_SIZE, TARGET_SIZE)</code> and calling <code>rgb2gray()</code> from skimage. The HOG visualization for each image is already stored in <code>hog_visuals[image_idx]</code>. This cell reveals what HOG missed: why it thought two different classes were similar.</p>
+</div>
+
+<div class="tip">
+  <strong>Markdown cell:</strong> For your best failure: describe in plain language what HOG noticed in both images and why it treated them as similar. A human would not make this mistake. What does a human use that HOG cannot see?
+</div>
+
+<!-- ========== PART 3: COMPARISON ========== -->
+<h2>Part 3: The Comparison</h2>
+
+<!-- CELL 10 -->
+<pre># Cell 10: Side-by-side summary table</pre>
+<div class="section-card">
+  <p><strong>What it does:</strong> Prints a formatted comparison table of TF-IDF and HOG properties, computed from variables already in the notebook. No new analysis. This is a synthesis cell.</p>
+
+  <p><strong>Takes in:</strong> <code>tfidf_matrix</code>, <code>hog_matrix</code>.</p>
+
+  <p><strong>Must produce:</strong> A printed comparison table with these rows:</p>
+  <ul>
+    <li><strong>Input type:</strong> Hard-coded string &ldquo;Text&rdquo; for TF-IDF, &ldquo;Images&rdquo; for HOG.</li>
+    <li><strong>Feature dimensions:</strong> Computed from your actual matrices. For TF-IDF: <code>tfidf_matrix.shape[1]</code> (should be 5,000). For HOG: <code>hog_matrix.shape[1]</code> (should be around 1,152).</li>
+    <li><strong>Sparsity (%):</strong> Computed from your matrices. For TF-IDF: <code>(1 - tfidf_matrix.nnz / (tfidf_matrix.shape[0] * tfidf_matrix.shape[1])) * 100</code> (expect 99%+). For HOG: <code>(np.sum(hog_matrix == 0) / hog_matrix.size) * 100</code>.</li>
+    <li><strong>What it encodes:</strong> Hard-coded string &ldquo;Word frequencies (which words appear, weighted by importance)&rdquo; for TF-IDF, and &ldquo;Edge orientations and magnitudes (brightness gradients at multiple scales)&rdquo; for HOG.</li>
+    <li><strong>What it ignores:</strong> Hard-coded string you should write based on the lab. For TF-IDF, consider: word order, context, negation handling, sentence structure. For HOG, consider: color, large-scale shape, semantic meaning, objects. Give one concrete example per extractor based on your failures from earlier cells.</li>
+    <li><strong>Core weakness:</strong> Hard-coded string you should write based on your learning. Both TF-IDF and HOG are designed by humans who decided in advance what mattered. What is wrong with that approach?</li>
+  </ul>
+
+  <p><strong>Notes:</strong> Format the table clearly (use a pandas DataFrame or a formatted string with aligned columns) so you can reference it in your presentation. The computed rows anchor the table to your actual data; the hard-coded rows are your insights from running the lab.</p>
+</div>
+
+<div class="tip">
+  <strong>Markdown cell 1: Sparsity:</strong> TF-IDF vectors are very sparse; HOG vectors are denser. What does sparsity tell you about how information is distributed across the feature space? Which representation is easier to interpret by hand?
+</div>
+
+<div class="tip">
+  <strong>Markdown cell 2: What each throws away:</strong> TF-IDF ignores word order. HOG ignores color. List at least two other things each extractor discards. For each, give a specific example of a retrieval failure it would cause.
+</div>
+
+<div class="tip">
+  <strong>Markdown cell 3: The shared limitation:</strong> Both TF-IDF and HOG were designed by humans who decided in advance what mattered in their input. What is the fundamental problem with that approach? What kind of feature representation would not have this limitation?
+</div>
+
+<div class="tip">
+  <strong>Markdown cell 4: Looking ahead:</strong> Based on your failures, what would a better NLP feature look like? What would a better image feature look like? One sentence each. (You will find out next week whether your intuition was right.)
+</div>
+
+<!-- ========== BONUS ========== -->
+<h2>Bonus (10 extra credit points; see note above)</h2>
+
+<p>Replace TF-IDF with Gemini embeddings in your NLP pipeline and rerun the four failure queries from Cell 5. The cell below describes what you need to build.</p>
+
+<pre># Bonus Cell: Gemini embedding retrieval</pre>
+<div class="section-card">
+  <p><strong>What it does:</strong> Gets a dense embedding vector from Gemini for each of a 200-document subset of the corpus, builds an embedding matrix, and defines a retrieval function that uses cosine similarity on those embeddings instead of TF-IDF. Reruns the four failure queries from Cell 5 and compares the results side by side: TF-IDF retrieval vs. embedding retrieval for the same query.</p>
+
+  <p><strong>Takes in:</strong> <code>documents</code>, <code>labels</code>, <code>failure_queries</code>, <code>find_similar_texts</code>, and an initialized Gemini client (you already configured this in Lab 1).</p>
+
+  <p><strong>Must produce:</strong></p>
+  <ul>
+    <li>Initialize a Gemini client using your API key (configured in Lab 1). You already have this from earlier lab setup.</li>
+    <li>For each of the first 200 documents in <code>documents</code>:
+      <ul style="margin-top: 0.5rem;">
+        <li>Truncate the document text to 2,000 characters (Gemini&rsquo;s embedding API has token limits).</li>
+        <li>Call <code>client.models.embed_content(model="models/text-embedding-004", contents=[text])</code>. This returns a response object.</li>
+        <li>Extract the embedding vector from <code>response.embeddings[0].values</code>. This is a list of 768 floating-point numbers.</li>
+        <li>Convert it to a numpy array and append to a growing list.</li>
+        <li>Sleep for 0.5 seconds between calls (<code>time.sleep(0.5)</code>). After every 15 calls, add an extra 2-second pause to stay within the free tier rate limit (15 requests per minute).</li>
+      </ul>
+    </li>
+    <li>Stack all 200 embeddings into <code>embedding_matrix</code>, a numpy array of shape <code>(200, 768)</code>.</li>
+    <li>Define a function <code>find_similar_by_embedding(query, n=5)</code> that:
+      <ul style="margin-top: 0.5rem;">
+        <li>Takes a plain-text query string.</li>
+        <li>Calls the Gemini embedding API on the query to get a 768-dimensional vector.</li>
+        <li>Computes cosine similarity between the query embedding and all 200 embeddings in <code>embedding_matrix</code>.</li>
+        <li>Returns the top <code>n</code> results in the same format as <code>find_similar_texts</code>: list of tuples <code>(text_excerpt, label, similarity_score)</code>, sorted highest-first.</li>
+      </ul>
+    </li>
+    <li>For each of the four failure queries from Cell 5 (<code>failure_queries</code>):
+      <ul style="margin-top: 0.5rem;">
+        <li>Call <code>find_similar_texts(query, n=3)</code> to get TF-IDF top-3.</li>
+        <li>Call <code>find_similar_by_embedding(query, n=3)</code> to get embedding top-3.</li>
+        <li>Print both results side by side: TF-IDF results on the left, embedding results on the right. Include class labels and similarity scores for each.</li>
+      </ul>
+    </li>
+  </ul>
+
+  <p><strong>Notes:</strong> Gemini embeddings are dense (768 dimensions) and learned from a massive corpus, so they capture semantic meaning better than hand-crafted TF-IDF. Expect embeddings to retrieve more semantically appropriate results, especially on the tricky queries where TF-IDF fails. Import <code>time</code> for the <code>sleep()</code> calls. The embedding API is rate-limited; strict sleep intervals prevent exceeding limits.</p>
+</div>
+
+<div class="tip">
+  <strong>Markdown cell:</strong> Did Gemini embeddings do better on the failure queries? Find one specific example where the improvement was meaningful and explain what the embedding captured that TF-IDF missed. This is the preview of Week 4.
+</div>
+
+<!-- ========== PRESENTATION PREP ========== -->
+<h2>Presentation Prep</h2>
+
+<div class="section-card">
+  <p>Your notebook is your presentation. There is no separate written reflection. Your presentation serves as the reflection.</p>
+  <p>In five to seven minutes, walk the class through:</p>
+  <ol>
+    <li><strong>One retrieval result that worked</strong>: from either the NLP or CV side. Show the query, the top results, and explain briefly why TF-IDF or HOG got it right.</li>
+    <li><strong>One failure from each side</strong>: your NLP failure and your CV failure. Explain in plain language what each extractor missed and why.</li>
+    <li><strong>The comparison:</strong> What do TF-IDF and HOG have in common? What is the shared limitation of human-designed features? What does that imply about what you&rsquo;ll need next?</li>
+  </ol>
+  <p>You are the only student in either class who ran both pipelines. Your comparison is firsthand, not borrowed from a textbook. That is what makes the presentation worth hearing.</p>
+  <p>See the assignment sheet for submission details and the rubric.</p>
+</div>
+
+</body>
+</html>

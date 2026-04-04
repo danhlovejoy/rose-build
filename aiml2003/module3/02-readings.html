@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Module 3 Readings: Text Embeddings | AIML 2003</title>
+<link rel="stylesheet" href="../../course-styles.css">
+</head>
+<body>
+
+<h1>Module 3: Text Embeddings</h1>
+<p class="subtitle">Readings &amp; Prep: Complete before Tuesday, April 14</p>
+
+<div class="time-box">
+  <strong>Estimated prep time:</strong> ~1.5 hours (required materials). One optional source for those who want the full Google ML Crash Course treatment. All materials are free.
+</div>
+
+<!-- ========== FRAMING ========== -->
+<div class="framing-box">
+  <p><strong>The big picture:</strong> TF-IDF gave each word its own dimension. &ldquo;Excellent&rdquo; and &ldquo;outstanding&rdquo; are completely unrelated in that space (different columns, zero overlap) even though they mean the same thing. A model built on TF-IDF can only know that two texts are similar if they share vocabulary.</p>
+  <p style="margin-top:0.5rem;">Embeddings fix this by throwing out the dictionary. Instead of one dimension per word, you get a fixed-length vector of real numbers where <em>meaning lives in geometry</em>: texts that mean similar things land near each other, regardless of the words they use. &ldquo;The food was delicious&rdquo; and &ldquo;The meal tasted amazing&rdquo; will be close neighbors. &ldquo;The food was delicious&rdquo; and &ldquo;The quarterly earnings report&rdquo; will not.</p>
+  <p style="margin-top:0.5rem;">This week you will load a pre-trained sentence transformer, encode a curated dataset into embedding vectors, build a semantic search engine, and compare it directly against the TF-IDF retrieval you built in Module 2. The comparison is the point: same data, same cosine similarity, completely different geometry.</p>
+</div>
+
+<!-- ========== NOTEBOOKLM ========== -->
+<div class="nlm-box">
+  <strong>NotebookLM tip:</strong> Upload the Illustrated Word2Vec article and the Sentence Transformers quickstart page to a Module 3 notebook. Good questions to try: &ldquo;What is the difference between a word embedding and a sentence embedding?&rdquo; &ldquo;Why does cosine similarity work better than Euclidean distance for comparing embeddings?&rdquo; &ldquo;Why does the sentence transformer need to see a sentence as a whole rather than word by word?&rdquo;
+</div>
+
+<!-- ================================================================
+     REQUIRED READINGS & VIDEOS
+     ================================================================ -->
+<h2>Required Readings &amp; Videos</h2>
+<p>Work through these in order. The StatQuest video builds the intuition; the Alammar article makes it visual; the Sentence Transformers quickstart connects it directly to the lab.</p>
+
+<!-- RESOURCE 1: StatQuest -->
+<div class="resource-card">
+  <div class="resource-header">
+    <span class="resource-title">Word Embedding and Word2Vec, Clearly Explained!!!</span>
+    <span class="tag tag-required">Required</span>
+    <span class="tag tag-video">Video</span>
+    <span class="tag tag-time">~15 min</span>
+  </div>
+  <p class="resource-meta">StatQuest with Josh Starmer &bull; YouTube</p>
+  <p class="resource-desc">StatQuest is the clearest explainer channel in machine learning. This video starts from scratch: why do we need to represent words as numbers at all, what does it mean for two words to be &ldquo;similar,&rdquo; and how does a neural network learn to place similar words near each other in vector space? Watch before reading the Alammar article: the video gives you the intuition that the article builds on.</p>
+  <p class="resource-link">
+    <a href="https://www.youtube.com/watch?v=viZrOnJclY0" target="_blank">Watch: Word Embedding and Word2Vec &rarr;</a>
+  </p>
+  <div class="focus-box">
+    <strong>Key concept to lock in:</strong> An embedding is a lookup table that assigns each word a point in space. The training process positions similar words near each other. After training, you can do arithmetic: vector(&ldquo;king&rdquo;) &minus; vector(&ldquo;man&rdquo;) + vector(&ldquo;woman&rdquo;) &asymp; vector(&ldquo;queen&rdquo;). This is not a coincidence: it falls out of how the vectors were trained.
+  </div>
+</div>
+
+<!-- RESOURCE 2: Jay Alammar -->
+<div class="resource-card">
+  <div class="resource-header">
+    <span class="resource-title">The Illustrated Word2Vec</span>
+    <span class="tag tag-required">Required</span>
+    <span class="tag tag-read">Read</span>
+    <span class="tag tag-time">~30 min</span>
+  </div>
+  <p class="resource-meta">Jay Alammar &bull; jalammar.github.io</p>
+  <p class="resource-desc">Jay Alammar&rsquo;s illustrated articles are the gold standard for making NLP concepts visible. This one walks through Word2Vec step by step with diagrams showing exactly how the training process pulls similar words together and pushes dissimilar ones apart. It covers the skip-gram model, negative sampling, and the final embedding matrix in detail. Take your time with the visualizations: the diagrams are doing most of the work.</p>
+  <p class="resource-desc" style="margin-top:0.5rem;"><em>Note: Word2Vec produces word-level embeddings. Your lab uses sentence-level embeddings from a transformer. The Word2Vec article builds the foundational intuition; the Sentence Transformers quickstart shows how the same idea scales up to whole sentences.</em></p>
+  <p class="resource-link">
+    <a href="https://jalammar.github.io/illustrated-word2vec/" target="_blank">Read: The Illustrated Word2Vec &rarr;</a>
+  </p>
+</div>
+
+<!-- RESOURCE 3: Sentence Transformers -->
+<div class="resource-card">
+  <div class="resource-header">
+    <span class="resource-title">Sentence Transformers: Quickstart</span>
+    <span class="tag tag-required">Required</span>
+    <span class="tag tag-read">Read</span>
+    <span class="tag tag-time">~15 min</span>
+  </div>
+  <p class="resource-meta">sbert.net &bull; Official documentation</p>
+  <p class="resource-desc">The official quickstart for the <code>sentence-transformers</code> library you will use in the lab. This is short and practical: how to load a model, how to encode sentences into vectors, and how to compute similarity between them. The code examples in this page map almost directly to Cells 1, 3, and 5 of the lab. Reading this first means you will already recognize the pattern when you get there.</p>
+  <p class="resource-link">
+    <a href="https://www.sbert.net/docs/quickstart.html" target="_blank">Read: Sentence Transformers Quickstart &rarr;</a>
+  </p>
+  <div class="focus-box">
+    <strong>Lab connection:</strong> The model name <code>'all-MiniLM-L6-v2'</code> in Cell 1 comes from the Sentence Transformers model hub. The quickstart explains what that name means and why this particular model is a good default. It is small (~80 MB), fast, and produces 384-dimensional embeddings that capture sentence-level meaning well.
+  </div>
+</div>
+
+<!-- RESOURCE 4: HuggingFace Model Card -->
+<div class="resource-card">
+  <div class="resource-header">
+    <span class="resource-title">all-MiniLM-L6-v2 Model Card</span>
+    <span class="tag tag-required">Required</span>
+    <span class="tag tag-read">Read</span>
+    <span class="tag tag-time">~10 min</span>
+  </div>
+  <p class="resource-meta">Hugging Face &bull; Model Hub</p>
+  <p class="resource-desc">This is the model card for <code>all-MiniLM-L6-v2</code>, the exact sentence transformer you will use in the lab. A model card is documentation that ships with a pre-trained model: what it was trained on, what it is good at, how to use it, and where it falls short. Reading model cards is a core skill in applied ML. You would not use a library without reading its docs; you should not use a model without reading its card.</p>
+  <p class="resource-desc" style="margin-top:0.5rem;">Pay attention to the &ldquo;Usage&rdquo; section (you will recognize the code from the quickstart), the training data list (notice the scale and variety), and the evaluation results table (the model is ranked against alternatives on specific benchmarks). You do not need to understand every metric, but you should leave with a sense of how practitioners choose one model over another.</p>
+  <p class="resource-link">
+    <a href="https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2" target="_blank">Read: all-MiniLM-L6-v2 on Hugging Face &rarr;</a>
+  </p>
+  <div class="focus-box">
+    <strong>What to notice:</strong> The model outputs 384-dimensional vectors (the same number you see in the demo and the lab). It was trained on over 1 billion sentence pairs. The &ldquo;Intended Uses&rdquo; section lists semantic search as a primary use case, which is exactly what you will build.
+  </div>
+</div>
+
+<!-- ================================================================
+     INTERACTIVE
+     ================================================================ -->
+<h2>Interactive: See It Before You Build It</h2>
+
+<div class="resource-card">
+  <div class="resource-header">
+    <span class="resource-title">Google Embedding Projector</span>
+    <span class="tag tag-required">Required</span>
+    <span class="tag tag-interactive">Interactive</span>
+    <span class="tag tag-time">~15 min</span>
+  </div>
+  <p class="resource-meta">Google &bull; projector.tensorflow.org</p>
+  <p class="resource-desc">An interactive 3D visualization of real word embeddings. The default dataset shows 10,000 words from a Word2Vec model trained on Google News. You can search for any word and watch its nearest neighbors light up in the embedding space. Try: search for &ldquo;cat&rdquo; and see what lands nearby. Then search for &ldquo;king&rdquo; and compare. Switch between the PCA and t-SNE projections: note how the same vectors look different depending on the dimensionality reduction method. This is the embedding space you will build for text in Cell 4 of the lab, but pre-made and interactive.</p>
+  <p class="resource-link">
+    <a href="https://projector.tensorflow.org/" target="_blank">Explore: Google Embedding Projector &rarr;</a>
+  </p>
+  <div class="focus-box">
+    <strong>What to notice:</strong> Countries cluster together. Sports terms cluster together. Abstract concepts cluster in their own region. The clusters are not programmed: they emerge from training on co-occurrence patterns in text. Your lab&rsquo;s t-SNE in Cell 9 is a 2D version of exactly what you are looking at here.
+  </div>
+</div>
+
+<!-- ================================================================
+     OPTIONAL
+     ================================================================ -->
+<h2>Optional: Deeper Background</h2>
+
+<div class="resource-card optional">
+  <div class="resource-header">
+    <span class="resource-title">Google ML Crash Course: Embeddings</span>
+    <span class="tag tag-optional">Optional</span>
+    <span class="tag tag-read">Read</span>
+    <span class="tag tag-time">~20 min</span>
+  </div>
+  <p class="resource-meta">Google for Developers &bull; developers.google.com</p>
+  <p class="resource-desc">Google&rsquo;s ML Crash Course section on embeddings covers the motivation (categorical data doesn&rsquo;t fit neural networks natively), the geometry (embedding space, distance, direction), and some practical considerations (embedding dimension, training). Worth reading if you want a clean second pass at the concepts from a different angle, or if the Word2Vec framing didn&rsquo;t fully click.</p>
+  <p class="resource-link">
+    <a href="https://developers.google.com/machine-learning/crash-course/embeddings" target="_blank">Read: Google ML Crash Course: Embeddings &rarr;</a>
+  </p>
+</div>
+
+<hr>
+
+<!-- ========== DISCUSSION PREP ========== -->
+<div class="discussion-box">
+  <strong>Discussion questions for Tuesday class:</strong>
+  <ol>
+    <li>TF-IDF and sentence embeddings both produce vectors you can compare with cosine similarity. What is the fundamental difference in what those vectors encode? If you search for &ldquo;great food&rdquo; using each method, why might they return different results?</li>
+    <li>The Embedding Projector shows that &ldquo;cat&rdquo; and &ldquo;dog&rdquo; land close together, and &ldquo;France&rdquo; and &ldquo;Germany&rdquo; land close together, but &ldquo;cat&rdquo; and &ldquo;France&rdquo; are far apart. The model was never told any of this: it emerged from training on text. What does this tell you about what the model actually learned?</li>
+    <li>Your lab&rsquo;s dataset has five cross-category edge cases: texts that genuinely belong to two categories. When the semantic search retrieves the top five matches for one of these, it has to &ldquo;choose&rdquo; a primary category. What determines where the model places an ambiguous text? Is that the right behavior for a real search engine?</li>
+  </ol>
+</div>
+
+<!-- ========== BRIDGE BOX ========== -->
+<div class="bridge-box" data-concurrent="true">
+  <strong>Bridge to Computer Vision (AIML 2013):</strong> CV students this week are doing exactly the same replacement you are: swapping a hand-crafted feature descriptor for a pre-trained neural network. They replace HOG gradients with MobileNetV2 embeddings; you replace TF-IDF word counts with sentence transformer embeddings. Both end up with a dense vector per item, both use cosine similarity to measure closeness, and both compare the learned representation directly against the Module 2 hand-crafted baseline. If you&rsquo;re doing the combined lab, you will run both pipelines in one notebook and compare the two embedding spaces side by side.
+</div>
+
+</body>
+</html>

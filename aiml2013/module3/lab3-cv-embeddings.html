@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Module 3 Lab: Image Retrieval with Learned Embeddings | AIML 2013</title>
+<link rel="stylesheet" href="../../course-styles.css">
+</head>
+<body>
+
+<h1>Module 3 Lab: Image Retrieval with Learned Embeddings</h1>
+<p class="subtitle">Let a neural network choose the features, then find where it still fails.</p>
+
+<!-- ========== LAB FRAMING ========== -->
+<div class="warning">
+  <strong>How this lab works.</strong>
+  <p style="margin: 0.75rem 0 0;">This lab gives you the specification for each cell, not the code. Each section below tells you exactly what a cell must do, what variables it must receive, and what variables it must produce. Your job is to write the code yourself, using an LLM (Gemini, Claude, ChatGPT, or any tool you like) to help you generate it.</p>
+  <p style="margin: 0.75rem 0 0;">Give the LLM the spec box as your prompt. If the generated code does not match the output contract, fix it before moving on. The next cell depends on it.</p>
+</div>
+
+<!-- ========== THE TASK ========== -->
+<div class="section-card">
+  <h3>The Task</h3>
+  <p>In the readings and in class, you learned that HOG encodes local edge orientations: a fixed recipe designed by researchers. It works when objects share an edge structure and fails when they do not. A neural network trained on millions of labeled images learns its own features, and those features encode higher-level patterns (textures, parts, shapes) that no hand-designed formula can capture.</p>
+  <p>This week you extract embeddings from a pre-trained MobileNetV2, run the same similarity retrieval task from Module 2 on the same images, and produce a direct comparison. The cells where HOG failed are where this lab gets interesting. You will find out exactly what the network learned that HOG could not represent, and you will find the cases where even learned features still struggle.</p>
+</div>
+
+<!-- ========== DATASET ========== -->
+<h2>Your Dataset</h2>
+
+<div class="section-card">
+  <h3>Same Images, New Features</h3>
+  <p>Use the same image dataset you chose in Module 2 (CIFAR-10 or your own images). This is intentional. Same data, different feature extractor, direct comparison. If you used CIFAR-10 before, use it again with the same class count and images-per-class. If you used your own images, use the same set.</p>
+  <p>The dataset loading cells below match the two options from Module 2. Pick the one you used before.</p>
+</div>
+
+<div class="tip">
+  <strong>Inline display note:</strong> All images in this lab display inline via matplotlib. You do not need to save images as files. <code>ax.imshow()</code> renders them directly in your notebook output.
+</div>
+
+<!-- ========== HOW TO READ THIS PAGE ========== -->
+<div class="section-card">
+  <h3>How to read this page</h3>
+  <p>Each cell below follows the same format. The gray <code># Cell N</code> header is what you will put at the top of your code cell. Below it:</p>
+  <ul>
+    <li><strong>What it does</strong>: plain English description of the cell&rsquo;s purpose.</li>
+    <li><strong>Takes in</strong>: variables already in the notebook that this cell uses.</li>
+    <li><strong>Must produce</strong>: the exact variable names, types, and shapes this cell must create. These are binding contracts. Use these exact names.</li>
+    <li><strong>Notes</strong>: constraints, pitfalls, and things to watch for.</li>
+  </ul>
+  <p>If the generated code does not match the output contract, fix it before moving on. The next cell depends on it.</p>
+</div>
+
+<!-- ==================== PART 1: LOAD IMAGES ==================== -->
+<h2>Part 1: Load Your Images</h2>
+
+<!-- CELL 1 -->
+<pre># Cell 1: Setup</pre>
+<div class="section-card">
+  <p><strong>What it does:</strong> Imports all libraries needed for the entire lab, including the pre-trained MobileNetV2 model. Loads MobileNetV2 as a feature extractor (no classification head) and prints its output shape.</p>
+
+  <p><strong>Takes in:</strong> Nothing. This is the first cell.</p>
+
+  <p><strong>Must produce:</strong></p>
+  <ul>
+    <li>All of the following available in the namespace:
+      <ul>
+        <li><code>numpy</code> (as <code>np</code>) — numerical arrays and operations</li>
+        <li><code>matplotlib.pyplot</code> (as <code>plt</code>) — plotting and visualization</li>
+        <li><code>cosine_similarity</code> from <code>sklearn.metrics.pairwise</code> — comparing feature vectors</li>
+        <li><code>TSNE</code> from <code>sklearn.manifold</code> — dimensionality reduction for visualization</li>
+        <li><code>hog</code> from <code>skimage.feature</code> — computing HOG descriptors</li>
+        <li><code>rgb2gray</code> from <code>skimage.color</code> — converting to grayscale</li>
+        <li><code>transform</code> from <code>skimage</code> — image resizing</li>
+        <li><code>preprocess_input</code> from <code>tensorflow.keras.applications.mobilenet_v2</code> — applying MobileNetV2&rsquo;s preprocessing normalization</li>
+        <li><code>Counter</code> and <code>defaultdict</code> from <code>collections</code> — data aggregation</li>
+      </ul>
+    </li>
+    <li><code>feature_model</code>: Call <code>tf.keras.applications.MobileNetV2()</code> with the arguments: <code>include_top=False</code> (removes the classification head, leaving only the convolutional feature-extraction layers), <code>weights='imagenet'</code> (uses weights pre-trained on ImageNet&rsquo;s 1.2 million images), <code>pooling='avg'</code> (applies global average pooling to collapse the spatial dimensions into one vector per image), and <code>input_shape=(224, 224, 3)</code> (MobileNetV2&rsquo;s standard input size). This outputs a single 1,280-dimensional vector per image. Check the output dimension by accessing <code>feature_model.output_shape</code> — it should be <code>(None, 1280)</code>.</li>
+    <li>Printed output: the model name (&ldquo;MobileNetV2&rdquo;), the embedding dimension (1,280), and a note comparing this to the HOG vector length from Module 2 (1,568 for 64&times;64 images).</li>
+  </ul>
+
+  <p><strong>Notes:</strong> The <code>pooling='avg'</code> parameter applies global average pooling after the final convolutional block. Without it, the output would be a 7&times;7&times;1280 spatial tensor; with it, you get a simple vector. All required packages are pre-installed in Colab. No <code>!pip install</code> needed.</p>
+</div>
+
+<!-- CELL 2A -->
+<pre># Cell 2A: Load CIFAR-10  (use this OR Cell 2B, not both)</pre>
+<div class="section-card">
+  <p><strong>What it does:</strong> Loads the CIFAR-10 training set via Keras, takes a fixed number of images per class, and displays a sample grid. Same structure as Module 2 Cell 2A.</p>
+
+  <p><strong>Takes in:</strong> Nothing external.</p>
+
+  <p><strong>Must produce:</strong></p>
+  <ul>
+    <li><code>N_PER_CLASS</code>: integer, value <code>15</code>.</li>
+    <li><code>images</code>: numpy array, shape <code>(150, 32, 32, 3)</code>, dtype <code>uint8</code>. Load the CIFAR-10 training set by calling <code>tf.keras.datasets.cifar10.load_data()</code>, which returns <code>(x_train, y_train)</code>, <code>(x_test, y_test)</code>. Use only the training set. To build this array: loop over each class index from 0 to 9, find all positions in <code>y_train</code> where the label equals that class, slice the first <code>N_PER_CLASS</code> images from <code>x_train</code> at those positions, and append them to a running list in class order. Convert the final list to a numpy array. This ensures the same 150 images as Module 2, in the same order.</li>
+    <li><code>img_labels</code>: Python list of integers, length 150. Build this in parallel with <code>images</code> by appending the class label for each image as you loop through classes and images.</li>
+    <li><code>img_names</code>: Python list of strings, length 150. The CIFAR-10 class names in order are <code>['airplane', 'automobile', 'bird', 'cat', 'deer', 'dog', 'frog', 'horse', 'ship', 'truck']</code>. Build this list by appending the class name 15 times for each of the 10 classes, in class order.</li>
+    <li>A displayed 2&times;5 grid of sample images, one per class, with class name as title.</li>
+  </ul>
+
+  <p><strong>Notes:</strong> Use the same loading code as Module 2 so you get the same images. Same class ordering, same <code>N_PER_CLASS</code>. The point is a controlled comparison: same images, different features.</p>
+</div>
+
+<!-- CELL 2B -->
+<pre># Cell 2B: Load your own images  (use this OR Cell 2A, not both)</pre>
+<div class="section-card">
+  <p><strong>What it does:</strong> Walks a directory of category subfolders, loads each image, and displays one sample per category. Same structure as Module 2 Cell 2B.</p>
+
+  <p><strong>Takes in:</strong> Image files organized under <code>/content/images/&lt;category&gt;/&lt;filename&gt;</code>.</p>
+
+  <p><strong>Must produce:</strong></p>
+  <ul>
+    <li>Use <code>os.walk('/content/images/')</code> to traverse the directory. The first-level subdirectories are category folders. Sort the list of category names for consistent ordering. For each category folder, use <code>skimage.io.imread()</code> or <code>PIL.Image.open()</code> (converting to numpy array) to load each image file. Append each image, its integer label (0 for the first category, 1 for the second, etc.), and the category name (the subfolder name) to running lists.</li>
+    <li><code>images</code>: Python list of numpy arrays (uint8 or float32, depending on your loader). One array per image file.</li>
+    <li><code>img_labels</code>: Python list of integers. Parallel to <code>images</code>; each entry is the category index (0–N_CATEGORIES).</li>
+    <li><code>img_names</code>: Python list of strings. Parallel to <code>images</code>; each entry is the category folder name (the category label).</li>
+    <li><code>N_PER_CLASS</code>: integer. Compute this after loading by finding the maximum number of images in any single category. This helps you understand the class balance of your dataset.</li>
+    <li>A displayed row of sample images, one per category, with category name as title.</li>
+  </ul>
+
+  <p><strong>Notes:</strong> Use the same image set as Module 2 for a controlled comparison.</p>
+</div>
+
+<!-- ==================== PART 2: EXTRACT EMBEDDINGS ==================== -->
+<h2>Part 2: Extract Embeddings</h2>
+
+<!-- CELL 3 -->
+<pre># Cell 3: Preprocess and extract MobileNetV2 embeddings</pre>
+<div class="section-card">
+  <p><strong>What it does:</strong> Resizes every image to 224&times;224 (MobileNetV2&rsquo;s expected input size), applies the model&rsquo;s preprocessing function, passes the batch through the network, and stores the output embeddings. Prints the shape and a sample vector.</p>
+
+  <p><strong>Takes in:</strong> <code>feature_model</code>, <code>images</code>, <code>preprocess_input</code> (from Cells 1&ndash;2).</p>
+
+  <p><strong>Must produce:</strong></p>
+  <ul>
+    <li>For each image in <code>images</code>, resize it to <code>(224, 224)</code> using <code>tf.image.resize(image, (224, 224))</code> or <code>skimage.transform.resize(image, (224, 224))</code>. If using TensorFlow, call <code>.numpy()</code> on the result to convert to a numpy array. Collect all resized images into a single numpy array of shape <code>(n_images, 224, 224, 3)</code> with dtype float32.</li>
+    <li>Apply <code>preprocess_input(batch_array)</code> to the entire batch. This function scales pixel values to the range that MobileNetV2&rsquo;s pre-trained weights expect (typically centered around zero, with a standard deviation of roughly 1). Do not apply preprocessing to individual images one at a time — preprocess the whole batch array.</li>
+    <li>Call <code>feature_model.predict(preprocessed_batch, verbose=0)</code> on the entire preprocessed batch. This is much faster than calling <code>predict()</code> on individual images. The output is a numpy array of shape <code>(n_images, 1280)</code>.</li>
+    <li><code>embed_matrix</code>: numpy array, shape <code>(n_images, 1280)</code>, dtype float32. This is the direct output from <code>feature_model.predict()</code>. Row <code>i</code> is the MobileNetV2 embedding vector for image <code>i</code>.</li>
+    <li>Printed output: (1) the matrix shape, (2) the first 10 values of <code>embed_matrix[0]</code> rounded to 4 decimal places, and (3) the percentage of zero values in the entire matrix, computed as <code>(embed_matrix == 0).mean() * 100</code>. (MobileNetV2 uses ReLU activations, which set negative values to zero, so sparsity is common.)</li>
+  </ul>
+
+  <p><strong>Notes:</strong> Batched prediction is critical for speed. For 150 CIFAR images, batched prediction takes about 5 seconds; doing it one image at a time would take much longer. Always build the full batch before calling <code>predict()</code>.</p>
+</div>
+
+<div class="tip">
+  <strong>Markdown cell:</strong> You just passed every image through a neural network that was trained on ImageNet (1.2 million images across 1,000 classes). The network learned to recognize dogs, cars, birds, and hundreds of other categories. Your images are from a different dataset. Why might features learned from ImageNet still be useful for images the network was never trained on? This idea is called transfer learning. Write 2&ndash;3 sentences explaining what you think transfers.
+</div>
+
+<!-- CELL 4 -->
+<pre># Cell 4: Recompute HOG for comparison</pre>
+<div class="section-card">
+  <p><strong>What it does:</strong> Runs the Module 2 HOG pipeline on the same images to create <code>hog_matrix</code>. This cell exists so both feature matrices are available in the same notebook for direct comparison. Uses the same HOG parameters as Module 2.</p>
+
+  <p><strong>Takes in:</strong> <code>images</code>, <code>hog</code>, <code>rgb2gray</code>, <code>transform</code> (from Cells 1&ndash;2).</p>
+
+  <p><strong>Must produce:</strong></p>
+  <ul>
+    <li><code>HOG_SIZE</code>: integer, value <code>64</code>. (Or <code>128</code> if you used custom high-resolution images in Module 2.)</li>
+    <li>For each image in <code>images</code>: (1) resize it to <code>(HOG_SIZE, HOG_SIZE)</code> using <code>skimage.transform.resize(image, (HOG_SIZE, HOG_SIZE))</code>, (2) convert to grayscale using <code>rgb2gray()</code>, then (3) compute the HOG descriptor by calling <code>hog(gray_image, orientations=8, pixels_per_cell=(8, 8), cells_per_block=(2, 2))</code>. This returns a 1D array of HOG features for that image. Collect all HOG descriptors into a list, then convert to a numpy array.</li>
+    <li><code>hog_matrix</code>: numpy array, shape <code>(n_images, n_hog_features)</code>. Row <code>i</code> is the HOG descriptor for image <code>i</code>. With the parameters above and 64&times;64 input images, each row has 1,568 features.</li>
+    <li>Printed comparison: HOG vector length (1,568) vs. MobileNetV2 embedding length (1,280), displayed side by side.</li>
+  </ul>
+
+  <p><strong>Notes:</strong> This is the same pipeline from Module 2 Cell 3. If you saved your Module 2 code, reuse it directly. Similar dimensionality (1,568 HOG vs. 1,280 embeddings), but very different information content.</p>
+</div>
+
+<!-- ==================== PART 3: THE COMPARISON ==================== -->
+<h2>Part 3: HOG vs. Learned Embeddings</h2>
+
+<!-- CELL 5 -->
+<pre># Cell 5: Side-by-side retrieval</pre>
+<div class="section-card">
+  <p><strong>What it does:</strong> Defines a retrieval function parameterized by feature matrix, runs 3 queries with both HOG and MobileNetV2 embeddings, and displays paired image grids: HOG results on top, embedding results below, same query image.</p>
+
+  <p><strong>Takes in:</strong> <code>hog_matrix</code>, <code>embed_matrix</code>, <code>images</code>, <code>img_names</code>, <code>N_PER_CLASS</code>, <code>cosine_similarity</code> (from earlier cells).</p>
+
+  <p><strong>Must produce:</strong></p>
+  <ul>
+    <li><code>find_similar(matrix, query_idx, n=5)</code>: a function that takes three arguments. <code>matrix</code> is a 2D feature array (either <code>hog_matrix</code> or <code>embed_matrix</code>). <code>query_idx</code> is the row index of the query image. <code>n</code> is the number of similar images to return (default 5). Inside the function: slice the query row as <code>matrix[query_idx:query_idx+1]</code> (keeping it 2D), compute <code>cosine_similarity()</code> between this single row and the full matrix, flatten the result to a 1D array, set the query&rsquo;s own score (at position <code>query_idx</code>) to <code>-1</code> so it won&rsquo;t be ranked, find the <code>n</code> indices with the highest scores using <code>np.argsort()` or similar, and return both the top indices and their corresponding scores, sorted highest-first.</li>
+    <li>Three displayed comparison figures, one per query image. Each figure has 2 rows and 6 columns. Row 0 (HOG): the query image in column 0 (titled &ldquo;QUERY&rdquo;), then the 5 most similar images according to HOG in columns 1&ndash;5. Row 1 (Embeddings): the same query image in column 0, then the 5 most similar images according to embeddings in columns 1&ndash;5. For each retrieved image, the title shows: (a) a checkmark (&rsquo;\u2713&rsquo;) if the retrieved image is the same class as the query, or an X (&rsquo;\u2717&rsquo;) if it&rsquo;s a different class, (b) the class name of the retrieved image, and (c) the cosine similarity score rounded to 2 decimal places. The figure supertitle identifies which query image is being shown.</li>
+  </ul>
+
+  <p><strong>Query indices:</strong> <code>0</code>, <code>N_PER_CLASS</code>, and <code>N_PER_CLASS * 2</code> (one from each of the first three classes).</p>
+
+  <p><strong>Notes:</strong> The function takes <code>matrix</code> as a parameter so the same function works for both <code>find_similar(hog_matrix, idx)</code> and <code>find_similar(embed_matrix, idx)</code>. Always slice the query row as <code>matrix[query_idx:query_idx+1]</code> to keep it 2D for <code>cosine_similarity()</code>. Use <code>figsize=(16, 6)</code> for each figure to give plenty of room for 12 images.</p>
+</div>
+
+<div class="tip">
+  <strong>Markdown cell:</strong> Compare the two rows in each figure. For the query where HOG and embeddings agree, what visual features do the matches share? For the query where they disagree, what did embeddings retrieve that HOG missed? Look specifically at whether the embedding results share object identity (same kind of thing) or just edge structure.
+</div>
+
+<!-- CELL 6 -->
+<pre># Cell 6: Full retrieval accuracy comparison</pre>
+<div class="section-card">
+  <p><strong>What it does:</strong> Loops over all images, checks whether the top-1 match is the same class, and computes per-class accuracy for both HOG and embeddings. Prints a comparison table with ASCII bar charts.</p>
+
+  <p><strong>Takes in:</strong> <code>find_similar</code>, <code>hog_matrix</code>, <code>embed_matrix</code>, <code>images</code>, <code>img_names</code>, <code>defaultdict</code> (from earlier cells).</p>
+
+  <p><strong>Must produce:</strong></p>
+  <ul>
+    <li>For each image index in the dataset: (1) call <code>find_similar(hog_matrix, idx, n=1)</code> to get the top-1 HOG match and its index, (2) call <code>find_similar(embed_matrix, idx, n=1)</code> to get the top-1 embedding match and its index, (3) for each result, check if <code>img_names[result_idx]</code> equals <code>img_names[idx]</code> (same class), and (4) record whether it was correct or not, grouped by the query image&rsquo;s class.</li>
+    <li><code>hog_acc</code>: a <code>defaultdict(lambda: {'correct': 0, 'total': 0})</code> keyed by class name. For each query image&rsquo;s class, track how many HOG top-1 retrievals were correct.</li>
+    <li><code>embed_acc</code>: same structure as <code>hog_acc</code>, but for embedding top-1 retrievals.</li>
+    <li>Printed table: one row per class. For each class, display: (a) class name, (b) HOG accuracy as a percentage (correct / total * 100), (c) embedding accuracy as a percentage, (d) ASCII bar for HOG using 20 &rsquo;\u2588&rsquo; blocks scaled to the percentage, and (e) ASCII bar for embeddings using 20 &rsquo;\u2591&rsquo; blocks (or similar) scaled to its percentage. Below the table: overall HOG accuracy (all correct / all total), overall embedding accuracy, and the improvement as both a raw percentage point difference and a relative percentage improvement.</li>
+  </ul>
+
+  <p><strong>Notes:</strong> Call <code>find_similar()</code> with <code>n=1</code> to get only the top match. Compare class names, not indices, using <code>img_names</code>. The overall accuracy is the sum of all correct retrievals divided by the total number of queries, not an average of per-class accuracies.</p>
+</div>
+
+<div class="tip">
+  <strong>Markdown cell:</strong> Which classes improved the most? Which improved the least (or got worse)? For the class with the biggest improvement, explain what visual information the network captures that HOG gradient histograms cannot. For any class where HOG performed comparably, what does that tell you about that class&rsquo;s visual structure?
+</div>
+
+<!-- CELL 7 -->
+<pre># Cell 7: What embeddings fixed</pre>
+<div class="section-card">
+  <p><strong>What it does:</strong> Finds specific image pairs where HOG retrieved the wrong class but embeddings retrieved the correct class. Displays up to 3 of these "fixed" cases as image triplets: the query, HOG&rsquo;s wrong match, and embedding&rsquo;s correct match.</p>
+
+  <p><strong>Takes in:</strong> <code>find_similar</code>, <code>hog_matrix</code>, <code>embed_matrix</code>, <code>images</code>, <code>img_names</code> (from earlier cells).</p>
+
+  <p><strong>Must produce:</strong></p>
+  <ul>
+    <li>For each image index: (1) call <code>find_similar(hog_matrix, idx, n=1)</code> and <code>find_similar(embed_matrix, idx, n=1)</code> to get the top matches, (2) check if HOG&rsquo;s result is the wrong class AND embeddings&rsquo; result is the correct class, (3) if so, record the query index, query class, HOG match index, HOG match class, embeddings match index, and embeddings match class. Collect all such cases into a list, then sort by the HOG match&rsquo;s cosine score in descending order (highest score first), so the most confident HOG failures appear first.</li>
+    <li><code>fixed_cases</code>: Python list of dicts. Each dict contains: <code>{'query_idx': int, 'query_class': str, 'hog_match': int, 'hog_class': str, 'hog_score': float, 'embed_match': int, 'embed_class': str}</code>. Only cases where HOG was wrong and embeddings were right, sorted by HOG confidence descending.</li>
+    <li>Printed count: how many total cases were found.</li>
+    <li>A matplotlib figure displaying up to 3 of these fixed cases. Each case occupies one row with 3 columns: (1) query image with title &ldquo;Query: {class}&rdquo;, (2) HOG&rsquo;s wrong match with title &ldquo;HOG: {class} \u2717&rdquo;, (3) embeddings&rsquo; correct match with title &ldquo;Embed: {class} \u2713&rdquo;. Use 3 rows and 3 columns total (<code>figsize=(12, 8)</code>).</li>
+  </ul>
+
+  <p><strong>Notes:</strong> Sort by HOG cosine score descending to surface the most confident HOG failures first. Limit display to 3 rows to keep the figure readable. If there are no fixed cases, print a note and skip the figure.</p>
+</div>
+
+<div class="tip">
+  <strong>Markdown cell:</strong> For each displayed case, explain what the network sees that HOG cannot. Think about: color, texture, object parts, spatial arrangement, semantic category. Which of these does HOG explicitly throw away (by design), and which does it keep but fail to use effectively?
+</div>
+
+<!-- CELL 8 -->
+<pre># Cell 8: What embeddings still get wrong</pre>
+<div class="section-card">
+  <p><strong>What it does:</strong> Finds cases where embeddings also retrieve the wrong class. These are the harder visual similarity problems. Displays up to 3 embedding failures with the query and the wrong match side by side.</p>
+
+  <p><strong>Takes in:</strong> <code>find_similar</code>, <code>embed_matrix</code>, <code>images</code>, <code>img_names</code> (from earlier cells).</p>
+
+  <p><strong>Must produce:</strong></p>
+  <ul>
+    <li>For each image index: (1) call <code>find_similar(embed_matrix, idx, n=1)</code>, (2) check if the embedding top-1 match&rsquo;s class differs from the query&rsquo;s class, (3) if so, record the query index, query class, match index, match class, and the cosine score. Collect all such mismatches into a list, then sort by cosine score in descending order (highest score first), so the most confident wrong predictions appear first.</li>
+    <li><code>embed_failures</code>: Python list of dicts. Each dict contains: <code>{'query_idx': int, 'query_class': str, 'match_idx': int, 'match_class': str, 'score': float}</code>. Only cases where the embedding top-1 match is a different class, sorted by score descending.</li>
+    <li>Printed count: total number of embedding failures and the failure rate as a percentage (failures / total images * 100).</li>
+    <li>A matplotlib figure showing up to 3 failure pairs. Each case occupies one row with 2 columns: (1) query image on the left with title &ldquo;Query: {class}&rdquo;, (2) the wrong embedding match on the right with title &ldquo;Wrong: {class} \u2717 (score: {score:.2f})&rdquo;. Use 3 rows and 2 columns total (<code>figsize=(10, 12)</code>).</li>
+  </ul>
+
+  <p><strong>Notes:</strong> Common failure modes include: similar textures across categories (water in a ship vs. water in a nature scene), similar shapes (a ball vs. a fruit), or images where the background dominates the foreground object. Sort by cosine score descending to show the most confident errors first. If there are no embedding failures, print a note like &ldquo;No embedding failures found!&rdquo; and skip the figure.</p>
+</div>
+
+<div class="tip">
+  <strong>Markdown cell:</strong> Look at the remaining failures. These images fooled a network trained on 1.2 million examples. Describe what the two images share that confused the model. Is it color, texture, shape, background, or something else? What additional information would a model need to tell them apart?
+</div>
+
+<!-- CELL 9 -->
+<pre># Cell 9: Dual t-SNE visualization</pre>
+<div class="section-card">
+  <p><strong>What it does:</strong> Reduces both the HOG feature matrix and the MobileNetV2 embedding matrix to 2 dimensions using t-SNE, then displays them as side-by-side scatter plots colored by class.</p>
+
+  <p><strong>Takes in:</strong> <code>hog_matrix</code>, <code>embed_matrix</code>, <code>img_names</code>, <code>TSNE</code> (from earlier cells).</p>
+
+  <p><strong>Must produce:</strong></p>
+  <ul>
+    <li>Create a <code>TSNE</code> instance with <code>n_components=2</code>, <code>random_state=42</code>, and <code>perplexity=15</code>. Call <code>.fit_transform(hog_matrix)</code> on the HOG matrix; this returns a numpy array of shape <code>(n_images, 2)</code>. Name this <code>hog_2d</code>.</li>
+    <li>Create another <code>TSNE</code> instance with the same parameters. Call <code>.fit_transform(embed_matrix)</code> to get <code>embed_2d</code>, also shape <code>(n_images, 2)</code>.</li>
+    <li><code>hog_2d</code>: numpy array, shape <code>(n_images, 2)</code>. Column 0 is the first t-SNE dimension, column 1 is the second.</li>
+    <li><code>embed_2d</code>: numpy array, shape <code>(n_images, 2)</code>. Same structure as <code>hog_2d</code>.</li>
+    <li>A matplotlib figure with 1 row and 2 columns (<code>figsize=(14, 6)</code>). Left subplot: scatter plot of <code>hog_2d</code>, titled &ldquo;HOG Feature Space&rdquo;. Right subplot: scatter plot of <code>embed_2d</code>, titled &ldquo;MobileNetV2 Embedding Space&rdquo;. For each subplot: use <code>ax.scatter()</code> with x as column 0 and y as column 1 of the t-SNE result. Assign each point a color based on its class (from <code>img_names</code>) using a color dictionary. Create a shared legend showing all unique classes and their colors, placed outside the subplots. Figure supertitle: &ldquo;Hand-Crafted vs. Learned Feature Spaces&rdquo;.</li>
+  </ul>
+
+  <p><strong>Notes:</strong> Use <code>perplexity=15</code> for 150 points. If your dataset is smaller (e.g., 50 images), reduce perplexity to 5 or 10. Assign consistent colors using a dictionary mapping class names to hex color strings (e.g., <code>{'cat': '#FF6B6B', 'dog': '#4ECDC4', ...}</code>). The embedding t-SNE plot typically shows tighter, more separated clusters than HOG. If a class that was scattered in the HOG plot becomes tightly clustered in the embedding plot, that class benefited most from learned features.</p>
+</div>
+
+<div class="tip">
+  <strong>Markdown cell 1:</strong> Compare the two plots. Find one class that was scattered in HOG space but tight in embedding space. What visual property makes that class hard for gradient histograms but easy for a neural network?
+</div>
+
+<div class="tip">
+  <strong>Markdown cell 2:</strong> Find two classes that overlap in both plots. Why does even a pre-trained network struggle to separate them? What would you need (more data, a different architecture, a different task) to fix this?
+</div>
+
+<!-- ========== PRESENTATION PREP ========== -->
+<h2>Presentation Prep</h2>
+
+<div class="section-card">
+  <p>Your notebook is your presentation. There is no separate written reflection. Your presentation serves as the reflection.</p>
+  <p>In three to five minutes, walk the class through:</p>
+  <p data-concurrent="true" style="font-size:0.9em; color:#5e35b1;"><strong>Dual-enrolled students:</strong> Your presentation covers both the CV and NLP labs in one 5&ndash;7 minute presentation. See the combined lab for guidance.</p>
+  <ol>
+    <li><strong>The side-by-side retrieval:</strong> Show one query from Cell 5 where HOG and embeddings returned different results. Explain what the network sees that gradient histograms miss.</li>
+    <li><strong>The accuracy table:</strong> Show the per-class comparison from Cell 6. Point to the biggest improvement and explain why that class benefited most from learned features.</li>
+    <li><strong>The remaining failures:</strong> Show one embedding failure from Cell 8. What fooled the network? What would it need to get this right?</li>
+  </ol>
+  <p>See the assignment sheet for submission details and the rubric.</p>
+</div>
+
+<!-- ========== BRIDGE BOX ========== -->
+<div class="bridge-box" data-concurrent="true">
+  <strong>Taking AIML 2003 too?</strong> This week, NLP students are generating text embeddings from a pre-trained sentence transformer and comparing them against TF-IDF. The parallel is direct: both courses replace hand-crafted feature vectors with learned representations, and both use cosine similarity to measure closeness. If you&rsquo;re doing the combined lab, you&rsquo;re building both pipelines in one notebook and presenting the comparison. See the combined lab sheet for instructions.
+</div>
+
+</body>
+</html>

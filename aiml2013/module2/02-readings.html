@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Module 2 Readings: Hand-Crafted Features — HOG | AIML 2013</title>
+<link rel="stylesheet" href="../../course-styles.css">
+</head>
+<body>
+
+<h1>Module 2: Hand-Crafted Features</h1>
+<p class="subtitle">Readings &amp; Prep: Complete before Tuesday, April 7</p>
+
+<div class="time-box">
+  <strong>Estimated prep time:</strong> ~2 hours 30 minutes (required materials). One optional source for those who want the original paper. All materials are free.
+</div>
+
+<!-- ========== FRAMING ========== -->
+<div class="framing-box">
+  <p><strong>The big picture:</strong> Before deep learning, computer vision ran on features that researchers designed by hand. Raw pixels are a poor representation. Two photos of the same dog look completely different as pixel arrays depending on lighting, angle, and background. Researchers solved this by computing something more structured: edges, their orientations, and how they cluster across local regions of the image.</p>
+  <p style="margin-top:0.5rem;">The Histogram of Oriented Gradients (HOG) is the clearest example of this approach. It converts an image into a vector that encodes gradient orientations across a fixed grid of cells, throwing away color and exact pixel positions, keeping shape and local texture. That vector can be compared to other images using cosine similarity. This week's lab is built on this idea: compute HOG descriptors, compare vectors, and find out exactly where the approach works and where it breaks down.</p>
+</div>
+
+<!-- ========== NOTEBOOKLM REMINDER ========== -->
+<div class="nlm-box">
+  <strong>NotebookLM tip:</strong> Upload the Szeliski sections to a Module 2 notebook. Ask questions like "What is the difference between HOG cells and blocks?", "Why does HOG normalize at the block level?", or "What aspects of an image does HOG fail to capture?" The Audio Overview feature is good preparation before Thursday lab.
+</div>
+
+<!-- ================================================================
+     REQUIRED READINGS & VIDEOS
+     ================================================================ -->
+<h2>Required Readings &amp; Videos</h2>
+<p>Start with the pixel histogram demo — it shows what raw image data actually looks like before HOG transforms it. Then work through the Szeliski sections in order; the Computerphile video reinforces the second one.</p>
+
+<div class="resource-card">
+  <div class="resource-header">
+    <span class="resource-title">Pixel Histograms: How Machines See Light (Interactive Demo)</span>
+    <span class="tag tag-required">Required</span>
+    <span class="tag tag-interactive">Interactive</span>
+    <span class="tag tag-time">~10 min</span>
+  </div>
+  <p class="resource-meta">Dan Lovejoy &bull; AIML 2013</p>
+  <p class="resource-desc">Upload any photo and watch how the pixel value distribution shifts as you apply different transformations: color channels, grayscale, black and white thresholding, low-resolution downsampling, and histogram equalization. Each mode shows a live labeled histogram with mean, standard deviation, and dynamic range. This is the representation HOG starts from — understanding what a flat or skewed histogram means is step one in diagnosing a weak feature extractor.</p>
+  <div class="focus-box">
+    <strong>What to notice:</strong> Try the Equalized mode on a dark image. Notice how the histogram stretches — and what that does to noise. Then switch to Low-Res and watch how the histogram shape barely changes even as the image becomes blocky. The distribution of values is preserved even when spatial detail is lost.
+  </div>
+  <p class="resource-link">
+    <a href="https://danhlovejoy.github.io/rose-build/slides/pixel-histogram-demo.html" target="_blank">Open: Pixel Histogram Demo &rarr;</a>
+  </p>
+</div>
+
+<div class="resource-card">
+  <div class="resource-header">
+    <span class="resource-title">Szeliski §6.2.3: Application — Visual Similarity Search</span>
+    <span class="tag tag-required">Required</span>
+    <span class="tag tag-read">Read</span>
+    <span class="tag tag-time">~15 min</span>
+  </div>
+  <p class="resource-meta">Computer Vision: Algorithms and Applications, 2nd Ed. — pp. 360–363</p>
+  <p class="resource-desc">Establishes why feature vectors matter for image retrieval: comparing raw pixels is brittle, but comparing compact descriptors enables scalable similarity search. This section frames the retrieval task you'll build in Thursday's lab. Read it before the HOG section — it tells you what problem HOG is solving.</p>
+  <p class="resource-link">
+    <a href="https://szeliski.org/Book/" target="_blank">Read: Szeliski Online (free) &rarr;</a>
+  </p>
+</div>
+
+<div class="resource-card">
+  <div class="resource-header">
+    <span class="resource-title">Szeliski §6.3.2: Pedestrian Detection — HOG</span>
+    <span class="tag tag-required">Required</span>
+    <span class="tag tag-read">Read</span>
+    <span class="tag tag-time">~20 min</span>
+  </div>
+  <p class="resource-meta">Computer Vision: Algorithms and Applications, 2nd Ed. — pp. 376–379</p>
+  <p class="resource-desc">The textbook's description of HOG: how gradient orientations are accumulated into cells, how cells are grouped into blocks for normalization, and how the descriptor captures shape in a way that's relatively invariant to illumination changes. Figure 6.23 in particular shows the HOG descriptor visualized on a test image — study each panel (a) through (g) before class.</p>
+  <p class="resource-link">
+    <a href="https://szeliski.org/Book/" target="_blank">Read: Szeliski Online (free) &rarr;</a>
+  </p>
+  <div class="focus-box">
+    <strong>Focus on:</strong> Why cells accumulate orientation votes weighted by gradient magnitude. Why blocks normalize over multiple cells. What the descriptor's dimensionality depends on. The relationship between HOG and the SIFT descriptor mentioned in the same passage.
+  </div>
+</div>
+
+<div class="resource-card">
+  <div class="resource-header">
+    <span class="resource-title"> HOG — Histogram of Oriented Gradients (HOG)</span>
+    <span class="tag tag-required">Required</span>
+    <span class="tag tag-video">Video</span>
+    <span class="tag tag-time">~13 min</span>
+  </div>
+  <p class="resource-meta">Professor Ryan Ahmed &bull; YouTube</p>
+  <p class="resource-desc">Ryan Ahmed gives us a concise description of how HOGs work. Don't worry too much about the math.</p>
+  <p class="resource-link">
+    <a href="https://www.youtube.com/watch?v=XmO0CSsKg88" target="_blank">Watch: HOG on YouTube &rarr;</a>
+  </p>
+</div>
+
+<div class="resource-card">
+  <div class="resource-header">
+    <span class="resource-title">scikit-image: HOG Feature Descriptor Example</span>
+    <span class="tag tag-required">Required</span>
+    <span class="tag tag-read">Read</span>
+    <span class="tag tag-time">~10 min</span>
+  </div>
+  <p class="resource-meta">scikit-image.org — Documentation</p>
+  <p class="resource-desc">The function reference and gallery example for the exact HOG implementation you'll use in Thursday's lab. Read the parameter list: <code>orientations</code>, <code>pixels_per_cell</code>, <code>cells_per_block</code>, <code>visualize</code>. These map directly to the algorithm steps in Szeliski. The example shows how to extract and display a HOG descriptor on an image — the same visualization your lab produces in Cell 4.</p>
+  <p class="resource-link">
+    <a href="https://scikit-image.org/docs/stable/auto_examples/features_detection/plot_hog.html" target="_blank">Read: HOG Example — scikit-image &rarr;</a>
+  </p>
+</div>
+
+<!-- ================================================================
+     HOG DEMO
+     ================================================================ -->
+<div class="resource-card">
+  <div class="resource-header">
+    <span class="resource-title">HOG Feature Extraction (Interactive Demo)</span>
+    <span class="tag tag-required">Required</span>
+    <span class="tag tag-interactive">Interactive</span>
+    <span class="tag tag-time">~10 min</span>
+  </div>
+  <p class="resource-meta">Dan Lovejoy &bull; AIML 2013</p>
+  <p class="resource-desc">Upload an image and watch the HOG descriptor computed in real time. Adjust cell size, number of orientation bins, and block normalization — the visualization updates immediately. This is the same pipeline your lab runs in code, shown step by step: from raw pixels to gradient magnitude and orientation, to cell histograms, to the final descriptor.</p>
+  <div class="focus-box">
+    <strong>What to notice:</strong> Try increasing cell size — the descriptor captures coarser shape but loses fine detail. Try a low-texture image (solid wall, clear sky) and watch the orientation bins flatten. That's the failure mode your lab's failure analysis asks you to explain.
+  </div>
+  <p class="resource-link">
+    <a href="https://danhlovejoy.github.io/rose-build/slides/hog-demo.html" target="_blank">Open: HOG Demo &rarr;</a>
+  </p>
+</div>
+
+<!-- ================================================================
+     PREVIEW: COSINE SIMILARITY
+     ================================================================ -->
+<h2>Preview: Cosine Similarity</h2>
+<p>The lab compares HOG vectors using cosine similarity. This is a short but essential concept to have before Thursday.</p>
+
+<div class="resource-card">
+  <div class="resource-header">
+    <span class="resource-title">3Blue1Brown: Dot Products and Duality | Ch. 9, Essence of Linear Algebra</span>
+    <span class="tag tag-required">Required</span>
+    <span class="tag tag-video">Video</span>
+    <span class="tag tag-time">~14 min</span>
+  </div>
+  <p class="resource-meta">3Blue1Brown (Grant Sanderson) &bull; YouTube</p>
+  <p class="resource-desc">Cosine similarity is the dot product of two unit vectors. This video gives you the geometric intuition: why the dot product measures the alignment of two vectors, and what that alignment means. Watch the first 8 minutes for the core idea. The animation makes the concept click in a way that a formula alone doesn't.</p>
+  <p class="resource-link">
+    <a href="https://www.youtube.com/watch?v=LyGKycYT2v0" target="_blank">Watch: Dot Products on YouTube &rarr;</a>
+  </p>
+  <div class="focus-box">
+    <strong>The key connection:</strong> A HOG descriptor is a vector. Two images with similar HOG vectors have a high cosine similarity score. "Similar vectors" means "similar gradient distributions" means "similar visual structure." That chain is the entire logic of the lab's retrieval system.
+  </div>
+</div>
+
+<div class="resource-card">
+  <div class="resource-header">
+    <span class="resource-title">Cosine Similarity: Measuring How Alike Two Things Are (Interactive Demo)</span>
+    <span class="tag tag-required">Required</span>
+    <span class="tag tag-interactive">Interactive</span>
+    <span class="tag tag-time">~10 min</span>
+  </div>
+  <p class="resource-meta">Dan Lovejoy &bull; AIML 2003 / AIML 2013</p>
+  <p class="resource-desc">This demo puts the 3Blue1Brown geometry into practice with HOG vectors directly. Stage 3 lets you compare synthetic HOG-like feature vectors for image pairs and watch the cosine similarity score change as the gradient patterns diverge. Stage 4 shows a full similarity matrix across six images: the same structure your lab builds in Cell 3. Work through Stages 1 through 4 before Thursday.</p>
+  <div class="focus-box">
+    <strong>What to notice:</strong> Stage 5 ("When Cosine Similarity Fails") shows the bicycle wheel vs. clock case — two images with high HOG similarity that are semantically unrelated. This is the failure mode your failure analysis section asks you to find and explain in your own data.
+  </div>
+  <p class="resource-link">
+    <a href="https://danhlovejoy.github.io/rose-build/slides/cosine-similarity-demo.html" target="_blank">Open: Cosine Similarity Demo &rarr;</a>
+  </p>
+</div>
+
+<!-- ================================================================
+     OPTIONAL
+     ================================================================ -->
+<h2>Optional: The Original Paper</h2>
+
+<div class="resource-card optional">
+  <div class="resource-header">
+    <span class="resource-title">Dalal &amp; Triggs (2005): Histograms of Oriented Gradients for Human Detection</span>
+    <span class="tag tag-optional">Optional</span>
+    <span class="tag tag-read">Read</span>
+    <span class="tag tag-time">~45 min</span>
+  </div>
+  <p class="resource-meta">Navneet Dalal &amp; Bill Triggs &bull; CVPR 2005 &bull; INRIA</p>
+  <p class="resource-desc">The paper that introduced HOG. Sections 2–3 walk through the algorithm in the same terms as Szeliski's summary. The value for this course is in Sections 4–5: the ablation study systematically tests each design choice (cell size, orientation bins, normalization scheme) and reports the accuracy effect of changing them. The lab's bonus section asks you to reproduce this kind of analysis in code.</p>
+  <p class="resource-link">
+    <a href="https://inria.hal.science/inria-00548512/document" target="_blank">Read: Dalal &amp; Triggs 2005 (PDF) &rarr;</a>
+  </p>
+</div>
+
+<hr>
+
+<!-- ========== DISCUSSION PREP ========== -->
+<div class="discussion-box">
+  <strong>Discussion questions for class:</strong>
+  <ol>
+    <li>Raw pixel values and HOG descriptors are both representations of the same image. What information does HOG preserve that raw pixels don't, and what does it discard?</li>
+    <li>HOG divides the image into a fixed grid of cells and bins gradient orientations within each cell. What do you expect to happen to retrieval accuracy if you make cells much larger? Much smaller?</li>
+    <li>Cosine similarity measures the angle between two vectors, not their magnitude. Why is angle a better measure than Euclidean distance for comparing HOG descriptors?</li>
+    <li>HOG was state-of-the-art for pedestrian detection in 2005. By 2012 it was largely superseded by deep networks. What problem does a CNN solve that HOG cannot?</li>
+  </ol>
+</div>
+
+<!-- ========== BRIDGE BOX ========== -->
+<div class="bridge-box" data-concurrent="true">
+  <strong>Bridge to NLP (AIML 2003):</strong> NLP students this week are building TF-IDF vectors — another form of explicit feature engineering that transforms raw text into a fixed-length numerical vector before any classification. HOG does for images what TF-IDF does for text: both discard irrelevant variation (pixel noise, common words), keep meaningful structure (gradient orientations, distinctive word distributions), and produce vectors that enable comparison via cosine similarity. In Week 4, both courses replace these hand-crafted representations with learned embeddings.
+</div>
+
+</body>
+</html>

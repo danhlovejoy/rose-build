@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lab 1: Edge Detection &amp; Blurring Kernels | AIML 2013</title>
+<link rel="stylesheet" href="../../course-styles.css">
+</head>
+<body>
+
+<h1>Lab 1: Edge Detection &amp; Blurring Kernels</h1>
+<p class="subtitle">Apply spatial filters to images and see how computers extract features from raw pixel data.</p>
+
+<div class="section-card">
+  <h3>The Task</h3>
+  <p>In the readings and in class, you learned that images are multidimensional arrays of numbers. Now you'll learn how to <strong>transform</strong> those arrays using small matrices called <strong>kernels</strong>. A blurring kernel smooths out noise. An edge-detection kernel finds boundaries between objects. These are the building blocks of every vision pipeline &mdash; from Instagram filters to self-driving cars to medical imaging.</p>
+  <p>You'll apply blurring filters, edge detectors, and experiment with kernel sizes, then reflect on what the filters reveal about how machines "see."</p>
+</div>
+
+<h2>Choose Your Image</h2>
+
+<div class="section-card">
+  <h3>What to pick</h3>
+  <p>Choose a photograph with clear structure: distinct objects, edges, and texture. Good examples include architecture, landscapes with horizons, close-ups of everyday objects, or portraits. Avoid images that are already blurry, underexposed, or pure graphics.</p>
+  <ul>
+    <li><strong>Color:</strong> Use a color image (RGB). You'll convert to grayscale as part of the lab.</li>
+    <li><strong>Source:</strong> Your own photograph, or a freely licensed image from <a href="https://unsplash.com" target="_blank">Unsplash</a> or <a href="https://commons.wikimedia.org" target="_blank">Wikimedia Commons</a>.</li>
+  </ul>
+
+  <p><strong>Don't worry about size yet.</strong> Phone cameras and stock photo sites produce huge images. Cell 3 in the code scaffold will resize it for you automatically.</p>
+</div>
+
+<h2>Code Scaffold</h2>
+
+<div class="warning">
+  <strong>Training wheels alert:</strong> This code scaffold is here to get you started. In later labs, you won't have one &mdash; you'll be writing your own code from scratch, using Gemini or another AI assistant to help you build it. So don't just copy-paste and run. Read each cell, understand what it does, and experiment with changing things. The more comfortable you get now, the easier it will be when the training wheels come off.
+</div>
+
+<div class="tip">
+  <strong>About displaying images:</strong> All images will display inline in your Colab notebook when you run each cell &mdash; you don't need to save them as separate files. When you save your notebook to GitHub, those inline outputs are preserved automatically. Just make sure to <strong>run all cells</strong> before your final save so the outputs are visible.
+</div>
+
+<pre># Cell 1: Setup &amp; imports
+# Run this cell first. If OpenCV isn't installed, uncomment the pip line.
+# !pip install opencv-python-headless -q
+
+import cv2
+import numpy as np
+import matplotlib.pyplot as plt
+from google.colab import files
+
+# Display helper — use this throughout the lab
+def show_images(images, titles, cols=3, figsize=(15, 5)):
+    """Display a row of images with titles."""
+    rows = (len(images) + cols - 1) // cols
+    fig, axes = plt.subplots(rows, cols, figsize=(figsize[0], figsize[1] * rows))
+    if rows == 1:
+        axes = [axes] if cols == 1 else axes
+    else:
+        axes = axes.flatten()
+    for i, (img, title) in enumerate(zip(images, titles)):
+        if len(img.shape) == 2:  # grayscale
+            axes[i].imshow(img, cmap='gray')
+        else:  # color
+            axes[i].imshow(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
+        axes[i].set_title(title, fontsize=10)
+        axes[i].axis('off')
+    for j in range(i + 1, len(axes)):
+        axes[j].axis('off')
+    plt.tight_layout()
+    plt.show()</pre>
+
+<pre># Cell 2: Load your image
+# Option A: Upload from your computer
+uploaded = files.upload()
+filename = list(uploaded.keys())[0]
+img = cv2.imread(filename)
+
+# Option B: Load from a URL (uncomment if you prefer)
+# import urllib.request
+# url = "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a7/Camponotus_flavomarginatus_ant.jpg/800px-Camponotus_flavomarginatus_ant.jpg"
+# urllib.request.urlretrieve(url, "sample.jpg")
+# img = cv2.imread("sample.jpg")
+
+# Inspect the original size
+print(f"Original size: {img.shape[1]}x{img.shape[0]} pixels, {img.shape[2]} channels")
+print(f"Dtype: {img.dtype}")     # uint8 (0-255)</pre>
+
+<pre># Cell 3: Resize your image
+# Phone cameras produce images that are thousands of pixels wide.
+# That's way more than we need and will make Colab slow.
+# This resizes so the longest side is ~800px, keeping the aspect ratio.
+
+max_dim = 800
+h, w = img.shape[:2]
+if max(h, w) > max_dim:
+    scale = max_dim / max(h, w)
+    img = cv2.resize(img, (int(w * scale), int(h * scale)))
+    print(f"Resized to: {img.shape[1]}x{img.shape[0]} pixels")
+else:
+    print(f"Image is already {w}x{h} — no resize needed")
+
+# Convert to grayscale — you'll need this for edge detection
+gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+
+show_images(
+    [img, gray],
+    [f"Color ({img.shape[1]}x{img.shape[0]})", f"Grayscale ({gray.shape[1]}x{gray.shape[0]})"],
+    cols=2, figsize=(12, 5)
+)</pre>
+
+<div class="tip">
+  <strong>Markdown cell after Cell 3:</strong> Describe your image. What did you choose and why? How big was it originally, and what size is it now after resizing? What structure (edges, textures, color gradients) do you expect the filters to pick up?
+</div>
+
+<h2>Part 1: Blurring Filters</h2>
+
+<p>Blurring smooths out variation between neighboring pixels. Each filter does this differently. Your job is to apply all three, display the results, and explain what's happening.</p>
+
+<pre># Cell 4: Apply three blur filters
+# Box blur — every pixel in the kernel has equal weight
+box = cv2.blur(img, (7, 7))
+
+# Gaussian blur — center pixel gets more weight, falls off like a bell curve
+gaussian = cv2.GaussianBlur(img, (7, 7), 0)
+
+# Median blur — replaces each pixel with the median of its neighbors
+# Especially good at removing "salt and pepper" noise
+median = cv2.medianBlur(img, 7)
+
+show_images(
+    [img, box, gaussian, median],
+    ["Original", "Box Blur (7×7)", "Gaussian Blur (7×7)", "Median Blur (7)"],
+    cols=4, figsize=(18, 5)
+)</pre>
+
+<div class="tip">
+  <strong>Markdown cell after Cell 4:</strong> What differences do you see between the three blur types? Can you see why Gaussian blur is more common than box blur? What's different about what median blur does vs. the other two? (Hint: look at what happens to edges.)
+</div>
+
+<h2>Part 2: Edge Detection</h2>
+
+<p>Edge detection finds places where pixel values change sharply &mdash; that's where the boundaries of objects are. You'll use two approaches: the Sobel operator (which detects edges in one direction at a time) and Canny (which combines multiple steps into a clean edge map).</p>
+
+<pre># Cell 5: Sobel edge detection
+# Sobel in the X direction — detects vertical edges
+sobel_x = cv2.Sobel(gray, cv2.CV_64F, 1, 0, ksize=3)
+sobel_x_abs = np.uint8(np.absolute(sobel_x))
+
+# Sobel in the Y direction — detects horizontal edges
+sobel_y = cv2.Sobel(gray, cv2.CV_64F, 0, 1, ksize=3)
+sobel_y_abs = np.uint8(np.absolute(sobel_y))
+
+# Combined magnitude
+sobel_combined = cv2.bitwise_or(sobel_x_abs, sobel_y_abs)
+
+show_images(
+    [gray, sobel_x_abs, sobel_y_abs, sobel_combined],
+    ["Grayscale", "Sobel X (vertical edges)", "Sobel Y (horizontal edges)", "Sobel Combined"],
+    cols=4, figsize=(18, 5)
+)</pre>
+
+<pre># Cell 6: Canny edge detection
+# Canny uses two thresholds to decide what counts as an "edge"
+# Low threshold: weak edges below this are discarded
+# High threshold: strong edges above this are kept
+# Edges between the two are kept only if connected to a strong edge
+
+canny = cv2.Canny(gray, threshold1=50, threshold2=150)
+
+show_images(
+    [gray, sobel_combined, canny],
+    ["Grayscale", "Sobel Combined", "Canny (50, 150)"],
+    cols=3, figsize=(15, 5)
+)</pre>
+
+<div class="tip">
+  <strong>Markdown cell after Cell 6:</strong> Compare Sobel X, Sobel Y, and the combined result. Why does the X kernel find vertical edges (not horizontal)? What does Canny give you that raw Sobel doesn't? Look at the Computerphile "Finding the Edges" video if you need a refresher on how Sobel works mathematically.
+</div>
+
+<h2>Part 3: Experiment with Kernel Size</h2>
+
+<p>The size of the kernel changes the filter's behavior dramatically. A small kernel detects fine detail. A large kernel smooths aggressively. Your job is to see this firsthand.</p>
+
+<pre># Cell 7: Kernel size comparison — Gaussian blur
+sizes = [3, 7, 15, 31]
+blurred = [cv2.GaussianBlur(img, (s, s), 0) for s in sizes]
+
+show_images(
+    [img] + blurred,
+    ["Original"] + [f"Gaussian {s}×{s}" for s in sizes],
+    cols=5, figsize=(20, 5)
+)</pre>
+
+<pre># Cell 8: Kernel size comparison — Canny edge detection
+# Blur first with different kernel sizes, then apply Canny
+# This shows how preprocessing affects edge detection
+
+edge_results = []
+edge_labels = []
+for s in [0, 3, 7, 15]:
+    if s == 0:
+        blurred_gray = gray  # no blur
+        label = "Canny (no blur)"
+    else:
+        blurred_gray = cv2.GaussianBlur(gray, (s, s), 0)
+        label = f"Blur {s}×{s} → Canny"
+    edges = cv2.Canny(blurred_gray, 50, 150)
+    edge_results.append(edges)
+    edge_labels.append(label)
+
+show_images(edge_results, edge_labels, cols=4, figsize=(18, 5))</pre>
+
+<div class="tip">
+  <strong>Markdown cell after Cell 8:</strong> How does kernel size affect the blur? At what point does the image become unrecognizable? For edge detection, what happens when you blur <em>before</em> detecting edges? Why might you <em>want</em> to blur before edge detection? (Hint: think about noise.)
+</div>
+
+<h2>Part 4: Creative Exploration (Bonus &mdash; 10 extra points)</h2>
+
+<p>This part is optional but worth <strong>10 extra credit points</strong>. Pick one (or make up your own):</p>
+
+<div class="section-card">
+  <ul>
+    <li><strong>Custom kernel:</strong> Define your own 3&times;3 kernel and apply it with <code>cv2.filter2D()</code>. Try a sharpening kernel: <code>np.array([[0,-1,0],[-1,5,-1],[0,-1,0]])</code>. What does it do?</li>
+    <li><strong>Noise then denoise:</strong> Add random noise to your image with <code>np.random.normal()</code>, then try to remove it with each of the three blur types. Which filter handles noise best?</li>
+    <li><strong>Compare images:</strong> Run the same filters on two contrasting images (e.g., a building vs. a face). Do the filters behave the same way?</li>
+  </ul>
+</div>
+
+<h2>Part 5: Prepare for Your Presentation</h2>
+
+<div class="section-card">
+  <p>Your notebook <em>is</em> your presentation. On Tuesday, you'll share your screen and walk the class through your work for 3&ndash;5 minutes. See the <strong>Week 2 Deliverables</strong> assignment sheet for the full presentation requirements and rubric.</p>
+  <p>Before you're done with this lab, make sure your notebook contains everything you want to show:</p>
+  <ul>
+    <li>Your best before-and-after images are clearly displayed and easy to find.</li>
+    <li>Your markdown cells explain what the kernels are doing &mdash; you'll talk through these live.</li>
+    <li>All cells are executed and outputs are visible. You don't want to re-run anything live unless you choose to.</li>
+  </ul>
+</div>
+
+<div class="tip">
+  <strong>Think of your notebook as your slide deck.</strong> A well-organized notebook with clear markdown headings, side-by-side image comparisons, and concise explanations is all you need. No separate slides required.
+</div>
+
+<h2>What Makes This Lab Interesting</h2>
+
+<p>Spatial filtering is one of the oldest ideas in computer vision, and it's still everywhere. The Sobel operator was published in 1968. Canny edge detection is from 1986. But the concept of sliding a small kernel over an array and computing a weighted sum at each position &mdash; that's <strong>convolution</strong>, and it's the same fundamental operation that powers modern convolutional neural networks (CNNs). When you apply a 3&times;3 Sobel kernel to your image, you're doing exactly what the first layer of a deep learning model does, except the model learns its own kernels from data instead of using hand-designed ones.</p>
+
+<p>That's where this course is heading: from hand-designed filters to learned filters. But you have to understand what a kernel does before you can appreciate what it means for a network to <em>learn</em> one.</p>
+
+<div class="warning">
+  <strong>Reminder:</strong> Save your completed notebook to your GitHub repo under <code>week2/</code> before the deadline. All cells must be executed with visible outputs. If it's not in your repo, it doesn't exist for grading.
+</div>
+
+</body>
+</html>

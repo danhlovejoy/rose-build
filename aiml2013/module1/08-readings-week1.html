@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Week 1 Readings: Vision & Images | AIML 2013</title>
+<link rel="stylesheet" href="../../course-styles.css">
+</head>
+<body>
+
+<h1>Week 1: Vision & Images</h1>
+<p class="subtitle">Readings &amp; Prep: Complete before Tuesday, March 31</p>
+
+<div class="time-box">
+  <strong>Estimated prep time:</strong> ~2.5 hours of reading, watching, and experimenting (required materials). The optional sources go deeper; use NotebookLM to help you navigate them. All materials are free.
+</div>
+
+<!-- ========== FRAMING ========== -->
+<div class="framing-box">
+  <p><strong>The big picture:</strong> Before a computer can "see" anything, an image must become a grid of numbers. A photograph is not a picture to a machine — it's a multidimensional array of pixel values. This week, we build that foundation: how images are captured, stored, and represented as data structures that code can manipulate.</p>
+</div>
+
+<!-- ========== NOTEBOOKLM REMINDER ========== -->
+<div class="nlm-box">
+  <strong>NotebookLM is your friend here.</strong> Some of these readings are technical material. Create a NotebookLM notebook for Week 1, upload the readings and video URLs as sources, and use it to ask questions, generate summaries, and check your understanding. Try generating an Audio Overview of the required readings before class. Listening to an AI-generated discussion of the material is a surprisingly effective way to prepare.
+</div>
+
+<!-- ================================================================
+     REQUIRED READINGS & VIDEOS
+     ================================================================ -->
+<h2>Required Readings &amp; Videos</h2>
+<p>These materials form the core foundation. Work through them in order.</p>
+
+<div class="resource-card">
+  <div class="resource-header">
+    <span class="resource-title">Szeliski, Ch. 1.1–1.2: Introduction to Computer Vision</span>
+    <span class="tag tag-required">Required</span>
+    <span class="tag tag-read">Read</span>
+    <span class="tag tag-time">~30 min</span>
+  </div>
+  <p class="resource-meta">Computer Vision: Algorithms and Applications, 2nd Edition (Springer Nature)</p>
+  <p class="resource-desc">The foundational overview of what computer vision is, its history, and the core problems the field tries to solve. Szeliski is the standard reference text for the field. This section establishes the context and vocabulary you'll use all semester.</p>
+  <p class="resource-link">
+    <a href="https://szeliski.org/Book/" target="_blank">Read: Szeliski Online (free) &rarr;</a>
+  </p>
+</div>
+
+<div class="resource-card">
+  <div class="resource-header">
+    <span class="resource-title">Wolberg: Digital Image Fundamentals</span>
+    <span class="tag tag-required">Required</span>
+    <span class="tag tag-read">Read</span>
+    <span class="tag tag-time">~20 min</span>
+  </div>
+  <p class="resource-meta">George Wolberg, City College of New York</p>
+  <p class="resource-desc">Prof. Wolberg's concise overview of image formation, sampling, quantization, and how images are represented digitally. This is the practical complement to Szeliski: where Szeliski shows you the big picture, Wolberg shows you how pixels work under the hood.</p>
+  <p class="resource-link">
+    <a href="https://www-cs.ccny.cuny.edu/~wolberg/cs470/pdf/CSc470-03-Fundamentals.pdf" target="_blank">Read: Digital Image Fundamentals (PDF) &rarr;</a>
+  </p>
+</div>
+
+<div class="resource-card">
+  <div class="resource-header">
+    <span class="resource-title">3Blue1Brown: Vectors | Ch. 1, Essence of Linear Algebra</span>
+    <span class="tag tag-required">Required</span>
+    <span class="tag tag-video">Video</span>
+    <span class="tag tag-time">~10 min</span>
+  </div>
+  <p class="resource-meta">3Blue1Brown (Grant Sanderson)</p>
+  <p class="resource-desc">A beautiful visual introduction to what vectors are and why they matter. The foundation for understanding image data as arrays and, later, embeddings. If you've never seen this series, it's one of the best mathematical visualizations ever made.</p>
+  <p class="resource-link">
+    <a href="https://www.youtube.com/watch?v=fNk_zzaMoSs" target="_blank">Watch: Vectors on YouTube &rarr;</a>
+  </p>
+</div>
+
+<div class="resource-card">
+  <div class="resource-header">
+    <span class="resource-title">Computerphile: Digital Images</span>
+    <span class="tag tag-required">Required</span>
+    <span class="tag tag-video">Video</span>
+    <span class="tag tag-time">~10 min</span>
+  </div>
+  <p class="resource-meta">Computerphile (Mike Pound)</p>
+  <p class="resource-desc">Mike Pound explains how images are represented in a computer: pixels, 32-bit color, and RGBA. A perfect companion to the Wolberg reading. Computerphile videos are known for making technical concepts crystal clear.</p>
+  <p class="resource-link">
+    <a href="https://www.youtube.com/watch?v=06OHflWNCOE" target="_blank">Watch: Digital Images on YouTube &rarr;</a>
+  </p>
+</div>
+
+<!-- ================================================================
+     INTERACTIVE EXPERIMENTS
+     ================================================================ -->
+<h2>Experiment: Get Your Hands Dirty</h2>
+<p>These interactive tools let you see the concepts in action. Spend 5&ndash;10 minutes playing with each one.</p>
+
+<div class="resource-card">
+  <div class="resource-header">
+    <span class="resource-title">Evident Scientific: Spatial Resolution Explorer</span>
+    <span class="tag tag-required">Required</span>
+    <span class="tag tag-interactive">Interactive</span>
+    <span class="tag tag-time">~5 min</span>
+  </div>
+  <p class="resource-meta">Evident Scientific (Olympus)</p>
+  <p class="resource-desc">Drag the slider and watch what happens to the image as resolution changes. This is the Wolberg reading come to life: you're seeing exactly what "sampling" and "quantization" do to visual information. How low can the resolution go before you can no longer recognize the subject?</p>
+  <p class="resource-link">
+    <a href="https://evidentscientific.com/en/microscope-resource/tutorials/digital-imaging/processing/spatialresolution" target="_blank">Experiment: Resolution Explorer &rarr;</a>
+  </p>
+</div>
+
+<div class="resource-card">
+  <div class="resource-header">
+    <span class="resource-title">Setosa.io: Image Kernels Explained Visually</span>
+    <span class="tag tag-required">Required</span>
+    <span class="tag tag-interactive">Interactive</span>
+    <span class="tag tag-time">~10 min</span>
+  </div>
+  <p class="resource-meta">Victor Powell &amp; Lewis Lehe &bull; Setosa.io</p>
+  <p class="resource-desc">This interactive visualization lets you select different kernels (blur, sharpen, edge detect) and see exactly what they do to an image, pixel by pixel. You can watch the kernel slide across the image and see how each output pixel is computed. This is the single best way to understand what "convolving a kernel over an image" means before you write any code. <strong>Play with every kernel option.</strong></p>
+  <p class="resource-link">
+    <a href="https://setosa.io/ev/image-kernels/" target="_blank">Experiment: Image Kernels Visualizer &rarr;</a>
+  </p>
+  <div class="focus-box">
+    <strong>Why this matters:</strong> Next week's lab (Edge Detection &amp; Blurring Kernels) is built entirely around these operations. The more intuition you build here, the faster the lab will go.
+  </div>
+</div>
+
+<!-- ================================================================
+     PREVIEW: SPATIAL FILTERING (BRIDGE TO WEEK 2)
+     ================================================================ -->
+<h2>Preview: Spatial Filtering &amp; Kernels</h2>
+<p>These resources preview the concepts you'll apply in Lab 1 next week. They're required reading so you're ready to hit the ground running in Thursday lab.</p>
+
+<div class="resource-card">
+  <div class="resource-header">
+    <span class="resource-title">Computerphile: How Blurs &amp; Filters Work</span>
+    <span class="tag tag-required">Required</span>
+    <span class="tag tag-video">Video</span>
+    <span class="tag tag-time">~8 min</span>
+  </div>
+  <p class="resource-meta">Computerphile (Mike Pound)</p>
+  <p class="resource-desc">Mike Pound walks through how a kernel slides across an image to produce a blur, and how different kernels produce different effects. This is the intuition you need before writing your first <code>cv2.filter2D()</code> call.</p>
+  <p class="resource-link">
+    <a href="https://www.youtube.com/watch?v=C_zFhWdM4ic" target="_blank">Watch: How Blurs &amp; Filters Work &rarr;</a>
+  </p>
+</div>
+
+<div class="resource-card">
+  <div class="resource-header">
+    <span class="resource-title">Computerphile: Finding the Edges (Sobel Operator)</span>
+    <span class="tag tag-required">Required</span>
+    <span class="tag tag-video">Video</span>
+    <span class="tag tag-time">~12 min</span>
+  </div>
+  <p class="resource-meta">Computerphile (Mike Pound)</p>
+  <p class="resource-desc">Extends the kernel concept to edge detection. Pound explains how the Sobel operator works: why it uses two kernels (horizontal and vertical), what the gradient means, and why edges are where the interesting information lives in an image.</p>
+  <p class="resource-link">
+    <a href="https://www.youtube.com/watch?v=uihBwtPIBxM" target="_blank">Watch: Finding the Edges &rarr;</a>
+  </p>
+</div>
+
+<h2>Optional Deeper Dive</h2>
+
+<div class="resource-card optional">
+  <div class="resource-header">
+    <span class="resource-title">KDnuggets: Basic Image Data Analysis Using NumPy and OpenCV</span>
+    <span class="tag tag-optional">Optional</span>
+    <span class="tag tag-read">Read</span>
+    <span class="tag tag-time">~20 min</span>
+  </div>
+  <p class="resource-meta">KDnuggets &bull; 2018</p>
+  <p class="resource-desc">Hands-on walkthrough of loading images as arrays, inspecting pixel values, and basic manipulation with NumPy. Good preview of what you'll do in lab. This bridges theory (how images work) with practice (how to code with them).</p>
+  <p class="resource-link">
+    <a href="https://www.kdnuggets.com/2018/07/basic-image-data-analysis-numpy-opencv-p1.html" target="_blank">Read: Image Data Analysis with NumPy &rarr;</a>
+  </p>
+</div>
+
+<div class="resource-card optional">
+  <div class="resource-header">
+    <span class="resource-title">LearnOpenCV: Image Filtering Using Convolution in OpenCV</span>
+    <span class="tag tag-optional">Optional</span>
+    <span class="tag tag-read">Read</span>
+    <span class="tag tag-time">~15 min</span>
+  </div>
+  <p class="resource-meta">LearnOpenCV</p>
+  <p class="resource-desc">A code-focused tutorial that walks through implementing blur, sharpen, and edge detection kernels in OpenCV. If you want a head start on the lab code, start here.</p>
+  <p class="resource-link">
+    <a href="https://learnopencv.com/image-filtering-using-convolution-in-opencv/" target="_blank">Read: Image Filtering in OpenCV &rarr;</a>
+  </p>
+</div>
+
+<hr>
+
+<!-- ========== DISCUSSION PREP ========== -->
+<div class="discussion-box">
+  <strong>Discussion questions for class:</strong>
+  <ol>
+    <li>If an image is "just numbers," what information is lost or preserved when a photograph becomes a NumPy array?</li>
+    <li>The Wolberg reading covers sampling and quantization. What trade-offs are involved in choosing image resolution and bit depth?</li>
+    <li>How does thinking of images as arrays change the way you think about what a computer "sees"?</li>
+  </ol>
+</div>
+
+<!-- ========== BRIDGE BOX ========== -->
+<div class="bridge-box" data-concurrent="true">
+  <strong>Bridge to NLP (AIML 2003):</strong> This week, NLP students are learning that text must become numbers (tokens and embeddings) before an LLM can process it. You're learning the same thing for images: pixels are to vision as tokens are to language. Both are transformations from human-readable content into numerical arrays that machines can compute on.
+</div>
+
+</body>
+</html>

@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lab 1 Option A: Fact-Check the LLM | AIML 2003</title>
+<link rel="stylesheet" href="../../course-styles.css">
+</head>
+<body>
+
+<h1>Lab 1, Option A: Fact-Check the LLM</h1>
+<p class="subtitle">Build a claim verification system using context engineering to improve accuracy.</p>
+
+<div class="section-card">
+  <h3>The Task</h3>
+  <p>You'll assemble a set of 10-15 claims (some true, some false, some half-true) and ask Gemini to verdict each one. You'll run the same claims through four prompting approaches and measure how structured context affects the model's ability to distinguish fact from fiction. We return to this problem in Week 6 (hallucination testing) with more formal evaluation methods.</p>
+</div>
+
+<h2>Your Dataset</h2>
+
+<p>Build a mix of claims across difficulty levels. Include at least 3 of each type:</p>
+
+<div class="section-card">
+  <h3>Claim types to include</h3>
+  <ul>
+    <li><strong>Clearly true:</strong> "The Earth orbits the Sun." Easy baseline.</li>
+    <li><strong>Clearly false:</strong> "The Great Wall of China is visible from the Moon with the naked eye." Common misconception the model might repeat.</li>
+    <li><strong>Half-true / misleading:</strong> "Goldfish have a 3-second memory." (False as stated, but there's a kernel of research about fish memory.) These are the hard ones.</li>
+    <li><strong>Plausible but fabricated:</strong> "A 2024 Stanford study found that 73% of college students use AI for homework." (You made this up. Will the model call it out or play along?)</li>
+    <li><strong>Domain-specific:</strong> At least 2-3 claims about NLP or AI. "GPT-4 was trained using RLHF." "Transformers were invented at Google Brain in 2017."</li>
+  </ul>
+</div>
+
+<h2>Code Scaffold</h2>
+
+<div class="warning">
+  <strong>Training wheels alert:</strong> This code scaffold is here to get you started. In later labs, you won't have one &mdash; you'll be writing your own code from scratch, using Gemini or another AI assistant to help you build it. So don't just copy-paste and run. Read each cell, understand what it does, and experiment with changing things. The more comfortable you get now, the easier it will be when the training wheels come off.
+</div>
+
+<pre># Cell 1: Setup
+!pip install google-genai -q
+
+from google.colab import userdata
+from google import genai
+
+client = genai.Client(api_key=userdata.get('GEMINI_API_KEY'))</pre>
+
+<pre># Cell 2: Your claims dataset
+claims = [
+    {"text": "The Earth orbits the Sun.",
+     "truth": "true"},
+    {"text": "The Great Wall of China is visible from the Moon.",
+     "truth": "false"},
+    {"text": "Goldfish have a 3-second memory.",
+     "truth": "half-true"},
+    {"text": "A 2024 Stanford study found that 73% of college students use AI for homework.",
+     "truth": "false"},  # fabricated
+    {"text": "GPT-4 was trained using RLHF.",
+     "truth": "true"},
+    # Add 10-15 total claims
+]</pre>
+
+<pre># Cell 3: Approach 1 - Zero-shot
+def verdict_zero_shot(claim):
+    response = client.models.generate_content(
+        model="gemini-2.0-flash",
+        contents=f"Is this claim true, false, or half-true? "
+                 f"Respond with only the verdict.\n\nClaim: {claim}"
+    )
+    return response.text.strip().lower()
+
+zero_shot = [verdict_zero_shot(c["text"]) for c in claims]</pre>
+
+<pre># Cell 4: Approach 2 - Few-shot with calibration examples
+def verdict_few_shot(claim):
+    prompt = """Verdict each claim as true, false, or half-true. Respond with only the verdict.
+
+Claim: "Water boils at 100°C at sea level." → true
+Claim: "Humans only use 10% of their brains." → false
+Claim: "Lightning never strikes the same place twice." → half-true
+
+Claim: "{claim}" →"""
+    response = client.models.generate_content(
+        model="gemini-2.0-flash",
+        contents=prompt.format(claim=claim)
+    )
+    return response.text.strip().lower()
+
+few_shot = [verdict_few_shot(c["text"]) for c in claims]</pre>
+
+<pre># Cell 5: Approach 3 - Context-engineered prompt
+import json
+
+FACTCHECK_PROMPT = """## System Instruction
+You are a fact-checker for a news organization. Your job is to
+evaluate claims for accuracy. You are cautious: when you aren't
+sure, you say so. You never fabricate citations or studies.
+
+## Task
+Evaluate the claim below. Consider common misconceptions,
+frequently misquoted statistics, and whether the claim could
+be technically true but misleading.
+
+## Output Format
+Respond with ONLY valid JSON:
+{{"verdict": "true" | "false" | "half-true",
+  "confidence": "high" | "medium" | "low",
+  "reasoning": "2-3 sentences explaining your verdict",
+  "red_flags": "any warning signs you noticed, or 'none'"}}
+
+## Calibration Examples
+Claim: "Humans share 50% of their DNA with bananas."
+{{"verdict": "half-true", "confidence": "medium",
+  "reasoning": "The figure is approximately correct for certain gene comparisons, but 'share DNA' oversimplifies. The comparison depends on methodology.",
+  "red_flags": "Precise percentage claims about genetics are often context-dependent."}}
+
+Claim: "A 2023 MIT study proved that AI will replace all jobs by 2030."
+{{"verdict": "false", "confidence": "high",
+  "reasoning": "No such study exists from MIT with this conclusion. This resembles a fabricated citation designed to sound authoritative.",
+  "red_flags": "Suspiciously specific institution + year + sweeping conclusion. Classic fabricated citation pattern."}}
+
+## Constraints
+- If you genuinely don't know whether a claim is accurate, use
+  verdict "half-true" with confidence "low" and explain what
+  you'd need to verify it.
+- Never invent a source to support your verdict.
+
+## Claim to Evaluate
+{claim}"""
+
+def verdict_context(claim):
+    response = client.models.generate_content(
+        model="gemini-2.0-flash",
+        contents=FACTCHECK_PROMPT.format(claim=claim)
+    )
+    try:
+        result = json.loads(response.text)
+        return result.get("verdict", "error").lower()
+    except json.JSONDecodeError:
+        return "parse_error"
+
+context_results = [verdict_context(c["text"]) for c in claims]</pre>
+
+<pre># Cell 6: Approach 4 - LLM-assisted refinement
+errors = []
+for c, pred in zip(claims, context_results):
+    if pred != c["truth"]:
+        errors.append(
+            f'Claim: "{c["text"]}"\n'
+            f'  Your verdict: {pred}\n'
+            f'  Correct verdict: {c["truth"]}'
+        )
+
+error_report = "\n\n".join(errors) if errors else "All verdicts matched."
+
+meta_prompt = f"""You are a prompt optimization specialist. Below is a
+fact-checking prompt and the claims it got wrong.
+
+## Current Prompt
+{FACTCHECK_PROMPT}
+
+## Incorrect Verdicts
+{error_report}
+
+## Your Task
+1. Diagnose why each misclassification happened.
+2. Propose a revised prompt that fixes these errors without
+   breaking the claims that already work.
+3. Return ONLY the complete revised prompt."""
+
+refinement = client.models.generate_content(
+    model="gemini-2.0-flash",
+    contents=meta_prompt
+)
+print("=== SUGGESTED REFINEMENTS ===")
+print(refinement.text)
+
+# Copy the refined prompt into a new function and run it:
+# refined_results = [verdict_refined(c["text"]) for c in claims]</pre>
+
+<pre># Cell 7: Comparison table
+print(f"{'Claim':<55} {'Truth':<12} {'Zero':<12} {'Few':<12} {'Context':<12}")
+print("-" * 103)
+for c, zs, fs, ce in zip(claims, zero_shot, few_shot, context_results):
+    short = c["text"][:52] + "..." if len(c["text"]) > 55 else c["text"]
+    print(f"{short:<55} {c['truth']:<12} {zs:<12} {fs:<12} {ce:<12}")
+
+# Accuracy per approach
+for name, results in [("Zero-shot", zero_shot), ("Few-shot", few_shot),
+                       ("Context", context_results)]:
+    correct = sum(1 for c, r in zip(claims, results) if c["truth"] == r)
+    print(f"{name}: {correct}/{len(claims)} ({100*correct/len(claims):.0f}%)")</pre>
+
+<h2>What Makes This Option Interesting</h2>
+
+<p>Fact-checking exposes the model's weaknesses in ways classification doesn't. The fabricated claims are especially revealing: a zero-shot prompt will often accept a plausible-sounding fake citation at face value, while a context-engineered prompt with explicit instructions about fabricated citations catches it. You'll also see the model struggle with half-truths, where the correct answer requires nuance the output format might not support without the structured reasoning field.</p>
+
+<div class="tip">
+  <strong>For your reflection:</strong> Pay attention to the "red_flags" field in the context-engineered responses. Did the model identify suspicious patterns you didn't? Did it miss any you caught? The gap between those two tells you something about where human judgment still matters.
+</div>
+
+</body>
+</html>

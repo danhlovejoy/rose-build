@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Module 2 Readings: Hand-Crafted Features — TF-IDF | AIML 2003</title>
+<link rel="stylesheet" href="../../course-styles.css">
+</head>
+<body>
+
+<h1>Module 2: Hand-Crafted Features</h1>
+<p class="subtitle">Readings &amp; Prep: Complete before Tuesday, April 7</p>
+
+<div class="time-box">
+  <strong>Estimated prep time:</strong> ~55 minutes (three videos plus three interactive demos). One optional source for those who want the theory behind the formula. All materials are free.
+</div>
+
+<!-- ========== FRAMING ========== -->
+<div class="framing-box">
+  <p><strong>The big picture:</strong> Before transformers, text classification was a pipeline of deliberate design choices. Which words should count? How should you handle words that appear in every document? What happens when a word like "bank" means something different in a finance review than in a nature article? TF-IDF — Term Frequency × Inverse Document Frequency — is the canonical answer to the core question: how should a document become a vector?</p>
+  <p style="margin-top:0.5rem;">This week you'll build a complete TF-IDF + logistic regression pipeline on the NLTK movie reviews corpus, visualize exactly which words drive the model's decisions, and then compare it head-to-head against Gemini zero-shot and context-engineered classification on the same 50 test examples. The comparison is the point: a classical pipeline trained in seconds on 2,000 labeled examples, versus a language model that has never been trained on this specific task.</p>
+</div>
+
+<!-- ========== NOTEBOOKLM REMINDER ========== -->
+<div class="nlm-box">
+  <strong>NotebookLM tip:</strong> Upload the transcripts or auto-generated notes from this week's videos to a Module 2 notebook. Good questions to ask: "What is the difference between TF and TF-IDF?", "Why do we remove stop words before building the vocabulary?", and "What does a logistic regression coefficient tell me about a word?" These map directly to lab cells 2, 3, and 5.
+</div>
+
+<!-- ================================================================
+     REQUIRED READINGS & VIDEOS
+     ================================================================ -->
+<h2>Required Readings</h2>
+<p>Work through these in order. The three videos give you the vocabulary; the three demos show how the pieces fit together. Finish all six before Thursday lab.</p>
+
+<div class="resource-card">
+  <div class="resource-header">
+    <span class="resource-title">What is TF-IDF? (Video)</span>
+    <span class="tag tag-required">Required</span>
+    <span class="tag tag-interactive">Video</span>
+    <span class="tag tag-time">~11 min</span>
+  </div>
+  <p class="resource-meta">Python Tutorials for Digital Humanities &bull; YouTube</p>
+  <p class="resource-desc">Explains Term Frequency and Inverse Document Frequency using plain examples. Covers why common words like "the" get low scores and why rare, distinctive words get high scores. This is the formula your lab's vectorizer runs under the hood on every review.</p>
+  <p class="resource-link">
+    <a href="https://www.youtube.com/watch?v=YtuydcHCkK8&t=30s" target="_blank">Watch: Introduction to TF-IDF &rarr;</a>
+  </p>
+</div>
+
+<div class="resource-card">
+  <div class="resource-header">
+    <span class="resource-title">Bag of Words and Text Preprocessing (Video)</span>
+    <span class="tag tag-required">Required</span>
+    <span class="tag tag-interactive">Video</span>
+    <span class="tag tag-time">~10 min</span>
+  </div>
+  <p class="resource-meta">Google Cloud Tech &bull; YouTube</p>
+  <p class="resource-desc">Before TF-IDF, text has to go through a pipeline: split into individual words (tokenization), lowercase everything so "The" and "the" count as the same word, remove punctuation, and strip out stop words like "the", "is", and "a" that carry no useful signal. This video walks through each step with examples. Watch it before the TF-IDF video if the concept of a "word count vector" feels unfamiliar, or after if you want to see the preprocessing steps made explicit.</p>
+  <div class="focus-box">
+    <strong>What to notice:</strong> After preprocessing, a movie review is no longer a sentence. It is a list of word counts. "This movie was absolutely brilliant!" becomes something like: brilliant=1, movie=1. Every other word was either a stop word or punctuation and gets dropped. TF-IDF then reweights those counts based on how common each word is across all reviews.
+  </div>
+  <p class="resource-link">
+    <a href="https://www.youtube.com/watch?v=UFtXy0KRxVI" target="_blank">Watch: Bag of Words &rarr;</a>
+  </p>
+</div>
+
+<div class="resource-card">
+  <div class="resource-header">
+    <span class="resource-title">Logistic Regression (Video)</span>
+    <span class="tag tag-required">Required</span>
+    <span class="tag tag-interactive">Video</span>
+    <span class="tag tag-time">~9 min</span>
+  </div>
+  <p class="resource-meta">StatQuest with Josh Starmer &bull; YouTube</p>
+  <p class="resource-desc">Logistic regression is the classifier your lab trains to predict positive or negative sentiment. This video explains what it does without requiring any calculus. The key ideas: it learns a score for each word (positive score means that word predicts a positive review, negative score means the opposite), it converts that score into a probability between 0 and 1, and the boundary between "positive prediction" and "negative prediction" sits at 0.5. Lab Cell 5 visualizes those word scores directly as a bar chart.</p>
+  <div class="focus-box">
+    <strong>The one concept that matters most:</strong> Each word in your vocabulary gets a coefficient. A large positive coefficient for "brilliant" means the model learned that reviews containing "brilliant" tend to be positive. A large negative coefficient for "waste" means the opposite. That is the entire logic behind the bar chart in Cell 5.
+  </div>
+  <p class="resource-link">
+    <a href="https://www.youtube.com/watch?v=yIYKR4sgzI8" target="_blank">Watch: Logistic Regression &mdash; StatQuest &rarr;</a>
+  </p>
+</div>
+
+<div class="resource-card">
+  <div class="resource-header">
+    <span class="resource-title">Cosine Similarity: Measuring How Alike Two Things Are (Interactive Demo)</span>
+    <span class="tag tag-required">Required</span>
+    <span class="tag tag-interactive">Interactive</span>
+    <span class="tag tag-time">~10 min</span>
+  </div>
+  <p class="resource-meta">Dan Lovejoy &bull; AIML 2003 / AIML 2013</p>
+  <p class="resource-desc">Cosine similarity is the metric behind TF-IDF vector comparison. This demo walks through the geometry (Stage 1), then applies it directly to text pairs (Stage 2): type two sentences and watch the score change as shared vocabulary increases or disappears. Stage 4 shows a similarity matrix across six reviews, the same computation used to compare documents in retrieval systems.</p>
+  <div class="focus-box">
+    <strong>What to notice:</strong> Stage 5 ("When Cosine Similarity Fails") shows why "excellent" and "outstanding" score 0.0 as TF-IDF vectors despite meaning the same thing. That failure is exactly what motivates the move to sentence embeddings in Module 3.
+  </div>
+  <p class="resource-link">
+    <a href="https://danhlovejoy.github.io/rose-build/slides/cosine-similarity-demo.html" target="_blank">Open: Cosine Similarity Demo &rarr;</a>
+  </p>
+</div>
+
+<div class="resource-card">
+  <div class="resource-header">
+    <span class="resource-title">Logistic Regression: The Binary Classifier (Interactive Demo)</span>
+    <span class="tag tag-required">Required</span>
+    <span class="tag tag-interactive">Interactive</span>
+    <span class="tag tag-time">~8 min</span>
+  </div>
+  <p class="resource-meta">Dan Lovejoy &bull; AIML 2003</p>
+  <p class="resource-desc">This demo picks up where the StatQuest video leaves off and applies logistic regression directly to text. Starting from two words and a decision boundary, it builds up to a full 5,000-word vocabulary, showing how the model learns a coefficient for every word and converts a weighted sum into a probability. The confidence and failure section at the end is worth paying attention to before lab.</p>
+  <div class="focus-box">
+    <strong>What to notice:</strong> The jump from two words to 5,000 words does not change the math. The model is still multiplying word counts by coefficients and summing them. The vocabulary just gets much longer. Keep that in mind when you look at the coefficient bar chart in Cell 5 of the lab notebook.
+  </div>
+  <p class="resource-link">
+    <a href="https://danhlovejoy.github.io/rose-build/slides/logistic-regression-demo.html" target="_blank">Open: Logistic Regression Demo &rarr;</a>
+  </p>
+</div>
+
+<div class="resource-card">
+  <div class="resource-header">
+    <span class="resource-title">Inside the Pipeline: TF-IDF + Logistic Regression (Interactive Demo)</span>
+    <span class="tag tag-required">Required</span>
+    <span class="tag tag-interactive">Interactive</span>
+    <span class="tag tag-time">~8 min</span>
+  </div>
+  <p class="resource-meta">Dan Lovejoy &bull; AIML 2003</p>
+  <p class="resource-desc">Walks the full six-stage pipeline that your lab notebook implements: raw text, tokenization and stopword removal, TF-IDF vectorization, learned coefficients, the dot-product scoring step, and finally the sigmoid that converts a score into a probability and a label. This is the end-to-end picture before you see it in code.</p>
+  <div class="focus-box">
+    <strong>What to notice:</strong> The pipeline is linear. Every review passes through the same six steps in the same order. Each step has one job and hands off a specific data structure to the next. When something goes wrong in the lab, it will usually be traceable to one stage. Keeping this picture in your head makes debugging much easier.
+  </div>
+  <p class="resource-link">
+    <a href="https://danhlovejoy.github.io/rose-build/slides/tfidf-pipeline-demo.html" target="_blank">Open: Pipeline Demo &rarr;</a>
+  </p>
+</div>
+
+<!-- ================================================================
+     OPTIONAL
+     ================================================================ -->
+<h2>Optional: The Theory Behind the Formula</h2>
+
+<div class="resource-card optional">
+  <div class="resource-header">
+    <span class="resource-title">Manning, Raghavan &amp; Schütze: Introduction to Information Retrieval — Chapter 6</span>
+    <span class="tag tag-optional">Optional</span>
+    <span class="tag tag-read">Read</span>
+    <span class="tag tag-time">~45 min</span>
+  </div>
+  <p class="resource-meta">Manning, Raghavan, Schütze &bull; Cambridge University Press &bull; Free online</p>
+  <p class="resource-desc">The standard reference for information retrieval, freely available online. Chapter 6 derives TF-IDF from first principles, explains cosine similarity in the vector space model, and connects the math to real retrieval behavior. Use it if you want to understand <em>why</em> TF-IDF uses a logarithm, not just <em>what</em> the formula computes. Worth bookmarking for Weeks 5–6 when we discuss retrieval-augmented generation.</p>
+  <p class="resource-link">
+    <a href="https://nlp.stanford.edu/IR-book/html/htmledition/scoring-term-weighting-and-the-vector-space-model-1.html" target="_blank">Read: IIR Book Chapter 6 (free online) &rarr;</a>
+  </p>
+</div>
+
+<hr>
+
+<!-- ========== DISCUSSION PREP ========== -->
+<div class="discussion-box">
+  <strong>Discussion questions for class:</strong>
+  <ol>
+    <li>A movie review says "not bad at all." After preprocessing and TF-IDF weighting, what does that review look like to the classifier? What information gets lost, and does it matter?</li>
+    <li>The logistic regression model assigns a score to every word in the vocabulary. If "waste" has a large negative score, what did the model learn from the training data? What kind of reviews would have pushed that score negative?</li>
+    <li>The model is trained on 1,600 labeled reviews and tested on 400 it has never seen. Why is it important that the vocabulary is built only from the training reviews, not from the test reviews?</li>
+    <li>You are comparing TF-IDF + logistic regression to Gemini on the same 50 reviews. What does each approach "know" going in? Where would you expect the classical model to outperform Gemini, and where would you expect Gemini to win?</li>
+  </ol>
+</div>
+
+<!-- ========== BRIDGE BOX ========== -->
+<div class="bridge-box" data-concurrent="true">
+  <strong>Bridge to Computer Vision (AIML 2013):</strong> CV students this week are computing HOG descriptors — explicit feature engineering that converts raw pixel data into a fixed-length numerical vector. TF-IDF and HOG solve the same problem in different domains: both discard irrelevant variation (common words, pixel noise), keep meaningful structure (distinctive terms, gradient orientations), and produce vectors that support cosine similarity comparison. In Week 4, both courses replace these hand-crafted vectors with learned representations: <code>all-MiniLM-L6-v2</code> sentence embeddings for text, MobileNetV2 features for images.
+</div>
+
+</body>
+</html>
