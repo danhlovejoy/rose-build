@@ -12,6 +12,10 @@ build/aiml2013/
 # Scratch/prep work
 prep-scratch/
 
+# Copyright sources can't be uploaded
+Szeliski_CVAABook_2ndEd.pdf
+readings/szeliski/
+
 # OS files
 .DS_Store
 .venv/

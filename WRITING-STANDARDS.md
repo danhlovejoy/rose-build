@@ -18,6 +18,7 @@ All original bans remain in force, plus curriculum-specific additions:
 - "Hands-on" as a standalone adjective without specifying what the hands are on
 - "Real-world" without naming the domain, dataset, or deployment context
 - "That's it" (as a closing phrase)
+- Pithy contrastive closers: "The X is not Y. The Z is." / "The limitation is in the X, not the Y." / "It's not about X. It's about Y." These read as taglines, not explanations. If the preceding sentences already made the point, the closer is redundant. If they didn't, the closer is doing too much work for one sentence. Either way, cut it.
 
 ## Lexical Governance
 
@@ -32,6 +33,10 @@ Delve, tapestry, leverage, foster, empower, revolutionize, optimize, enhance, tr
 ### Banned Adverbs
 
 Extremely, quite, very, actually, basically, potentially.
+
+### Anthropomorphic Language
+
+Do not attribute intent, opinion, understanding, or preference to models, algorithms, or math. A model does not "think," "want," "believe," "decide," or "have opinions." It computes, produces, returns, assigns, classifies. When anthropomorphic shorthand genuinely aids comprehension, flag it with quotes on first use: the model "sees" edges. Do not sustain the metaphor beyond the initial explanation.
 
 ### Encouraged Precision
 

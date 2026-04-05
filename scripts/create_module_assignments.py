@@ -53,7 +53,7 @@ import sys
 from urllib.request import Request, urlopen
 from urllib.error import HTTPError
 
-ROOT = os.path.dirname(os.path.abspath(__file__))
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 BASE = "https://rose.instructure.com"
 
 # ── Course config ──────────────────────────────────────────────────────────────

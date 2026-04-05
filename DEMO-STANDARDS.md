@@ -1,12 +1,25 @@
 # DEMO-STANDARDS.md
 
-Standards for building interactive HTML demos in `slides/`. These demos are standalone files used during live class sessions. They do not go through the build pipeline or use `course-styles.css`.
+Standards for building interactive HTML demos in `slides/`. These demos are standalone files used during live class sessions. They are also added to readings. They do not go through the build pipeline or use `course-styles.css`. These demos form a bridge from the students' current understanding to understanding the new concept being presented. Consider WHERE the student is in the course, and what they have already learned to build upon their understanding. 
+
+## Process and Pedagogy 
+When the instructor gives you a demo task, be sure to think through it with them. When planning the lesson, go through the thinking process with your imaginary student. Think of what you know the student knows, what they have recently covered, and the learning desired and the intermediate understandings required to get there. Think of questions the student might ask. Prompt the instructor with these questions when planning the demo. Each stage should build on the previous one; a student who understood Stage N should have the vocabulary and intuition needed for Stage N+1.  
+
+## Writing
+
+All prose in demos — stage descriptions, tip boxes, warn boxes, card text, explanations — must follow **WRITING-STANDARDS.md**. The same banned frames, banned tells, and formatting constraints apply here as in course pages. Demos are not exempt because they're standalone files.
+
+Watch especially for:
+- Dramatic inversion rhetoric: "X is not the problem. Y is." This is an AI tell.
+- Banned words from the lexical governance list (delve, robust, comprehensive, etc.).
+- Over-explaining concepts the student already knows from a previous stage.
+- Restating the same idea in different words within the same tip box.
 
 ## File Conventions
 
 **Naming:** `{topic}-demo.html`, kebab-case. Examples: `cosine-similarity-demo.html`, `pixel-histogram-demo.html`.
 
-**Title format:** `Topic: Subtitle — Course`. Use an em-dash, not a pipe or double hyphen.
+**Title format:** `Topic: Subtitle — Course`. Use a hyphen after the topic and an em-dash before the course. A demo can be for both courses.
 
 ```html
 <title>Cosine Similarity: From Geometry to Meaning — AIML 2003 / 2013</title>
@@ -203,7 +216,15 @@ Initialize interactive elements to a random or clearly wrong state. The student 
 
 ### Every transformation must be visible
 
-If a stage demonstrates a conversion (color to grayscale, text to vector, raw pixels to histogram), the before and after must look different. Do not use grayscale inputs when demonstrating grayscale conversion. Do not use zero vectors when demonstrating sparsity.
+If a stage demonstrates a conversion (color to grayscale, text to vector, raw pixels to histogram), the before and after must look different. Do not use grayscale inputs when demonstrating grayscale conversion. Do not use all zero vectors when demonstrating sparsity.
+
+### Visualizations must not contradict the concept
+
+If the demo teaches that "same direction = similar," every chart in the demo must visually reinforce that. A butterfly chart that mirrors one vector's bars to the left while the other points right makes two similar documents look opposite — directly contradicting the lesson the student just learned. The chart format itself becomes misinformation.
+
+Before choosing a chart type, ask: if a student who understood the previous stage glances at this chart without reading any labels, will their instinct match the data? If a high-similarity pair looks like it's pointing in opposite directions, the chart is lying. Use grouped bars (side by side, same direction) instead of mirrored/tornado charts when comparing vectors that the demo frames as "similar" or "same direction."
+
+This applies broadly. Any visual encoding — color, direction, length, position — that a student could reasonably interpret as meaning the opposite of what the data shows is a bug, not a style choice.
 
 ### Match the displayed metric to the optimization target
 
@@ -221,6 +242,67 @@ Prefer real model outputs over simulated or pseudo-random data. If the demo refe
 
 Every stage should have something the student can click, drag, or hover. If a stage is purely expository, it should be a tip box inside an adjacent stage or a short paragraph, not its own numbered stage. The exception is a final "bridge to readings" stage that points students to the assigned materials.
 
+## Assertions
+
+Demos contain hardcoded values that make implicit mathematical or behavioral claims: a "Perpendicular" button implies a 90-degree angle, a "Best Fit" button implies maximum accuracy, a toy vector labeled "Queen" implies specific attribute values. When these claims are wrong, students notice.
+
+The rule: **any hardcoded value that makes a verifiable claim gets an assertion comment.** The comment documents the claim, shows the math, and states the expected result. This serves two purposes: it forces the author to verify the math at write time, and it gives a future reader (or a lint script) something to check.
+
+### Format
+
+Use HTML comments with the prefix `assert:` followed by a plain-language check. Place the comment immediately above the code it covers.
+
+```html
+<!-- assert: dot(3,4, -4,3) = 0 (perpendicular) -->
+<!-- assert: dot(3,4, 4,3) = 24 (similar, not identical) -->
+<!-- assert: dot(3,4, -3,-4) = -25 (opposite) -->
+<button onclick="presetVectors(3,4,4,3)">Nearly aligned</button>
+<button onclick="presetVectors(3,4,-4,3)">Perpendicular</button>
+<button onclick="presetVectors(3,4,-3,-4)">Opposite</button>
+```
+
+For JS data, use `// assert:` comments:
+
+```js
+// assert: cosine(king, queen) > 0.6 (most similar pair)
+// assert: cosine(king, water) < 0.35 (unrelated)
+const REAL_EMBEDDINGS = { ... };
+```
+
+### What to assert
+
+- **Preset buttons** that claim a mathematical property (perpendicular, opposite, identical, zero, maximum).
+- **Hardcoded vectors** where the relationships between entries matter (e.g., king is closer to queen than to water).
+- **Toy data** where specific values produce a known outcome (e.g., training data that is linearly separable, a word vector that is sparse).
+- **Threshold values** where crossing a boundary changes behavior (e.g., a similarity cutoff, a learning rate that avoids divergence).
+
+### What not to assert
+
+- Layout constants (chart heights, margins, font sizes).
+- Aesthetic choices (colors, labels, prose).
+- Values that are only approximate by nature ("roughly 0.68" does not need `assert: exactly 0.6807`).
+
+### The standard that prevents the bug
+
+The perpendicular preset bug happened because `presetVectors(3, 4, -4, 1)` was never checked: (3)(−4) + (4)(1) = −8, not 0. With the assertion convention, the author writes `assert: dot(3,4, -4,1) = 0`, does the mental math, gets −8, and catches the typo before committing.
+
+### Lint script
+
+`build/lint_demos.py` automatically verifies all `assert:` comments and checks for anti-patterns. Run it before committing any demo changes:
+
+```
+python3 build/lint_demos.py                        # all demos
+python3 build/lint_demos.py slides/foo-demo.html   # one file
+```
+
+The script checks:
+
+- **Assertions:** Parses `assert:` comments and verifies the math. Supports `dot(a,b, c,d) = N`, `cosine(name1, name2) > N`, `cosine(name1, name2) < N`. Cosine assertions look up named vectors from JS objects in the same file (e.g., `REAL_EMBEDDINGS`).
+- **Anti-patterns:** `Plotly.newPlot` usage, SVG via innerHTML, CSS variables in JS string contexts, bare `h2` selectors.
+- **CSS completeness:** Reports any missing required CSS variables from the `:root` block.
+
+The script exits with code 1 if any assertion fails (errors). Warnings (anti-patterns, missing vars) are reported but do not fail the run.
+
 ## Things That Break
 
 These are lessons from actual bugs. Do not repeat them.
@@ -236,3 +318,5 @@ const muted = getComputedStyle(document.documentElement).getPropertyValue('--mut
 **Plotly legend colors break with per-bar color arrays.** When a trace has `marker.color` set to an array (e.g., different colors per bar for highlighting), Plotly uses the first element's color for the legend swatch. If the first element is dimmed, the legend loses its real color. Fix: use a single `marker.color` for the trace and dim via `marker.opacity` array instead.
 
 **Cosine similarity with negative result vectors.** In toy embedding spaces where all word vectors are non-negative (0–1), vector subtraction can produce negative components. Cosine similarity then ranks orthogonal (unrelated) words higher than semantically close words with negative dot products. Fix: clamp the result vector to non-negative before the nearest-neighbor search. Display the raw (unclamped) vector for pedagogical transparency.
+
+**Hardcoded presets that contradict their labels.** See the Assertions section below — this is now a standardized practice, not just a warning.

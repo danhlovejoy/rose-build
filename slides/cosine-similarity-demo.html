@@ -210,8 +210,11 @@
         <div class="lbl">angle between vectors</div>
       </div>
       <div class="btn-group">
+        <!-- assert: dot(3,4, 4,3) = 24 (similar, not identical) -->
+        <!-- assert: dot(3,4, -4,3) = 0 (perpendicular) -->
+        <!-- assert: dot(3,4, -3,-4) = -25 (opposite) -->
         <button class="btn btn-accent" onclick="presetVectors(3,4,4,3)">Nearly aligned</button>
-        <button class="btn btn-primary" onclick="presetVectors(3,4,-4,1)">Perpendicular</button>
+        <button class="btn btn-primary" onclick="presetVectors(3,4,-4,3)">Perpendicular</button>
         <button class="btn btn-outline" onclick="presetVectors(3,4,-3,-4)">Opposite</button>
       </div>
     </div>
@@ -358,7 +361,7 @@
   </div>
 
   <div class="warn-tip">
-    <strong>The metric is not the bottleneck. The representation is.</strong> Cosine similarity computes the angle between two vectors and has no opinion about what those numbers encode. TF-IDF vectors for &#8220;excellent&#8221; and &#8220;outstanding&#8221; sit far apart in vocabulary space because the words don't overlap, so the metric faithfully reports low similarity. The representation was the wrong tool for the question, not the math. HOG has the same problem with semantics: a bicycle wheel and a clock both produce gradient histograms dominated by radial patterns, so their vectors sit close together in HOG space. Cosine similarity will say they're alike. Given the features it was handed, it's right.
+    <strong>Cosine similarity does exactly what it's built to do, and ONLY what it's built to do.</strong> It doesn't ACTUALLY compute meaning or understanding. It computes the angle between two vectors. What those numbers encode is outside its scope. TF-IDF vectors for &#8220;excellent&#8221; and &#8220;outstanding&#8221; sit far apart because the words don&#8217;t overlap, so the metric reports low similarity. That&#8217;s correct given the representation, even though a human would disagree. HOG has the same blind spot: a bicycle wheel and a clock both produce radial gradient patterns, so their vectors land close together. Cosine similarity says they&#8217;re alike. Given what it was handed, it&#8217;s right. In dense vector spaces using generative models, its accuracy is much higher because the representations are learned to capture semantic relationships. But it&#8217;s still just measuring angles between vectors. 
   </div>
 </div>
 
@@ -591,11 +594,11 @@ function computeTextSim() {
   Plotly.react('textBarChart', [
     { y: combined.map(c => c.word).reverse(), x: combined.map(c => c.a).reverse(),
       type: 'bar', orientation: 'h', name: 'Doc A', marker: { color: '#1565c0' } },
-    { y: combined.map(c => c.word).reverse(), x: combined.map(c => -c.b).reverse(),
+    { y: combined.map(c => c.word).reverse(), x: combined.map(c => c.b).reverse(),
       type: 'bar', orientation: 'h', name: 'Doc B', marker: { color: '#e65100' } }
   ], {
-    barmode: 'relative',
-    xaxis: { title: '← Doc B          TF weight          Doc A →', gridcolor: '#e8ecf0', zeroline: true, zerolinecolor: '#1a3a5c' },
+    barmode: 'group',
+    xaxis: { title: 'TF-IDF weight', gridcolor: '#e8ecf0' },
     yaxis: { automargin: true },
     plot_bgcolor: '#fff', paper_bgcolor: '#fff',
     margin: { l: 90, r: 20, t: 10, b: 50 },
