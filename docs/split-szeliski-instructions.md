@@ -8,6 +8,20 @@ This script takes the full Szeliski PDF (*Computer Vision: Algorithms and Applic
 - Python installed on your computer
 - A terminal (Terminal on Mac, PowerShell on Windows)
 
+## Get the script
+
+Download `split_szeliski.py` from the course repository:
+
+<https://raw.githubusercontent.com/danhlovejoy/rose-build/main/scripts/split_szeliski.py>
+
+Right-click the link and choose "Save Link As" (or click it and save the page). Put the script in the same folder as the Szeliski PDF. Your folder should look like:
+
+```
+some-folder/
+├── split_szeliski.py
+└── Szeliski_CVAABook_2ndEd.pdf
+```
+
 ---
 
 ## Mac
@@ -16,13 +30,13 @@ This script takes the full Szeliski PDF (*Computer Vision: Algorithms and Applic
 
 Press **Cmd + Space**, type `Terminal`, and hit Enter.
 
-### 2. Navigate to the project folder
+### 2. Navigate to the folder with the script and PDF
 
 ```
-cd path/to/rose
+cd path/to/some-folder
 ```
 
-Replace `path/to/rose` with wherever you downloaded or cloned the project. If you're not sure, drag the folder from Finder into the Terminal window and it will paste the path for you.
+Replace with the actual path. If you're not sure, type `cd ` (with a space after it), then drag the folder from Finder into the Terminal window. It will paste the path for you.
 
 ### 3. Create a virtual environment
 
@@ -32,7 +46,7 @@ A virtual environment is an isolated copy of Python where you can install packag
 python3 -m venv .venv
 ```
 
-This creates a `.venv` folder inside the project. You only need to do this once.
+This creates a `.venv` folder. You only need to do this once.
 
 ### 4. Activate the virtual environment
 
@@ -40,7 +54,7 @@ This creates a `.venv` folder inside the project. You only need to do this once.
 source .venv/bin/activate
 ```
 
-Your terminal prompt will change to show `(.venv)` at the beginning. That means you're inside the virtual environment. Every `pip install` and `python3` command you run now uses this isolated copy.
+Your terminal prompt will change to show `(.venv)` at the beginning. That means you're inside the virtual environment.
 
 ### 5. Install the PDF library
 
@@ -52,17 +66,13 @@ You only need to do this once (per virtual environment).
 
 ### 6. Run the script
 
-Place the `Szeliski_CVAABook_2ndEd.pdf` file in the project root (the `rose/` folder), then run:
-
 ```
-python3 scripts/split_szeliski.py
+python3 split_szeliski.py Szeliski_CVAABook_2ndEd.pdf output/
 ```
 
-The split PDFs will appear in `readings/szeliski/`.
+The split PDFs will appear in the `output/` folder.
 
 ### 7. When you're done
-
-Deactivate the virtual environment:
 
 ```
 deactivate
@@ -89,10 +99,10 @@ If you see a version number (3.10 or higher), skip to step 2. If you get an erro
 3. Run the installer. **Check the box that says "Add Python to PATH"** before clicking Install. This is the most common mistake. If you skip this, nothing below will work without extra configuration.
 4. Close and reopen PowerShell, then run `python --version` again to confirm.
 
-### 2. Open PowerShell and navigate to the project folder
+### 2. Open PowerShell and navigate to the folder with the script and PDF
 
 ```
-cd C:\path\to\rose
+cd C:\path\to\some-folder
 ```
 
 Replace with the actual path. If you're not sure, open the folder in File Explorer, click the address bar, and copy the path.
@@ -125,13 +135,11 @@ pip install pymupdf
 
 ### 6. Run the script
 
-Place the `Szeliski_CVAABook_2ndEd.pdf` file in the project root (the `rose\` folder), then run:
-
 ```
-python scripts/split_szeliski.py
+python split_szeliski.py Szeliski_CVAABook_2ndEd.pdf output\
 ```
 
-The split PDFs will appear in `readings\szeliski\`.
+The split PDFs will appear in the `output\` folder.
 
 ### 7. When you're done
 
