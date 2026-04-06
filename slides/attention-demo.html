@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Attention: How Context Changes Meaning &mdash; AIML 2003</title>
+<script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+<style>
+  :root {
+    --primary: #1a3a5c;
+    --primary-light: #2e5a88;
+    --accent: #2e7d32;
+    --light-bg: #f7f9fc;
+    --border: #d0d7de;
+    --text: #1f2328;
+    --muted: #656d76;
+    --neg: #c62828;
+    --neg-bg: #fce4ec;
+    --pos: #2e7d32;
+    --pos-bg: #e8f5e9;
+    --purple: #5e35b1;
+    --purple-bg: #ede7f6;
+    --orange: #e65100;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    color: var(--text); line-height: 1.6; background: #fff;
+  }
+  .container { max-width: 1100px; margin: 0 auto; padding: 0 2rem 3rem; }
+
+  .hero {
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+    color: #fff; padding: 2.5rem 2rem; text-align: center; margin-bottom: 2rem;
+  }
+  .hero h1 { font-size: 1.8rem; margin-bottom: 0.3rem; font-weight: 700; }
+  .hero p { color: #c0d4e8; font-size: 1rem; }
+  .hero .hl { color: #fff; font-weight: 500; margin-top: 0.75rem; font-size: 1.05rem; }
+
+  .stage { margin-top: 3rem; }
+  .stage-num {
+    display: inline-block; width: 2rem; height: 2rem; line-height: 2rem;
+    border-radius: 50%; background: var(--primary); color: #fff;
+    text-align: center; font-weight: 700; font-size: 0.9rem;
+    margin-right: 0.5rem; vertical-align: middle;
+  }
+  .stage-line h2 { font-size: 1.3rem; color: var(--primary); margin-bottom: 0.75rem; display: inline; vertical-align: middle; }
+  .stage-line { border-bottom: 2px solid var(--primary); margin-bottom: 1rem; padding-bottom: 0.4rem; }
+  p { font-size: 0.95rem; margin-bottom: 0.75rem; }
+
+  .card {
+    background: var(--light-bg); border: 1px solid var(--border);
+    border-radius: 8px; padding: 1.25rem; margin-bottom: 1rem;
+  }
+  .card strong { color: var(--primary); display: block; margin-bottom: 0.3rem; }
+
+  .tip {
+    background: var(--pos-bg); border-left: 4px solid var(--accent);
+    padding: 1rem 1.25rem; border-radius: 4px; margin: 1rem 0; font-size: 0.9rem;
+  }
+  .tip strong { color: var(--accent); }
+  .warn-tip {
+    background: #fff3e0; border-left: 4px solid var(--orange);
+    padding: 1rem 1.25rem; border-radius: 4px; margin: 1rem 0; font-size: 0.9rem;
+  }
+  .warn-tip strong { color: var(--orange); }
+  .arrow-box { text-align: center; padding: 1rem 0; color: var(--muted); font-size: 1.5rem; }
+
+  .btn {
+    display: inline-block; padding: 0.5rem 1.1rem; border: none; border-radius: 6px;
+    font-size: 0.85rem; font-weight: 600; cursor: pointer; font-family: inherit;
+    transition: opacity 0.15s;
+  }
+  .btn:hover { opacity: 0.85; }
+  .btn-accent { background: var(--accent); color: #fff; }
+  .btn-primary { background: var(--primary); color: #fff; }
+  .btn-outline { background: #fff; color: var(--primary); border: 1px solid var(--border); }
+  .btn-purple { background: var(--purple); color: #fff; }
+  .btn-group { display: flex; gap: 0.5rem; flex-wrap: wrap; margin: 0.75rem 0; }
+
+  .stats-row { display: flex; gap: 1rem; flex-wrap: wrap; margin: 1rem 0; }
+  .stat-card {
+    flex: 1; min-width: 110px; background: var(--light-bg);
+    border: 1px solid var(--border); border-radius: 8px;
+    padding: 0.75rem 1rem; text-align: center;
+  }
+  .stat-card .val { font-size: 1.5rem; font-weight: 700; color: var(--primary); }
+  .stat-card .lbl { font-size: 0.8rem; color: var(--muted); }
+
+  .eq-box {
+    background: var(--light-bg); border: 1px solid var(--border); border-radius: 8px;
+    padding: 1rem 1.25rem; margin: 1rem 0; text-align: center;
+    font-family: "SF Mono", Consolas, monospace; font-size: 0.95rem;
+  }
+
+  .vec-table { width: 100%; border-collapse: collapse; font-size: 0.88rem; margin: 1rem 0; }
+  .vec-table th {
+    text-align: center; padding: 0.5rem 0.6rem;
+    background: var(--primary); color: #fff; font-size: 0.8rem;
+    text-transform: uppercase; letter-spacing: 0.04em;
+  }
+  .vec-table th:first-child { text-align: left; }
+  .vec-table td {
+    padding: 0.5rem 0.6rem; border-bottom: 1px solid var(--border);
+    text-align: center; font-family: "SF Mono", Consolas, monospace; font-size: 0.85rem;
+  }
+  .vec-table td:first-child {
+    text-align: left; font-family: inherit; font-weight: 600; color: var(--primary);
+  }
+  .vec-table tr:hover { background: #eef3fa; }
+  .vec-table tr.active-row { background: #dbe8f5; }
+  .vec-table .cell-hot { background: #c8e6c9; color: #1b5e20; font-weight: 700; }
+  .vec-table .cell-warm { background: #fff9c4; color: #f57f17; font-weight: 600; }
+  .vec-table .cell-zero { background: #f5f5f5; color: #bbb; }
+
+  /* Sentence word tokens */
+  .sentence-display { display: flex; gap: 0.5rem; flex-wrap: wrap; margin: 1rem 0; align-items: stretch; }
+  .sentence-word {
+    padding: 0.6rem 1.2rem; border: 2px solid var(--border); border-radius: 8px;
+    background: #fff; cursor: pointer; font-family: inherit; font-size: 1rem;
+    font-weight: 600; color: var(--text); transition: border-color 0.15s, background 0.15s;
+    text-align: center; min-width: 80px; position: relative;
+  }
+  .sentence-word:hover { border-color: var(--primary); }
+  .sentence-word.active {
+    border-color: var(--primary); background: var(--light-bg); color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(26,58,92,0.15);
+  }
+  .sentence-word .attn-bar {
+    position: absolute; bottom: 0; left: 0; right: 0; height: 4px;
+    border-radius: 0 0 6px 6px; background: var(--accent); transition: opacity 0.2s;
+  }
+  .sentence-word .attn-label {
+    display: block; font-size: 0.7rem; color: var(--muted); margin-top: 0.2rem;
+    font-family: "SF Mono", Consolas, monospace;
+  }
+
+  /* QKV diagram */
+  .qkv-row { display: flex; gap: 1.5rem; justify-content: center; flex-wrap: wrap; margin: 1.5rem 0; }
+  .qkv-card {
+    flex: 1; min-width: 200px; max-width: 280px; padding: 1.25rem;
+    border-radius: 8px; text-align: center;
+  }
+  .qkv-card h3 { margin-bottom: 0.4rem; font-size: 1.1rem; }
+  .qkv-card p { font-size: 0.85rem; margin: 0; line-height: 1.5; }
+  .qkv-card.query { background: #e3f2fd; border: 2px solid #1565c0; }
+  .qkv-card.query h3 { color: #1565c0; }
+  .qkv-card.key { background: var(--pos-bg); border: 2px solid var(--accent); }
+  .qkv-card.key h3 { color: var(--accent); }
+  .qkv-card.value { background: var(--purple-bg); border: 2px solid var(--purple); }
+  .qkv-card.value h3 { color: var(--purple); }
+
+  .footer {
+    text-align: center; padding: 2rem 0; color: var(--muted); font-size: 0.85rem;
+    border-top: 1px solid var(--border); margin-top: 3rem;
+  }
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <h1>Attention: How Context Changes Meaning</h1>
+  <p>AIML 2003 &bull; Interactive Walkthrough</p>
+  <p class="hl">The same word gets a different vector depending on the words around it.</p>
+</div>
+
+<div class="container">
+
+<!-- ========== REVIEW: DOT PRODUCTS ========== -->
+<div class="card" style="margin-top:1rem;">
+  <strong>Quick review: dot products</strong>
+  <p style="margin:0.5rem 0 0;">A dot product multiplies two vectors element-by-element and sums the results. If two vectors share high values in the same dimensions, the dot product is large. If they have nothing in common, it&rsquo;s near zero.</p>
+  <div class="eq-box" style="margin:0.75rem 0;">
+    dot([0.9, 0.0, 0.3], [0.3, 0.5, 0.7]) = (0.9 &times; 0.3) + (0.0 &times; 0.5) + (0.3 &times; 0.7) = 0.27 + 0 + 0.21 = <strong>0.48</strong>
+  </div>
+  <p style="margin:0;">You used dot products in the cosine similarity demo. Cosine similarity normalizes by vector length; the raw dot product does not. Attention uses raw dot products because the magnitude carries useful information &mdash; longer vectors (stronger signals) should contribute more.</p>
+</div>
+
+<!-- ================================================================
+     STAGE 1: ONE WORD, TWO MEANINGS
+     ================================================================ -->
+<div class="stage">
+  <div class="stage-line"><span class="stage-num">1</span><h2>One Word, Two Meanings</h2></div>
+  <p>Word2Vec and similar models assign one vector per word. &ldquo;Bank&rdquo; gets the same list of numbers whether it appears next to &ldquo;river&rdquo; or &ldquo;account.&rdquo; That&rsquo;s a problem. The two meanings share a spelling but almost nothing else.</p>
+
+  <div class="card">
+    <strong>Two sentences, same word</strong>
+    <p style="margin:0.5rem 0;"><span style="font-size:1.1rem;">&ldquo;The <strong>river bank</strong> was steep.&rdquo;</span></p>
+    <p style="margin:0;"><span style="font-size:1.1rem;">&ldquo;The <strong>bank account</strong> was empty.&rdquo;</span></p>
+  </div>
+
+  <p>Here is the single static vector for &ldquo;bank&rdquo; in our toy space. It scores moderately on both Water and Money because the vector tries to cover both meanings at once. It commits to neither.</p>
+
+  <div id="s1Chart" style="width:100%; height:260px;"></div>
+
+  <div class="warn-tip">
+    <strong>One vector cannot represent two meanings.</strong> A system that encodes &ldquo;bank&rdquo; the same way regardless of context will confuse river banks with financial institutions. Something needs to look at the surrounding words and adjust.
+  </div>
+</div>
+
+<div class="arrow-box">&darr;</div>
+
+<!-- ================================================================
+     STAGE 2: WHICH WORDS MATTER?
+     ================================================================ -->
+<div class="stage">
+  <div class="stage-line"><span class="stage-num">2</span><h2>Which Words Matter?</h2></div>
+  <p>The fix: before producing a final vector for &ldquo;bank,&rdquo; look at every other word in the sentence and ask how relevant it is. You already know how to measure relevance between two vectors. Take the dot product. A higher dot product means the vectors share more structure, which means the words are more related in this context.</p>
+  <p>After computing dot products, normalize them with softmax so they sum to 1.0. These normalized scores are the <em>attention weights</em>: how much each word should influence the representation of the word you&rsquo;re encoding.</p>
+
+  <p>Here are the toy vectors. For this demo, we use just the content words (real transformers process every token, including &ldquo;the&rdquo; and &ldquo;was&rdquo;).</p>
+
+  <table class="vec-table">
+    <thead><tr><th>Word</th><th>Water</th><th>Money</th><th>Edge</th><th>Living</th><th>Action</th><th>Object</th></tr></thead>
+    <tbody id="s2VecBody"></tbody>
+  </table>
+
+  <div class="btn-group">
+    <button class="btn btn-primary" id="s2BtnNature" onclick="selectS2Sentence('nature')">river &middot; bank &middot; fish</button>
+    <button class="btn btn-accent" id="s2BtnFinance" onclick="selectS2Sentence('finance')">bank &middot; account &middot; deposit</button>
+  </div>
+
+  <p style="font-size:0.88rem; color:var(--muted);">Click a word below to see what it attends to:</p>
+  <div class="sentence-display" id="s2Sentence"></div>
+
+  <div class="eq-box" id="s2Eq" style="display:none;"></div>
+
+  <div id="s2Heatmap" style="width:100%; height:320px;"></div>
+
+  <div class="tip" id="s2Tip" style="display:none;">
+    <strong>Softmax weights always sum to 1.0.</strong> Each word distributes its full attention across the sentence. A word that attends strongly to one neighbor necessarily attends less to the others. The attention pattern for &ldquo;bank&rdquo; shifts depending on which sentence it appears in &mdash; and that shift is what resolves the ambiguity.
+  </div>
+</div>
+
+<div class="arrow-box">&darr;</div>
+
+<!-- ================================================================
+     STAGE 3: THE WEIGHTED MIX
+     ================================================================ -->
+<div class="stage">
+  <div class="stage-line"><span class="stage-num">3</span><h2>The Weighted Mix</h2></div>
+  <p>Attention weights tell you how relevant each word is. Now use them. Multiply each word&rsquo;s vector by its attention weight and sum the results. The output is a new vector for &ldquo;bank&rdquo; that blends in context from the surrounding words.</p>
+
+  <div class="eq-box">
+    context(<strong>bank</strong>) = w<sub>1</sub> &times; v<sub>word1</sub> + w<sub>2</sub> &times; v<sub>word2</sub> + w<sub>3</sub> &times; v<sub>word3</sub>
+  </div>
+
+  <div class="btn-group">
+    <button class="btn btn-primary" id="s3BtnNature" onclick="selectS3Sentence('nature')">river &middot; bank &middot; fish</button>
+    <button class="btn btn-accent" id="s3BtnFinance" onclick="selectS3Sentence('finance')">bank &middot; account &middot; deposit</button>
+  </div>
+
+  <div id="s3ArithTable"></div>
+
+  <p>Now compare. The same word &ldquo;bank&rdquo; produces two different context vectors:</p>
+
+  <div id="s3CompareChart" style="width:100%; height:340px;"></div>
+
+  <div class="stats-row">
+    <div class="stat-card"><div class="val" id="s3WaterNature">&mdash;</div><div class="lbl">Water (nature)</div></div>
+    <div class="stat-card"><div class="val" id="s3MoneyNature">&mdash;</div><div class="lbl">Money (nature)</div></div>
+    <div class="stat-card"><div class="val" id="s3WaterFinance">&mdash;</div><div class="lbl">Water (finance)</div></div>
+    <div class="stat-card"><div class="val" id="s3MoneyFinance">&mdash;</div><div class="lbl">Money (finance)</div></div>
+  </div>
+
+  <div class="tip">
+    <strong>Context resolved the ambiguity.</strong> In the nature sentence, the context vector for &ldquo;bank&rdquo; scores high on Water and low on Money. In the finance sentence, the opposite. The surrounding words pulled the representation in different directions. That pull is attention.
+  </div>
+</div>
+
+<div class="arrow-box">&darr;</div>
+
+<!-- ================================================================
+     STAGE 4: PREVIEW — Q, K, V
+     ================================================================ -->
+<div class="stage">
+  <div class="stage-line"><span class="stage-num">4</span><h2>Preview: Query, Key, Value</h2></div>
+  <p>In Stages 2 and 3, we used the raw word vectors for everything: to compute relevance scores and to mix into the output. Real transformers don&rsquo;t do that. They learn three separate projections of each word vector, each with a different job.</p>
+
+  <div class="qkv-row">
+    <div class="qkv-card query">
+      <h3>Query (Q)</h3>
+      <p>&ldquo;What am I looking for?&rdquo;</p>
+      <p style="margin-top:0.4rem; font-size:0.8rem; color:#1565c0;">Used by the word that&rsquo;s asking for context.</p>
+    </div>
+    <div class="qkv-card key">
+      <h3>Key (K)</h3>
+      <p>&ldquo;What do I contain?&rdquo;</p>
+      <p style="margin-top:0.4rem; font-size:0.8rem; color:var(--accent);">Used by each candidate word to advertise its content.</p>
+    </div>
+    <div class="qkv-card value">
+      <h3>Value (V)</h3>
+      <p>&ldquo;What do I pass along?&rdquo;</p>
+      <p style="margin-top:0.4rem; font-size:0.8rem; color:var(--purple);">The actual information that gets mixed into the output.</p>
+    </div>
+  </div>
+
+  <p>In our demo, the same vector played all three roles. A real transformer multiplies each word vector by three learned weight matrices to produce Q, K, and V separately. The attention score becomes dot(Q, K) instead of dot(raw, raw), and the weighted sum uses V instead of the raw vectors.</p>
+
+  <p>This separation is what makes attention trainable. The model can learn to search for one pattern (Q), advertise a different pattern (K), and pass along a third (V). Our toy demo used fixed vectors and got reasonable results; learned projections are what make the mechanism powerful enough for language.</p>
+
+  <div class="card">
+    <strong>What changes with Q, K, V?</strong>
+    <p style="margin:0;">The core operation stays the same: dot products to measure relevance, softmax to normalize, weighted sum to mix. The difference is that the vectors fed into each step are specialized rather than shared. That specialization is learned during training on billions of sentences. The full mechanics are a separate demo.</p>
+  </div>
+</div>
+
+</div><!-- /.container -->
+
+<div class="footer">
+  AIML 2003 &bull; Introduction to Natural Language Processing &bull; Module 4: Attention &bull; Spring 2026
+</div>
+
+<!-- ================================================================
+     JAVASCRIPT
+     ================================================================ -->
+<script>
+// ── Data ──
+
+const DIMS = ['Water', 'Money', 'Edge', 'Living', 'Action', 'Object'];
+
+// assert: dot(0.3,0.5,0.7,0.0,0.1,0.6, 0.9,0.0,0.3,0.2,0.4,0.1) = 0.58
+// assert: dot(0.3,0.5,0.7,0.0,0.1,0.6, 0.3,0.5,0.7,0.0,0.1,0.6) = 1.20
+// assert: dot(0.3,0.5,0.7,0.0,0.1,0.6, 0.0,0.9,0.0,0.0,0.2,0.5) = 0.77
+// assert: dot(0.3,0.5,0.7,0.0,0.1,0.6, 0.7,0.0,0.0,0.9,0.3,0.1) = 0.30
+// assert: dot(0.3,0.5,0.7,0.0,0.1,0.6, 0.1,0.8,0.0,0.0,0.7,0.3) = 0.68
+const WORDS = {
+  'river':   [0.9, 0.0, 0.3, 0.2, 0.4, 0.1],
+  'bank':    [0.3, 0.5, 0.7, 0.0, 0.1, 0.6],
+  'account': [0.0, 0.9, 0.0, 0.0, 0.2, 0.5],
+  'fish':    [0.7, 0.0, 0.0, 0.9, 0.3, 0.1],
+  'deposit': [0.1, 0.8, 0.0, 0.0, 0.7, 0.3],
+};
+
+const SENTENCES = {
+  'nature':  ['river', 'bank', 'fish'],
+  'finance': ['bank', 'account', 'deposit'],
+};
+
+// ── Utilities ──
+
+function dot(a, b) {
+  let s = 0;
+  for (let i = 0; i < a.length; i++) s += a[i] * b[i];
+  return s;
+}
+
+function softmax(scores) {
+  const mx = Math.max(...scores);
+  const exps = scores.map(s => Math.exp(s - mx));
+  const total = exps.reduce((a, b) => a + b, 0);
+  return exps.map(e => e / total);
+}
+
+function cellClass(v) {
+  if (v >= 0.7) return 'cell-hot';
+  if (v >= 0.2) return 'cell-warm';
+  return 'cell-zero';
+}
+
+function computeAttentionMatrix(sentenceKey) {
+  const words = SENTENCES[sentenceKey];
+  const n = words.length;
+  const matrix = [];
+  for (let i = 0; i < n; i++) {
+    const scores = [];
+    for (let j = 0; j < n; j++) {
+      scores.push(dot(WORDS[words[i]], WORDS[words[j]]));
+    }
+    matrix.push(softmax(scores));
+  }
+  return matrix;
+}
+
+function computeContextVector(sentenceKey, queryWord) {
+  const words = SENTENCES[sentenceKey];
+  const qi = words.indexOf(queryWord);
+  const matrix = computeAttentionMatrix(sentenceKey);
+  const weights = matrix[qi];
+  const ctx = new Array(DIMS.length).fill(0);
+  for (let j = 0; j < words.length; j++) {
+    const vec = WORDS[words[j]];
+    for (let d = 0; d < DIMS.length; d++) {
+      ctx[d] += weights[j] * vec[d];
+    }
+  }
+  return { weights, ctx };
+}
+
+const PLOTLY_LAYOUT = {
+  plot_bgcolor: '#fff', paper_bgcolor: '#fff',
+  font: { family: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif', size: 11 },
+};
+
+// ── Stage 1 ──
+
+function renderS1() {
+  const bankVec = WORDS['bank'];
+  Plotly.react('s1Chart', [{
+    x: DIMS,
+    y: bankVec,
+    type: 'bar',
+    marker: { color: DIMS.map((_, i) => bankVec[i] >= 0.5 ? '#1565c0' : '#90caf9') },
+    showlegend: false,
+  }], {
+    ...PLOTLY_LAYOUT,
+    title: { text: 'Static vector for "bank"', font: { size: 13, color: '#1a3a5c' } },
+    xaxis: { gridcolor: '#e8ecf0' },
+    yaxis: { title: 'Value', range: [0, 1.05], gridcolor: '#e8ecf0' },
+    margin: { l: 50, r: 20, t: 40, b: 50 },
+  }, { responsive: true });
+}
+
+// ── Stage 2 ──
+
+let s2Sentence = 'nature';
+let s2Query = null;
+
+function renderS2VecTable() {
+  const names = Object.keys(WORDS);
+  document.getElementById('s2VecBody').innerHTML = names.map(w => {
+    const v = WORDS[w];
+    return `<tr>
+      <td>${w}</td>${v.map(val => `<td class="${cellClass(val)}">${val.toFixed(1)}</td>`).join('')}
+    </tr>`;
+  }).join('');
+}
+
+function selectS2Sentence(which) {
+  s2Sentence = which;
+  s2Query = null;
+  document.getElementById('s2BtnNature').className = 'btn ' + (which === 'nature' ? 'btn-primary' : 'btn-outline');
+  document.getElementById('s2BtnFinance').className = 'btn ' + (which === 'finance' ? 'btn-accent' : 'btn-outline');
+  renderS2Sentence();
+  updateS2Heatmap();
+  document.getElementById('s2Eq').style.display = 'none';
+  document.getElementById('s2Tip').style.display = 'none';
+}
+
+function renderS2Sentence() {
+  const words = SENTENCES[s2Sentence];
+  document.getElementById('s2Sentence').innerHTML = words.map(w =>
+    `<div class="sentence-word" id="s2w_${w}" onclick="selectS2Query('${w}')">
+      ${w}
+      <span class="attn-label" id="s2lbl_${w}"></span>
+    </div>`
+  ).join('');
+}
+
+function selectS2Query(word) {
+  s2Query = word;
+  const words = SENTENCES[s2Sentence];
+
+  // Highlight active word
+  words.forEach(w => {
+    const el = document.getElementById('s2w_' + w);
+    el.className = 'sentence-word' + (w === word ? ' active' : '');
+  });
+
+  // Compute attention
+  const qi = words.indexOf(word);
+  const rawScores = words.map(w => dot(WORDS[word], WORDS[w]));
+  const weights = softmax(rawScores);
+
+  // Show weights under words
+  words.forEach((w, i) => {
+    document.getElementById('s2lbl_' + w).textContent = weights[i].toFixed(3);
+  });
+
+  // Show equation
+  const eqParts = words.map((w, i) => `dot(${word}, ${w}) = ${rawScores[i].toFixed(2)}`).join(' &nbsp;|&nbsp; ');
+  document.getElementById('s2Eq').style.display = '';
+  document.getElementById('s2Eq').innerHTML = `<strong>${word}</strong> attends to: ${eqParts}<br>softmax &rarr; [${weights.map(w => w.toFixed(3)).join(', ')}]`;
+
+  document.getElementById('s2Tip').style.display = '';
+
+  updateS2Heatmap(qi);
+}
+
+function updateS2Heatmap(highlightRow) {
+  const words = SENTENCES[s2Sentence];
+  const matrix = computeAttentionMatrix(s2Sentence);
+
+  Plotly.react('s2Heatmap', [{
+    z: matrix,
+    x: words.map(w => w + ' (key)'),
+    y: words.map(w => w + ' (query)'),
+    type: 'heatmap',
+    colorscale: [[0, '#f5f5f5'], [0.3, '#fff9c4'], [0.6, '#a5d6a7'], [1, '#2e7d32']],
+    showscale: true,
+    colorbar: { title: 'Weight', titleside: 'right' },
+    text: matrix.map(row => row.map(v => v.toFixed(3))),
+    texttemplate: '%{text}',
+    textfont: { size: 12 },
+    hovertemplate: '<b>%{y}</b> &rarr; %{x}: %{z:.3f}<extra></extra>',
+  }], {
+    ...PLOTLY_LAYOUT,
+    title: { text: 'Attention weights (who attends to whom)', font: { size: 13, color: '#1a3a5c' } },
+    xaxis: { side: 'top', automargin: true },
+    yaxis: { autorange: 'reversed', automargin: true },
+    margin: { l: 100, r: 20, t: 60, b: 20 },
+  }, { responsive: true });
+}
+
+// ── Stage 3 ──
+
+let s3Sentence = 'nature';
+
+function renderS3() {
+  selectS3Sentence('nature');
+}
+
+function selectS3Sentence(which) {
+  s3Sentence = which;
+  document.getElementById('s3BtnNature').className = 'btn ' + (which === 'nature' ? 'btn-primary' : 'btn-outline');
+  document.getElementById('s3BtnFinance').className = 'btn ' + (which === 'finance' ? 'btn-accent' : 'btn-outline');
+  updateS3();
+}
+
+function updateS3() {
+  const words = SENTENCES[s3Sentence];
+  const bankIdx = words.indexOf('bank');
+  const { weights, ctx } = computeContextVector(s3Sentence, 'bank');
+
+  // Build arithmetic table
+  let html = '<table class="vec-table"><thead><tr><th>Word</th><th>Weight</th>';
+  DIMS.forEach(d => html += `<th>${d}</th>`);
+  html += '</tr></thead><tbody>';
+
+  words.forEach((w, i) => {
+    const vec = WORDS[w];
+    html += `<tr><td>${w}</td><td class="cell-warm">${weights[i].toFixed(3)}</td>`;
+    vec.forEach((v, d) => {
+      const product = weights[i] * v;
+      html += `<td class="${product > 0.1 ? 'cell-warm' : 'cell-zero'}">${product.toFixed(3)}</td>`;
+    });
+    html += '</tr>';
+  });
+
+  // Sum row
+  html += '<tr style="border-top:3px solid #1a3a5c; font-weight:700;"><td>context(bank)</td><td></td>';
+  ctx.forEach(v => {
+    html += `<td class="${v >= 0.4 ? 'cell-hot' : (v >= 0.15 ? 'cell-warm' : 'cell-zero')}">${v.toFixed(3)}</td>`;
+  });
+  html += '</tr></tbody></table>';
+  document.getElementById('s3ArithTable').innerHTML = html;
+
+  updateS3Compare();
+}
+
+function updateS3Compare() {
+  const ctxNature = computeContextVector('nature', 'bank').ctx;
+  const ctxFinance = computeContextVector('finance', 'bank').ctx;
+
+  Plotly.react('s3CompareChart', [
+    { x: DIMS, y: ctxNature, type: 'bar', name: 'bank in "river bank fish"',
+      marker: { color: '#1565c0' } },
+    { x: DIMS, y: ctxFinance, type: 'bar', name: 'bank in "bank account deposit"',
+      marker: { color: '#e65100' } },
+  ], {
+    ...PLOTLY_LAYOUT,
+    barmode: 'group',
+    title: { text: 'Context vectors for "bank" — two different meanings', font: { size: 13, color: '#1a3a5c' } },
+    xaxis: { gridcolor: '#e8ecf0' },
+    yaxis: { title: 'Value', range: [0, 0.75], gridcolor: '#e8ecf0' },
+    margin: { l: 50, r: 20, t: 40, b: 50 },
+    legend: { orientation: 'h', y: 1.15 },
+  }, { responsive: true });
+
+  // Update stat cards
+  document.getElementById('s3WaterNature').textContent = ctxNature[0].toFixed(2);
+  document.getElementById('s3MoneyNature').textContent = ctxNature[1].toFixed(2);
+  document.getElementById('s3WaterFinance').textContent = ctxFinance[0].toFixed(2);
+  document.getElementById('s3MoneyFinance').textContent = ctxFinance[1].toFixed(2);
+}
+
+// ── Stage 4 (static — QKV diagram is rendered in HTML) ──
+
+// ── Init ──
+
+function init() {
+  renderS1();
+  renderS2VecTable();
+  selectS2Sentence('nature');
+  renderS3();
+}
+
+document.addEventListener('DOMContentLoaded', init);
+</script>
+
+</body>
+</html>
