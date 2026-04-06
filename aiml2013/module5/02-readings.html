@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Module 5 Readings: CV Metrics &amp; Bias | AIML 2013</title>
+<link rel="stylesheet" href="../../course-styles.css">
+</head>
+<body>
+
+<h1>Module 5: CV Metrics &amp; Bias</h1>
+<p class="subtitle">Readings &amp; Prep: Complete before Tuesday, April 28</p>
+
+<div class="time-box">
+  <strong>Estimated prep time:</strong> ~1 hour (required materials). One optional deep dive on dataset documentation. All materials are free.
+</div>
+
+<!-- ========== FRAMING ========== -->
+<div class="framing-box">
+  <p><strong>The big picture:</strong> In Module 4 you built a retrieval system and evaluated it with precision@k. That metric told you how often the system returned the right class of image, but it treated every query equally. A retrieval system that works well for cats and badly for dogs gets the same average score as one that works equally for both &mdash; the average hides the gap.</p>
+  <p style="margin-top:0.5rem;">The same problem applies to classifiers. A face-attribute classifier with 94% accuracy sounds reliable until you discover it's 99% accurate on one demographic group and 65% accurate on another. The overall number is technically correct and practically misleading. This week's readings cover the landmark study that exposed this problem, the metrics you need to audit it, and the structural reasons why it happens.</p>
+  <p style="margin-top:0.5rem;">This is not abstract. In 2018, Joy Buolamwini and Timnit Gebru published Gender Shades, which showed that commercial facial analysis systems from Microsoft, IBM, and Face++ had error rates up to 34% on darker-skinned women while performing nearly perfectly on lighter-skinned men. That paper changed industry practice. You are building a simplified version of their audit this week.</p>
+</div>
+
+<!-- ========== NOTEBOOKLM ========== -->
+<div class="nlm-box">
+  <strong>NotebookLM tip:</strong> Upload the Gender Shades paper and the StatQuest transcript to a Module 5 notebook. Good questions: &ldquo;What is the difference between precision and recall in the context of face classification?&rdquo; &ldquo;Why did Gender Shades use an intersectional framework instead of just testing by gender or skin tone separately?&rdquo; &ldquo;What changed in the industry after Gender Shades was published?&rdquo;
+</div>
+
+<!-- ================================================================
+     REQUIRED READINGS & VIDEOS
+     ================================================================ -->
+<h2>Required Readings &amp; Videos</h2>
+<p>Work through these in order. The StatQuest video builds your metrics vocabulary; the Gender Shades paper shows what a real bias audit looks like.</p>
+
+<!-- RESOURCE 1: StatQuest -->
+<div class="resource-card">
+  <div class="resource-header">
+    <span class="resource-title">Confusion Matrix, Accuracy, Precision, Recall, F1 Score</span>
+    <span class="tag tag-required">Required</span>
+    <span class="tag tag-video">Video</span>
+    <span class="tag tag-time">~15 min</span>
+  </div>
+  <p class="resource-meta">StatQuest with Josh Starmer &bull; YouTube</p>
+  <p class="resource-desc">A concise, visual walkthrough of the core classification metrics. You've seen accuracy before; this video explains why accuracy alone is not enough, and when precision and recall tell a different story. StatQuest's step-by-step style makes the formulas stick without requiring derivations. Watch this first &mdash; you will use every metric in this video in the lab.</p>
+  <p class="resource-link">
+    <a href="https://www.youtube.com/watch?v=Kdsp6soqA7o" target="_blank">Watch: Confusion Matrix &amp; Classification Metrics &rarr;</a>
+  </p>
+  <div class="focus-box">
+    <strong>Key concept to lock in:</strong> Precision answers "of the items the model flagged as positive, how many actually were?" Recall answers "of all the actual positives, how many did the model find?" A model can have high precision and low recall (it's cautious but misses many), or low precision and high recall (it catches everything but flags many false positives). The right balance depends on the cost of each error.
+  </div>
+</div>
+
+<!-- RESOURCE 2: Gender Shades -->
+<div class="resource-card">
+  <div class="resource-header">
+    <span class="resource-title">Gender Shades: Intersectional Accuracy Disparities in Commercial Gender Classification</span>
+    <span class="tag tag-required">Required</span>
+    <span class="tag tag-read">Read</span>
+    <span class="tag tag-time">~30 min</span>
+  </div>
+  <p class="resource-meta">Buolamwini &amp; Gebru, 2018 &bull; Proceedings of Machine Learning Research</p>
+  <p class="resource-desc">The paper that started the AI bias audit movement. Buolamwini and Gebru tested three commercial gender classification systems (Microsoft, IBM, Face++) on a new benchmark dataset (Pilot Parliaments Benchmark) balanced across skin tone and gender. They found error rates ranging from 0.8% on lighter-skinned males to 34.7% on darker-skinned females. Read Sections 1&ndash;4 and the results tables. The methodology section (Section 3) is the template for what you are building in the lab: choose a classifier, choose subgroups, compute per-group metrics, report the gaps.</p>
+  <p class="resource-link">
+    <a href="http://proceedings.mlr.press/v81/buolamwini18a.html" target="_blank">Read: Gender Shades &rarr;</a>
+  </p>
+  <div class="focus-box">
+    <strong>Key concept to lock in:</strong> Intersectional analysis matters because single-attribute analysis can miss compounding failures. The commercial classifiers tested in Gender Shades performed well on "male" and reasonably on "female," but poorly on "darker-skinned female." The intersection of two attributes created a failure that neither attribute revealed alone.
+  </div>
+</div>
+
+
+<!-- ================================================================
+     OPTIONAL
+     ================================================================ -->
+<h2>Optional Deeper Dive</h2>
+
+<div class="resource-card">
+  <div class="resource-header">
+    <span class="resource-title">Datasheets for Datasets</span>
+    <span class="tag tag-optional">Optional</span>
+    <span class="tag tag-read">Read</span>
+    <span class="tag tag-time">~25 min</span>
+  </div>
+  <p class="resource-meta">Gebru et al., 2021 &bull; Communications of the ACM</p>
+  <p class="resource-desc">Timnit Gebru (co-author of Gender Shades) proposes that every dataset should come with a "datasheet" documenting who collected it, why, what it contains, how it was labeled, and known limitations. CelebA, the dataset you use in the lab, has known issues: binary gender labels, celebrity-only faces, limited ethnic diversity. This paper gives you the vocabulary to articulate those limitations in your reflection and ethics discussion.</p>
+  <p class="resource-link">
+    <a href="https://arxiv.org/abs/1803.09010" target="_blank">Read: Datasheets for Datasets &rarr;</a>
+  </p>
+</div>
+
+<!-- ================================================================
+     DISCUSSION PREP
+     ================================================================ -->
+<h2>Discussion Prep</h2>
+<p>These questions will frame our Tuesday class discussion. You don't need to write answers, but come prepared to talk about them.</p>
+
+<div class="section-card">
+  <ol>
+    <li style="margin-bottom:0.75rem;">Gender Shades found that commercial classifiers had error rates up to 34% on darker-skinned women. The companies argued their systems had high overall accuracy. Both statements were true. How should companies report accuracy to the public? Should disaggregated results be mandatory?</li>
+    <li style="margin-bottom:0.75rem;">CelebA labels gender as a binary attribute (Male / not Male). This means your lab's audit cannot measure how the classifier performs on non-binary individuals. How does the dataset's labeling scheme limit what your audit can find? What would a more inclusive dataset look like?</li>
+    <li style="margin-bottom:0.75rem;">Your lab's bonus cell shows that changing the classification threshold can reduce the accuracy gap between subgroups. But reducing the gap may also reduce overall accuracy. Who should decide that tradeoff &mdash; the engineers, the users, or a regulator?</li>
+    <li style="margin-bottom:0.75rem;">You are using a classifier you trained yourself on CelebA. In a real deployment, the classifier might be a black box from a vendor. How does auditing change when you can't see the model's architecture or training data?</li>
+  </ol>
+</div>
+
+<!-- ========== BRIDGE BOX ========== -->
+<div class="bridge-box" data-concurrent="true">
+  <strong>Taking AIML 2003 too?</strong> NLP students are evaluating Gemini for hallucination and demographic bias in text generation this week. Both courses are measuring bias &mdash; CV through per-group classification accuracy, NLP through sentiment gaps and profession-gender associations. The combined presentation asks you to compare the two: how does bias manifest differently when the output is a classification label vs. when it is generated text?
+</div>
+
+</body>
+</html>

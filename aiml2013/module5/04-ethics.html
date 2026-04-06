@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Module 5 Ethics Thread | AIML 2013</title>
+<link rel="stylesheet" href="../../course-styles.css">
+</head>
+<body>
+
+<h1>Ethics Thread: When Accuracy Isn't Equal</h1>
+<p class="subtitle">AIML 2013: Module 5 Discussion. Post by Tuesday, April 28 (before class)</p>
+
+<div class="prompt-box">
+  <h2>The Prompt</h2>
+  <p>This week you ran a demographic bias audit on a face-attribute classifier. You computed overall accuracy, then disaggregated that accuracy by subgroup. The overall number looked reasonable. The per-group numbers told a different story. Some subgroups had high accuracy; others had accuracy gaps of 10, 15, or 20 percentage points. You saw which faces the model got wrong, and you saw patterns in those errors.</p>
+  <p>This is not a hypothetical exercise. In 2018, Gender Shades showed that commercial facial analysis systems from major companies had error rates up to 34% on darker-skinned women while performing near-perfectly on lighter-skinned men. The companies had published overall accuracy numbers that looked strong. The disaggregated numbers were never published until an external audit revealed them.</p>
+  <p>In your post, address at least one of the following:</p>
+  <ul>
+    <li>Your lab's intersectional analysis (Cell 5) crossed two attributes and found accuracy gaps that neither attribute revealed alone. If a company tests its classifier by gender and by age separately but never crosses them, it may never discover the intersectional failure. Should regulators require intersectional audits before deployment? What are the practical barriers to doing this at scale?</li>
+    <li>CelebA labels gender as binary (Male / not Male). Your entire audit is built on those labels. What does it mean to audit for fairness using a dataset that doesn't represent everyone? If the dataset excludes a population, does the audit's silence about that population constitute a form of harm?</li>
+    <li>Your bias scorecard (Cell 7) color-codes accuracy gaps: green, yellow, red. You chose the thresholds (5% and 10%). A different choice would produce a different verdict. Who should set the acceptable accuracy gap for a deployed system, and what should happen when a system exceeds it?</li>
+    <li>After Gender Shades was published, Microsoft and IBM improved their systems' accuracy on darker-skinned faces. But Amazon continued selling its facial recognition system to law enforcement without publishing disaggregated accuracy data. Should companies be required to publish per-group accuracy before selling classification systems? What would that requirement look like?</li>
+  </ul>
+</div>
+
+<div class="requirements">
+  <strong>Requirements</strong>
+  <ul>
+    <li><strong>Your post:</strong> 150&ndash;250 words. Take a position. Don't just summarize the question.</li>
+    <li><strong>Reply to a classmate:</strong> At least one substantive reply (not just "I agree"). Engage with their reasoning: push back, build on it, or offer a different angle.</li>
+    <li><strong>Deadline:</strong> Initial post by Tuesday, April 28 (before class). Reply by the following Tuesday class (May 5).</li>
+  </ul>
+</div>
+
+<p>You ran the audit yourself this week. You saw the gap between overall accuracy and per-group accuracy. You chose which attributes to slice on and which intersections to test. Use that experience. The ethical question is not whether bias exists &mdash; your scorecard already answered that &mdash; but what obligations follow from knowing it exists.</p>
+
+<p class="note">The weekly ethics discussion is worth 20% of your weekly Participation grade (the other 80% comes from attendance and in-class engagement). Whether you attend in person or via Zoom, this post is required every week.</p>
+
+</body>
+</html>

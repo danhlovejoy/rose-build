@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Module 4 Overview: Visual Similarity | AIML 2013</title>
+<link rel="stylesheet" href="../../course-styles.css">
+</head>
+<body>
+
+<!-- ========== HERO ========== -->
+<div class="hero">
+  <h2>Module 4: Visual Similarity</h2>
+  <p>AIML 2013 &bull; Introduction to Computer Vision &bull; Spring 2026</p>
+  <p class="highlight" style="margin-top:0.75rem;">Last week you extracted embeddings from a neural network and measured similarity with cosine distance. This week you store those embeddings in a vector database, build a real retrieval system, and find out exactly where it fails.</p>
+</div>
+
+<!-- ========== AT A GLANCE ========== -->
+<div class="info-grid">
+  <div class="info-card">
+    <strong>This Week's Focus</strong>
+    <p>Build an image similarity search engine: extract MobileNetV2 embeddings, store them in ChromaDB, query by image, evaluate with precision@k, and compare against your HOG baseline from Module 2.</p>
+  </div>
+  <div class="info-card">
+    <strong>Deliverables</strong>
+    <p>GitHub Repo + Demo (3&ndash;5 min)</p>
+    <p data-concurrent="true" style="margin-top:0.25rem; font-size:0.9em;">Dual-enrolled: Combined demo is 5&ndash;7 min</p>
+    <p>Ethics discussion post</p>
+  </div>
+  <div class="info-card">
+    <strong>Key Dates</strong>
+    <p>Tuesday April 14: Class (7:00 PM)</p>
+    <p>Thursday April 16: Lab (Zoom, 6:00 PM)</p>
+    <p>Due: By Tuesday, April 21 (by class time)</p>
+  </div>
+  <div class="info-card">
+    <strong>Prep Before Tuesday</strong>
+    <p>~2 hours of readings and videos on the attention mechanism, feature extraction with pre-trained CNNs, and similarity metrics. See the Readings page in this module.</p>
+  </div>
+</div>
+
+<!-- ========== THIS WEEK ========== -->
+<h2>This Week</h2>
+
+<div class="week-block">
+  <h3>Before Tuesday</h3>
+  <ul>
+    <li>Complete the readings and watch the assigned videos (~2 hours). See the Readings &amp; Prep page.</li>
+    <li>Post your ethics discussion response (due by Tuesday class).</li>
+    <li>Finish the lab, push to GitHub, and prepare your demo.</li>
+    <li>Your Module 3 presentation is on Tuesday. Practice once to stay within the 3&ndash;5 minute window. <span data-concurrent="true">(5&ndash;7 minutes for the combined presentation)</span></li>
+  </ul>
+</div>
+
+<div class="week-block">
+  <h3>Tuesday April 14 <span class="tag tag-tue">In Person</span></h3>
+  <ul>
+    <li><strong>Presentations:</strong> You present what you built in Module 3 (3&ndash;5 minutes). Come ready to show your results and take a question or two.</li>
+    <li>We discuss this week's concepts: vector databases vs. brute-force similarity, precision@k as a retrieval metric, and why feature extractors fail on out-of-distribution images.</li>
+    <li>New readings assigned for next week.</li>
+  </ul>
+</div>
+
+<div class="week-block">
+  <h3>Thursday April 16 <span class="tag tag-thu">Zoom</span></h3>
+  <ul>
+    <li>We work through the image retrieval pipeline together: loading images, extracting MobileNetV2 embeddings, building the ChromaDB collection, and querying by image.</li>
+    <li>Bring your dataset from Module 3. Come with Cells 1&ndash;3 attempted so we can debug together.</li>
+  </ul>
+</div>
+
+<!-- ========== WHAT'S IN THIS MODULE ========== -->
+<h2>What's in This Module</h2>
+
+<div class="week-block">
+  <ol>
+    <li style="margin-bottom:0.5rem;"><strong>Readings &amp; Prep:</strong> A conceptual introduction to the attention mechanism (3Blue1Brown), feature extraction with pre-trained CNNs (PyImageSearch), similarity metrics for image retrieval, and the ChromaDB quickstart. Together, these explain why deep features outperform hand-crafted descriptors, how to evaluate retrieval quality, and how to set up the vector database for the lab.</li>
+    <li style="margin-bottom:0.5rem;"><strong>Module 4 Lab: Image Similarity Search with ChromaDB.</strong> Build a complete image retrieval system: extract MobileNetV2 embeddings, store in ChromaDB, query by image, compute precision@k, analyze failure cases, and compare against HOG on the same images.</li>
+    <li style="margin-bottom:0.5rem;" data-concurrent="true"><strong>Combined Lab: The Universal Search Engine.</strong> For dual-enrolled students taking both NLP and CV. One notebook with a ChromaDB instance that indexes both image embeddings and text chunks, queryable in both modalities.</li>
+    <li style="margin-bottom:0.5rem;"><strong>Assignment Sheet:</strong> Deliverable details, abbreviated rubrics with Canvas links, and the due date for Tuesday, April 21.</li>
+    <li style="margin-bottom:0.5rem;"><strong>Ethics Discussion:</strong> This week's ethics prompt on visual search and surveillance.</li>
+  </ol>
+</div>
+
+<div class="tip" style="margin-top:1rem;">
+  <strong>Tip:</strong> The readings this week include a conceptual introduction to the attention mechanism &mdash; the engine inside transformers and increasingly inside vision models. You've been using pre-trained neural networks without knowing how they process input. This reading fills that gap and gives you vocabulary for the portfolio presentation in Week 8.
+</div>
+
+</body>
+</html>

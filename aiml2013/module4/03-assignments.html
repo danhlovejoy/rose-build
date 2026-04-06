@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Module 4 Deliverables: Visual Similarity (CV) | AIML 2013</title>
+<link rel="stylesheet" href="../../course-styles.css">
+</head>
+<body>
+
+<h1>Module 4 Deliverables: Visual Similarity</h1>
+<p class="subtitle">AIML 2013: Introduction to Computer Vision</p>
+<div class="due-banner">All deliverables due: By Tuesday, April 21 (by class time).</div>
+
+<!-- ========== OVERVIEW ========== -->
+<div class="overview-card">
+  <strong>This week you will submit three things:</strong>
+  <table class="overview-table" style="margin-top: 0.75rem;">
+    <thead>
+      <tr>
+        <th>Deliverable</th>
+        <th>Type</th>
+        <th>Weight</th>
+        <th>Where</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Module 4 Lab: Image Similarity Search with ChromaDB</td>
+        <td>Colab notebook via GitHub</td>
+        <td>Repos (25%)</td>
+        <td>GitHub + link in Canvas</td>
+      </tr>
+      <tr>
+        <td>Module 4 Demo</td>
+        <td>3&ndash;5 minute live demo</td>
+        <td>Demos (25%)</td>
+        <td>In class, Tuesday April 21</td>
+      </tr>
+      <tr>
+        <td>Ethics Discussion</td>
+        <td>Discussion post</td>
+        <td>Participation (20%)</td>
+        <td>Canvas Discussion</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- =====================================================================
+     DELIVERABLE 1: LAB
+     ===================================================================== -->
+<h2>Deliverable 1: Module 4 Lab <span class="tag tag-lab">Lab</span></h2>
+
+<div class="section-card">
+  <h3>Overview</h3>
+  <p>In the readings and in class, you learned how pre-trained CNNs serve as feature extractors: remove the classification head, feed in an image, and the remaining layers produce a dense embedding that encodes visual content. In Module 3 you computed similarity by brute-force cosine distance against a numpy array. This lab replaces that with a real retrieval system backed by ChromaDB, adds quantitative evaluation (precision@k), and runs the HOG comparison one more time to measure the gap.</p>
+  <p>The failure case analysis in Cell 8 is where the interesting findings live. Every retrieval system has blind spots. Identifying them &mdash; and explaining why the feature extractor fails on those specific images &mdash; is more valuable than reporting a high precision score.</p>
+
+  <h3>What to Submit</h3>
+  <ul>
+    <li>A completed Colab notebook (<code>.ipynb</code>) saved to your GitHub repo at <code>week5/lab4_similarity.ipynb</code>.</li>
+    <li>All cells executed with visible outputs (don't clear outputs).</li>
+    <li>Each code cell preceded by a markdown cell with your LLM prompt and fix note.</li>
+    <li>No API keys or secrets anywhere in the notebook.</li>
+    <li>Submit the GitHub link in Canvas. If it's not in the repo, it doesn't exist for grading.</li>
+  </ul>
+</div>
+
+<div class="tip">
+  <strong>Start this in Thursday lab.</strong> We'll work through the pipeline together: extracting embeddings, building the ChromaDB collection, and running the first retrieval query. Bring your dataset from Module 3 &mdash; you'll use the same images.
+</div>
+
+<div class="rubric-section">
+  <h4>Repository Rubric (Summary)</h4>
+  <p style="font-size:0.85rem; margin-bottom:0.75rem;">100 points possible. Each criterion is scored on a 4-level scale (Full Credit &rarr; No Credit). <a href="https://rose.instructure.com/courses/26944/rubrics/66064" target="_blank"><strong>View the full rubric with detailed scoring &rarr;</strong></a></p>
+  <p style="font-size:0.85rem; color: var(--muted); margin-bottom:0.75rem;">Criteria marked <strong>WEEKLY</strong> change per assignment; criteria marked <strong>STANDARD</strong> stay the same all semester.</p>
+  <table class="rubric-table">
+    <thead>
+      <tr><th style="width:30%">Criterion</th><th style="width:10%">Points</th><th style="width:10%">Type</th><th>Description</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Notebook Runs</td><td>/25</td><td>STANDARD</td><td>Notebook is in the correct week folder. Cells execute top-to-bottom without errors. All outputs visible.</td></tr>
+      <tr style="background:#fff3e0;"><td>Task Requirements</td><td>/40</td><td>WEEKLY</td><td><strong>This week:</strong>
+        <ul style="margin: 0.4rem 0 0 1rem; padding: 0;">
+          <li>MobileNetV2 embeddings extracted and stored in a ChromaDB collection.</li>
+          <li>Query-by-image retrieval function returns ranked results with visual display.</li>
+          <li>Cross-class confusion analysis with heatmap visualization.</li>
+          <li>Precision@k computed at k=1, 3, 5 across the full dataset.</li>
+          <li>HOG baseline comparison: precision@5 and dual t-SNE visualization.</li>
+        </ul></td></tr>
+      <tr><td>Reflection</td><td>/20</td><td>STANDARD</td><td>200&ndash;400 words. Connects results to the readings. Addresses what worked, what didn't, and what you'd change.</td></tr>
+      <tr><td>Repo Hygiene</td><td>/15</td><td>STANDARD</td><td>No active (unrevoked) secrets. README updated. Descriptive commit message. Files in the right folder.</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<hr>
+
+<!-- =====================================================================
+     DELIVERABLE 2: DEMO
+     ===================================================================== -->
+<h2>Deliverable 2: Module 4 Demo <span class="tag tag-demo">Demo</span></h2>
+
+<div class="section-card">
+  <h3>Overview</h3>
+  <p>A <strong>three- to five-minute</strong> live demo during Tuesday's class (April 21, 7:00 PM). Your notebook is your demo &mdash; no separate slides required. Walk the class through your retrieval system, show the evaluation results, and make a live modification.</p>
+
+  <h3>What to Cover</h3>
+  <ol>
+    <li><strong>The retrieval system:</strong> Query with a new image (one you haven't shown before). Display the query and the top 5 results. Walk the class through whether the results make visual sense.</li>
+    <li><strong>The confusion heatmap:</strong> Show Cell 6. Which two classes does the model confuse most? Pull up example images from both classes and explain the visual similarity that causes confusion.</li>
+    <li><strong>The HOG comparison:</strong> Show precision@5 for MobileNetV2 vs. HOG and the dual t-SNE plot. Explain the gap in one sentence.</li>
+    <li><strong>Live modification:</strong> Change something &mdash; the number of retrieved results, swap a query image, or try a different class. Re-run and explain what changed. This is worth 25 points on the demo rubric.</li>
+  </ol>
+
+  <h3>Format</h3>
+  <p>Share your screen and run your notebook live. If you attend via Zoom, have your notebook open and ready to run before your turn.</p>
+</div>
+
+<div class="rubric-section">
+  <h4>Demo Rubric (Summary)</h4>
+  <p style="font-size:0.85rem; margin-bottom:0.75rem;">100 points possible. Each criterion is scored on a 4-level scale (Full Credit &rarr; No Credit). <a href="https://rose.instructure.com/courses/26944/rubrics/66063" target="_blank"><strong>View the full rubric with detailed scoring &rarr;</strong></a></p>
+  <table class="rubric-table">
+    <thead>
+      <tr><th style="width:35%">Criterion</th><th style="width:12%">Points</th><th>What I'm Looking For</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Execution &amp; Requirements</td><td>20</td><td>Pipeline runs cleanly. Images load, embeddings extract, ChromaDB returns results, visualizations render.</td></tr>
+      <tr><td>Variable &amp; Data Flow</td><td>20</td><td>You can explain what each stage produces. Image &rarr; preprocess &rarr; MobileNetV2 &rarr; embedding &rarr; ChromaDB &rarr; retrieval &rarr; display.</td></tr>
+      <tr><td>Dependency Justification</td><td>15</td><td>You can explain why MobileNetV2, why this dataset, why this number of results.</td></tr>
+      <tr><td>Prompt Strategy</td><td>20</td><td>Your evaluation metrics are meaningful. You can explain what precision@k measures and what it misses.</td></tr>
+      <tr><td>Live Modification</td><td>25</td><td>You change a parameter live, re-run, and explain the effect.</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<hr>
+
+<!-- ========== COMBINED ASSIGNMENT NOTE ========== -->
+<div class="bridge-box" data-concurrent="true">
+  <strong>Taking AIML 2003 (Natural Language Processing) too?</strong>
+  <p>A combined lab is available: <a href="lab4-combined-universal-search.html">The Universal Search Engine</a>. It builds a single ChromaDB instance that indexes both image embeddings (CV) and text chunks (NLP), queryable in both modalities. You submit the same GitHub URL to both courses. If you do the combined lab, it replaces the individual CV lab. Do not submit both. Your demo this week is also combined: plan for 5&ndash;7 minutes instead of 3&ndash;5 to cover both domains.</p>
+</div>
+
+<hr>
+
+<!-- =====================================================================
+     DELIVERABLE 3: ETHICS DISCUSSION
+     ===================================================================== -->
+<h2>Deliverable 3: Ethics Discussion <span class="tag tag-ethics">Ethics</span></h2>
+
+<div class="section-card">
+  <h3>Overview</h3>
+  <p>Complete the ethics discussion thread for this module. The full prompt and context are on the <a href="04-ethics.html">Ethics Thread page</a> in this module.</p>
+
+  <h3>Requirements</h3>
+  <ul>
+    <li>Initial post: 150&ndash;250 words. Take a position: don't just summarize the question.</li>
+    <li>Reply to a classmate: at least one substantive reply (not just &ldquo;I agree&rdquo;).</li>
+    <li>Initial post due by Tuesday class (April 21). Reply due by the following Tuesday class (April 28).</li>
+  </ul>
+  <p style="margin-top:0.75rem; font-size:0.9rem; color:var(--muted);">The ethics discussion is worth 20% of your weekly Participation grade. Whether you attend in person or via Zoom, this post is required every week.</p>
+</div>
+
+<!-- ========== SUBMISSION CHECKLIST ========== -->
+<div class="overview-card" style="margin-top:1.5rem;">
+  <strong>Submission Checklist</strong>
+  <ul>
+    <li>Module 4 Lab notebook runs cleanly top-to-bottom with all outputs visible</li>
+    <li>Each code cell has a preceding markdown cell with your LLM prompt and fix note</li>
+    <li>No API keys exposed in any committed file</li>
+    <li>Notebook saved to GitHub at <code>week5/lab4_similarity.ipynb</code></li>
+    <li>README updated to reflect Module 4 contents</li>
+    <li>GitHub repo link submitted in Canvas</li>
+    <li>Demo prepared and notebook ready to run for Tuesday class (April 21)</li>
+    <li>Ethics discussion post submitted in Canvas by Tuesday class (April 21)</li>
+  </ul>
+</div>
+
+<div class="warning" style="margin-top:1.5rem;">
+  <strong>Reminder:</strong> If it's not in your GitHub repo, it doesn't exist for grading. Save your final work before the deadline.
+</div>
+
+<div class="tip" style="margin-top: 1rem;">
+  <strong>Need help?</strong> Start your work during Thursday lab (April 16, Zoom, 6:00 PM): that's what lab time is for. If you get stuck after lab, email me before the weekend so I can help. Don't wait until Monday night.
+</div>
+
+</body>
+</html>

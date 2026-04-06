@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lab 5: CV Metrics &amp; Demographic Bias Audit | AIML 2013</title>
+<link rel="stylesheet" href="../../course-styles.css">
+</head>
+<body>
+
+<h1>Lab 5: CV Metrics &amp; Demographic Bias Audit</h1>
+<p class="subtitle">Measure a classifier's accuracy, then find out who it works for and who it doesn't.</p>
+
+<!-- ========== LAB FRAMING ========== -->
+<div class="warning">
+  <strong>How this lab works.</strong>
+  <p style="margin: 0.75rem 0 0;">Same format as Modules 3 and 4: specification boxes, not code scaffolds. Give the spec to an LLM, generate the code, fix anything that doesn't match the output contract.</p>
+  <p style="margin: 0.75rem 0 0;">For each code cell, include a markdown cell with your prompt and a one-sentence fix note.</p>
+</div>
+
+<!-- ========== THE TASK ========== -->
+<div class="section-card">
+  <h3>The Task</h3>
+  <p>In the readings and in class, you learned that a model's overall accuracy can mask large disparities across subgroups. A face-attribute classifier that is 94% accurate overall might be 99% accurate on lighter-skinned males and 65% accurate on darker-skinned females. The overall number looks good; the per-group numbers tell a different story.</p>
+  <p>This lab uses a pre-trained image classifier and a dataset with demographic labels to run a structured bias audit. You will compute standard classification metrics (accuracy, precision, recall, F1) on the full dataset, then disaggregate those metrics by demographic group to find where the model fails disproportionately. The lab is less about code and more about what the numbers reveal &mdash; the same classifier, the same test set, but a completely different conclusion depending on how you slice the results.</p>
+</div>
+
+<!-- ========== DATASET ========== -->
+<div class="section-card">
+  <h3>Dataset: CelebA Gender Classification</h3>
+  <p>You will use a subset of the CelebA (Celebrity Faces Attributes) dataset for a binary gender classification task. CelebA provides 40 attribute labels per image, including "Male" (binary). You will use a pre-trained classifier to predict this attribute and then audit its accuracy across subgroups defined by other attributes (e.g., "Young" vs. "not Young", "Wearing_Hat" vs. "not Wearing_Hat").</p>
+  <ul>
+    <li>Load 1,000 images from the CelebA test set via <code>tensorflow_datasets</code> (<code>celeb_a</code>, split <code>'test[:1000]'</code>).</li>
+    <li>Each image comes with 40 binary attribute labels. You will use <code>Male</code> as the prediction target and other attributes as subgroup slicers.</li>
+    <li>The classifier is MobileNetV2 fine-tuned on CelebA gender classification, loaded from a public checkpoint (details in Cell 2).</li>
+  </ul>
+  <p>If <code>tensorflow_datasets</code> download fails in Colab, an alternative loading approach is described in Cell 2's notes.</p>
+</div>
+
+<!-- ========== HOW TO READ ========== -->
+<div class="section-card">
+  <h3>How to Read This Page</h3>
+  <p>Each cell below follows the same format as previous labs. The gray <code># Cell N</code> header goes at the top of your code cell. Below it:</p>
+  <ul>
+    <li><strong>What it does:</strong> plain English description of the cell's purpose.</li>
+    <li><strong>Takes in:</strong> variables already in the notebook that this cell uses.</li>
+    <li><strong>Must produce:</strong> the exact variable names, types, and shapes this cell must create.</li>
+    <li><strong>Notes:</strong> constraints, pitfalls, and things to watch for.</li>
+  </ul>
+</div>
+
+<hr>
+
+<!-- ==================== PART 1: SETUP AND BASELINE METRICS ==================== -->
+<h2>Part 1: Setup and Baseline Metrics</h2>
+
+<!-- CELL 1 -->
+<pre># Cell 1: Setup</pre>
+<div class="section-card">
+  <p><strong>What it does:</strong> Installs dependencies, imports all packages, and sets random seeds for reproducibility.</p>
+
+  <p><strong>Takes in:</strong> Nothing. This is the first cell.</p>
+
+  <p><strong>Must produce:</strong></p>
+  <ul>
+    <li>Imports: <code>tensorflow</code> (as <code>tf</code>), <code>tensorflow_datasets</code> (as <code>tfds</code>), <code>numpy</code> (as <code>np</code>), <code>pandas</code> (as <code>pd</code>), <code>matplotlib.pyplot</code> (as <code>plt</code>), <code>seaborn</code> (as <code>sns</code>), <code>sklearn.metrics</code> (accuracy_score, precision_score, recall_score, f1_score, confusion_matrix, classification_report).</li>
+    <li>Install <code>tensorflow_datasets</code> if not already available: <code>!pip install -q tensorflow_datasets</code>.</li>
+    <li>Random seeds set: <code>np.random.seed(42)</code>, <code>tf.random.set_seed(42)</code>.</li>
+    <li>Printed confirmation message.</li>
+  </ul>
+
+  <p><strong>Notes:</strong> CelebA images are 218&times;178 pixels. You will resize to 224&times;224 for MobileNetV2 in Cell 2.</p>
+</div>
+
+<!-- CELL 2 -->
+<pre># Cell 2: Load Dataset and Classifier</pre>
+<div class="section-card">
+  <p><strong>What it does:</strong> Loads 1,000 CelebA test images with attribute labels, preprocesses them for MobileNetV2, and loads a pre-trained gender classifier.</p>
+
+  <p><strong>Takes in:</strong> All imports from Cell 1.</p>
+
+  <p><strong>Must produce:</strong></p>
+  <ul>
+    <li><code>images</code>: numpy array, shape (1000, 224, 224, 3), preprocessed with <code>keras.applications.mobilenet_v2.preprocess_input()</code>.</li>
+    <li><code>labels_df</code>: a pandas DataFrame with 1,000 rows and columns for each CelebA attribute. At minimum: <code>Male</code>, <code>Young</code>, <code>Wearing_Hat</code>, <code>Smiling</code>, <code>Eyeglasses</code>. Values are boolean (True/False).</li>
+    <li><code>y_true</code>: numpy array of shape (1000,), the ground-truth <code>Male</code> labels as integers (1 = Male, 0 = not Male).</li>
+    <li><code>model</code>: a Keras model that takes (batch, 224, 224, 3) input and outputs a single sigmoid value (probability of Male).</li>
+    <li>Print: number of images loaded, class balance (how many Male vs. not Male), and a 2&times;4 grid of sample images with their <code>Male</code> label.</li>
+  </ul>
+
+  <p><strong>Notes:</strong></p>
+  <ul>
+    <li>To build the classifier: load MobileNetV2 with <code>include_top=False, pooling='avg'</code>, freeze it, add a <code>Dense(1, activation='sigmoid')</code> head, and compile. Then fine-tune on CelebA training images for 3&ndash;5 epochs. This is fast on Colab GPU (~2 minutes). Save the trained model so you don't have to retrain every run.</li>
+    <li>Alternative: if fine-tuning is too slow, use <code>model.predict()</code> on the MobileNetV2 embeddings and train a logistic regression head with sklearn. The bias audit works the same way regardless of how the classifier is built.</li>
+    <li>If <code>tensorflow_datasets</code> download fails, try: <code>!gdown 0B7EVK8r0v71pblRyaVFSWGxPY0U -O celeba.zip</code> and unzip manually. The lab works with any face dataset that has attribute labels.</li>
+  </ul>
+</div>
+<div class="tip">
+  <strong>Markdown cell:</strong> What is the gender balance in your test set? If the test set is 60% Male, what does that mean for interpreting the model's accuracy?
+</div>
+
+<!-- CELL 3 -->
+<pre># Cell 3: Generate Predictions and Compute Overall Metrics</pre>
+<div class="section-card">
+  <p><strong>What it does:</strong> Runs the classifier on all 1,000 images, generates predictions, and computes overall accuracy, precision, recall, and F1.</p>
+
+  <p><strong>Takes in:</strong> <code>images</code>, <code>y_true</code>, <code>model</code>.</p>
+
+  <p><strong>Must produce:</strong></p>
+  <ul>
+    <li><code>y_pred_proba</code>: numpy array of shape (1000,), raw sigmoid probabilities from the model.</li>
+    <li><code>y_pred</code>: numpy array of shape (1000,), binary predictions (threshold at 0.5).</li>
+    <li><code>overall_metrics</code>: a dictionary with keys <code>'accuracy'</code>, <code>'precision'</code>, <code>'recall'</code>, <code>'f1'</code>, each a float.</li>
+    <li><code>cm</code>: confusion matrix, shape (2, 2).</li>
+    <li>Printed output: a formatted classification report (use <code>sklearn.metrics.classification_report</code>) and a heatmap visualization of the confusion matrix with counts and labels.</li>
+  </ul>
+
+  <p><strong>Notes:</strong> Use <code>seaborn.heatmap()</code> for the confusion matrix. Label axes as "Predicted" and "Actual". Include both raw counts (<code>annot=True</code>) and the format string <code>fmt='d'</code>.</p>
+</div>
+<div class="tip">
+  <strong>Markdown cell:</strong> Look at the confusion matrix. Are false positives and false negatives roughly balanced, or does the model make one type of error more than the other? What might cause that asymmetry?
+</div>
+
+<hr>
+
+<!-- ==================== PART 2: DISAGGREGATED ANALYSIS ==================== -->
+<h2>Part 2: The Demographic Audit</h2>
+
+<!-- CELL 4 -->
+<pre># Cell 4: Per-Group Accuracy by Attribute</pre>
+<div class="section-card">
+  <p><strong>What it does:</strong> Disaggregates the model's accuracy by demographic subgroups. For each slicing attribute (Young, Wearing_Hat, Smiling, Eyeglasses), computes accuracy separately for each subgroup (e.g., "Young = True" vs. "Young = False").</p>
+
+  <p><strong>Takes in:</strong> <code>y_true</code>, <code>y_pred</code>, <code>labels_df</code>.</p>
+
+  <p><strong>Must produce:</strong></p>
+  <ul>
+    <li><code>slice_attributes</code>: a list of column names used for slicing: <code>['Young', 'Wearing_Hat', 'Smiling', 'Eyeglasses']</code>.</li>
+    <li><code>group_metrics</code>: a pandas DataFrame with columns <code>['attribute', 'group', 'accuracy', 'precision', 'recall', 'f1', 'n_samples']</code>. Each row represents one subgroup (e.g., attribute="Young", group=True, accuracy=0.93, n_samples=612).</li>
+    <li>A grouped bar chart showing accuracy per subgroup for each slicing attribute. Each attribute gets a pair of bars (True vs. False). Include a horizontal dashed line at the overall accuracy for comparison.</li>
+    <li>Print: the group with the highest accuracy and the group with the lowest accuracy, with the gap between them.</li>
+  </ul>
+
+  <p><strong>Notes:</strong></p>
+  <ul>
+    <li>Some subgroups may be small (e.g., few people wearing hats). Print the sample count next to each bar so the audience can judge whether the result is reliable.</li>
+    <li>If a subgroup has fewer than 20 samples, flag it in the output: "Caution: small sample size."</li>
+  </ul>
+</div>
+<div class="tip">
+  <strong>Markdown cell:</strong> Which subgroup has the lowest accuracy? Is the gap between the best and worst subgroup larger than you expected? What might explain the difference?
+</div>
+
+<!-- CELL 5 -->
+<pre># Cell 5: Intersectional Analysis</pre>
+<div class="section-card">
+  <p><strong>What it does:</strong> Crosses two slicing attributes to create intersectional subgroups (e.g., "Young + Smiling", "not Young + not Smiling") and computes per-group accuracy for the four resulting combinations.</p>
+
+  <p><strong>Takes in:</strong> <code>y_true</code>, <code>y_pred</code>, <code>labels_df</code>.</p>
+
+  <p><strong>Must produce:</strong></p>
+  <ul>
+    <li>Choose two attributes to cross. Good pairs: Young &times; Smiling, Young &times; Wearing_Hat, or Eyeglasses &times; Smiling.</li>
+    <li><code>intersect_metrics</code>: a pandas DataFrame with columns <code>['group_a', 'group_b', 'accuracy', 'precision', 'recall', 'f1', 'n_samples']</code>. Four rows (one per combination of True/False for each attribute).</li>
+    <li>A 2&times;2 heatmap showing accuracy for each intersection. Rows = attribute A (True/False), columns = attribute B (True/False). Annotate each cell with accuracy and sample count.</li>
+    <li>Print: the accuracy gap between the best-performing and worst-performing intersection.</li>
+  </ul>
+
+  <p><strong>Notes:</strong> Intersectional subgroups can be small. If any cell has fewer than 15 samples, note this in the output. The point is to demonstrate that overall accuracy can hide compounding disadvantages &mdash; a group that is fine on one attribute and fine on another may still have low accuracy when both attributes co-occur.</p>
+</div>
+<div class="tip">
+  <strong>Markdown cell:</strong> Did the intersectional analysis reveal a subgroup that performs worse than either individual attribute suggested? This is the core insight of intersectional auditing: combined identities can produce failures that single-attribute analysis misses.
+</div>
+
+<!-- CELL 6 -->
+<pre># Cell 6: Per-Group Confusion Matrices</pre>
+<div class="section-card">
+  <p><strong>What it does:</strong> Generates a separate confusion matrix for the best-performing and worst-performing subgroups identified in Cell 4, displayed side by side.</p>
+
+  <p><strong>Takes in:</strong> <code>y_true</code>, <code>y_pred</code>, <code>labels_df</code>, <code>group_metrics</code>.</p>
+
+  <p><strong>Must produce:</strong></p>
+  <ul>
+    <li>A 1&times;2 figure with two heatmap confusion matrices: one for the best subgroup, one for the worst.</li>
+    <li>Title each subplot with the subgroup name, accuracy, and sample count.</li>
+    <li>Print: a comparison statement, e.g., "The model's false negative rate on [worst group] is X% vs. Y% on [best group]."</li>
+  </ul>
+
+  <p><strong>Notes:</strong> Normalize confusion matrices by row (so each row sums to 1.0) in addition to showing raw counts. The normalized version makes error rates comparable across subgroups of different sizes.</p>
+</div>
+<div class="tip">
+  <strong>Markdown cell:</strong> Compare the false negative rates. In a real deployment (e.g., identity verification), which type of error is more harmful: a false positive or a false negative? Does the answer change depending on the application?
+</div>
+
+<hr>
+
+<!-- ==================== PART 3: VISUALIZATION AND REPORTING ==================== -->
+<h2>Part 3: The Audit Report</h2>
+
+<!-- CELL 7 -->
+<pre># Cell 7: Bias Scorecard</pre>
+<div class="section-card">
+  <p><strong>What it does:</strong> Creates a combined visualization that summarizes the entire audit in a single figure. This is the artifact you'll show in your demo.</p>
+
+  <p><strong>Takes in:</strong> <code>overall_metrics</code>, <code>group_metrics</code>, <code>intersect_metrics</code>.</p>
+
+  <p><strong>Must produce:</strong></p>
+  <ul>
+    <li>A multi-panel figure (2&times;2 or similar layout) containing:
+      <ul>
+        <li>Panel 1: Overall metrics bar chart (accuracy, precision, recall, F1).</li>
+        <li>Panel 2: Per-attribute accuracy gap chart (for each slicing attribute, show the gap between best and worst subgroup as a horizontal bar). Color-code: green if gap &lt; 5%, yellow if 5&ndash;10%, red if &gt; 10%.</li>
+        <li>Panel 3: The intersectional heatmap from Cell 5.</li>
+        <li>Panel 4: A text summary panel listing: overall accuracy, largest per-group gap, worst-performing subgroup, and a one-line "audit verdict" (e.g., "Significant disparities detected in [attribute]").</li>
+      </ul>
+    </li>
+    <li>A descriptive title: "Bias Audit Scorecard: Gender Classification on CelebA".</li>
+  </ul>
+
+  <p><strong>Notes:</strong> Use <code>plt.subplot()</code> or <code>fig, axes = plt.subplots(2, 2)</code>. Set the figure size to at least (14, 10) so everything is readable during the demo. Add <code>plt.tight_layout()</code>.</p>
+</div>
+<div class="tip">
+  <strong>Markdown cell:</strong> Look at your scorecard. If you were presenting this to a product team deciding whether to deploy this classifier, what would be your one-sentence recommendation? Would you approve deployment? Under what conditions?
+</div>
+
+<!-- CELL 8 -->
+<pre># Cell 8: Failure Gallery</pre>
+<div class="section-card">
+  <p><strong>What it does:</strong> Displays the actual misclassified images from the worst-performing subgroup. Seeing the images makes the audit concrete.</p>
+
+  <p><strong>Takes in:</strong> <code>images</code>, <code>y_true</code>, <code>y_pred</code>, <code>y_pred_proba</code>, <code>labels_df</code>.</p>
+
+  <p><strong>Must produce:</strong></p>
+  <ul>
+    <li>Identify the worst-performing subgroup from Cell 4.</li>
+    <li>Select up to 12 misclassified images from that subgroup.</li>
+    <li>Display in a 3&times;4 grid. Title each image with: true label, predicted label, and confidence score.</li>
+    <li>Print: the total number of misclassifications in this subgroup and the subgroup's sample size.</li>
+  </ul>
+
+  <p><strong>Notes:</strong></p>
+  <ul>
+    <li>Images were preprocessed with <code>preprocess_input()</code>, which normalizes pixel values. To display them, reverse the normalization: <code>(img + 1.0) / 2.0</code> for MobileNetV2's [-1, 1] range, or reload the original images for display.</li>
+    <li>Keep the original (unnormalized) images in a separate array for display purposes. Or reload from the dataset in this cell.</li>
+  </ul>
+</div>
+<div class="tip">
+  <strong>Markdown cell:</strong> Look at the misclassified images. Can you see any visual patterns? Are the errors random, or do they cluster on images with specific characteristics (lighting, pose, accessories)?
+</div>
+
+<hr>
+
+<!-- ==================== BONUS ==================== -->
+<h2>Bonus: Threshold Sensitivity Analysis (10 Extra Credit Points)</h2>
+
+<pre># Bonus Cell: Threshold Sweep</pre>
+<div class="section-card">
+  <p><strong>What it does:</strong> The default classification threshold is 0.5. This cell tests what happens to per-group accuracy when you vary the threshold from 0.3 to 0.7.</p>
+
+  <p><strong>Takes in:</strong> <code>y_true</code>, <code>y_pred_proba</code>, <code>labels_df</code>.</p>
+
+  <p><strong>Must produce:</strong></p>
+  <ul>
+    <li><code>thresholds</code>: a numpy array from 0.3 to 0.7 in steps of 0.05.</li>
+    <li>A line plot with one line per subgroup (use the worst and best subgroups from Cell 4, plus the overall). X-axis: threshold. Y-axis: accuracy. Show where the accuracy gap is smallest.</li>
+    <li>Print: the threshold that minimizes the accuracy gap between the best and worst subgroups, and the gap at that threshold compared to the default 0.5 gap.</li>
+  </ul>
+
+  <p><strong>Notes:</strong> This demonstrates that fairness and accuracy are tunable. A different threshold may reduce the gap between subgroups at the cost of overall accuracy. There is no "correct" threshold &mdash; the choice depends on what the deployer values.</p>
+</div>
+
+<hr>
+
+<!-- ========== DEMO PREP ========== -->
+<h2>Demo Prep</h2>
+
+<div class="section-card">
+  <p>Your Module 5 demo is a <strong>three- to five-minute</strong> live walkthrough during Tuesday class (April 28, 7:00 PM). Your notebook is your demo. Review the assignment sheet for what to cover and the rubric criteria. Practice once end-to-end: the demo should flow from Cell 3 (overall metrics) to Cell 7 (scorecard) to Cell 8 (failure gallery), with your live modification in between.</p>
+  <p>The demo rubric awards 25 points for the live modification. Good options: change the classification threshold, swap the slicing attribute, or drill into a different intersectional combination. Pick one, know what you expect to happen, and be ready to explain the result.</p>
+</div>
+
+</body>
+</html>

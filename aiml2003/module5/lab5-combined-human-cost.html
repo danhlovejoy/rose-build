@@ -1,0 +1,66 @@
+<!-- concurrent-only: requires dual enrollment in AIML 2003 + AIML 2013 -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Module 5 Combined Presentation: The Human Cost of Data | AIML 2003 + AIML 2013</title>
+<link rel="stylesheet" href="../../course-styles.css">
+</head>
+<body>
+
+<h1>Module 5 Combined Presentation: The Human Cost of Data</h1>
+<p class="subtitle">One presentation. Two audits. A comparative look at how bias manifests across modalities.</p>
+
+<!-- ========== DUAL ENROLLMENT NOTICE ========== -->
+<div class="bridge-box">
+  <strong>Dual-enrollment presentation: AIML 2003 + AIML 2013</strong>
+  <p style="margin: 0.5rem 0 0;">This combined presentation is for students enrolled in both AIML 2003 (NLP) and AIML 2013 (CV). You give one 5&ndash;7 minute presentation covering both courses' Module 5 content. It replaces the individual NLP presentation and the individual CV demo. You still submit separate lab notebooks to each course &mdash; one for the NLP evaluation harness, one for the CV bias audit. If you are enrolled in only one course, use that course's standalone presentation or demo instead.</p>
+</div>
+
+<!-- ========== THE ASSIGNMENT ========== -->
+<div class="section-card">
+  <h3>The Assignment</h3>
+  <p>This week, both courses measured bias &mdash; but in fundamentally different ways. In NLP, you probed Gemini's text generation for profession-gender associations and sentiment gaps across demographic groups. In CV, you audited a face-attribute classifier's accuracy across demographic subgroups using per-group metrics and intersectional analysis.</p>
+  <p>The combined presentation asks you to put these two audits side by side and draw comparisons. The bias comes from the same root cause (training data composition), but it manifests differently depending on the task and the output format. Your job is to show how.</p>
+</div>
+
+<!-- ========== WHAT TO COVER ========== -->
+<div class="section-card">
+  <h3>What to Cover (5&ndash;7 Minutes)</h3>
+  <ol>
+    <li style="margin-bottom:0.75rem;"><strong>The NLP audit (1&ndash;2 minutes):</strong> Show your bias scorecard from the NLP lab (Cell 7). Summarize what you found: which professions showed the strongest gender associations, how large was the sentiment gap across demographic groups, and how reliable was the LLM-as-judge scoring method.</li>
+    <li style="margin-bottom:0.75rem;"><strong>The CV audit (1&ndash;2 minutes):</strong> Show your bias scorecard from the CV lab (Cell 7). Summarize what you found: which subgroups had the lowest accuracy, what the intersectional analysis revealed, and what the failure gallery showed about the classifier's error patterns.</li>
+    <li style="margin-bottom:0.75rem;"><strong>The comparison (2&ndash;3 minutes):</strong> This is the core of the combined presentation. Address these questions:
+      <ul>
+        <li>How does bias manifest differently when the output is generated text vs. a classification label? In one case, the model writes biased content; in the other, it makes biased predictions. Are these the same problem?</li>
+        <li>How do the measurement techniques compare? The NLP audit uses pronoun counting and sentiment scoring. The CV audit uses per-group accuracy and confusion matrices. What does each technique capture that the other misses?</li>
+        <li>Both audits depend entirely on the evaluator's design choices: which professions to test, which attributes to slice on, which demographic groups to include. How do those choices shape what each audit can find?</li>
+      </ul>
+    </li>
+    <li style="margin-bottom:0.75rem;"><strong>One takeaway:</strong> End with a single sentence that captures the most important thing you learned from comparing the two audits.</li>
+  </ol>
+</div>
+
+<!-- ========== FORMAT ========== -->
+<div class="section-card">
+  <h3>Format</h3>
+  <p>You may present from your notebooks, slides, or a combination. If using slides, keep them minimal &mdash; the bias scorecards from each lab are your strongest visual aids. Share your screen during the presentation. If you attend via Zoom, have all materials open and ready before your turn.</p>
+  <p>The combined presentation is graded as a single assignment and counts toward both courses. The NLP grade uses the Presentation rubric; the CV grade uses the Demo rubric. Both rubrics are available on each course's assignment sheet.</p>
+</div>
+
+<!-- ========== WHAT TO SUBMIT ========== -->
+<div class="section-card">
+  <h3>What to Submit</h3>
+  <ul>
+    <li><strong>Lab notebooks:</strong> Submit separately. The NLP evaluation harness goes to AIML 2003 (<code>week6/lab5_evaluation.ipynb</code>). The CV bias audit goes to AIML 2013 (<code>week6/lab5_bias_audit.ipynb</code>). Each notebook stands alone and is graded independently against its course's Repo rubric.</li>
+    <li><strong>Presentation:</strong> Delivered live during the CV class period (Tuesday April 28, 7:00 PM). No separate file submission required unless you use slides, in which case upload the slides to your GitHub repo.</li>
+  </ul>
+</div>
+
+<div class="tip" style="margin-top:1rem;">
+  <strong>Tip:</strong> The strongest combined presentations don't just present two audits back-to-back. They find the connections: the same type of training data gap produces different symptoms in different modalities, but the structural cause is the same. If you can articulate that connection clearly, you've understood the week.
+</div>
+
+</body>
+</html>

@@ -1,0 +1,390 @@
+<!-- concurrent-only: requires dual enrollment in AIML 2003 + AIML 2013 -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Module 4 Lab (Combined): The Universal Search Engine | AIML 2003 + AIML 2013</title>
+<link rel="stylesheet" href="../../course-styles.css">
+</head>
+<body>
+
+<h1>Module 4 Lab (Combined): The Universal Search Engine</h1>
+<p class="subtitle">One vector database. Two modalities. Find anything by meaning.</p>
+
+<!-- ========== DUAL ENROLLMENT NOTICE ========== -->
+<div class="bridge-box">
+  <strong>Dual-enrollment lab: AIML 2003 + AIML 2013</strong>
+  <p style="margin: 0.5rem 0 0;">This lab is for students enrolled in both AIML 2003 (NLP) and AIML 2013 (CV). You will build one notebook covering both courses&rsquo; Module 4 content, give one 5&ndash;7 minute presentation, and submit the same GitHub repo link to both Canvas assignments. If you are enrolled in only one course, use that course&rsquo;s standalone lab instead.</p>
+</div>
+
+<!-- ========== LAB FRAMING ========== -->
+<div class="warning">
+  <strong>How this lab works.</strong>
+  <p style="margin: 0.75rem 0 0;">Same format as Module 3: each section gives you a specification box describing what a cell must do, what it takes in, and what it must produce. Give the spec to an LLM, generate the code, and fix anything that doesn&rsquo;t match the output contract before moving on.</p>
+  <p style="margin: 0.75rem 0 0;">For each code cell, include a markdown cell with the prompt you used and one sentence describing any fix you made.</p>
+</div>
+
+<!-- ========== THE TASK ========== -->
+<div class="section-card">
+  <h3>The Task</h3>
+  <p>In the readings and in class, you learned that neural embeddings encode meaning in a way that hand-crafted features cannot. This week you will build a single system that uses embeddings to index <em>both</em> text and images into one vector database.</p>
+  <p>You can query this database with text to find similar text passages, or query with an image to find visually similar images. The text and image embeddings live in different vector spaces and cannot be directly compared &mdash; this is not true cross-modal search. But you will see how a unified system can serve both modalities using independent embedding pipelines, and in the final cell you will build a crude bridge between the two using Gemini Vision.</p>
+</div>
+
+<!-- ========== DATASETS ========== -->
+<h2>Your Datasets</h2>
+
+<div class="section-card">
+  <h3>NLP: A PDF Document</h3>
+  <p>You will use a PDF document as your text corpus. The lab will chunk it into manageable passages and embed each chunk. Use any PDF you choose: a research paper, a news article, technical documentation, or a book excerpt. Aim for at least 10 pages of selectable text (not scanned images).</p>
+  <p>Upload your PDF to Colab via the Files panel (left sidebar &rarr; Upload to session storage), then reference it by filename in your code.</p>
+</div>
+
+<div class="section-card">
+  <h3>CV: Image Dataset</h3>
+  <p>Use the same image dataset you chose in Modules 2&ndash;3 (CIFAR-10 subset or your own images). Same data, new infrastructure: instead of searching in-memory arrays with cosine similarity, you&rsquo;ll store the embeddings in ChromaDB.</p>
+</div>
+
+<!-- ========== HOW TO READ THIS PAGE ========== -->
+<div class="section-card">
+  <h3>How to read this page</h3>
+  <p>Each cell below follows the same format as Module 3. The gray <code># Cell N</code> header goes at the top of your code cell. Below it:</p>
+  <ul>
+    <li><strong>What it does</strong>: plain English description of the cell&rsquo;s purpose.</li>
+    <li><strong>Takes in</strong>: variables already in the notebook that this cell uses.</li>
+    <li><strong>Must produce</strong>: the variable names and outputs this cell must create.</li>
+    <li><strong>Notes</strong>: constraints, pitfalls, and things to watch for.</li>
+  </ul>
+</div>
+
+<!-- ==================== PART 1: SETUP ==================== -->
+<h2>Part 1: Setup and Data Loading</h2>
+
+<!-- CELL 1 -->
+<pre># Cell 1: Setup and dependencies</pre>
+<div class="section-card">
+  <p><strong>What it does:</strong> Installs all libraries needed for both the NLP and CV pipelines, then imports everything. Prints version numbers for key dependencies.</p>
+
+  <p><strong>Takes in:</strong> Nothing. This is the first cell.</p>
+
+  <p><strong>Must produce:</strong></p>
+  <ul>
+    <li>The following packages installed via pip: <code>chromadb</code>, <code>sentence-transformers</code>, <code>pymupdf</code>, <code>google-genai</code>, <code>tensorflow</code>, <code>scikit-image</code>.</li>
+    <li>All of the following imported:
+      <ul>
+        <li><code>numpy</code> (as <code>np</code>), <code>matplotlib.pyplot</code> (as <code>plt</code>)</li>
+        <li><code>fitz</code> (from pymupdf) &mdash; PDF text extraction</li>
+        <li><code>SentenceTransformer</code> from <code>sentence_transformers</code></li>
+        <li><code>chromadb</code></li>
+        <li><code>google.genai</code> (import as <code>from google import genai</code>)</li>
+        <li><code>tensorflow</code> (as <code>tf</code>)</li>
+        <li><code>PIL.Image</code>, <code>skimage.transform</code></li>
+        <li><code>cosine_similarity</code> from <code>sklearn.metrics.pairwise</code></li>
+      </ul>
+    </li>
+    <li>Printed output: version of <code>chromadb</code> and confirmation that all imports succeeded.</li>
+  </ul>
+
+  <p><strong>Notes:</strong> The installs take 30&ndash;60 seconds. Run this cell first and let it finish. If <code>chromadb</code> throws a dependency conflict warning, it is safe to ignore.</p>
+</div>
+
+<!-- CELL 2 -->
+<pre># Cell 2: Configure the Gemini API</pre>
+<div class="section-card">
+  <p><strong>What it does:</strong> Loads your Gemini API key from Colab Secrets and creates a Gemini client. Sends a test prompt to confirm the connection works.</p>
+
+  <p><strong>Takes in:</strong> Your API key stored in Colab Secrets under <code>GEMINI_API_KEY</code>.</p>
+
+  <p><strong>Must produce:</strong></p>
+  <ul>
+    <li><code>client</code>: a <code>genai.Client</code> object, created with <code>genai.Client(api_key=...)</code>.</li>
+    <li>Printed output: the response from a test call using <code>client.models.generate_content(model='gemini-2.0-flash', contents='Say hello in exactly five words.')</code>.</li>
+  </ul>
+
+  <p><strong>Notes:</strong> If you get an authentication error, check that the secret is named exactly <code>GEMINI_API_KEY</code> and that notebook access is toggled on.</p>
+</div>
+
+<!-- CELL 3 -->
+<pre># Cell 3: Load and chunk PDF</pre>
+<div class="section-card">
+  <p><strong>What it does:</strong> Opens the uploaded PDF, extracts text from every page, and chunks the full text into passages of roughly 300 words each. Prints a summary.</p>
+
+  <p><strong>Takes in:</strong> The PDF file path (set as a variable at the top of the cell).</p>
+
+  <p><strong>Must produce:</strong></p>
+  <ul>
+    <li><code>full_text</code>: a single string containing all extracted page text.</li>
+    <li><code>chunks</code>: a list of strings, each roughly 300 words. Filter out any chunks shorter than 50 characters.</li>
+    <li>Printed output: number of pages in the PDF, total character count, number of chunks, and a preview of the first chunk.</li>
+  </ul>
+
+  <p><strong>Notes:</strong> Use <code>fitz.open()</code> and <code>page.get_text()</code> to extract text. Split on whitespace to count words. If every page returns empty text, your PDF is scanned images &mdash; choose a different one.</p>
+</div>
+
+<div class="tip">
+  <strong>Markdown cell:</strong> Why chunk the PDF into passages instead of embedding the entire document as one vector? What information do you preserve or lose by chunking? How might chunk size affect retrieval quality?
+</div>
+
+<!-- CELL 4 -->
+<pre># Cell 4: Load and preprocess images</pre>
+<div class="section-card">
+  <p><strong>What it does:</strong> Loads your image dataset (CIFAR-10 subset or your own images), resizes all images to 224&times;224 for MobileNetV2, and applies the model&rsquo;s preprocessing function.</p>
+
+  <p><strong>Takes in:</strong> Nothing external (loads data from Keras or from uploaded files).</p>
+
+  <p><strong>Must produce:</strong></p>
+  <ul>
+    <li><code>images</code>: list or array of original images (for display).</li>
+    <li><code>images_preprocessed</code>: numpy array of shape <code>(N, 224, 224, 3)</code>, preprocessed for MobileNetV2.</li>
+    <li><code>labels</code>: list of string class labels, one per image.</li>
+    <li>Printed output: number of images loaded, image shape, and class distribution.</li>
+  </ul>
+
+  <p><strong>Notes:</strong> Apply <code>mobilenet_v2.preprocess_input()</code> after resizing. If using CIFAR-10, select 20 images per class from 10 classes (200 total). If using your own images, organize in subfolders by class.</p>
+</div>
+
+<!-- ==================== PART 2: EMBEDDINGS ==================== -->
+<h2>Part 2: Embed Everything</h2>
+
+<!-- CELL 5 -->
+<pre># Cell 5: Embed text chunks</pre>
+<div class="section-card">
+  <p><strong>What it does:</strong> Loads the <code>all-MiniLM-L6-v2</code> sentence transformer model and encodes all text chunks into dense vectors. Prints the embedding matrix shape and density.</p>
+
+  <p><strong>Takes in:</strong> <code>chunks</code></p>
+
+  <p><strong>Must produce:</strong></p>
+  <ul>
+    <li><code>text_model</code>: a loaded <code>SentenceTransformer</code> instance.</li>
+    <li><code>text_embeddings</code>: numpy array of shape <code>(len(chunks), 384)</code>.</li>
+    <li>Printed output: embedding shape, dimensionality, and density (percentage of non-zero values).</li>
+  </ul>
+</div>
+
+<div class="tip">
+  <strong>Markdown cell:</strong> Compare the text embeddings (384 dimensions, ~100% dense) to the TF-IDF vectors from Module 2 (thousands of dimensions, ~98% sparse). What is the tradeoff between dimensionality and density?
+</div>
+
+<!-- CELL 6 -->
+<pre># Cell 6: Extract image embeddings</pre>
+<div class="section-card">
+  <p><strong>What it does:</strong> Loads MobileNetV2 as a feature extractor (no classification head, global average pooling) and extracts a 1,280-dimensional embedding for each image. Prints the embedding matrix shape and density.</p>
+
+  <p><strong>Takes in:</strong> <code>images_preprocessed</code></p>
+
+  <p><strong>Must produce:</strong></p>
+  <ul>
+    <li><code>base_model</code>: MobileNetV2 loaded with <code>include_top=False</code>, <code>weights='imagenet'</code>, <code>pooling='avg'</code>.</li>
+    <li><code>image_embeddings</code>: numpy array of shape <code>(N, 1280)</code>.</li>
+    <li>Printed output: embedding shape, dimensionality, and density.</li>
+  </ul>
+</div>
+
+<div class="tip">
+  <strong>Markdown cell:</strong> MobileNetV2 was trained to classify 1,000 ImageNet categories. You are using its embedding layer, not its classifier. Does the embedding still encode object categories? Pick two images from the same class and compute their cosine similarity to test.
+</div>
+
+<!-- ==================== PART 3: VECTOR DATABASE ==================== -->
+<h2>Part 3: Build the Unified Vector Store</h2>
+
+<!-- CELL 7 -->
+<pre># Cell 7: Create ChromaDB collections</pre>
+<div class="section-card">
+  <p><strong>What it does:</strong> Creates an in-memory ChromaDB client with two independent collections: one for text chunks and one for image embeddings. Populates both collections.</p>
+
+  <p><strong>Takes in:</strong> <code>chunks</code>, <code>text_embeddings</code>, <code>images</code>, <code>labels</code>, <code>image_embeddings</code></p>
+
+  <p><strong>Must produce:</strong></p>
+  <ul>
+    <li><code>chroma_client</code>: a <code>chromadb.Client()</code> instance.</li>
+    <li><code>text_collection</code>: a ChromaDB collection containing all text chunks with their embeddings. Each item needs an ID (e.g., <code>text_0</code>, <code>text_1</code>), the embedding vector, the chunk text as the document, and metadata with the chunk index.</li>
+    <li><code>image_collection</code>: a ChromaDB collection containing all image embeddings. Each item needs an ID, the embedding vector, the class label as the document, and metadata with the label and index.</li>
+    <li>Printed output: item count for each collection and their embedding dimensions.</li>
+  </ul>
+
+  <p><strong>Notes:</strong> ChromaDB&rsquo;s <code>.add()</code> method accepts <code>ids</code>, <code>embeddings</code>, <code>documents</code>, and <code>metadatas</code>. Embeddings must be Python lists, not numpy arrays &mdash; call <code>.tolist()</code> on each vector.</p>
+</div>
+
+<div class="tip">
+  <strong>Markdown cell:</strong> The text collection uses 384-dimensional embeddings; the image collection uses 1,280-dimensional embeddings. What does this difference tell you about the information density of the two modalities? Could you project one to match the other?
+</div>
+
+<!-- CELL 8 -->
+<pre># Cell 8: Define search functions</pre>
+<div class="section-card">
+  <p><strong>What it does:</strong> Defines two search functions: one that takes a text query and retrieves similar text passages, and one that takes an image index and retrieves visually similar images. Tests both with an example query.</p>
+
+  <p><strong>Takes in:</strong> <code>text_model</code>, <code>text_collection</code>, <code>image_embeddings</code>, <code>image_collection</code>, <code>labels</code></p>
+
+  <p><strong>Must produce:</strong></p>
+  <ul>
+    <li><code>search_text(query, n=3)</code>: encodes the query string with <code>text_model</code>, queries <code>text_collection</code>, returns the ChromaDB results object.</li>
+    <li><code>search_images_by_image(query_idx, n=5)</code>: uses the embedding at <code>image_embeddings[query_idx]</code> to query <code>image_collection</code>, returns results.</li>
+    <li>Printed output: results from a test text query and a test image query, showing retrieved items and distances.</li>
+  </ul>
+
+  <p><strong>Notes:</strong> ChromaDB returns results ordered by distance (smaller = more similar). Use <code>.query(query_embeddings=[...], n_results=n)</code>.</p>
+</div>
+
+<div class="tip">
+  <strong>Markdown cell:</strong> ChromaDB returns distances, not similarities. For text, notice how a query like &ldquo;artificial intelligence&rdquo; retrieves passages that might not contain those exact words. What is the embedding capturing that TF-IDF would miss?
+</div>
+
+<!-- ==================== PART 4: TEXT RAG ==================== -->
+<h2>Part 4: Text RAG Mode</h2>
+
+<!-- CELL 9 -->
+<pre># Cell 9: Build RAG with retrieved context</pre>
+<div class="section-card">
+  <p><strong>What it does:</strong> Defines an <code>ask_document</code> function that retrieves the top 3 text passages for a question, passes them as context to Gemini with a system prompt instructing it to answer using only the provided context, and returns the question, retrieved passages, generated answer, and distances. Runs an example question.</p>
+
+  <p><strong>Takes in:</strong> <code>search_text</code>, <code>client</code></p>
+
+  <p><strong>Must produce:</strong></p>
+  <ul>
+    <li><code>ask_document(question)</code>: a function that returns a dictionary with keys <code>'question'</code>, <code>'retrieved_passages'</code>, <code>'answer'</code>, <code>'distances'</code>.</li>
+    <li>Printed output: the question, retrieved passages with distances, and the generated answer.</li>
+  </ul>
+
+  <p><strong>Notes:</strong> The system prompt must instruct Gemini to use only the provided context. If the answer is not in the context, it should say so clearly rather than guessing. Use <code>client.models.generate_content()</code> with <code>model='gemini-2.0-flash'</code>.</p>
+</div>
+
+<div class="tip">
+  <strong>Markdown cell:</strong> This is Retrieval-Augmented Generation (RAG). The retrieved passages ground Gemini&rsquo;s answer in your document. Compare this to Module 2, where Gemini had no context. What kinds of hallucinations might RAG prevent? Can RAG still go wrong?
+</div>
+
+<!-- CELL 10 -->
+<pre># Cell 10: Test hallucination resistance</pre>
+<div class="section-card">
+  <p><strong>What it does:</strong> Tests the RAG pipeline with three questions that are impossible to answer from the document. Checks whether Gemini refuses to answer or hallucinates.</p>
+
+  <p><strong>Takes in:</strong> <code>ask_document</code></p>
+
+  <p><strong>Must produce:</strong></p>
+  <ul>
+    <li>Three impossible questions (e.g., questions about topics your document does not cover).</li>
+    <li>Printed output: each question, Gemini&rsquo;s answer, and the retrieval similarity score for the top passage.</li>
+  </ul>
+
+  <p><strong>Notes:</strong> Look at the retrieval distances. Does a high distance (low similarity) reliably predict that Gemini will refuse to answer? Or does it sometimes answer anyway?</p>
+</div>
+
+<div class="tip">
+  <strong>Markdown cell:</strong> Did Gemini hallucinate or correctly refuse? Could you set a distance threshold to automatically flag low-confidence answers?
+</div>
+
+<!-- ==================== PART 5: IMAGE RETRIEVAL ==================== -->
+<h2>Part 5: Image Retrieval Mode</h2>
+
+<!-- CELL 11 -->
+<pre># Cell 11: Image retrieval visualization</pre>
+<div class="section-card">
+  <p><strong>What it does:</strong> Defines a function that takes a query image index, retrieves the most similar images from ChromaDB, and displays the query and results in a single matplotlib figure. Runs the visualization on at least three query images from different classes.</p>
+
+  <p><strong>Takes in:</strong> <code>search_images_by_image</code>, <code>images</code>, <code>labels</code></p>
+
+  <p><strong>Must produce:</strong></p>
+  <ul>
+    <li>A visualization function that displays the query image on the left and retrieved images to the right, with labels and similarity scores. Mark correct matches (&check;) and incorrect matches (&cross;).</li>
+    <li>At least three retrieval visualizations from different classes.</li>
+  </ul>
+
+  <p><strong>Notes:</strong> Exclude the query image itself from results (it will be its own closest match). Convert distance to similarity with <code>1 - distance</code> for display.</p>
+</div>
+
+<div class="tip">
+  <strong>Markdown cell:</strong> Compare these results to the HOG retrievals from Module 2. Find one case where neural embeddings succeeded but HOG failed. What feature did the embedding capture that HOG missed?
+</div>
+
+<!-- CELL 12 -->
+<pre># Cell 12: Precision@k evaluation</pre>
+<div class="section-card">
+  <p><strong>What it does:</strong> Computes precision@k for image retrieval across all images (or a sample of at least 50). Reports mean precision@1, precision@3, and precision@5.</p>
+
+  <p><strong>Takes in:</strong> <code>images</code>, <code>labels</code>, <code>image_embeddings</code></p>
+
+  <p><strong>Must produce:</strong></p>
+  <ul>
+    <li>A function or loop that computes precision@k: for each query image, retrieve the top k nearest neighbors (excluding itself), count how many share the query&rsquo;s label, and divide by k.</li>
+    <li>Printed output: a table showing mean precision@1, precision@3, and precision@5.</li>
+  </ul>
+
+  <p><strong>Notes:</strong> You can compute distances directly with numpy (L2 norm) rather than querying ChromaDB for every image. This is faster for batch evaluation.</p>
+</div>
+
+<div class="tip">
+  <strong>Markdown cell:</strong> What does precision@1 of 60% mean? What would 100% require? How does this compare to the HOG precision@k from Module 2?
+</div>
+
+<!-- ==================== PART 6: UNIFIED DEMO ==================== -->
+<h2>Part 6: The Unified Demo</h2>
+
+<!-- CELL 13 -->
+<pre># Cell 13: Unified search engine demonstration</pre>
+<div class="section-card">
+  <p><strong>What it does:</strong> Defines a function that takes a text topic and an image query index, runs the text RAG pipeline and the image retrieval pipeline, and displays everything together in one combined output: the text question, retrieved passages, Gemini&rsquo;s answer, the query image, and the top image matches.</p>
+
+  <p><strong>Takes in:</strong> <code>ask_document</code>, <code>search_images_by_image</code>, <code>images</code>, <code>labels</code></p>
+
+  <p><strong>Must produce:</strong></p>
+  <ul>
+    <li>A <code>unified_search_demo(text_topic, image_query_idx)</code> function that runs both pipelines and displays the results.</li>
+    <li>At least one demonstration call with a meaningful text topic and image query.</li>
+  </ul>
+
+  <p><strong>Notes:</strong> The visualization should make it clear that both modalities are served by the same system. Use matplotlib subplots or separate print sections for each modality.</p>
+</div>
+
+<div class="tip">
+  <strong>Markdown cell 1 &mdash; Independent modalities:</strong> You can query text and images independently within the same system. But you cannot query images with text (e.g., &ldquo;show me sunset photos&rdquo;) and get back matching images. Why not? What is different about the 384-dimensional text space and the 1,280-dimensional image space?
+</div>
+
+<div class="tip">
+  <strong>Markdown cell 2 &mdash; Cross-modal search:</strong> To search for &ldquo;sunset over water&rdquo; as text and get back matching images, what would you need? Research CLIP and write two to three sentences about how it differs from what you built here.
+</div>
+
+<div class="tip">
+  <strong>Markdown cell 3 &mdash; Production implications:</strong> You have a working vector database. What would you need to add to deploy it as a real search engine? Think about scaling, updates, filtering, and explainability.
+</div>
+
+<!-- ==================== PART 7: CROSS-MODAL BRIDGE ==================== -->
+<h2>Part 7: Cross-Modal Bridge</h2>
+
+<!-- CELL 14 -->
+<pre># Cell 14: Gemini Vision captions as a cross-modal bridge</pre>
+<div class="section-card">
+  <p><strong>What it does:</strong> Builds a crude cross-modal bridge without CLIP. Takes a query image, retrieves its top visual match from ChromaDB, sends that match to Gemini Vision to generate a one-sentence caption, embeds the caption as text, and uses it to search the text collection. Visualizes the full chain: image &rarr; top visual match &rarr; caption &rarr; related text passages.</p>
+
+  <p><strong>Takes in:</strong> <code>search_images_by_image</code>, <code>images</code>, <code>labels</code>, <code>text_model</code>, <code>text_collection</code>, <code>client</code></p>
+
+  <p><strong>Must produce:</strong></p>
+  <ul>
+    <li>A helper function that converts a numpy image array to a format Gemini Vision can accept and returns a one-sentence caption.</li>
+    <li>A demonstration that chains the steps: pick a query image, retrieve the top visual match, caption it with Gemini Vision, embed the caption, search the text collection with it, and display the results.</li>
+    <li>A matplotlib figure showing the chain: the query image, the top visual match with its caption, and the retrieved text passage.</li>
+  </ul>
+
+  <p><strong>Notes:</strong> To send an image to Gemini, convert the numpy array to a PIL Image, save it to a bytes buffer in JPEG format, and base64-encode it. Pass the encoded image and a captioning prompt to <code>client.models.generate_content()</code>. The caption bridges the modalities: it translates visual content into text that the sentence transformer can embed.</p>
+</div>
+
+<div class="tip">
+  <strong>Markdown cell:</strong> This approach bridges image and text without CLIP. What are its weaknesses? When would the bridge break &mdash; imprecise caption, ambiguous image, document that doesn&rsquo;t contain the concept? What does CLIP do that this approach cannot?
+</div>
+
+<!-- ========== PRESENTATION PREP ========== -->
+<h2>Presentation Prep</h2>
+
+<div class="section-card">
+  <p>Your notebook is your presentation. There is no separate written reflection. Your presentation serves as the reflection.</p>
+  <p>In five to seven minutes, walk the class through:</p>
+  <ol>
+    <li><strong>Text RAG in action:</strong> ask a question of your document, show the retrieved passages, and explain how retrieval helped Gemini answer correctly.</li>
+    <li><strong>Image retrieval:</strong> show one query image and its top matches. Explain which matches were correct and what the neural embedding captured.</li>
+    <li><strong>The unified system:</strong> demonstrate Cell 13. Show how the same database serves text and images. Explain why true cross-modal search is not possible here (different embedding spaces) and what would be needed (CLIP).</li>
+    <li><strong>The bridge:</strong> demonstrate Cell 14. Show the image &rarr; caption &rarr; text chain and explain where it worked and where it broke down.</li>
+  </ol>
+</div>
+
+</body>
+</html>

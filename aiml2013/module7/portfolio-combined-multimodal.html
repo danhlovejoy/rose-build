@@ -1,0 +1,75 @@
+<!-- concurrent-only: requires dual enrollment in AIML 2003 + AIML 2013 -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Combined Portfolio: Multimodal Portfolio | AIML 2003 + AIML 2013</title>
+<link rel="stylesheet" href="../../course-styles.css">
+</head>
+<body>
+
+<h1>Combined Portfolio: Multimodal Portfolio</h1>
+<p class="subtitle">One presentation. Two courses. One synthesis project that connects them.</p>
+
+<!-- ========== DUAL ENROLLMENT NOTICE ========== -->
+<div class="bridge-box">
+  <strong>Dual-enrollment portfolio: AIML 2003 + AIML 2013</strong>
+  <p style="margin: 0.5rem 0 0;">This combined portfolio is for students enrolled in both AIML 2003 (NLP) and AIML 2013 (CV). You give one presentation covering both courses in 5&ndash;7 minutes. It replaces both individual portfolio presentations. If you are enrolled in only one course, use that course's standalone portfolio format instead.</p>
+</div>
+
+<!-- ========== THE ASSIGNMENT ========== -->
+<div class="section-card">
+  <h3>The Assignment</h3>
+  <p>You've spent eight weeks building NLP and CV systems in parallel. Some weeks the courses converged (embeddings, vector databases, bias auditing); other weeks they diverged (agents vs. captioning). Your combined portfolio presentation tells the story of both tracks and, critically, includes one synthesis project that connects them.</p>
+</div>
+
+<!-- ========== WHAT TO COVER ========== -->
+<div class="section-card">
+  <h3>What to Cover (5&ndash;7 Minutes)</h3>
+  <ol>
+    <li style="margin-bottom:0.75rem;"><strong>The dual arc (1 minute):</strong> Open with how the two tracks paralleled and diverged. Where were the connections strongest? Where did they fully separate? The combined lab weeks (Modules 3&ndash;5) are natural touchpoints.</li>
+    <li style="margin-bottom:0.75rem;"><strong>2&ndash;3 highlights (2&ndash;3 minutes):</strong> Choose your best work across both courses. You don't need to cover every module. Pick projects that show range: one from NLP, one from CV, and one combined (or one that demonstrates a cross-domain insight). For each: what you built, what you learned, what you'd change.</li>
+    <li style="margin-bottom:0.75rem;"><strong>The synthesis project (1&ndash;2 minutes):</strong> This is what distinguishes the combined portfolio from two separate ones. Present one project or demo that combines NLP and CV. Options:
+      <ul>
+        <li><strong>Extend the Universal Search Engine (Module 4):</strong> Your combined lab built a ChromaDB instance with both text and image embeddings. Extend it: add a natural language query that retrieves both relevant text passages and related images. Show the results side by side.</li>
+        <li><strong>Multimodal bias audit:</strong> Combine your Module 5 work. Show the NLP bias scorecard and the CV bias scorecard side by side. Compare how bias manifests in text generation vs. image classification. This doesn't require new code &mdash; it's a comparative analysis using existing outputs.</li>
+        <li><strong>Captioning + RAG:</strong> Feed your Module 6 image captions into your Module 4 RAG pipeline. Ask questions about images using text retrieval over generated captions. This is a quick prototype that demonstrates how NLP and CV pipelines can chain together.</li>
+        <li><strong>Your own idea:</strong> Any project that meaningfully combines NLP and CV tools or insights from the semester. Clear it with me during Thursday lab if you're unsure.</li>
+      </ul>
+    </li>
+    <li style="margin-bottom:0.75rem;"><strong>Reflection (1 minute):</strong> What is the most important thing you learned from studying NLP and CV together that you wouldn't have learned from either alone? The mathematical commonalities (vectors, similarity, embeddings, attention) are a good starting point, but the best answers go beyond the math to the conceptual parallels.</li>
+  </ol>
+</div>
+
+<!-- ========== SYNTHESIS PROJECT EXPECTATIONS ========== -->
+<div class="section-card">
+  <h3>Synthesis Project Expectations</h3>
+  <p>The synthesis project does not need to be a polished production system. It can be:</p>
+  <ul>
+    <li>A short extension of an existing combined lab (5&ndash;10 new cells in a notebook).</li>
+    <li>A comparative analysis using outputs from both courses (no new code, just new analysis).</li>
+    <li>A proof-of-concept that chains an NLP pipeline to a CV pipeline.</li>
+  </ul>
+  <p>What matters is that the connection between NLP and CV is genuine, not forced. A side-by-side comparison of two unrelated notebooks is not a synthesis project. A system that uses text embeddings and image embeddings in the same pipeline is.</p>
+</div>
+
+<!-- ========== FORMAT ========== -->
+<div class="section-card">
+  <h3>Format and Submission</h3>
+  <p>Present during the CV class session (Tuesday May 12, 7:00 PM). The combined presentation counts toward both courses. You may use slides, notebooks, or a combination.</p>
+  <p>If your synthesis project involves a new notebook, save it to your GitHub repo at <code>portfolio/synthesis_project.ipynb</code>. Submit the same repo link to both Canvas courses.</p>
+</div>
+
+<!-- ========== REFLECTION ========== -->
+<div class="section-card">
+  <h3>Combined Reflection</h3>
+  <p>Dual-enrolled students write a single "Synthesis Reflection" (600&ndash;1000 words) submitted to both courses. Due Thursday, May 14 by 11:59 PM. In addition to the standard reflection prompts, address: What are the mathematical commonalities between NLP and CV? Where did the two fields diverge in ways that surprised you? What would a unified "AI practitioner" curriculum look like if it combined both?</p>
+</div>
+
+<div class="tip" style="margin-top:1rem;">
+  <strong>Tip:</strong> The combined portfolio presentation is the capstone of your dual-enrollment experience. The students who do well are the ones who find a genuine insight at the intersection of NLP and CV &mdash; not just "both use vectors" but something deeper about how different modalities encode meaning, where the same evaluation techniques apply, and where they break down. That insight is the synthesis.
+</div>
+
+</body>
+</html>

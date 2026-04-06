@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lab 4: Image Similarity Search with ChromaDB</title>
+    <link rel="stylesheet" href="../../course-styles.css">
+</head>
+<body>
+    <div class="page-container">
+        <h1>Lab 4: Image Similarity Search with ChromaDB</h1>
+        <p class="subtitle">Computer Vision Module 4: From Local Search to Vector Database Retrieval</p>
+
+        <div class="warning">
+            <strong>How this lab works:</strong> This is a &ldquo;spec box&rdquo; lab. You write the code from scratch using the cell specifications below. Each cell lists what it must do, what inputs it takes, and what outputs it must produce. You&rsquo;re encouraged to use Claude, ChatGPT, or another LLM to help you write the code &mdash; paste the spec box and ask the model to implement it. The code structure is intentional: working through it yourself will deepen your understanding of vector databases and similarity search. No &ldquo;training wheels&rdquo; scaffold here.
+        </div>
+
+        <div class="section-card">
+            <h2>The Task</h2>
+            <p>In the readings and in class, you learned how deep learning models like MobileNetV2 encode images as high-dimensional embeddings, and how vector databases like ChromaDB efficiently index and retrieve embeddings by similarity. This lab upgrades your Module 3 retrieval system: instead of searching in-memory numpy arrays with cosine similarity, you&rsquo;ll build a persistent, queryable vector database and evaluate retrieval quality using precision@k metrics.</p>
+            <p>You&rsquo;ll build a query-by-image system that:</p>
+            <ul>
+                <li>Extracts 1280-dimensional embeddings using MobileNetV2 (no classification head)</li>
+                <li>Stores embeddings in a ChromaDB collection with metadata</li>
+                <li>Retrieves similar images by querying the embedding space</li>
+                <li>Evaluates retrieval performance with precision@k</li>
+                <li>Compares MobileNetV2 embeddings against HOG features from Module 2</li>
+                <li>Analyzes failure cases and cross-class confusion patterns</li>
+            </ul>
+            <p>By the end, you&rsquo;ll have a live retrieval system and insights into which visual categories the model confuses.</p>
+        </div>
+
+        <div class="section-card">
+            <h2>Dataset</h2>
+            <p>You may use the same CIFAR-10 images from Module 3 (200 images: 50 per class from 4 classes), or substitute your own set of 200 images organized by class. If using CIFAR-10:</p>
+            <ul>
+                <li>Load via <code>tensorflow.keras.datasets.cifar10</code></li>
+                <li>Use the training set; select one stratified sample of 50 images from 4 classes (e.g., truck, automobile, cat, dog)</li>
+                <li>Resize all images to 224 &times; 224 (MobileNetV2 input size)</li>
+                <li>Apply <code>keras.applications.mobilenet_v2.preprocess_input()</code></li>
+            </ul>
+            <p>If using your own images, store them in a folder structure like <code>data/class1/</code>, <code>data/class2/</code>, etc., and load via <code>cv2.imread()</code> or PIL.</p>
+        </div>
+
+        <div class="section-card">
+            <h2>How to Read This Page</h2>
+            <p>Each cell is labeled <code>Cell N: Title</code>. Below that, a spec box describes:</p>
+            <ul>
+                <li><strong>What it does:</strong> the goal in plain language</li>
+                <li><strong>Takes in:</strong> the variables or objects from previous cells that this cell uses</li>
+                <li><strong>Must produce:</strong> the output variables this cell creates (used by later cells)</li>
+                <li><strong>Notes:</strong> tips, gotchas, or hints</li>
+            </ul>
+            <p>After the spec box, a &ldquo;Markdown cell prompt&rdquo; suggests a question to explore; paste the entire spec box into your LLM and ask it to implement the cell. Then answer the markdown question in a text cell to reflect on your results.</p>
+        </div>
+
+        <hr>
+
+        <h2>Part 1: Setup and Load Images</h2>
+
+        <pre># Cell 1: Setup</pre>
+        <div class="section-card">
+            <p><strong>What it does:</strong> Install ChromaDB and import all necessary libraries.</p>
+            <p><strong>Takes in:</strong> nothing</p>
+            <p><strong>Must produce:</strong> all libraries imported; model (MobileNetV2 feature extractor) created and shape verified.</p>
+            <p><strong>Notes:</strong>
+            <ul>
+                <li>Install chromadb: <code>!pip install chromadb</code></li>
+                <li>Import numpy, matplotlib.pyplot, sklearn.metrics.pairwise.cosine_similarity, sklearn.manifold.TSNE, cv2 (or PIL), tensorflow.keras, and chromadb</li>
+                <li>Load MobileNetV2: <code>model = keras.applications.MobileNetV2(include_top=False, weights='imagenet', pooling='avg', input_shape=(224, 224, 3))</code></li>
+                <li>Run a dummy forward pass with shape (1, 224, 224, 3) and print the output shape. It should be (1, 1280).</li>
+                <li>Set random seeds for reproducibility: <code>np.random.seed(42)</code>, <code>tf.random.set_seed(42)</code></li>
+            </ul>
+            </p>
+        </div>
+        <div class="tip">
+            <strong>Markdown cell:</strong> Why does MobileNetV2 have 1280 output dimensions when we set <code>include_top=False</code>? What feature information is represented in those 1280 values?
+        </div>
+
+        <pre># Cell 2: Load and Preprocess Images</pre>
+        <div class="section-card">
+            <p><strong>What it does:</strong> Load images, resize to 224&times;224, apply MobileNetV2 preprocessing, and prepare display versions.</p>
+            <p><strong>Takes in:</strong> model</p>
+            <p><strong>Must produce:</strong>
+            <ul>
+                <li><code>images</code>: list of 200 original-resolution PIL/numpy arrays (for display)</li>
+                <li><code>images_preprocessed</code>: numpy array shape (200, 224, 224, 3), float32, preprocessed</li>
+                <li><code>labels</code>: list of 200 class label strings (e.g., &ldquo;truck&rdquo;, &ldquo;automobile&rdquo;, &ldquo;cat&rdquo;, &ldquo;dog&rdquo;)</li>
+                <li><code>class_names</code>: list of 4 unique class names in order</li>
+            </ul>
+            </p>
+            <p><strong>Notes:</strong>
+            <ul>
+                <li>If using CIFAR-10, load and stratify: 50 images per class from 4 classes</li>
+                <li>Resize all images to 224&times;224 before preprocessing</li>
+                <li>Call <code>keras.applications.mobilenet_v2.preprocess_input()</code> on the preprocessed array (scales to [-1, 1])</li>
+                <li>Keep a separate list of original-resolution images (or smaller display crops) for visualization</li>
+                <li>Display a 4&times;4 grid (16 random images) using matplotlib to verify the data looks reasonable</li>
+            </ul>
+            </p>
+        </div>
+        <div class="tip">
+            <strong>Markdown cell:</strong> Why do we preprocess images before feeding them to MobileNetV2? What would happen if we passed raw pixel values (0&ndash;255) to the model?
+        </div>
+
+        <pre># Cell 3: Extract Embeddings</pre>
+        <div class="section-card">
+            <p><strong>What it does:</strong> Run all 200 preprocessed images through the MobileNetV2 feature extractor to generate embeddings.</p>
+            <p><strong>Takes in:</strong> model, images_preprocessed</p>
+            <p><strong>Must produce:</strong> <code>embeddings</code> numpy array shape (200, 1280), float32</p>
+            <p><strong>Notes:</strong>
+            <ul>
+                <li>Call <code>model.predict(images_preprocessed)</code></li>
+                <li>Print the shape to confirm (200, 1280)</li>
+                <li>Optionally, print min/max/mean values to understand the embedding distribution</li>
+            </ul>
+            </p>
+        </div>
+        <div class="tip">
+            <strong>Markdown cell:</strong> Look at the min, max, and mean values of the embeddings. Are they bounded (e.g., 0&ndash;1) or unbounded? What does this tell you about how the model&rsquo;s pooling layer works?
+        </div>
+
+        <hr>
+
+        <h2>Part 2: Build the ChromaDB Collection</h2>
+
+        <pre># Cell 4: Create ChromaDB Collection</pre>
+        <div class="section-card">
+            <p><strong>What it does:</strong> Create an ephemeral ChromaDB client, initialize a collection, and add all 200 embeddings with metadata.</p>
+            <p><strong>Takes in:</strong> embeddings, labels, class_names</p>
+            <p><strong>Must produce:</strong> <code>client</code> (ChromaDB client), <code>collection</code> (ChromaDB collection named &ldquo;image_embeddings&rdquo)</p>
+            <p><strong>Notes:</strong>
+            <ul>
+                <li>Create an ephemeral client: <code>client = chromadb.EphemeralClient()</code></li>
+                <li>Create a collection: <code>collection = client.get_or_create_collection(name="image_embeddings")</code></li>
+                <li>Add embeddings and metadata:
+                <pre>collection.add(
+    ids=[str(i) for i in range(200)],
+    embeddings=embeddings.tolist(),  # Convert numpy array to list
+    metadatas=[{"label": labels[i], "index": i} for i in range(200)]
+)</pre>
+                </li>
+                <li>Print <code>collection.count()</code> to confirm all 200 embeddings were added</li>
+            </ul>
+            </p>
+        </div>
+        <div class="tip">
+            <strong>Markdown cell:</strong> In Module 3, you stored embeddings in a numpy array and computed cosine similarity with a dense matrix operation. Now you&rsquo;re storing them in ChromaDB. What does a vector database add? (Hint: think about scale, persistence, and query speed.)
+        </div>
+
+        <hr>
+
+        <h2>Part 3: Query-by-Image Retrieval</h2>
+
+        <pre># Cell 5: Build Retrieval Function and Display Results</pre>
+        <div class="section-card">
+            <p><strong>What it does:</strong> Implement a function that queries ChromaDB for the top-n most similar images to a query image. Display results with labels and similarity scores.</p>
+            <p><strong>Takes in:</strong> collection, embeddings, images, labels</p>
+            <p><strong>Must produce:</strong> function <code>find_similar(query_idx, n=5)</code> and visualizations for one query from each of the 4 classes</p>
+            <p><strong>Notes:</strong>
+            <ul>
+                <li>Function signature: <code>def find_similar(query_idx, n=5):</code></li>
+                <li>Query the collection using the query image&rsquo;s embedding: <code>results = collection.query(query_embeddings=[embeddings[query_idx].tolist()], n_results=n+1)</code> (n+1 to exclude the query itself later)</li>
+                <li>Remove the query image from results (first result will be the query itself with distance 0)</li>
+                <li>Compute distances: ChromaDB returns results in distance order (Euclidean by default); convert to similarity if needed, or work with distance directly</li>
+                <li>Return the top-n result indices, labels, and distances</li>
+                <li>Visualization: matplotlib figure with query image on the left, retrieved images in a row to the right. Label each result with its class and distance/similarity score. Use a 1-row, n+1-column layout.</li>
+                <li>Call the function for one query image from each of the 4 classes (use indices that are typical examples, e.g., 12, 62, 112, 162)</li>
+            </ul>
+            </p>
+        </div>
+        <div class="tip">
+            <strong>Markdown cell:</strong> For each of the 4 queries, count how many of the top-5 results share the query&rsquo;s class. Which classes have the clearest matches? Which have the most mismatches?
+        </div>
+
+        <pre># Cell 6: Cross-Class Confusion Analysis</pre>
+        <div class="section-card">
+            <p><strong>What it does:</strong> For each of the 4 classes, query with 10 random images and count how often each class appears in the top-5 results. Visualize as a confusion-style heatmap.</p>
+            <p><strong>Takes in:</strong> collection, embeddings, labels, class_names</p>
+            <p><strong>Must produce:</strong> 4&times;4 confusion matrix (rows = query class, columns = retrieved class, values = count of co-occurrences), displayed as a matplotlib heatmap with annotations</p>
+            <p><strong>Notes:</strong>
+            <ul>
+                <li>Loop over each class: select 10 random images from that class</li>
+                <li>For each query image, retrieve top-5 results (excluding the query itself)</li>
+                <li>Count the class label of each result and increment the confusion matrix</li>
+                <li>Rows = query class, columns = result class. Diagonal should be high (same-class matches).</li>
+                <li>Display as a heatmap with integer annotations (use <code>sns.heatmap()</code> or matplotlib&rsquo;s <code>imshow()</code> + colorbar)</li>
+                <li>Label axes with class names</li>
+            </ul>
+            </p>
+        </div>
+        <div class="tip">
+            <strong>Markdown cell:</strong> Which two classes does the model confuse most (highest off-diagonal values)? Pick a pair (e.g., truck vs. automobile) and display example images from both. What visual properties do they share that might cause the model to confuse them?
+        </div>
+
+        <hr>
+
+        <h2>Part 4: Evaluate Retrieval Quality</h2>
+
+        <pre># Cell 7: Precision@k Evaluation</pre>
+        <div class="section-card">
+            <p><strong>What it does:</strong> Compute precision@k for k in {1, 3, 5} across all 200 images. Compare against HOG baseline if available.</p>
+            <p><strong>Takes in:</strong> collection, embeddings, labels</p>
+            <p><strong>Must produce:</strong>
+            <ul>
+                <li><code>precision_at_k</code> function</li>
+                <li>Mean precision@1, @3, @5 printed as a table or summary</li>
+                <li>Optional: comparison with HOG baseline from Module 2 (if saved)</li>
+            </ul>
+            </p>
+            <p><strong>Notes:</strong>
+            <ul>
+                <li>Define: <code>def precision_at_k(query_idx, k):</code> which returns the fraction of top-k results that share the query image&rsquo;s class</li>
+                <li>Loop over all 200 images, compute precision@1, @3, @5 for each, then average</li>
+                <li>Print results in a table: <code>Metric | Score</code> format (Precision@1 | 0.XX, Precision@3 | 0.XX, Precision@5 | 0.XX)</li>
+                <li>If you saved HOG features or metrics from Module 2, load them and display a side-by-side comparison of precision@5 values</li>
+            </ul>
+            </p>
+        </div>
+        <div class="tip">
+            <strong>Markdown cell:</strong> Precision@1 vs. Precision@5 &mdash; which is higher and why? What does this tell you about how quickly retrieval quality degrades as you request more results?
+        </div>
+
+        <pre># Cell 8: Failure Case Gallery</pre>
+        <div class="section-card">
+            <p><strong>What it does:</strong> Identify the 5 queries with the lowest precision@5, and display each query alongside its top-5 results with incorrect matches highlighted.</p>
+            <p><strong>Takes in:</strong> images, labels, embeddings, collection</p>
+            <p><strong>Must produce:</strong> matplotlib figure(s) showing 5 rows, each with the query image and its top-5 results. Incorrect matches should be visually marked (red border, X, or gray overlay).</p>
+            <p><strong>Notes:</strong>
+            <ul>
+                <li>Compute precision@5 for all 200 images (reuse the function from Cell 7)</li>
+                <li>Sort by precision@5 and select the 5 lowest</li>
+                <li>For each failure case, display the query image (larger, on the left) and top-5 results in a row to the right</li>
+                <li>Draw a red border or add an X marker to results that don&rsquo;t match the query class</li>
+                <li>Label each result with its class and show whether it&rsquo;s a match (+) or mismatch (−)</li>
+            </ul>
+            </p>
+        </div>
+        <div class="tip">
+            <strong>Markdown cell:</strong> What do the 5 failure cases have in common? Are they ambiguous images (e.g., blurry, unusual pose, occlusion), or images that genuinely belong to multiple categories? Can you spot a pattern?
+        </div>
+
+        <hr>
+
+        <h2>Part 5: HOG vs. MobileNetV2 Comparison</h2>
+
+        <pre># Cell 9: HOG Feature Extraction and Retrieval</pre>
+        <div class="section-card">
+            <p><strong>What it does:</strong> Extract HOG features for all 200 images (same parameters as Module 2), store in a second ChromaDB collection, and compute precision@5 for comparison.</p>
+            <p><strong>Takes in:</strong> images_preprocessed, labels, client</p>
+            <p><strong>Must produce:</strong>
+            <ul>
+                <li><code>hog_features</code> numpy array shape (200, N) where N is the HOG feature dimension</li>
+                <li><code>hog_collection</code> ChromaDB collection named &ldquo;hog_features&rdquo;</li>
+                <li>Mean HOG precision@5</li>
+                <li>Side-by-side comparison table: MobileNetV2 precision@5 vs. HOG precision@5</li>
+            </ul>
+            </p>
+            <p><strong>Notes:</strong>
+            <ul>
+                <li>Convert images to grayscale and resize to 64&times;64 (or use original size, but HOG is typically faster on smaller images)</li>
+                <li>Extract HOG: <code>skimage.feature.hog(image, pixels_per_cell=(8, 8), cells_per_block=(2, 2))</code></li>
+                <li>Create a second ChromaDB collection with HOG features (same structure as Cell 4)</li>
+                <li>Compute precision@5 for HOG the same way as MobileNetV2</li>
+                <li>Print comparison: &ldquo;MobileNetV2 Precision@5: X.XX | HOG Precision@5: Y.YY | Improvement: +Z% &rdquo;</li>
+            </ul>
+            </p>
+        </div>
+        <div class="tip">
+            <strong>Markdown cell:</strong> By what percentage did MobileNetV2 improve over HOG? Pick one specific query where HOG failed (low score or wrong class in top-5) but MobileNetV2 succeeded. What visual feature did MobileNetV2 detect that HOG missed?
+        </div>
+
+        <pre># Cell 10: Dual t-SNE Visualization</pre>
+        <div class="section-card">
+            <p><strong>What it does:</strong> Generate side-by-side t-SNE plots of MobileNetV2 embeddings and HOG features, both colored by class.</p>
+            <p><strong>Takes in:</strong> embeddings, hog_features, labels, class_names</p>
+            <p><strong>Must produce:</strong> matplotlib figure with two subplots: left = MobileNetV2 t-SNE, right = HOG t-SNE. Points colored by class, legend showing class names.</p>
+            <p><strong>Notes:</strong>
+            <ul>
+                <li>Use <code>sklearn.manifold.TSNE</code> with <code>perplexity=30</code> (appropriate for 200 points)</li>
+                <li>Same random state for both to ensure reproducibility</li>
+                <li>Plot each class in a distinct color (use a colormap like &ldquo;tab10&rdquo; or a custom palette)</li>
+                <li>Add a legend and title to each subplot</li>
+                <li>Make sure axes are equal aspect ratio</li>
+            </ul>
+            </p>
+        </div>
+        <div class="tip">
+            <strong>Markdown cell:</strong> Which embedding space (MobileNetV2 or HOG) has tighter, more separated clusters? How does this visual clustering pattern match the precision@5 numbers from Cell 9? What does tight clustering suggest about the feature representation?
+        </div>
+
+        <hr>
+
+        <h2>Bonus: Query with a Personal Image (+10 Extra Credit)</h2>
+
+        <div class="section-card">
+            <p>Upload a photo from your phone or download an image of your choice. Resize and preprocess it using the same pipeline (224&times;224, MobileNetV2 preprocessing). Extract its MobileNetV2 embedding, query ChromaDB for the top-10 similar images from the CIFAR-10 dataset, and display the results. Does the model find meaningful matches even though the query image is from a completely different source?</p>
+            <p><strong>Notes:</strong>
+            <ul>
+                <li>Use Jupyter&rsquo;s file upload widget or download an image URL with <code>urllib</code></li>
+                <li>Resize to 224&times;224</li>
+                <li>Apply the same <code>preprocess_input()</code> as the training data</li>
+                <li>Extract embedding and query for top-10 results</li>
+                <li>Display the personal image (larger, on the left) and top-10 results in two rows of 5</li>
+                <li>Note: CIFAR-10 images are 32&times;32 and upsampled during display, so matches may be noisy. That&rsquo;s expected.</li>
+            </ul>
+            </p>
+        </div>
+
+        <hr>
+
+        <h2>Demo Prep: What to Show</h2>
+
+        <div class="section-card">
+            <p>Your 3&ndash;5 minute demo should showcase:</p>
+            <ul>
+                <li><strong>Live retrieval system:</strong> Query with a new image (from your test set) and show the top-5 or top-10 results. Explain why those images are similar (color, shape, pose).</li>
+                <li><strong>Confusion heatmap (Cell 6):</strong> Show which classes confuse the model most. Highlight one pair of confused classes and explain the shared visual properties.</li>
+                <li><strong>HOG vs. MobileNetV2 comparison (Cell 9&ndash;10):</strong> Discuss the precision@5 improvement and show the t-SNE plots. Which embedding space is better separated?</li>
+                <li><strong>Live modification (stretch):</strong> If time allows, change <code>n_results</code>, swap a query image, or try a different distance metric and observe the change in retrieval results.</li>
+            </ul>
+        </div>
+
+        <div class="bridge-box" data-concurrent="true">
+            <strong>Taking AIML 2003 too?</strong>
+            <p>This week, NLP students are building a RAG pipeline using ChromaDB to retrieve text chunks and generate answers with Gemini. The shared foundation is the vector database &mdash; both courses use ChromaDB to store and retrieve embeddings by similarity. If you&rsquo;re doing the combined lab, you build a single &ldquo;Universal Search Engine&rdquo; that indexes both images and text in one vector store. You&rsquo;ll query it with either an image or a text prompt and retrieve the top-k most relevant items from both modalities.</p>
+        </div>
+
+    </div>
+</body>
+</html>

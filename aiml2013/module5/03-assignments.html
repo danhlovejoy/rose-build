@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Module 5 Deliverables: CV Metrics &amp; Bias | AIML 2013</title>
+<link rel="stylesheet" href="../../course-styles.css">
+</head>
+<body>
+
+<h1>Module 5 Deliverables: CV Metrics &amp; Bias</h1>
+<p class="subtitle">AIML 2013: Introduction to Computer Vision</p>
+<div class="due-banner">All deliverables due: By Tuesday, April 28 (by class time).</div>
+
+<!-- ========== OVERVIEW ========== -->
+<div class="overview-card">
+  <strong>This week you will submit three things:</strong>
+  <table class="overview-table" style="margin-top: 0.75rem;">
+    <thead>
+      <tr>
+        <th>Deliverable</th>
+        <th>Type</th>
+        <th>Weight</th>
+        <th>Where</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Module 5 Lab: CV Metrics &amp; Demographic Bias Audit</td>
+        <td>Colab notebook via GitHub</td>
+        <td>Repos (25%)</td>
+        <td>GitHub + link in Canvas</td>
+      </tr>
+      <tr>
+        <td>Module 5 Demo</td>
+        <td>3&ndash;5 minute live demo</td>
+        <td>Demos (25%)</td>
+        <td>In class, Tuesday April 28</td>
+      </tr>
+      <tr>
+        <td>Ethics Discussion</td>
+        <td>Discussion post</td>
+        <td>Participation (20%)</td>
+        <td>Canvas Discussion</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- =====================================================================
+     DELIVERABLE 1: LAB
+     ===================================================================== -->
+<h2>Deliverable 1: Module 5 Lab <span class="tag tag-lab">Lab</span></h2>
+
+<div class="section-card">
+  <h3>Overview</h3>
+  <p>In the readings and in class, you learned that a classifier's overall accuracy can hide large disparities across demographic subgroups. The Gender Shades study showed this at industrial scale: commercial face classifiers that appeared to work well overall were failing on specific populations. This lab builds your own version of that audit. You will train a gender classifier on CelebA, compute overall metrics, disaggregate by demographic attributes, run an intersectional analysis, and produce a bias scorecard.</p>
+  <p>The failure gallery in Cell 8 is where the audit becomes real. Numbers tell you the model is wrong 20% of the time on a subgroup; the images show you the specific faces it gets wrong and the visual patterns behind the errors.</p>
+
+  <h3>What to Submit</h3>
+  <ul>
+    <li>A completed Colab notebook (<code>.ipynb</code>) saved to your GitHub repo at <code>week6/lab5_bias_audit.ipynb</code>.</li>
+    <li>All cells executed with visible outputs (don't clear outputs).</li>
+    <li>Each code cell preceded by a markdown cell with your LLM prompt and fix note.</li>
+    <li>No API keys or secrets anywhere in the notebook.</li>
+    <li>Submit the GitHub link in Canvas. If it's not in the repo, it doesn't exist for grading.</li>
+  </ul>
+</div>
+
+<div class="tip">
+  <strong>Start this in Thursday lab.</strong> We'll work through the audit pipeline together: loading CelebA, training the classifier head, and computing the first per-group metrics. Come with the readings done &mdash; understanding what Gender Shades found will help you interpret your own results.
+</div>
+
+<div class="rubric-section">
+  <h4>Repository Rubric (Summary)</h4>
+  <p style="font-size:0.85rem; margin-bottom:0.75rem;">100 points possible. Each criterion is scored on a 4-level scale (Full Credit &rarr; No Credit). <a href="https://rose.instructure.com/courses/26944/rubrics/66064" target="_blank"><strong>View the full rubric with detailed scoring &rarr;</strong></a></p>
+  <p style="font-size:0.85rem; color: var(--muted); margin-bottom:0.75rem;">Criteria marked <strong>WEEKLY</strong> change per assignment; criteria marked <strong>STANDARD</strong> stay the same all semester.</p>
+  <table class="rubric-table">
+    <thead>
+      <tr><th style="width:30%">Criterion</th><th style="width:10%">Points</th><th style="width:10%">Type</th><th>Description</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Notebook Runs</td><td>/25</td><td>STANDARD</td><td>Notebook is in the correct week folder. Cells execute top-to-bottom without errors. All outputs visible.</td></tr>
+      <tr style="background:#fff3e0;"><td>Task Requirements</td><td>/40</td><td>WEEKLY</td><td><strong>This week:</strong>
+        <ul style="margin: 0.4rem 0 0 1rem; padding: 0;">
+          <li>Gender classifier trained (or loaded) and predictions generated on 1,000 CelebA test images.</li>
+          <li>Overall metrics computed: accuracy, precision, recall, F1, confusion matrix.</li>
+          <li>Per-group accuracy disaggregated across at least 4 attributes with grouped bar chart.</li>
+          <li>Intersectional analysis: 2&times;2 heatmap crossing two attributes.</li>
+          <li>Bias scorecard: multi-panel summary figure.</li>
+          <li>Failure gallery: misclassified images from the worst-performing subgroup.</li>
+        </ul></td></tr>
+      <tr><td>Reflection</td><td>/20</td><td>STANDARD</td><td>200&ndash;400 words. Connects results to the readings. Addresses what worked, what didn't, and what you'd change.</td></tr>
+      <tr><td>Repo Hygiene</td><td>/15</td><td>STANDARD</td><td>No active (unrevoked) secrets. README updated. Descriptive commit message. Files in the right folder.</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<hr>
+
+<!-- =====================================================================
+     DELIVERABLE 2: DEMO
+     ===================================================================== -->
+<h2>Deliverable 2: Module 5 Demo <span class="tag tag-demo">Demo</span></h2>
+
+<div class="section-card">
+  <h3>Overview</h3>
+  <p>A <strong>three- to five-minute</strong> live demo during Tuesday's class (April 28, 7:00 PM). Your notebook is your demo &mdash; no separate slides required. Walk the class through your bias audit, show where the model fails, and make a live modification.</p>
+
+  <h3>What to Cover</h3>
+  <ol>
+    <li><strong>Overall metrics (30 seconds):</strong> Show the confusion matrix and classification report. Orient the audience on how the model performs before disaggregation.</li>
+    <li><strong>The disaggregated results:</strong> Show the per-group bar chart from Cell 4. Which subgroup performs worst? How large is the gap compared to overall accuracy?</li>
+    <li><strong>Intersectional analysis:</strong> Show the 2&times;2 heatmap from Cell 5. Did the intersection reveal a failure that single-attribute analysis missed?</li>
+    <li><strong>The failure gallery:</strong> Show Cell 8. Pick two misclassified images and explain what visual features might have confused the classifier.</li>
+    <li><strong>Live modification:</strong> Change something &mdash; the classification threshold, the slicing attributes, or the intersectional combination. Re-run and explain what changed. This is worth 25 points on the demo rubric.</li>
+  </ol>
+
+  <h3>Format</h3>
+  <p>Share your screen and run your notebook live. If you attend via Zoom, have your notebook open and ready to run before your turn.</p>
+</div>
+
+<div class="rubric-section">
+  <h4>Demo Rubric (Summary)</h4>
+  <p style="font-size:0.85rem; margin-bottom:0.75rem;">100 points possible. Each criterion is scored on a 4-level scale (Full Credit &rarr; No Credit). <a href="https://rose.instructure.com/courses/26944/rubrics/66063" target="_blank"><strong>View the full rubric with detailed scoring &rarr;</strong></a></p>
+  <table class="rubric-table">
+    <thead>
+      <tr><th style="width:35%">Criterion</th><th style="width:12%">Points</th><th>What I'm Looking For</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Execution &amp; Requirements</td><td>20</td><td>Pipeline runs cleanly. Classifier loads, predictions generate, metrics compute, visualizations render.</td></tr>
+      <tr><td>Variable &amp; Data Flow</td><td>20</td><td>You can explain what each stage produces. Image &rarr; preprocess &rarr; classify &rarr; threshold &rarr; compare to ground truth &rarr; disaggregate.</td></tr>
+      <tr><td>Dependency Justification</td><td>15</td><td>You can explain why this dataset, why these slicing attributes, and why the intersectional analysis matters.</td></tr>
+      <tr><td>Prompt Strategy</td><td>20</td><td>Your evaluation is meaningful. You can explain what the accuracy gap means and what it would mean for deployment.</td></tr>
+      <tr><td>Live Modification</td><td>25</td><td>You change a parameter live, re-run, and explain the effect. Not scripted &mdash; a genuine experiment.</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<hr>
+
+<!-- ========== COMBINED ASSIGNMENT NOTE ========== -->
+<div class="bridge-box" data-concurrent="true">
+  <strong>Taking AIML 2003 (Natural Language Processing) too?</strong>
+  <p>A combined presentation is available: <a href="lab5-combined-human-cost.html">The Human Cost of Data</a>. It combines your CV demographic accuracy audit with the NLP bias evaluation into a single comparative presentation. You present once, covering both domains, in 5&ndash;7 minutes instead of 3&ndash;5. If you do the combined presentation, it replaces the individual CV demo. You still submit separate lab notebooks to each course.</p>
+</div>
+
+<hr>
+
+<!-- =====================================================================
+     DELIVERABLE 3: ETHICS DISCUSSION
+     ===================================================================== -->
+<h2>Deliverable 3: Ethics Discussion <span class="tag tag-ethics">Ethics</span></h2>
+
+<div class="section-card">
+  <h3>Overview</h3>
+  <p>Complete the ethics discussion thread for this module. The full prompt and context are on the <a href="04-ethics.html">Ethics Thread page</a> in this module.</p>
+
+  <h3>Requirements</h3>
+  <ul>
+    <li>Initial post: 150&ndash;250 words. Take a position: don't just summarize the question.</li>
+    <li>Reply to a classmate: at least one substantive reply (not just &ldquo;I agree&rdquo;).</li>
+    <li>Initial post due by Tuesday class (April 28). Reply due by the following Tuesday class (May 5).</li>
+  </ul>
+  <p style="margin-top:0.75rem; font-size:0.9rem; color:var(--muted);">The ethics discussion is worth 20% of your weekly Participation grade. Whether you attend in person or via Zoom, this post is required every week.</p>
+</div>
+
+<!-- ========== SUBMISSION CHECKLIST ========== -->
+<div class="overview-card" style="margin-top:1.5rem;">
+  <strong>Submission Checklist</strong>
+  <ul>
+    <li>Module 5 Lab notebook runs cleanly top-to-bottom with all outputs visible</li>
+    <li>Each code cell has a preceding markdown cell with your LLM prompt and fix note</li>
+    <li>No API keys exposed in any committed file</li>
+    <li>Notebook saved to GitHub at <code>week6/lab5_bias_audit.ipynb</code></li>
+    <li>README updated to reflect Module 5 contents</li>
+    <li>GitHub repo link submitted in Canvas</li>
+    <li>Demo prepared and notebook ready to run for Tuesday class (April 28)</li>
+    <li>Ethics discussion post submitted in Canvas by Tuesday class (April 28)</li>
+  </ul>
+</div>
+
+<div class="warning" style="margin-top:1.5rem;">
+  <strong>Reminder:</strong> If it's not in your GitHub repo, it doesn't exist for grading. Save your final work before the deadline.
+</div>
+
+<div class="tip" style="margin-top: 1rem;">
+  <strong>Need help?</strong> Start your work during Thursday lab (April 23, Zoom, 6:00 PM): that's what lab time is for. If you get stuck after lab, email me before the weekend so I can help. Don't wait until Monday night.
+</div>
+
+</body>
+</html>

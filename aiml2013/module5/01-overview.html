@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Module 5 Overview: CV Metrics &amp; Bias | AIML 2013</title>
+<link rel="stylesheet" href="../../course-styles.css">
+</head>
+<body>
+
+<!-- ========== HERO ========== -->
+<div class="hero">
+  <h2>Module 5: CV Metrics &amp; Bias</h2>
+  <p>AIML 2013 &bull; Introduction to Computer Vision &bull; Spring 2026</p>
+  <p class="highlight" style="margin-top:0.75rem;">Your image classifier works. This week you find out who it works for. You'll run a demographic bias audit on a face-attribute classifier and discover that overall accuracy hides large disparities across subgroups.</p>
+</div>
+
+<!-- ========== AT A GLANCE ========== -->
+<div class="info-grid">
+  <div class="info-card">
+    <strong>This Week's Focus</strong>
+    <p>Run a pre-trained gender classifier on CelebA, compute per-group accuracy across demographic attributes, build intersectional confusion matrices, and produce a bias audit scorecard.</p>
+  </div>
+  <div class="info-card">
+    <strong>Deliverables</strong>
+    <p>GitHub Repo + Demo (3&ndash;5 min)</p>
+    <p data-concurrent="true" style="margin-top:0.25rem; font-size:0.9em;">Dual-enrolled: Combined presentation is 5&ndash;7 min</p>
+    <p>Ethics discussion post</p>
+  </div>
+  <div class="info-card">
+    <strong>Key Dates</strong>
+    <p>Tuesday April 21: Class (7:00 PM)</p>
+    <p>Thursday April 23: Lab (Zoom, 6:00 PM)</p>
+    <p>Due: By Tuesday, April 28 (by class time)</p>
+  </div>
+  <div class="info-card">
+    <strong>Prep Before Tuesday</strong>
+    <p>~1.5 hours of readings and videos on classification metrics, demographic bias in CV models, and the Gender Shades study. See the Readings page in this module.</p>
+  </div>
+</div>
+
+<!-- ========== THIS WEEK ========== -->
+<h2>This Week</h2>
+
+<div class="week-block">
+  <h3>Before Tuesday</h3>
+  <ul>
+    <li>Complete the readings and watch the assigned videos (~1.5 hours). See the Readings &amp; Prep page.</li>
+    <li>Post your ethics discussion response (due by Tuesday class).</li>
+    <li>Finish the lab, push to GitHub, and prepare your demo.</li>
+    <li>Your Module 4 demo is on Tuesday. Practice once to stay within the 3&ndash;5 minute window. <span data-concurrent="true">(5&ndash;7 minutes for the combined demo)</span></li>
+  </ul>
+</div>
+
+<div class="week-block">
+  <h3>Tuesday April 21 <span class="tag tag-tue">In Person</span></h3>
+  <ul>
+    <li><strong>Demos:</strong> You demo what you built in Module 4 (3&ndash;5 minutes). Come ready to run your image retrieval system live.</li>
+    <li>We discuss this week's concepts: precision vs. recall tradeoffs, why overall accuracy is misleading for imbalanced problems, and what intersectional auditing reveals that single-attribute analysis misses.</li>
+    <li>New readings assigned for next week.</li>
+  </ul>
+</div>
+
+<div class="week-block">
+  <h3>Thursday April 23 <span class="tag tag-thu">Zoom</span></h3>
+  <ul>
+    <li>We work through the bias audit pipeline together: loading CelebA, training the classifier head, computing per-group metrics, and building the first intersectional heatmap.</li>
+    <li>Come with Cells 1&ndash;2 attempted (setup and data loaded). We'll debug classifier training and start the disaggregated analysis together.</li>
+  </ul>
+</div>
+
+<!-- ========== WHAT'S IN THIS MODULE ========== -->
+<h2>What's in This Module</h2>
+
+<div class="week-block">
+  <ol>
+    <li style="margin-bottom:0.5rem;"><strong>Readings &amp; Prep:</strong> The Gender Shades study (Buolamwini &amp; Gebru), a StatQuest refresher on precision/recall/F1, and a reading on intersectional bias in computer vision. Together, these explain why per-group evaluation matters, how to compute the right metrics, and what real-world audits look like.</li>
+    <li style="margin-bottom:0.5rem;"><strong>Module 5 Lab: CV Metrics &amp; Demographic Bias Audit.</strong> Fine-tune a MobileNetV2 classifier on CelebA gender labels, compute overall and per-group metrics, run an intersectional analysis, build per-group confusion matrices, create a bias audit scorecard, and display a failure gallery of misclassified images.</li>
+    <li style="margin-bottom:0.5rem;" data-concurrent="true"><strong>Combined Presentation: The Human Cost of Data.</strong> For dual-enrolled students. A single presentation covering both the CV demographic accuracy audit and the NLP bias evaluation.</li>
+    <li style="margin-bottom:0.5rem;"><strong>Assignment Sheet:</strong> Deliverable details, abbreviated rubrics with Canvas links, and the due date for Tuesday, April 28.</li>
+    <li style="margin-bottom:0.5rem;"><strong>Ethics Discussion:</strong> This week's ethics prompt on what happens when accuracy gaps map to real people.</li>
+  </ol>
+</div>
+
+<div class="tip" style="margin-top:1rem;">
+  <strong>Tip:</strong> This module is more about what the metrics mean than how to compute them. The code for accuracy, precision, and recall is a single sklearn function call. The hard part is choosing the right slicing attributes, interpreting the intersectional results, and deciding what the numbers mean for deployment. Spend time understanding the Gender Shades study before Thursday lab &mdash; it is the template for what you are building.
+</div>
+
+</body>
+</html>

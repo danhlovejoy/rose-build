@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Module 6 Overview: Generative Vision | AIML 2013</title>
+<link rel="stylesheet" href="../../course-styles.css">
+</head>
+<body>
+
+<!-- ========== HERO ========== -->
+<div class="hero">
+  <h2>Module 6: Generative Vision</h2>
+  <p>AIML 2013 &bull; Introduction to Computer Vision &bull; Spring 2026</p>
+  <p class="highlight" style="margin-top:0.75rem;">Until now, your CV models have classified or retrieved images. This week you flip the direction: instead of turning images into labels, you turn images into language. You'll feed images to a vision-language model, generate captions, and find out what the model invents.</p>
+</div>
+
+<!-- ========== SYLLABUS NOTICE ========== -->
+<div class="syllabus-notice">
+  The Course Syllabus is the authoritative document for this course. All policies, grading criteria, due dates, and course requirements are governed by the Syllabus. If anything on this page conflicts with the Syllabus, the Syllabus takes precedence. <a href="https://rose.instructure.com/courses/26944/external_tools/13895" target="_blank">View the Syllabus &rarr;</a>
+</div>
+
+<!-- ========== AT A GLANCE ========== -->
+<div class="info-grid">
+  <div class="info-card">
+    <strong>This Week's Focus</strong>
+    <p>Generate captions with Gemini Vision, evaluate caption accuracy against reference descriptions, measure per-category hallucination rates, and test how prompt wording affects what the model invents.</p>
+  </div>
+  <div class="info-card">
+    <strong>Deliverables</strong>
+    <p>GitHub Repo + Presentation (3&ndash;5 min)</p>
+    <p>Ethics discussion post</p>
+  </div>
+  <div class="info-card">
+    <strong>Key Dates</strong>
+    <p>Tuesday April 28: Class (7:00 PM)</p>
+    <p>Thursday April 30: Lab (Zoom, 6:00 PM)</p>
+    <p>Due: By Tuesday, May 5 (by class time)</p>
+  </div>
+  <div class="info-card">
+    <strong>Prep Before Tuesday</strong>
+    <p>~1.5 hours of readings and videos on vision-language models, image captioning evaluation, and VLM hallucination. See the Readings page in this module.</p>
+  </div>
+</div>
+
+<!-- ========== THIS WEEK ========== -->
+<h2>This Week</h2>
+
+<div class="week-block">
+  <h3>Before Tuesday</h3>
+  <ul>
+    <li>Complete the readings and watch the assigned videos (~1.5 hours). See the Readings &amp; Prep page.</li>
+    <li>Post your ethics discussion response (due by Tuesday class).</li>
+    <li>Finish the lab, push to GitHub, and prepare your presentation.</li>
+    <li>Your Module 5 demo is on Tuesday. Practice once to stay within the 3&ndash;5 minute window.</li>
+  </ul>
+</div>
+
+<div class="week-block">
+  <h3>Tuesday April 28 <span class="tag tag-tue">In Person</span></h3>
+  <ul>
+    <li><strong>Demos:</strong> You demo your Module 5 bias audit (3&ndash;5 minutes).</li>
+    <li>We discuss this week's concepts: vision-language models, how image encoders and language decoders work together, and why VLMs hallucinate objects that aren't in the image.</li>
+    <li>New readings assigned for next week (portfolio prep).</li>
+  </ul>
+</div>
+
+<div class="week-block">
+  <h3>Thursday April 30 <span class="tag tag-thu">Zoom</span></h3>
+  <ul>
+    <li>We work through the captioning pipeline together: sending images to Gemini Vision, collecting captions, and setting up the object-accuracy evaluation with LLM-as-judge.</li>
+    <li>Come with Cells 1&ndash;2 done (setup and images loaded with reference descriptions). We'll build the evaluation pipeline together.</li>
+  </ul>
+</div>
+
+<!-- ========== WHAT'S IN THIS MODULE ========== -->
+<h2>What's in This Module</h2>
+
+<div class="week-block">
+  <ol>
+    <li style="margin-bottom:0.5rem;"><strong>Readings &amp; Prep:</strong> A video on how vision-language models work, the CHAIR hallucination metric paper, and a reading on VLM applications in accessibility and medical imaging. Together, these explain the architecture, the evaluation techniques, and the real-world impact of captioning accuracy.</li>
+    <li style="margin-bottom:0.5rem;"><strong>Module 6 Lab: Image Captioning with Vision-Language Models.</strong> Generate captions with Gemini Vision, evaluate object accuracy against reference descriptions, compute per-category hallucination rates, build a hallucination gallery, and test prompt sensitivity.</li>
+    <li style="margin-bottom:0.5rem;"><strong>Assignment Sheet:</strong> Deliverable details, abbreviated rubrics with Canvas links, and the due date for Tuesday, May 5.</li>
+    <li style="margin-bottom:0.5rem;"><strong>Ethics Discussion:</strong> This week's ethics prompt on VLM accuracy when the audience depends on the description.</li>
+  </ol>
+</div>
+
+<div class="tip" style="margin-top:1rem;">
+  <strong>Tip:</strong> Start collecting your images early. You need 30 images across 6 categories, each with a reference description you write before running the model. The image selection and reference writing take more time than the code. Do this before Thursday lab so you can spend lab time on the evaluation pipeline.
+</div>
+
+</body>
+</html>

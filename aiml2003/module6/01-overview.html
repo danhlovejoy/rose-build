@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Module 6 Overview: Simple Agents | AIML 2003</title>
+<link rel="stylesheet" href="../../course-styles.css">
+</head>
+<body>
+
+<!-- ========== HERO ========== -->
+<div class="hero">
+  <h2>Module 6: Simple Agents</h2>
+  <p>AIML 2003 &bull; Introduction to Natural Language Processing &bull; Spring 2026</p>
+  <p class="highlight" style="margin-top:0.75rem;">Until now, Gemini could only use what's in its parameters or what you fed it as context. This week you give it tools. The model decides when to call them, your code executes them, and the model incorporates the results into its response. This is how AI assistants work.</p>
+</div>
+
+<!-- ========== SYLLABUS NOTICE ========== -->
+<div class="syllabus-notice">
+  The Course Syllabus is the authoritative document for this course. All policies, grading criteria, due dates, and course requirements are governed by the Syllabus. If anything on this page conflicts with the Syllabus, the Syllabus takes precedence. <a href="https://rose.instructure.com/courses/26943/external_tools/13895" target="_blank">View the Syllabus &rarr;</a>
+</div>
+
+<!-- ========== AT A GLANCE ========== -->
+<div class="info-grid">
+  <div class="info-card">
+    <strong>This Week's Focus</strong>
+    <p>Build a multi-turn chatbot with function calling: define tool schemas, implement routing logic, handle tool results, and test the agent on scripted and edge-case conversations.</p>
+  </div>
+  <div class="info-card">
+    <strong>Deliverables</strong>
+    <p>GitHub Repo + Demo (3&ndash;5 min)</p>
+    <p>Ethics discussion post</p>
+  </div>
+  <div class="info-card">
+    <strong>Key Dates</strong>
+    <p>Tuesday April 28: Class (5:30 PM)</p>
+    <p>Thursday April 30: Lab (Zoom, 6:00 PM)</p>
+    <p>Due: By Tuesday, May 5 (by class time)</p>
+  </div>
+  <div class="info-card">
+    <strong>Prep Before Tuesday</strong>
+    <p>~1.5 hours of readings and videos on function calling, agent patterns, and the ReAct framework. See the Readings page in this module.</p>
+  </div>
+</div>
+
+<!-- ========== THIS WEEK ========== -->
+<h2>This Week</h2>
+
+<div class="week-block">
+  <h3>Before Tuesday</h3>
+  <ul>
+    <li>Complete the readings and watch the assigned videos (~1.5 hours). See the Readings &amp; Prep page.</li>
+    <li>Post your ethics discussion response (due by Tuesday class).</li>
+    <li>Finish the lab, push to GitHub, and prepare your demo.</li>
+    <li>Your Module 5 presentation is on Tuesday. Practice once to stay within the 3&ndash;5 minute window.</li>
+  </ul>
+</div>
+
+<div class="week-block">
+  <h3>Tuesday April 28 <span class="tag tag-tue">In Person</span></h3>
+  <ul>
+    <li><strong>Presentations:</strong> You present your Module 5 evaluation findings (3&ndash;5 minutes).</li>
+    <li>We discuss this week's concepts: what function calling is, the agent loop (observe &rarr; decide &rarr; act &rarr; observe), and why tool descriptions are as important as tool implementations.</li>
+    <li>New readings assigned for next week (portfolio prep).</li>
+  </ul>
+</div>
+
+<div class="week-block">
+  <h3>Thursday April 30 <span class="tag tag-thu">Zoom</span></h3>
+  <ul>
+    <li>We work through the agent loop together: defining tool schemas, wiring the function-call detection, executing tools, and feeding results back to Gemini.</li>
+    <li>Come with Cells 1&ndash;3 attempted (setup, tool functions, and tool schemas defined). We'll build the agent loop (Cell 4) and debug the multi-turn conversation together.</li>
+  </ul>
+</div>
+
+<!-- ========== WHAT'S IN THIS MODULE ========== -->
+<h2>What's in This Module</h2>
+
+<div class="week-block">
+  <ol>
+    <li style="margin-bottom:0.5rem;"><strong>Readings &amp; Prep:</strong> Gemini function calling documentation, an overview of the ReAct (Reason + Act) agent pattern, and a reading on the security risks of tool-using agents. Together, these explain how function calling works, why agents need a decision loop, and what can go wrong when you give an LLM access to external tools.</li>
+    <li style="margin-bottom:0.5rem;"><strong>Module 6 Lab: Simple Agents.</strong> Build a chatbot with three tools (calculator, date/time, knowledge base), implement the agent loop, test multi-turn conversations, analyze tool-routing accuracy, and probe error-handling edge cases.</li>
+    <li style="margin-bottom:0.5rem;"><strong>Assignment Sheet:</strong> Deliverable details, abbreviated rubrics with Canvas links, and the due date for Tuesday, May 5.</li>
+    <li style="margin-bottom:0.5rem;"><strong>Ethics Discussion:</strong> This week's ethics prompt on what happens when agents can act, not just answer.</li>
+  </ol>
+</div>
+
+<div class="tip" style="margin-top:1rem;">
+  <strong>Tip:</strong> This is the most technically complex lab of the semester, but the code for each piece is straightforward &mdash; the complexity is in how the pieces connect. Read all the cell specs before writing any code. Understanding the full architecture (tool definitions &rarr; schemas &rarr; agent loop &rarr; conversation history) will make each cell easier. Start in Thursday lab so you have live help for the tricky parts.
+</div>
+
+</body>
+</html>

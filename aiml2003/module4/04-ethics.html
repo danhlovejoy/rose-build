@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Module 4 Ethics Thread | AIML 2003</title>
+<link rel="stylesheet" href="../../course-styles.css">
+</head>
+<body>
+
+<h1>Ethics Thread: Who Controls the Context?</h1>
+<p class="subtitle">AIML 2003: Module 4 Discussion. Post by Tuesday, April 21 (before class)</p>
+
+<div class="prompt-box">
+  <h2>The Prompt</h2>
+  <p>This week you built a RAG system that answers questions using only the content of a document you provided. The LLM doesn't know anything beyond what the retriever hands it. That sounds like a safety feature: the model can't hallucinate about topics outside the document because it never sees them.</p>
+  <p>But flip the perspective. The person who chooses the document, writes the chunking logic, and designs the system prompt has enormous power over what the model can and cannot say. A company could build a RAG-based customer support bot that only retrieves passages favorable to the company. A government agency could build a policy Q&amp;A tool that omits certain regulations from the retrieval corpus. A school could build a research assistant that excludes entire categories of sources.</p>
+  <p>In your post, address at least one of the following:</p>
+  <ul>
+    <li>A health insurance company deploys a RAG chatbot trained on its own policy documents. A customer asks whether a specific treatment is covered. The chatbot retrieves passages about coverage limitations but not the appeals process. The customer concludes the treatment isn't covered and doesn't appeal. Who is responsible for the omission &mdash; the chatbot, the engineers who built the retrieval corpus, or the company that decided what to include?</li>
+    <li>RAG systems answer only from their context, which means they can't answer questions the corpus doesn't address. Compare this to a general-purpose LLM that can answer anything but sometimes hallucinates. Which failure mode is more dangerous: a system that confidently says wrong things, or a system that silently omits important things? Does it depend on the domain?</li>
+    <li>Your lab includes a hallucination test where you ask questions the document can't answer. A well-designed system says "I don't have enough information." But users often interpret "I don't know" as "this information doesn't exist" rather than "this information wasn't in my corpus." How should RAG systems communicate the boundaries of their knowledge?</li>
+    <li>Who should have the right to audit a RAG system's retrieval corpus? If a public institution uses RAG to answer citizen questions about benefits or regulations, should the underlying document set be publicly available? What about a private company?</li>
+  </ul>
+</div>
+
+<div class="requirements">
+  <strong>Requirements</strong>
+  <ul>
+    <li><strong>Your post:</strong> 150&ndash;250 words. Take a position. Don't just summarize the question.</li>
+    <li><strong>Reply to a classmate:</strong> At least one substantive reply (not just "I agree"). Engage with their reasoning: push back, build on it, or offer a different angle.</li>
+    <li><strong>Deadline:</strong> Initial post by Tuesday, April 21 (before class). Reply by the following Tuesday class (April 28).</li>
+  </ul>
+</div>
+
+<p>You built the RAG pipeline this week. You chose the document, the chunk size, the system prompt. You saw what the retriever returns and what it misses. Use that direct experience. The ethical question here isn't abstract &mdash; it's about the design decisions you made in the lab and what those decisions would mean at scale, with real users who can't see inside the pipeline.</p>
+
+<p class="note">The weekly ethics discussion is worth 20% of your weekly Participation grade (the other 80% comes from attendance and in-class engagement). Whether you attend in person or via Zoom, this post is required every week.</p>
+
+</body>
+</html>

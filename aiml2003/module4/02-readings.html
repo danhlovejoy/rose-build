@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Module 4 Readings: Basic RAG | AIML 2003</title>
+<link rel="stylesheet" href="../../course-styles.css">
+</head>
+<body>
+
+<h1>Module 4: Basic RAG</h1>
+<p class="subtitle">Readings &amp; Prep: Complete before Tuesday, April 21</p>
+
+<div class="time-box">
+  <strong>Estimated prep time:</strong> ~2 hours (required materials). One optional deep dive for those who want the full transformer architecture walkthrough. All materials are free.
+</div>
+
+<!-- ========== FRAMING ========== -->
+<div class="framing-box">
+  <p><strong>The big picture:</strong> In Module 3 you built a semantic search engine that found similar sentences by comparing embedding vectors. The retriever worked &mdash; it returned relevant results for a given query. But retrieval alone doesn't answer a question. It returns ranked passages, not synthesized explanations.</p>
+  <p style="margin-top:0.5rem;">RAG (Retrieval-Augmented Generation) closes that gap. You retrieve the most relevant passages from a document, inject them into a prompt as context, and ask an LLM to generate an answer grounded in that context. The LLM never saw the document during training. Everything it knows comes from what you feed it at query time. This is how production document Q&amp;A systems, customer support bots, and enterprise knowledge bases work.</p>
+  <p style="margin-top:0.5rem;">This week's readings cover three things: how the attention mechanism inside transformers actually works (the engine behind every model you've used so far), how RAG stitches retrieval and generation together, and how to set up ChromaDB as the vector store between them.</p>
+</div>
+
+<!-- ========== NOTEBOOKLM ========== -->
+<div class="nlm-box">
+  <strong>NotebookLM tip:</strong> Upload the Pinecone RAG guide and the ChromaDB quickstart to a Module 4 notebook. Good questions: &ldquo;What happens if the retriever returns irrelevant chunks?&rdquo; &ldquo;Why does chunk size matter?&rdquo; &ldquo;What is the difference between RAG and fine-tuning?&rdquo;
+</div>
+
+<!-- ================================================================
+     REQUIRED READINGS & VIDEOS
+     ================================================================ -->
+<h2>Required Readings &amp; Videos</h2>
+<p>Work through these in order. The 3Blue1Brown video builds intuition for how transformers process language; the RAG guide explains the retrieval-generation pattern; the ChromaDB quickstart connects directly to the lab.</p>
+
+<!-- RESOURCE 1: 3Blue1Brown Attention -->
+<div class="resource-card">
+  <div class="resource-header">
+    <span class="resource-title">Attention in Transformers, Visually Explained</span>
+    <span class="tag tag-required">Required</span>
+    <span class="tag tag-video">Video</span>
+    <span class="tag tag-time">~25 min</span>
+  </div>
+  <p class="resource-meta">3Blue1Brown &bull; YouTube</p>
+  <p class="resource-desc">You've been using transformer-based models since Module 3 (the sentence transformer) and since Module 1 (Gemini itself). This video explains what's happening inside: the attention mechanism that lets a transformer decide which parts of the input to focus on when producing each part of the output. 3Blue1Brown's visual style makes the matrix operations intuitive without requiring linear algebra. Watch this first &mdash; the vocabulary it introduces (query, key, value, attention head) will appear in readings and class discussions for the rest of the semester.</p>
+  <p class="resource-link">
+    <a href="https://www.youtube.com/watch?v=eMlx5fFNoYc" target="_blank">Watch: Attention in Transformers &rarr;</a>
+  </p>
+  <div class="focus-box">
+    <strong>Key concept to lock in:</strong> Attention is a learned lookup. Each word generates a query ("what am I looking for?"), and every other word generates a key ("here's what I contain"). The dot product between query and key determines how much attention each word pays to every other word. This is why transformers can connect "it" to "the cat" even when they're 50 words apart &mdash; unlike TF-IDF or simple RNNs, attention has no distance penalty.
+  </div>
+</div>
+
+<!-- RESOURCE 2: RAG Guide -->
+<div class="resource-card">
+  <div class="resource-header">
+    <span class="resource-title">Retrieval-Augmented Generation (RAG)</span>
+    <span class="tag tag-required">Required</span>
+    <span class="tag tag-read">Read</span>
+    <span class="tag tag-time">~20 min</span>
+  </div>
+  <p class="resource-meta">Pinecone &bull; pinecone.io/learn</p>
+  <p class="resource-desc">Pinecone is a vector database company, so take the product mentions with a grain of salt &mdash; but their RAG explainer is one of the clearest available. It covers the full pipeline: why LLMs need external knowledge, how retrieval provides it, how the context window limits what you can feed in, and why chunk size and overlap matter. The diagram on page 2 maps directly to the architecture you'll build in the lab.</p>
+  <p class="resource-link">
+    <a href="https://www.pinecone.io/learn/retrieval-augmented-generation/" target="_blank">Read: Retrieval-Augmented Generation &rarr;</a>
+  </p>
+  <div class="focus-box">
+    <strong>Key concept to lock in:</strong> RAG is not fine-tuning. Fine-tuning changes the model's weights permanently. RAG leaves the model untouched and changes the prompt dynamically based on what's retrieved. This means RAG can answer questions about documents that didn't exist when the model was trained &mdash; which is the entire point.
+  </div>
+</div>
+
+<!-- RESOURCE 3: ChromaDB -->
+<div class="resource-card">
+  <div class="resource-header">
+    <span class="resource-title">ChromaDB: Getting Started</span>
+    <span class="tag tag-required">Required</span>
+    <span class="tag tag-read">Read</span>
+    <span class="tag tag-time">~15 min</span>
+  </div>
+  <p class="resource-meta">ChromaDB &bull; docs.trychroma.com</p>
+  <p class="resource-desc">The official quickstart for ChromaDB, the vector database you'll use in the lab. This is short and code-first: how to create a client, build a collection, add documents with embeddings, and query by similarity. The code examples map almost line-for-line to Cells 6 and 7 of the lab. Read this after the RAG guide so you already know where ChromaDB fits in the pipeline.</p>
+  <p class="resource-link">
+    <a href="https://docs.trychroma.com/docs/overview/getting-started" target="_blank">Read: ChromaDB Getting Started &rarr;</a>
+  </p>
+</div>
+
+<!-- RESOURCE 4: Chunking -->
+<div class="resource-card">
+  <div class="resource-header">
+    <span class="resource-title">Chunking Strategies for LLM Applications</span>
+    <span class="tag tag-required">Required</span>
+    <span class="tag tag-read">Read</span>
+    <span class="tag tag-time">~15 min</span>
+  </div>
+  <p class="resource-meta">Pinecone &bull; pinecone.io/learn</p>
+  <p class="resource-desc">Before you can retrieve relevant passages, you have to decide how to split a document into pieces. This guide covers the tradeoffs: fixed-size chunks (simple, predictable, sometimes splits sentences), sentence-level chunks (preserves grammar, varies wildly in size), and recursive splitting (tries to keep paragraphs intact). Your lab uses fixed-size chunking with overlap; this reading explains why that's a reasonable default and when you might want something more sophisticated.</p>
+  <p class="resource-link">
+    <a href="https://www.pinecone.io/learn/chunking-strategies/" target="_blank">Read: Chunking Strategies &rarr;</a>
+  </p>
+</div>
+
+<!-- ================================================================
+     OPTIONAL
+     ================================================================ -->
+<h2>Optional Deeper Dive</h2>
+
+<div class="resource-card">
+  <div class="resource-header">
+    <span class="resource-title">The Illustrated Transformer</span>
+    <span class="tag tag-optional">Optional</span>
+    <span class="tag tag-read">Read</span>
+    <span class="tag tag-time">~45 min</span>
+  </div>
+  <p class="resource-meta">Jay Alammar &bull; jalammar.github.io</p>
+  <p class="resource-desc">The definitive visual walkthrough of the full transformer architecture &mdash; encoder, decoder, multi-head attention, positional encoding, the lot. This goes deeper than the 3Blue1Brown video and is worth the time if you want to understand the complete picture. Not required for the lab, but strongly recommended if you plan to discuss transformer architecture in your portfolio presentation.</p>
+  <p class="resource-link">
+    <a href="https://jalammar.github.io/illustrated-transformer/" target="_blank">Read: The Illustrated Transformer &rarr;</a>
+  </p>
+</div>
+
+<!-- ================================================================
+     DISCUSSION PREP
+     ================================================================ -->
+<h2>Discussion Prep</h2>
+<p>These questions will frame our Tuesday class discussion. You don't need to write answers, but come prepared to talk about them.</p>
+
+<div class="section-card">
+  <ol>
+    <li style="margin-bottom:0.75rem;">RAG retrieves chunks and passes them to an LLM as context. The LLM generates an answer from that context. What happens when the retriever returns the wrong chunks? Is the LLM likely to notice, or will it confidently generate an answer from irrelevant context?</li>
+    <li style="margin-bottom:0.75rem;">Chunk size creates a tradeoff: small chunks are precise but lack context; large chunks carry context but dilute the relevant passage. For a 200-page legal contract, would you chunk by paragraph, by section, or by fixed character count? Why?</li>
+    <li style="margin-bottom:0.75rem;">The 3Blue1Brown video shows how attention lets a transformer connect distant words. How does this relate to why sentence transformers produce better embeddings than TF-IDF for the retrieval step of RAG?</li>
+    <li style="margin-bottom:0.75rem;">A company builds a customer support bot using RAG over their product documentation. The bot answers questions accurately 90% of the time and hallucinates 10% of the time. Is 90% good enough to deploy? What factors would change your answer?</li>
+  </ol>
+</div>
+
+<!-- ========== BRIDGE BOX ========== -->
+<div class="bridge-box" data-concurrent="true">
+  <strong>Taking AIML 2013 too?</strong> CV students are reading about feature extraction with pre-trained CNNs and image similarity search this week. Both courses share the 3Blue1Brown attention video &mdash; the mechanism works the same way in vision transformers as in text transformers. The combined lab connects the two: a single ChromaDB instance that indexes both text chunks and image embeddings.
+</div>
+
+</body>
+</html>

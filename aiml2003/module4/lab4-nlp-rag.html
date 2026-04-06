@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Module 4 Lab: Chat with a PDF | AIML 2003</title>
+<link rel="stylesheet" href="../../course-styles.css">
+</head>
+<body>
+
+<h1>Module 4 Lab: Chat with a PDF</h1>
+<p class="subtitle">Build a RAG pipeline that answers questions using a document it has never been trained on.</p>
+
+<!-- ========== LAB FRAMING ========== -->
+<div class="warning">
+  <strong>How this lab works.</strong>
+  <p style="margin: 0.75rem 0 0;">Same format as Module 3: each section gives you a specification box describing what a cell must do, what it takes in, and what it must produce. Give the spec to an LLM, generate the code, and fix anything that doesn't match the output contract before moving on.</p>
+  <p style="margin: 0.75rem 0 0;">For each code cell, include a markdown cell with the prompt you used and one sentence describing any fix you made.</p>
+</div>
+
+<!-- ========== THE TASK ========== -->
+<div class="section-card">
+  <h3>The Task</h3>
+  <p>In the readings and in class, you learned that embedding models encode meaning into vectors, and that cosine similarity finds the closest matches. In Module 3 you built a semantic search engine that retrieved similar texts from a fixed dataset. The results were ranked, but they were just quotes from the original data. No synthesis, no reasoning, no answer to a question.</p>
+  <p>RAG changes that. You still retrieve relevant text chunks using embeddings and cosine similarity, but you pass those chunks to an LLM as context and ask it to generate an answer. The LLM never saw the document during training. Everything it knows comes from what you feed it at query time. This is how production knowledge bases, customer support bots, and document Q&amp;A tools work: retrieval first, generation second.</p>
+  <p>You will load a PDF, split it into chunks, embed the chunks with the same <code>all-MiniLM-L6-v2</code> model from Module 3, store them in ChromaDB (a vector database), retrieve the most relevant chunks for a question, and pass them to Gemini with a system prompt that instructs the model to answer using only the provided context. Then you will test what happens when the answer isn't in the document.</p>
+</div>
+
+<!-- ========== YOUR DOCUMENT ========== -->
+<h2>Your Document</h2>
+
+<div class="section-card">
+  <h3>Choosing a PDF</h3>
+  <p>Pick a PDF that is between 5 and 30 pages of actual text content. Avoid scanned images (the text extractor needs selectable text, not photographs of pages). Good candidates include government reports, technical documentation, open-access research papers, employee handbooks, or product manuals. If you can highlight and copy text from the PDF in your browser, the extractor will work.</p>
+  <p>If you don't have one in mind, use the <a href="https://www.whitehouse.gov/wp-content/uploads/2025/01/OSTP-AI-Action-Plan-RFI.pdf" target="_blank">OSTP AI Action Plan RFI (January 2025)</a> &mdash; a 10-page government document about federal AI policy. It works well because the language is dense enough to produce interesting retrieval results and the content is factual enough to test hallucination behavior.</p>
+</div>
+
+<div class="tip">
+  <strong>Upload your PDF to Colab.</strong> In the Colab sidebar, click the folder icon, then the upload icon, and drag your PDF in. It will appear at <code>/content/your_file.pdf</code>. Colab files are temporary &mdash; if you disconnect and reconnect, you'll need to re-upload. For persistence, upload to your Google Drive and mount it instead.
+</div>
+
+<!-- ========== HOW TO READ THIS PAGE ========== -->
+<div class="section-card">
+  <h3>How to read this page</h3>
+  <p>Each cell below follows the same format as Module 3. The gray <code># Cell N</code> header goes at the top of your code cell. Below it:</p>
+  <ul>
+    <li><strong>What it does</strong>: plain English description of the cell's purpose.</li>
+    <li><strong>Takes in</strong>: variables already in the notebook that this cell uses.</li>
+    <li><strong>Must produce</strong>: the exact variable names, types, and shapes this cell must create. These are binding contracts.</li>
+    <li><strong>Notes</strong>: constraints, pitfalls, and things to watch for.</li>
+  </ul>
+</div>
+
+<!-- ==================== PART 1: LOAD AND CHUNK THE DOCUMENT ==================== -->
+<h2>Part 1: Load and Chunk the Document</h2>
+
+<!-- CELL 1 -->
+<pre># Cell 1: Setup and installs</pre>
+<div class="section-card">
+  <p><strong>What it does:</strong> Installs the libraries needed for the entire lab, then imports all packages. Prints version numbers for the key dependencies to confirm everything loaded correctly.</p>
+
+  <p><strong>Takes in:</strong> Nothing. This is the first cell.</p>
+
+  <p><strong>Must produce:</strong></p>
+  <ul>
+    <li>The following packages installed via pip:
+      <ul>
+        <li><code>chromadb</code> &mdash; a lightweight vector database that stores embeddings and retrieves them by similarity. Install with <code>!pip install -q chromadb</code>.</li>
+        <li><code>sentence-transformers</code> &mdash; the same library from Module 3. Install with <code>!pip install -q sentence-transformers</code>.</li>
+        <li><code>pymupdf</code> &mdash; a PDF text extraction library. Install with <code>!pip install -q pymupdf</code>. Import it as <code>fitz</code> (this is the library's import name, not a typo).</li>
+        <li><code>google-genai</code> &mdash; the official Google GenAI SDK for calling Gemini. Install with <code>!pip install -q google-genai</code>.</li>
+      </ul>
+    </li>
+    <li>All of the following imported and ready to use:
+      <ul>
+        <li><code>fitz</code> (from pymupdf) &mdash; for extracting text from PDF files.</li>
+        <li><code>chromadb</code> &mdash; for creating and querying the vector store.</li>
+        <li><code>SentenceTransformer</code> from <code>sentence_transformers</code> &mdash; for encoding text into embeddings.</li>
+        <li><code>google.genai</code> &mdash; for calling Gemini. Import with <code>from google import genai</code>.</li>
+        <li><code>textwrap</code> (stdlib) &mdash; for wrapping long text output to a readable width.</li>
+      </ul>
+    </li>
+    <li>Printed output: the version of <code>chromadb</code> (via <code>chromadb.__version__</code>), confirmation that the sentence transformer model is loaded, and a one-line note that all installs succeeded.</li>
+  </ul>
+
+  <p><strong>Notes:</strong> The installs take 30&ndash;60 seconds total. Run this cell first and let it finish before moving on. If <code>chromadb</code> throws a dependency conflict warning, it is safe to ignore &mdash; the library will still work. The <code>pymupdf</code> package installs under the name <code>pymupdf</code> but is imported as <code>fitz</code>; this naming convention is a legacy artifact of the library's history.</p>
+</div>
+
+<!-- CELL 2 -->
+<pre># Cell 2: Configure the Gemini API</pre>
+<div class="section-card">
+  <p><strong>What it does:</strong> Loads your Gemini API key from Colab's Secrets manager and creates a Gemini client. Sends a single test prompt to confirm the connection works.</p>
+
+  <p><strong>Takes in:</strong> Your Gemini API key stored in Colab Secrets under the name <code>GEMINI_API_KEY</code>. (You set this up in Module 1.)</p>
+
+  <p><strong>Must produce:</strong></p>
+  <ul>
+    <li><code>client</code>: a <code>genai.Client</code> object. Create it by calling <code>genai.Client(api_key=...)</code> with your API key retrieved from <code>google.colab.userdata.get('GEMINI_API_KEY')</code>.</li>
+    <li>Printed output: The response from a test call &mdash; send the prompt <code>"Say hello in exactly five words."</code> using <code>client.models.generate_content(model='gemini-2.0-flash', contents='...')</code>. Print <code>response.text</code> to confirm the API is working.</li>
+  </ul>
+
+  <p><strong>Notes:</strong> If you get an authentication error, go to Colab's sidebar (key icon), confirm your secret is named exactly <code>GEMINI_API_KEY</code>, and that the "Notebook access" toggle is turned on for this notebook. The test prompt is just a connectivity check &mdash; the actual RAG prompts come later.</p>
+</div>
+
+<!-- CELL 3 -->
+<pre># Cell 3: Extract text from the PDF</pre>
+<div class="section-card">
+  <p><strong>What it does:</strong> Opens the uploaded PDF, extracts the text content from every page, and stores it as a single string and as a list of per-page strings. Prints a summary: number of pages, total character count, and the first 500 characters of the extracted text.</p>
+
+  <p><strong>Takes in:</strong> The PDF file path. Set <code>pdf_path = "/content/your_file.pdf"</code> and change the filename to match your upload.</p>
+
+  <p><strong>Must produce:</strong></p>
+  <ul>
+    <li><code>pages</code>: Python list of strings. Each element is the text extracted from one page of the PDF. Use <code>fitz.open(pdf_path)</code> to open the document, then loop through the pages calling <code>page.get_text()</code> on each one. Filter out any pages where the extracted text is empty or only whitespace.</li>
+    <li><code>full_text</code>: a single Python string containing all page texts joined with <code>"\n\n"</code> between them.</li>
+    <li>Printed output: the number of pages with extractable text, the total character count of <code>full_text</code>, and the first 500 characters as a preview.</li>
+  </ul>
+
+  <p><strong>Notes:</strong> If <code>get_text()</code> returns empty strings for every page, the PDF is likely a scanned image rather than searchable text. Choose a different PDF. Some PDFs have headers, footers, and page numbers that repeat on every page &mdash; this is normal and the chunking in Cell 4 will handle it.</p>
+</div>
+
+<div class="tip">
+  <strong>Markdown cell:</strong> How much text did you get? Does the preview look clean (readable sentences) or noisy (garbled characters, broken formatting)? If it's noisy, note where the problems are. RAG systems are only as good as the text they ingest &mdash; garbage in, garbage out.
+</div>
+
+<!-- CELL 4 -->
+<pre># Cell 4: Chunk the text</pre>
+<div class="section-card">
+  <p><strong>What it does:</strong> Splits the full document text into overlapping chunks of roughly equal size. Each chunk becomes one unit that will be embedded and stored in the vector database. Prints the number of chunks, the average chunk length, and the text of the first two chunks.</p>
+
+  <p><strong>Takes in:</strong> <code>full_text</code> (from Cell 3).</p>
+
+  <p><strong>Must produce:</strong></p>
+  <ul>
+    <li><code>CHUNK_SIZE</code>: integer, set to <code>500</code>. This is the target number of characters per chunk.</li>
+    <li><code>CHUNK_OVERLAP</code>: integer, set to <code>100</code>. This is how many characters from the end of one chunk repeat at the start of the next, so that sentences split across a boundary still appear in at least one chunk.</li>
+    <li><code>chunks</code>: Python list of strings. Name it exactly <code>chunks</code>. Build this by sliding a window of size <code>CHUNK_SIZE</code> across <code>full_text</code>, stepping forward by <code>CHUNK_SIZE - CHUNK_OVERLAP</code> characters each time. Each element is one chunk of text. The implementation is a while-loop:
+      <ol>
+        <li>Start at position <code>0</code>.</li>
+        <li>Take <code>full_text[start : start + CHUNK_SIZE]</code> as a chunk.</li>
+        <li>Advance <code>start</code> by <code>CHUNK_SIZE - CHUNK_OVERLAP</code>.</li>
+        <li>Stop when <code>start</code> exceeds <code>len(full_text)</code>.</li>
+      </ol>
+    </li>
+    <li>Printed output: the total number of chunks, the average length in characters (rounded to the nearest integer), and the full text of chunks 0 and 1 (to visually confirm the overlap region).</li>
+  </ul>
+
+  <p><strong>Notes:</strong> The overlap ensures that if a sentence is split between two chunks, the full sentence appears in at least one of them. 500 characters is roughly 75&ndash;100 words &mdash; long enough to carry meaning, short enough that each chunk is about one paragraph. You can experiment with different values in the bonus section. The last chunk may be shorter than <code>CHUNK_SIZE</code>; that is fine.</p>
+</div>
+
+<div class="tip">
+  <strong>Markdown cell:</strong> Look at chunks 0 and 1. Can you find the overlapping region? Copy the repeated text into your markdown cell. Why does overlap matter for retrieval? Think about what would happen if a key sentence started in the last 50 characters of one chunk and ended in the first 50 of the next.
+</div>
+
+<!-- ==================== PART 2: BUILD THE VECTOR STORE ==================== -->
+<h2>Part 2: Build the Vector Store</h2>
+
+<!-- CELL 5 -->
+<pre># Cell 5: Embed the chunks</pre>
+<div class="section-card">
+  <p><strong>What it does:</strong> Loads the sentence transformer model (the same one from Module 3) and encodes every chunk into a 384-dimensional embedding vector. Prints the shape of the resulting embedding matrix.</p>
+
+  <p><strong>Takes in:</strong> <code>chunks</code> (from Cell 4).</p>
+
+  <p><strong>Must produce:</strong></p>
+  <ul>
+    <li><code>model</code>: a <code>SentenceTransformer</code> object loaded with <code>'all-MiniLM-L6-v2'</code>. Same model as Module 3.</li>
+    <li><code>chunk_embeddings</code>: numpy array of shape <code>(len(chunks), 384)</code>. Generate by calling <code>model.encode(chunks, show_progress_bar=True)</code>. Each row is one chunk's embedding.</li>
+    <li>Printed output: the shape of <code>chunk_embeddings</code> and a note confirming the embedding dimension matches Module 3 (384).</li>
+  </ul>
+
+  <p><strong>Notes:</strong> Encoding time scales linearly with the number of chunks. For a 20-page document with ~80 chunks, expect 3&ndash;5 seconds on a GPU runtime. If you're on a CPU runtime, it may take 15&ndash;30 seconds.</p>
+</div>
+
+<!-- CELL 6 -->
+<pre># Cell 6: Create the ChromaDB collection</pre>
+<div class="section-card">
+  <p><strong>What it does:</strong> Creates an in-memory ChromaDB database, builds a collection, and inserts all chunks with their embeddings and metadata. Prints the collection count to confirm all chunks were stored.</p>
+
+  <p><strong>Takes in:</strong> <code>chunks</code>, <code>chunk_embeddings</code> (from Cells 4&ndash;5).</p>
+
+  <p><strong>Must produce:</strong></p>
+  <ul>
+    <li><code>chroma_client</code>: a ChromaDB client. Create with <code>chromadb.Client()</code> (no arguments &mdash; this creates an ephemeral in-memory database).</li>
+    <li><code>collection</code>: a ChromaDB collection. Create it by calling <code>chroma_client.get_or_create_collection(name="pdf_chunks")</code>. The name is arbitrary but must be consistent across cells.</li>
+    <li>All chunks inserted into the collection using <code>collection.add()</code>. The method requires four arguments:
+      <ul>
+        <li><code>ids</code>: a list of unique string IDs. Use <code>[f"chunk_{i}" for i in range(len(chunks))]</code>.</li>
+        <li><code>documents</code>: the list of chunk texts (<code>chunks</code>).</li>
+        <li><code>embeddings</code>: the embedding matrix. ChromaDB expects a list of lists, not a numpy array, so convert with <code>chunk_embeddings.tolist()</code>.</li>
+        <li><code>metadatas</code>: a list of dictionaries, one per chunk. Include at least <code>{"chunk_index": i}</code> for each chunk so you can trace results back to their position in the document.</li>
+      </ul>
+    </li>
+    <li>Printed output: the collection's item count via <code>collection.count()</code>, confirming it matches <code>len(chunks)</code>.</li>
+  </ul>
+
+  <p><strong>Notes:</strong> ChromaDB's in-memory mode means the database lives only in RAM and disappears when the runtime resets. This is fine for a lab &mdash; you'll rebuild it by re-running the notebook. The <code>get_or_create_collection</code> method avoids errors if you re-run the cell (it returns the existing collection instead of crashing). Convert embeddings to a list of lists with <code>.tolist()</code> before passing to ChromaDB; numpy arrays cause a type error.</p>
+</div>
+
+<div class="tip">
+  <strong>Markdown cell:</strong> You just built a vector database. In Module 3 you did similarity search by computing cosine similarity against a numpy array in memory. What does a vector database add? Think about what would happen if your document were 10,000 pages instead of 10.
+</div>
+
+<!-- ==================== PART 3: RETRIEVAL ==================== -->
+<h2>Part 3: Retrieve Relevant Chunks</h2>
+
+<!-- CELL 7 -->
+<pre># Cell 7: Query the vector store</pre>
+<div class="section-card">
+  <p><strong>What it does:</strong> Defines a retrieval function that takes a natural language question, encodes it into an embedding, queries ChromaDB for the most similar chunks, and returns them as context. Runs three test queries and prints the retrieved chunks for each.</p>
+
+  <p><strong>Takes in:</strong> <code>model</code>, <code>collection</code> (from Cells 5&ndash;6).</p>
+
+  <p><strong>Must produce:</strong></p>
+  <ul>
+    <li><code>retrieve(question, n_results=3)</code>: a function. Name it exactly <code>retrieve</code>. It takes a question string and an optional number of results. Inside:
+      <ol>
+        <li>Encode the question: <code>q_embedding = model.encode([question]).tolist()</code>.</li>
+        <li>Query the collection: <code>results = collection.query(query_embeddings=q_embedding, n_results=n_results)</code>.</li>
+        <li>Return <code>results</code> (a dictionary with keys <code>'documents'</code>, <code>'distances'</code>, <code>'metadatas'</code>, and <code>'ids'</code>).</li>
+      </ol>
+    </li>
+    <li>Three test queries: write three questions about your document's content. At least one should be a factual question with a specific answer in the text, and at least one should be a question the document probably doesn't answer.</li>
+    <li>Printed output for each query: the question, followed by the top 3 retrieved chunks. For each chunk, print its ID, its distance score (lower is more similar in ChromaDB's default metric), and the first 200 characters of the chunk text.</li>
+  </ul>
+
+  <p><strong>Notes:</strong> ChromaDB's <code>.query()</code> returns distances, not similarities. By default it uses L2 (Euclidean) distance: lower numbers mean closer matches. The <code>query_embeddings</code> parameter expects a list of lists (one list per query), which is why you pass <code>[question]</code> to <code>model.encode()</code> and then call <code>.tolist()</code>. The results dictionary nests lists inside lists: <code>results['documents'][0]</code> gives the list of document texts for the first (and only) query.</p>
+</div>
+
+<div class="tip">
+  <strong>Markdown cell:</strong> Look at the three retrievals. For the factual question, did the correct chunk appear in the top 3? For the question the document probably can't answer, what did the retriever return anyway? A retriever always returns something &mdash; it doesn't know whether the results are actually relevant. This is where generation becomes necessary.
+</div>
+
+<!-- ==================== PART 4: GENERATION (RAG) ==================== -->
+<h2>Part 4: Ask the LLM</h2>
+
+<!-- CELL 8 -->
+<pre># Cell 8: Build the RAG prompt</pre>
+<div class="section-card">
+  <p><strong>What it does:</strong> Defines a function that constructs a prompt for Gemini by combining retrieved chunks with a system instruction and the user's question. The system instruction tells the model to answer using only the provided context and to say "I don't have enough information to answer that" if the context doesn't contain the answer.</p>
+
+  <p><strong>Takes in:</strong> Nothing directly. This cell defines the prompt template.</p>
+
+  <p><strong>Must produce:</strong></p>
+  <ul>
+    <li><code>build_rag_prompt(question, context_chunks)</code>: a function. Name it exactly <code>build_rag_prompt</code>. It takes a question string and a list of chunk strings. It returns a single string containing the full prompt. The prompt must have three clearly labeled sections:
+      <ol>
+        <li><strong>System instruction:</strong> Tell the model it is a document assistant. It must answer questions using only the provided context. If the answer is not in the context, it must say so explicitly. It must not make up information. It should quote the relevant passage when possible.</li>
+        <li><strong>Context:</strong> The retrieved chunks, numbered and separated by blank lines. Format: <code>--- Chunk 1 ---\n{chunk_text}\n\n--- Chunk 2 ---\n{chunk_text}</code>, and so on.</li>
+        <li><strong>Question:</strong> The user's question, on its own line after the context.</li>
+      </ol>
+    </li>
+    <li>Printed output: call the function with one of your test questions and the corresponding retrieved chunks from Cell 7. Print the full assembled prompt so you can see exactly what Gemini will receive.</li>
+  </ul>
+
+  <p><strong>Notes:</strong> The system instruction is where chain-of-thought prompting lives. A good instruction tells the model to first identify which chunk contains the relevant information, then extract the specific passage, then formulate the answer. This stepwise framing reduces hallucination because the model must ground each step in the context. Keep the instruction under 150 words &mdash; long instructions dilute the signal.</p>
+</div>
+
+<div class="tip">
+  <strong>Markdown cell:</strong> Read your assembled prompt. Could a human answer the question from the context alone? If not, the retriever didn't find the right chunks, and no amount of prompt engineering will fix that. RAG fails at the retrieval step more often than the generation step.
+</div>
+
+<!-- CELL 9 -->
+<pre># Cell 9: Generate answers with Gemini</pre>
+<div class="section-card">
+  <p><strong>What it does:</strong> Defines an end-to-end RAG function that retrieves context and generates an answer using Gemini. Runs it on your three test questions and prints the full pipeline: question, retrieved chunks, and generated answer.</p>
+
+  <p><strong>Takes in:</strong> <code>client</code>, <code>retrieve</code>, <code>build_rag_prompt</code> (from Cells 2, 7, 8).</p>
+
+  <p><strong>Must produce:</strong></p>
+  <ul>
+    <li><code>ask(question, n_chunks=3)</code>: a function. Name it exactly <code>ask</code>. It takes a question string and an optional chunk count. Inside:
+      <ol>
+        <li>Call <code>retrieve(question, n_results=n_chunks)</code> to get the context chunks.</li>
+        <li>Extract the chunk texts from <code>results['documents'][0]</code>.</li>
+        <li>Call <code>build_rag_prompt(question, chunk_texts)</code> to assemble the full prompt.</li>
+        <li>Send the prompt to Gemini: <code>response = client.models.generate_content(model='gemini-2.0-flash', contents=prompt)</code>.</li>
+        <li>Return a dictionary with three keys: <code>'question'</code>, <code>'chunks'</code> (the list of chunk texts), and <code>'answer'</code> (the value of <code>response.text</code>).</li>
+      </ol>
+    </li>
+    <li>Printed output for each of your three test questions: the question, a separator, the retrieved chunks (numbered, first 150 characters each), another separator, and the generated answer in full.</li>
+  </ul>
+
+  <p><strong>Notes:</strong> Use <code>gemini-2.0-flash</code> for speed and cost. If you get a rate limit error, wait 30 seconds and re-run the cell. The answer quality depends on two things: whether the retriever found the right chunks, and whether the system prompt constrained the model to use them. If the model ignores the context and answers from its own knowledge, your system instruction needs to be more explicit.</p>
+</div>
+
+<div class="tip">
+  <strong>Markdown cell:</strong> Compare the three answers. For the factual question, did Gemini quote or paraphrase the source material? For the unanswerable question, did it refuse to answer or did it hallucinate? If it hallucinated, note exactly what it fabricated and where the context fell short. This is the central tension of RAG: the model always wants to be helpful, even when it shouldn't be.
+</div>
+
+<!-- ==================== PART 5: STRESS TESTS ==================== -->
+<h2>Part 5: Test the Boundaries</h2>
+
+<!-- CELL 10 -->
+<pre># Cell 10: Hallucination test</pre>
+<div class="section-card">
+  <p><strong>What it does:</strong> Sends three questions to the RAG pipeline that the document definitely cannot answer. Evaluates whether the system correctly refuses to fabricate information or whether it hallucinates. Compares the RAG response against a direct Gemini call (no context) on the same question.</p>
+
+  <p><strong>Takes in:</strong> <code>ask</code>, <code>client</code> (from Cells 9, 2).</p>
+
+  <p><strong>Must produce:</strong></p>
+  <ul>
+    <li>Three questions that your document cannot possibly answer. These should be factual questions with verifiable answers in a domain completely outside your document's scope. For example, if your document is about AI policy, ask about the boiling point of nitrogen, the population of a specific city, or the release date of a movie.</li>
+    <li>For each question, two responses:
+      <ol>
+        <li><strong>RAG response:</strong> Call <code>ask(question)</code>. This goes through retrieval and generation.</li>
+        <li><strong>Direct response:</strong> Call Gemini directly with just the question (no context, no system prompt): <code>client.models.generate_content(model='gemini-2.0-flash', contents=question)</code>.</li>
+      </ol>
+    </li>
+    <li>Printed output: for each question, display both responses side by side. Label them clearly as "RAG (with context)" and "Direct (no context)." After each pair, note whether the RAG system correctly refused to answer.</li>
+    <li><code>hallucination_count</code>: an integer. Count how many of the three RAG responses fabricated an answer instead of declining. Print a summary: "Hallucination rate: X/3".</li>
+  </ul>
+
+  <p><strong>Notes:</strong> A well-designed RAG system should refuse to answer questions outside its context. If yours doesn't, the system instruction in Cell 8 needs work. This is a real test of your prompt engineering: the model's default behavior is to answer everything, and your system prompt must override that default. The direct Gemini call serves as a control &mdash; it shows what the model would say without your RAG constraints.</p>
+</div>
+
+<div class="tip">
+  <strong>Markdown cell:</strong> Report your hallucination rate. If the RAG system refused to answer all three, your system prompt is doing its job. If it hallucinated on one or more, identify what went wrong. Did the retriever return chunks that the model misinterpreted as relevant? Or did the model ignore the "only use provided context" instruction? These are different failure modes with different fixes.
+</div>
+
+<!-- CELL 11 -->
+<pre># Cell 11: Chunk size experiment</pre>
+<div class="section-card">
+  <p><strong>What it does:</strong> Rebuilds the RAG pipeline with a different chunk size (250 characters instead of 500) and compares retrieval results on the same queries. This reveals how chunk size affects what gets retrieved and whether the answers improve or degrade.</p>
+
+  <p><strong>Takes in:</strong> <code>full_text</code>, <code>model</code>, <code>client</code>, <code>build_rag_prompt</code> (from earlier cells).</p>
+
+  <p><strong>Must produce:</strong></p>
+  <ul>
+    <li><code>small_chunks</code>: Python list of strings. Same sliding window as Cell 4, but with <code>CHUNK_SIZE=250</code> and <code>CHUNK_OVERLAP=50</code>.</li>
+    <li>A second ChromaDB collection named <code>"pdf_chunks_small"</code> with the small chunks embedded and inserted.</li>
+    <li>A second retrieval function <code>retrieve_small(question, n_results=3)</code> that queries the small-chunk collection.</li>
+    <li>Printed output: for one of your factual questions, show the retrieved chunks from both the original (500-char) and small (250-char) collections side by side. Then generate answers from both and print them. Note any differences in answer quality, specificity, or accuracy.</li>
+  </ul>
+
+  <p><strong>Notes:</strong> Smaller chunks are more precise (each chunk is about one idea) but carry less context. Larger chunks carry more context but may dilute the relevant passage with unrelated surrounding text. There is no universally correct chunk size &mdash; it depends on the document and the questions. This experiment gives you evidence for your demo discussion.</p>
+</div>
+
+<div class="tip">
+  <strong>Markdown cell:</strong> Which chunk size produced the better answer for your test question, and why? Think about the tradeoff: smaller chunks mean the retriever can pinpoint specific sentences, but the LLM gets less surrounding context to work with. Larger chunks give the LLM more to work with, but the relevant sentence might be buried in irrelevant text. What would you do differently for a 500-page legal document versus a 5-page product FAQ?
+</div>
+
+<!-- ==================== BONUS ==================== -->
+<h2>Bonus: Conversation Memory <span class="tag tag-bonus">+10 Extra Credit</span></h2>
+
+<div class="section-card">
+  <p>Extend your RAG pipeline to support multi-turn conversations. Maintain a list of previous question-answer pairs and include the last two exchanges in the prompt alongside the retrieved chunks. This lets the user ask follow-up questions like "Can you explain that in simpler terms?" or "What about the section on enforcement?" without re-stating the full context.</p>
+  <p>Test it with a three-turn conversation: an initial question, a follow-up that references the first answer, and a clarification request. Print all three turns with their retrieved chunks and generated answers.</p>
+  <p>This is how production chatbots maintain coherence across a conversation. The retrieval still happens fresh each turn (the new question gets a new set of chunks), but the generation step sees the conversation history as additional context.</p>
+</div>
+
+<!-- ========== DEMO PREP ========== -->
+<h2>Demo Prep</h2>
+
+<div class="section-card">
+  <p>Your notebook is your demo. No separate slides.</p>
+  <p>In three to five minutes, walk the class through a live demonstration:</p>
+  <p data-concurrent="true" style="font-size:0.9em; color:#5e35b1;"><strong>Dual-enrolled students:</strong> Your demo covers both the NLP and CV labs in one 5&ndash;7 minute demo. See the combined lab for guidance.</p>
+  <ol>
+    <li><strong>The pipeline:</strong> Show the document you chose, how many chunks it produced, and the ChromaDB collection count. This takes 30 seconds and orients the audience.</li>
+    <li><strong>A live question:</strong> Type a new question (one you haven't asked before) into the <code>ask()</code> function in Cell 9 and run it live. Walk the class through the retrieved chunks and the generated answer. Did the model answer correctly? Did it ground its answer in the context?</li>
+    <li><strong>The hallucination test:</strong> Show your results from Cell 10. If the system hallucinated, explain why. If it didn't, show the system prompt that prevented it.</li>
+    <li><strong>Live modification:</strong> Change a parameter &mdash; chunk size, number of retrieved chunks, or the system instruction &mdash; re-run, and explain what changed. This is worth 25 points on the demo rubric.</li>
+  </ol>
+  <p>See the assignment sheet for submission details and the full rubric.</p>
+</div>
+
+<!-- ========== BRIDGE BOX ========== -->
+<div class="bridge-box" data-concurrent="true">
+  <strong>Taking AIML 2013 too?</strong> This week, CV students are building an image similarity search engine using embeddings and ChromaDB. The shared foundation is the vector database &mdash; both courses use ChromaDB to store and retrieve embeddings by similarity. If you're doing the combined lab, you build a single "Universal Search Engine" that indexes both text chunks and images in one vector store. See the combined lab sheet for instructions.
+</div>
+
+</body>
+</html>

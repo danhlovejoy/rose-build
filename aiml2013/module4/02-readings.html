@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Module 4 Readings: Visual Similarity | AIML 2013</title>
+<link rel="stylesheet" href="../../course-styles.css">
+</head>
+<body>
+
+<h1>Module 4: Visual Similarity</h1>
+<p class="subtitle">Readings &amp; Prep: Complete before Tuesday, April 21</p>
+
+<div class="time-box">
+  <strong>Estimated prep time:</strong> ~2 hours (required materials). One optional deep dive on the full transformer architecture. All materials are free.
+</div>
+
+<!-- ========== FRAMING ========== -->
+<div class="framing-box">
+  <p><strong>The big picture:</strong> In Module 3 you replaced HOG with MobileNetV2 embeddings and showed that learned features capture semantic similarity that hand-crafted descriptors miss. The retrieval worked &mdash; similar images landed close together in 1,280-dimensional space. But you stored the embeddings in a numpy array and computed cosine similarity by brute force against every vector in the dataset.</p>
+  <p style="margin-top:0.5rem;">That approach does not scale. A dataset with 10,000 images means 10,000 dot products per query. A dataset with a million means a million. Vector databases like ChromaDB solve this by indexing embeddings so that queries return approximate nearest neighbors without scanning every vector. This week you move from brute-force to indexed retrieval, add quantitative evaluation (precision@k), and run the HOG comparison one more time to lock in the difference.</p>
+  <p style="margin-top:0.5rem;">The readings also cover a conceptual gap: how transformers work. You've been using neural networks as black-box feature extractors. The attention mechanism reading explains what's happening inside &mdash; the same mechanism that powers vision transformers (ViT), which are replacing CNNs in many production systems.</p>
+</div>
+
+<!-- ========== NOTEBOOKLM ========== -->
+<div class="nlm-box">
+  <strong>NotebookLM tip:</strong> Upload the PyImageSearch transfer learning guide and the ChromaDB quickstart to a Module 4 notebook. Good questions: &ldquo;What is the difference between using a CNN as a classifier and using it as a feature extractor?&rdquo; &ldquo;Why does MobileNetV2 use global average pooling?&rdquo; &ldquo;What is precision@k and why is it better than raw accuracy for retrieval tasks?&rdquo;
+</div>
+
+<!-- ================================================================
+     REQUIRED READINGS & VIDEOS
+     ================================================================ -->
+<h2>Required Readings &amp; Videos</h2>
+<p>Work through these in order. The 3Blue1Brown video explains the attention mechanism conceptually; the PyImageSearch article connects it to feature extraction; the Szeliski section grounds similarity metrics; the ChromaDB quickstart prepares you for the lab.</p>
+
+<!-- RESOURCE 1: 3Blue1Brown Attention -->
+<div class="resource-card">
+  <div class="resource-header">
+    <span class="resource-title">Attention in Transformers, Visually Explained</span>
+    <span class="tag tag-required">Required</span>
+    <span class="tag tag-video">Video</span>
+    <span class="tag tag-time">~25 min</span>
+  </div>
+  <p class="resource-meta">3Blue1Brown &bull; YouTube</p>
+  <p class="resource-desc">Transformers aren't just for text. Vision Transformers (ViT) use the same attention mechanism to process image patches. This video explains how attention works: each element generates a query, every other element generates a key, and the dot product between them determines where the model focuses. The visual style makes the matrix operations intuitive without requiring linear algebra. NLP students are watching this same video &mdash; the mechanism is identical across modalities.</p>
+  <p class="resource-link">
+    <a href="https://www.youtube.com/watch?v=eMlx5fFNoYc" target="_blank">Watch: Attention in Transformers &rarr;</a>
+  </p>
+  <div class="focus-box">
+    <strong>Key concept to lock in:</strong> Attention lets a model decide what to focus on rather than processing everything equally. In a vision transformer, an image patch of a dog's ear can "attend" to the patch containing the dog's nose even if they're on opposite sides of the image. CNNs like MobileNetV2 build this receptive field gradually through stacked layers; transformers get it in a single attention step.
+  </div>
+</div>
+
+<!-- RESOURCE 2: Transfer Learning / Feature Extraction -->
+<div class="resource-card">
+  <div class="resource-header">
+    <span class="resource-title">Transfer Learning with Keras and Deep Learning</span>
+    <span class="tag tag-required">Required</span>
+    <span class="tag tag-read">Read</span>
+    <span class="tag tag-time">~20 min</span>
+  </div>
+  <p class="resource-meta">PyImageSearch &bull; pyimagesearch.com</p>
+  <p class="resource-desc">You've been using MobileNetV2 with <code>include_top=False</code> to extract embeddings. This article explains why that works: the early layers of a pre-trained CNN learn generic features (edges, textures, colors) that transfer across tasks, while the final classification layers are task-specific. Removing the top and using the remaining activations as a feature vector gives you a general-purpose image encoder. The article covers both feature extraction (freeze all layers) and fine-tuning (unfreeze some layers) &mdash; your lab uses feature extraction.</p>
+  <p class="resource-link">
+    <a href="https://pyimagesearch.com/2019/05/20/transfer-learning-with-keras-and-deep-learning/" target="_blank">Read: Transfer Learning with Keras &rarr;</a>
+  </p>
+</div>
+
+<!-- RESOURCE 3: Szeliski - Image Matching -->
+<div class="resource-card">
+  <div class="resource-header">
+    <span class="resource-title">Computer Vision: Algorithms and Applications, &sect;7.1.3&ndash;7.1.4: Feature Matching and Large-Scale Retrieval</span>
+    <span class="tag tag-required">Required</span>
+    <span class="tag tag-read">Read</span>
+    <span class="tag tag-time">~20 min</span>
+  </div>
+  <p class="resource-meta">Richard Szeliski &bull; 2nd Edition (2022) &bull; Free online</p>
+  <p class="resource-desc">Szeliski covers how feature matching works: comparing descriptors across images, nearest-neighbor search, and the ratio test for filtering false matches. The large-scale matching section (&sect;7.1.4) explains why brute-force search doesn&rsquo;t scale and how indexing structures (kd-trees, hashing) enable retrieval over large image collections &mdash; the same problem vector databases solve.</p>
+  <p class="resource-link">
+    <a href="https://szeliski.org/Book/" target="_blank">Read: Szeliski &sect;7.1.3&ndash;7.1.4 &rarr;</a>
+  </p>
+  <div class="focus-box">
+    <strong>Key concept to lock in:</strong> Cosine similarity measures the angle between two vectors; Euclidean distance measures the straight-line gap. For normalized embeddings (vectors with unit length), these two metrics produce identical rankings. MobileNetV2 embeddings are not normalized by default &mdash; which is why ChromaDB's default L2 distance and cosine similarity may rank results differently.
+  </div>
+</div>
+
+<!-- RESOURCE 4: ChromaDB -->
+<div class="resource-card">
+  <div class="resource-header">
+    <span class="resource-title">ChromaDB: Getting Started</span>
+    <span class="tag tag-required">Required</span>
+    <span class="tag tag-read">Read</span>
+    <span class="tag tag-time">~15 min</span>
+  </div>
+  <p class="resource-meta">ChromaDB &bull; docs.trychroma.com</p>
+  <p class="resource-desc">The official quickstart for ChromaDB, the vector database you'll use in the lab. Short and code-first: how to create a client, build a collection, add embeddings, and query by similarity. NLP students use the same database this week to store text embeddings. The code examples map directly to Cells 4 and 5 of the lab.</p>
+  <p class="resource-link">
+    <a href="https://docs.trychroma.com/docs/overview/getting-started" target="_blank">Read: ChromaDB Getting Started &rarr;</a>
+  </p>
+</div>
+
+<!-- ================================================================
+     OPTIONAL
+     ================================================================ -->
+<h2>Optional Deeper Dive</h2>
+
+<div class="resource-card">
+  <div class="resource-header">
+    <span class="resource-title">The Illustrated Transformer</span>
+    <span class="tag tag-optional">Optional</span>
+    <span class="tag tag-read">Read</span>
+    <span class="tag tag-time">~45 min</span>
+  </div>
+  <p class="resource-meta">Jay Alammar &bull; jalammar.github.io</p>
+  <p class="resource-desc">The definitive visual walkthrough of the full transformer architecture. Goes deeper than the 3Blue1Brown video. Not required for the lab, but strongly recommended if you plan to discuss vision transformers or attention in your portfolio presentation.</p>
+  <p class="resource-link">
+    <a href="https://jalammar.github.io/illustrated-transformer/" target="_blank">Read: The Illustrated Transformer &rarr;</a>
+  </p>
+</div>
+
+<!-- ================================================================
+     DISCUSSION PREP
+     ================================================================ -->
+<h2>Discussion Prep</h2>
+<p>These questions will frame our Tuesday class discussion. You don't need to write answers, but come prepared to talk about them.</p>
+
+<div class="section-card">
+  <ol>
+    <li style="margin-bottom:0.75rem;">Your retrieval system returns the 5 most similar images for any query. How would you explain to a non-technical user why a particular image was returned? Can you point to specific visual features, or is the model's reasoning opaque?</li>
+    <li style="margin-bottom:0.75rem;">MobileNetV2 was trained on ImageNet (1.2 million images, 1,000 classes). If you query with an image from a class that wasn't in ImageNet &mdash; say, a medical X-ray or a satellite photo &mdash; what would you expect the retrieval quality to look like? Why?</li>
+    <li style="margin-bottom:0.75rem;">The 3Blue1Brown video shows how attention lets a model relate distant parts of an input. How does this compare to how a CNN like MobileNetV2 builds its receptive field through stacked convolution layers? What can attention do that convolution cannot?</li>
+    <li style="margin-bottom:0.75rem;">Google Image Search, Pinterest visual search, and Amazon's product matching all use systems similar to what you're building. What properties would a production system need that your lab prototype does not have?</li>
+  </ol>
+</div>
+
+<!-- ========== BRIDGE BOX ========== -->
+<div class="bridge-box" data-concurrent="true">
+  <strong>Taking AIML 2003 too?</strong> NLP students are reading about RAG (Retrieval-Augmented Generation) and ChromaDB this week. Both courses share the 3Blue1Brown attention video and the ChromaDB quickstart &mdash; the mechanism and the database work the same way regardless of whether the vectors represent text or images. The combined lab connects the two: a single ChromaDB instance that indexes both text chunks and image embeddings.
+</div>
+
+</body>
+</html>

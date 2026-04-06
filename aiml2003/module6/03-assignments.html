@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Module 6 Deliverables: Simple Agents (NLP) | AIML 2003</title>
+<link rel="stylesheet" href="../../course-styles.css">
+</head>
+<body>
+
+<h1>Module 6 Deliverables: Simple Agents</h1>
+<p class="subtitle">AIML 2003: Introduction to Natural Language Processing</p>
+<div class="due-banner">All deliverables due: By Tuesday, May 5 (by class time).</div>
+
+<!-- ========== OVERVIEW ========== -->
+<div class="overview-card">
+  <strong>This week you will submit three things:</strong>
+  <table class="overview-table" style="margin-top: 0.75rem;">
+    <thead>
+      <tr>
+        <th>Deliverable</th>
+        <th>Type</th>
+        <th>Weight</th>
+        <th>Where</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Module 6 Lab: Simple Agents</td>
+        <td>Colab notebook via GitHub</td>
+        <td>Repos (25%)</td>
+        <td>GitHub + link in Canvas</td>
+      </tr>
+      <tr>
+        <td>Module 6 Demo</td>
+        <td>3&ndash;5 minute live demo</td>
+        <td>Demos (25%)</td>
+        <td>In class, Tuesday May 5</td>
+      </tr>
+      <tr>
+        <td>Ethics Discussion</td>
+        <td>Discussion post</td>
+        <td>Participation (20%)</td>
+        <td>Canvas Discussion</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- =====================================================================
+     DELIVERABLE 1: LAB
+     ===================================================================== -->
+<h2>Deliverable 1: Module 6 Lab <span class="tag tag-lab">Lab</span></h2>
+
+<div class="section-card">
+  <h3>Overview</h3>
+  <p>In the readings and in class, you learned how function calling lets an LLM decide when to use external tools, and how the ReAct pattern structures that decision as a reason-then-act loop. This lab implements both. You will define three tools (calculator, date/time, knowledge base), declare them as schemas Gemini can read, build the agent loop that routes tool calls and feeds results back, and test the system on multi-turn conversations and edge cases.</p>
+  <p>The routing analysis in Cell 6 is where the design decisions become visible. A well-described tool gets called when it should and ignored when it shouldn't. A poorly described tool gets called for everything or nothing. The quality of your tool descriptions determines the quality of your agent.</p>
+
+  <h3>What to Submit</h3>
+  <ul>
+    <li>A completed Colab notebook (<code>.ipynb</code>) saved to your GitHub repo at <code>week7/lab6_agents.ipynb</code>.</li>
+    <li>All cells executed with visible outputs (don't clear outputs).</li>
+    <li>Each code cell preceded by a markdown cell with your LLM prompt and fix note.</li>
+    <li>No API keys or secrets anywhere in the notebook.</li>
+    <li>Submit the GitHub link in Canvas. If it's not in the repo, it doesn't exist for grading.</li>
+  </ul>
+</div>
+
+<div class="tip">
+  <strong>Start this in Thursday lab.</strong> We'll build the agent loop together: defining tool schemas, wiring the function-call detection, and debugging the conversation history format. This is the most technically complex lab of the semester &mdash; Thursday lab time is essential. Come with Cells 1&ndash;3 attempted (setup, tool functions, tool schemas).
+</div>
+
+<div class="rubric-section">
+  <h4>Repository Rubric (Summary)</h4>
+  <p style="font-size:0.85rem; margin-bottom:0.75rem;">100 points possible. Each criterion is scored on a 4-level scale (Full Credit &rarr; No Credit). <a href="https://rose.instructure.com/courses/26943/rubrics/66034" target="_blank"><strong>View the full rubric with detailed scoring &rarr;</strong></a></p>
+  <p style="font-size:0.85rem; color: var(--muted); margin-bottom:0.75rem;">Criteria marked <strong>WEEKLY</strong> change per assignment; criteria marked <strong>STANDARD</strong> stay the same all semester.</p>
+  <table class="rubric-table">
+    <thead>
+      <tr><th style="width:30%">Criterion</th><th style="width:10%">Points</th><th style="width:10%">Type</th><th>Description</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Notebook Runs</td><td>/25</td><td>STANDARD</td><td>Notebook is in the correct week folder. Cells execute top-to-bottom without errors. All outputs visible.</td></tr>
+      <tr style="background:#fff3e0;"><td>Task Requirements</td><td>/40</td><td>WEEKLY</td><td><strong>This week:</strong>
+        <ul style="margin: 0.4rem 0 0 1rem; padding: 0;">
+          <li>Three tool functions implemented and tested (calculator, date/time, knowledge base).</li>
+          <li>Tool schemas declared with clear descriptions. Gemini receives them correctly.</li>
+          <li>Agent loop implemented: detects tool calls, executes tools, feeds results back, generates final response.</li>
+          <li>Multi-turn conversation test: all three tools exercised, context retained across turns.</li>
+          <li>Routing analysis: 10 test questions, routing accuracy computed.</li>
+          <li>Error handling: at least 3 edge cases tested, graceful failure demonstrated.</li>
+        </ul></td></tr>
+      <tr><td>Reflection</td><td>/20</td><td>STANDARD</td><td>200&ndash;400 words. Connects results to the readings. Addresses what worked, what didn't, and what you'd change.</td></tr>
+      <tr><td>Repo Hygiene</td><td>/15</td><td>STANDARD</td><td>No active (unrevoked) secrets. README updated. Descriptive commit message. Files in the right folder.</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<hr>
+
+<!-- =====================================================================
+     DELIVERABLE 2: DEMO
+     ===================================================================== -->
+<h2>Deliverable 2: Module 6 Demo <span class="tag tag-demo">Demo</span></h2>
+
+<div class="section-card">
+  <h3>Overview</h3>
+  <p>A <strong>three- to five-minute</strong> live demo during Tuesday's class (May 5, 5:30 PM). Your notebook is your demo &mdash; no separate slides required. Show the agent working, explain the architecture, and make a live modification.</p>
+
+  <h3>What to Cover</h3>
+  <ol>
+    <li><strong>Architecture overview (30 seconds):</strong> Show the tool declarations and explain the agent loop. How does the model decide whether to use a tool?</li>
+    <li><strong>Tool-using turn:</strong> Run a question that triggers a tool. Show the tool-call log. Walk through the flow: user message &rarr; model decides to call tool &rarr; tool executes &rarr; result fed back &rarr; final response.</li>
+    <li><strong>Direct answer:</strong> Run a question that does NOT trigger a tool. Show that the model answered from its own knowledge.</li>
+    <li><strong>Multi-turn context:</strong> Show a conversation where the model uses a previous answer in a new tool call (e.g., "take that number and multiply it by 3").</li>
+    <li><strong>Live modification:</strong> Change something &mdash; a tool description, a knowledge base entry, or ask a question designed to confuse the routing. Re-run and explain what changed. This is worth 25 points on the demo rubric.</li>
+  </ol>
+
+  <h3>Format</h3>
+  <p>Share your screen and run your notebook live. The interactive chat mode (bonus cell) is ideal for demos &mdash; it lets you take questions from the audience. If you attend via Zoom, have your notebook open and ready to run before your turn.</p>
+</div>
+
+<div class="rubric-section">
+  <h4>Demo Rubric (Summary)</h4>
+  <p style="font-size:0.85rem; margin-bottom:0.75rem;">100 points possible. Each criterion is scored on a 4-level scale (Full Credit &rarr; No Credit). <a href="https://rose.instructure.com/courses/26943/rubrics/65794" target="_blank"><strong>View the full rubric with detailed scoring &rarr;</strong></a></p>
+  <table class="rubric-table">
+    <thead>
+      <tr><th style="width:35%">Criterion</th><th style="width:12%">Points</th><th>What I'm Looking For</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Execution &amp; Requirements</td><td>20</td><td>Agent loop runs cleanly. Tool calls execute. Results feed back correctly. Final responses make sense.</td></tr>
+      <tr><td>Variable &amp; Data Flow</td><td>20</td><td>You can explain the full loop: message &rarr; model &rarr; function_call &rarr; tool execution &rarr; function_response &rarr; model &rarr; text response.</td></tr>
+      <tr><td>Dependency Justification</td><td>15</td><td>You can explain why these tools, why these descriptions, and how the model routes between them.</td></tr>
+      <tr><td>Prompt Strategy</td><td>20</td><td>Your system instruction and tool descriptions shape the model's behavior. You can explain what each does and why.</td></tr>
+      <tr><td>Live Modification</td><td>25</td><td>You change something live, re-run, and explain the effect. Not scripted &mdash; a genuine experiment.</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<hr>
+
+<!-- =====================================================================
+     DELIVERABLE 3: ETHICS DISCUSSION
+     ===================================================================== -->
+<h2>Deliverable 3: Ethics Discussion <span class="tag tag-ethics">Ethics</span></h2>
+
+<div class="section-card">
+  <h3>Overview</h3>
+  <p>Complete the ethics discussion thread for this module. The full prompt and context are on the <a href="04-ethics.html">Ethics Thread page</a> in this module.</p>
+
+  <h3>Requirements</h3>
+  <ul>
+    <li>Initial post: 150&ndash;250 words. Take a position: don't just summarize the question.</li>
+    <li>Reply to a classmate: at least one substantive reply (not just &ldquo;I agree&rdquo;).</li>
+    <li>Initial post due by Tuesday class (May 5). Reply due by the following Tuesday class (May 12).</li>
+  </ul>
+  <p style="margin-top:0.75rem; font-size:0.9rem; color:var(--muted);">The ethics discussion is worth 20% of your weekly Participation grade. Whether you attend in person or via Zoom, this post is required every week.</p>
+</div>
+
+<!-- ========== SUBMISSION CHECKLIST ========== -->
+<div class="overview-card" style="margin-top:1.5rem;">
+  <strong>Submission Checklist</strong>
+  <ul>
+    <li>Module 6 Lab notebook runs cleanly top-to-bottom with all outputs visible</li>
+    <li>Each code cell has a preceding markdown cell with your LLM prompt and fix note</li>
+    <li>No API keys exposed in any committed file</li>
+    <li>Notebook saved to GitHub at <code>week7/lab6_agents.ipynb</code></li>
+    <li>README updated to reflect Module 6 contents</li>
+    <li>GitHub repo link submitted in Canvas</li>
+    <li>Demo prepared and notebook ready to run for Tuesday class (May 5)</li>
+    <li>Ethics discussion post submitted in Canvas by Tuesday class (May 5)</li>
+  </ul>
+</div>
+
+<div class="warning" style="margin-top:1.5rem;">
+  <strong>Reminder:</strong> If it's not in your GitHub repo, it doesn't exist for grading. Save your final work before the deadline.
+</div>
+
+<div class="tip" style="margin-top: 1rem;">
+  <strong>Need help?</strong> Start your work during Thursday lab (April 30, Zoom, 6:00 PM): that's what lab time is for. This is the most complex lab of the semester &mdash; don't try to do it alone on Monday night.
+</div>
+
+</body>
+</html>

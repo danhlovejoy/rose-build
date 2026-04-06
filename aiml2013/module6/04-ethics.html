@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Module 6 Ethics Thread | AIML 2013</title>
+<link rel="stylesheet" href="../../course-styles.css">
+</head>
+<body>
+
+<h1>Ethics Thread: When the Description Is All You Have</h1>
+<p class="subtitle">AIML 2013: Module 6 Discussion. Post by Tuesday, May 5 (before class)</p>
+
+<div class="prompt-box">
+  <h2>The Prompt</h2>
+  <p>This week you generated image captions with a vision-language model and measured how often it described objects that weren't in the image. Some hallucinations were harmless: a caption mentioning a cloud in a sky photo that was actually cloudless. Others were more consequential: describing a person where none existed, or adding objects that changed the meaning of the scene.</p>
+  <p>For a sighted person, a wrong caption is easy to dismiss &mdash; you look at the image and see the error. For a blind person relying on alt text, the caption is the image. A hallucinated object becomes part of their understanding of the world. A fabricated person in a room description, a nonexistent hazard on a sidewalk, or a wrong medication label in a pharmacy photo could all have real consequences.</p>
+  <p>In your post, address at least one of the following:</p>
+  <ul>
+    <li>Your prompt sensitivity test (Cell 7) showed that a "cautious" prompt reduced hallucinations but also reduced detail. If you are building an accessibility tool, you face a tradeoff: a cautious caption protects users from false information but may omit real objects they need to know about. A detailed caption gives a richer description but includes invented objects the user cannot verify. How should a developer navigate this tradeoff? Should the user get to choose?</li>
+    <li>Commercial VLMs like Gemini Vision, GPT-4V, and Claude are already being used to generate alt text at scale. Most users have no way to know whether a given alt text was human-written or AI-generated. Should AI-generated descriptions be labeled? Would the label help or harm users?</li>
+    <li>Your lab used Gemini as both the caption generator and the caption judge (LLM-as-judge in Cell 4). The same model that invented objects was asked to evaluate whether those objects were real. Is this circular evaluation acceptable for a research exercise? Would it be acceptable for a deployed accessibility product? What would a better evaluation pipeline look like?</li>
+    <li>VLMs trained on web-scraped images and captions inherit the biases of that data. If a VLM consistently captions images of women in kitchens but men in offices, it is not just describing &mdash; it is reinforcing stereotypes through its descriptions. For a blind user, the model's gender assumptions become the default understanding of the image. Is this a hallucination problem, a bias problem, or both?</li>
+  </ul>
+</div>
+
+<div class="requirements">
+  <strong>Requirements</strong>
+  <ul>
+    <li><strong>Your post:</strong> 150&ndash;250 words. Take a position. Don't just summarize the question.</li>
+    <li><strong>Reply to a classmate:</strong> At least one substantive reply (not just "I agree"). Engage with their reasoning: push back, build on it, or offer a different angle.</li>
+    <li><strong>Deadline:</strong> Initial post by Tuesday, May 5 (before class). Reply by the following Tuesday class (May 12).</li>
+  </ul>
+</div>
+
+<p>You measured how often a VLM invents objects. For most applications, a few hallucinated objects are a nuisance. For accessibility, they are a failure of trust. The ethical question is not whether VLMs are good enough for captioning &mdash; they are already being used &mdash; but whether the people who depend on the descriptions have any way to know when the description is wrong.</p>
+
+<p class="note">The weekly ethics discussion is worth 20% of your weekly Participation grade (the other 80% comes from attendance and in-class engagement). Whether you attend in person or via Zoom, this post is required every week.</p>
+
+</body>
+</html>

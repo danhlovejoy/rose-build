@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Module 5 Overview: Evaluating LLMs | AIML 2003</title>
+<link rel="stylesheet" href="../../course-styles.css">
+</head>
+<body>
+
+<!-- ========== HERO ========== -->
+<div class="hero">
+  <h2>Module 5: Evaluating LLMs</h2>
+  <p>AIML 2003 &bull; Introduction to Natural Language Processing &bull; Spring 2026</p>
+  <p class="highlight" style="margin-top:0.75rem;">You've been using Gemini as a tool all semester. This week you evaluate it as a subject. You'll measure how often it hallucinates, test whether it treats all demographics equally, and produce a quantitative report on a model you thought you could trust.</p>
+</div>
+
+<!-- ========== AT A GLANCE ========== -->
+<div class="info-grid">
+  <div class="info-card">
+    <strong>This Week's Focus</strong>
+    <p>Build a structured evaluation harness: test Gemini on factual questions with known answers, measure hallucination rates, probe for gender and demographic bias in text generation, and produce a bias scorecard.</p>
+  </div>
+  <div class="info-card">
+    <strong>Deliverables</strong>
+    <p>GitHub Repo + Presentation (3&ndash;5 min)</p>
+    <p data-concurrent="true" style="margin-top:0.25rem; font-size:0.9em;">Dual-enrolled: Combined presentation is 5&ndash;7 min</p>
+    <p>Ethics discussion post</p>
+  </div>
+  <div class="info-card">
+    <strong>Key Dates</strong>
+    <p>Tuesday April 21: Class (5:30 PM)</p>
+    <p>Thursday April 23: Lab (Zoom, 6:00 PM)</p>
+    <p>Due: By Tuesday, April 28 (by class time)</p>
+  </div>
+  <div class="info-card">
+    <strong>Prep Before Tuesday</strong>
+    <p>~1.5 hours of readings and videos on LLM evaluation, hallucination taxonomies, and bias benchmarking. See the Readings page in this module.</p>
+  </div>
+</div>
+
+<!-- ========== THIS WEEK ========== -->
+<h2>This Week</h2>
+
+<div class="week-block">
+  <h3>Before Tuesday</h3>
+  <ul>
+    <li>Complete the readings and watch the assigned videos (~1.5 hours). See the Readings &amp; Prep page.</li>
+    <li>Post your ethics discussion response (due by Tuesday class).</li>
+    <li>Finish the lab, push to GitHub, and prepare your presentation.</li>
+    <li>Your Module 4 demo is on Tuesday. Practice once to stay within the 3&ndash;5 minute window. <span data-concurrent="true">(5&ndash;7 minutes for the combined demo)</span></li>
+  </ul>
+</div>
+
+<div class="week-block">
+  <h3>Tuesday April 21 <span class="tag tag-tue">In Person</span></h3>
+  <ul>
+    <li><strong>Demos:</strong> You demo what you built in Module 4 (3&ndash;5 minutes). Come ready to run your RAG pipeline live.</li>
+    <li>We discuss this week's concepts: what makes a good evaluation question, the "LLM-as-judge" technique, and why bias in text generation is harder to measure than bias in classification.</li>
+    <li>New readings assigned for next week.</li>
+  </ul>
+</div>
+
+<div class="week-block">
+  <h3>Thursday April 23 <span class="tag tag-thu">Zoom</span></h3>
+  <ul>
+    <li>We work through the evaluation harness together: designing factual questions, setting up the LLM-as-judge pipeline, and running the first bias probes.</li>
+    <li>Come with your 20 factual questions drafted (Cell 2). We'll review them together and improve the ones that are too easy or too ambiguous.</li>
+  </ul>
+</div>
+
+<!-- ========== WHAT'S IN THIS MODULE ========== -->
+<h2>What's in This Module</h2>
+
+<div class="week-block">
+  <ol>
+    <li style="margin-bottom:0.5rem;"><strong>Readings &amp; Prep:</strong> A video on LLM hallucination patterns, a research summary on bias in language models, and an introduction to evaluation frameworks. Together, these explain what goes wrong inside LLMs, how to measure it, and why evaluation design is as important as model design.</li>
+    <li style="margin-bottom:0.5rem;"><strong>Module 5 Lab: Evaluating LLMs.</strong> Build a factual accuracy test (20 questions, LLM-as-judge scoring), a profession-gender association probe, a sentiment bias test across demographic groups, and a combined bias scorecard visualization.</li>
+    <li style="margin-bottom:0.5rem;" data-concurrent="true"><strong>Combined Presentation: The Human Cost of Data.</strong> For dual-enrolled students. A single presentation covering both the NLP bias evaluation and the CV demographic accuracy audit.</li>
+    <li style="margin-bottom:0.5rem;"><strong>Assignment Sheet:</strong> Deliverable details, abbreviated rubrics with Canvas links, and the due date for Tuesday, April 28.</li>
+    <li style="margin-bottom:0.5rem;"><strong>Ethics Discussion:</strong> This week's ethics prompt on who should be responsible for auditing AI systems.</li>
+  </ol>
+</div>
+
+<div class="tip" style="margin-top:1rem;">
+  <strong>Tip:</strong> This module is more about test design than code. The hardest part is writing good evaluation questions &mdash; ones that are unambiguous, verifiable, and targeted at the model's likely failure modes. Spend time on your question set before Thursday lab. The code to run the evaluation is straightforward; the questions are what make the difference.
+</div>
+
+</body>
+</html>

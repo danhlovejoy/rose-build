@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Module 4 Ethics Thread | AIML 2013</title>
+<link rel="stylesheet" href="../../course-styles.css">
+</head>
+<body>
+
+<h1>Ethics Thread: When Machines Decide What Looks Alike</h1>
+<p class="subtitle">AIML 2013: Module 4 Discussion. Post by Tuesday, April 21 (before class)</p>
+
+<div class="prompt-box">
+  <h2>The Prompt</h2>
+  <p>This week you built an image similarity search engine. Given a query image, your system returns the most visually similar images from a database. The model decides what "similar" means &mdash; not you, not the user, not a written definition. MobileNetV2 learned its similarity metric from 1.2 million ImageNet images, and that learned metric now determines what your system considers a match.</p>
+  <p>This technology is already deployed at scale. Google Image Search, Pinterest Lens, Amazon product matching, and law enforcement facial recognition all use some variant of image similarity search. The retrieval results shape what users see, what products get recommended, and in some cases, who gets flagged as a suspect.</p>
+  <p>In your post, address at least one of the following:</p>
+  <ul>
+    <li>Your lab's confusion heatmap (Cell 6) shows which image classes the model tends to confuse. In a product search engine, confusing two product categories is annoying. In a facial recognition system, confusing two people can have legal consequences. At what error rate does a visual similarity system become too unreliable to deploy, and who should make that determination?</li>
+    <li>MobileNetV2 was trained on ImageNet, a dataset that overrepresents certain objects, environments, and skin tones. If a visual search system built on these embeddings is used for e-commerce in a market where most users upload images that look different from ImageNet's distribution, what happens to retrieval quality? Who bears the cost of that gap?</li>
+    <li>In 2020, a Detroit man was wrongfully arrested after a facial recognition system matched his driver's license photo to surveillance footage of a different person. The system's "similarity score" was treated as evidence. Should there be a legal standard for how similar two images must be before a match is actionable? What would that standard look like?</li>
+    <li>Your retrieval system shows results ranked by distance score, but it doesn't explain why two images are considered similar. A user sees "these images are 0.85 similar" but can't see which features drove that score. Compare this to a system that could highlight the shared visual features (edges, colors, shapes). What changes about accountability when the reasoning is visible?</li>
+  </ul>
+</div>
+
+<div class="requirements">
+  <strong>Requirements</strong>
+  <ul>
+    <li><strong>Your post:</strong> 150&ndash;250 words. Take a position. Don't just summarize the question.</li>
+    <li><strong>Reply to a classmate:</strong> At least one substantive reply (not just "I agree"). Engage with their reasoning: push back, build on it, or offer a different angle.</li>
+    <li><strong>Deadline:</strong> Initial post by Tuesday, April 21 (before class). Reply by the following Tuesday class (April 28).</li>
+  </ul>
+</div>
+
+<p>You built the retrieval system this week. You saw which classes it confuses, which queries it handles well, and which fail. Use that direct experience. The ethical questions here connect to your precision@k scores: a system that returns the right image 80% of the time sounds good until you consider what happens during the other 20%, and who is affected by those errors.</p>
+
+<p class="note">The weekly ethics discussion is worth 20% of your weekly Participation grade (the other 80% comes from attendance and in-class engagement). Whether you attend in person or via Zoom, this post is required every week.</p>
+
+</body>
+</html>

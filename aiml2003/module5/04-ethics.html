@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Module 5 Ethics Thread | AIML 2003</title>
+<link rel="stylesheet" href="../../course-styles.css">
+</head>
+<body>
+
+<h1>Ethics Thread: Who Audits the Auditors?</h1>
+<p class="subtitle">AIML 2003: Module 5 Discussion. Post by Tuesday, April 28 (before class)</p>
+
+<div class="prompt-box">
+  <h2>The Prompt</h2>
+  <p>This week you built an evaluation harness that tested Gemini for factual accuracy and demographic bias. You designed the questions, chose the professions, selected the demographic groups, and wrote the scoring rubric. Your findings depend entirely on those design choices. A different set of professions would produce different gender ratios. A different set of factual questions would produce a different accuracy score. A different set of demographic groups would produce different sentiment gaps.</p>
+  <p>Evaluation is not neutral. The person who designs the test determines what gets measured, and what gets measured determines what gets fixed. An audit that tests only English-language performance will miss failures in other languages. An audit that tests gender bias with only binary categories will miss non-binary representation gaps. An audit that measures accuracy on well-known facts will miss hallucinations on obscure topics.</p>
+  <p>In your post, address at least one of the following:</p>
+  <ul>
+    <li>You used "LLM-as-judge" to score Gemini's factual answers &mdash; that is, you used an LLM to evaluate an LLM. What are the risks of this approach? Can a model reliably judge its own kind? What biases might the judge model share with the model being tested?</li>
+    <li>Companies that build LLMs also publish their own evaluation benchmarks. OpenAI publishes scores on MMLU; Google publishes scores on their own safety benchmarks. What incentives does a company have to design evaluations that make their model look good? Should third-party audits be required before deployment, and if so, who should conduct them?</li>
+    <li>Your bias probe tested a specific set of professions and demographic groups. If you were hired to audit a model before it was deployed in a hospital, a courtroom, or a school, how would you decide which groups and which failure modes to test? Who should have input into that decision?</li>
+    <li>An evaluation that finds no bias is not the same as proof of no bias &mdash; it may simply mean the test didn't look in the right places. How should companies communicate evaluation results to the public? Is "we tested for bias and found none" an honest statement if the test was narrow?</li>
+  </ul>
+</div>
+
+<div class="requirements">
+  <strong>Requirements</strong>
+  <ul>
+    <li><strong>Your post:</strong> 150&ndash;250 words. Take a position. Don't just summarize the question.</li>
+    <li><strong>Reply to a classmate:</strong> At least one substantive reply (not just "I agree"). Engage with their reasoning.</li>
+    <li><strong>Deadline:</strong> Initial post by Tuesday, April 28 (before class). Reply by the following Tuesday class (May 5).</li>
+  </ul>
+</div>
+
+<p>You designed and ran an evaluation this week. You know what it tested and what it didn't. Use that experience. The ethical question isn't abstract &mdash; it's about the specific choices you made in Cells 2, 5, and 6, and what those choices would mean if your evaluation were the only one a company ran before shipping the model.</p>
+
+<p class="note">The weekly ethics discussion is worth 20% of your weekly Participation grade (the other 80% comes from attendance and in-class engagement). Whether you attend in person or via Zoom, this post is required every week.</p>
+
+</body>
+</html>

@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lab 6: Image Captioning with Vision-Language Models | AIML 2013</title>
+<link rel="stylesheet" href="../../course-styles.css">
+</head>
+<body>
+
+<h1>Lab 6: Image Captioning with Vision-Language Models</h1>
+<p class="subtitle">Feed images to Gemini Vision, evaluate the captions, and find out what the model hallucinates.</p>
+
+<!-- ========== LAB FRAMING ========== -->
+<div class="warning">
+  <strong>How this lab works.</strong>
+  <p style="margin: 0.75rem 0 0;">Same format as Modules 3&ndash;5: specification boxes, not code scaffolds. Give the spec to an LLM, generate the code, fix anything that doesn't match the output contract.</p>
+  <p style="margin: 0.75rem 0 0;">For each code cell, include a markdown cell with your prompt and a one-sentence fix note.</p>
+</div>
+
+<!-- ========== THE TASK ========== -->
+<div class="section-card">
+  <h3>The Task</h3>
+  <p>In the readings and in class, you learned that vision-language models (VLMs) combine image encoders with language decoders to generate text descriptions of visual content. Unlike the classifiers you've used so far (which output a label or a score), VLMs produce open-ended text. This makes them powerful &mdash; they can describe anything in an image &mdash; and hard to evaluate, because there is no single correct caption for any image.</p>
+  <p>You will use Gemini's vision capabilities to generate captions for images, then evaluate those captions against human-written reference descriptions. The evaluation is the core of this lab: you will measure whether the model describes what's actually in the image, whether it adds objects that aren't there (hallucinated objects), and how caption quality varies across different image types.</p>
+  <p>By the end, you will have a captioning evaluation pipeline and a clear understanding of where VLMs succeed and where they fabricate.</p>
+</div>
+
+<!-- ========== DATASET ========== -->
+<div class="section-card">
+  <h3>Dataset</h3>
+  <p>You will use a curated set of 30 images from multiple categories. For each image, you write a brief reference description (1&ndash;2 sentences) before running the model, then compare Gemini's caption to your reference.</p>
+  <ul>
+    <li><strong>Option A (recommended):</strong> Download 30 images from <a href="https://unsplash.com" target="_blank">Unsplash</a> (free, high-quality). Choose 5 images from each of 6 categories: people, animals, landscapes, food, vehicles, and indoor scenes. Write your reference descriptions before running the model.</li>
+    <li><strong>Option B:</strong> Use 30 images from the COCO validation set via <code>fiftyone</code> or direct download. COCO provides human-written captions you can use as references.</li>
+    <li><strong>Option C:</strong> Use your own photos. At least 30 images across at least 4 categories.</li>
+  </ul>
+  <p>Upload images to Colab via the Files panel or load from a URL. Resize each to have a longest side of 800 pixels before sending to Gemini (saves API quota).</p>
+</div>
+
+<!-- ========== HOW TO READ ========== -->
+<div class="section-card">
+  <h3>How to Read This Page</h3>
+  <p>Each cell below follows the same format as previous labs. The gray <code># Cell N</code> header goes at the top of your code cell. Below it:</p>
+  <ul>
+    <li><strong>What it does:</strong> plain English description of the cell's purpose.</li>
+    <li><strong>Takes in:</strong> variables already in the notebook that this cell uses.</li>
+    <li><strong>Must produce:</strong> the exact variable names, types, and shapes this cell must create.</li>
+    <li><strong>Notes:</strong> constraints, pitfalls, and things to watch for.</li>
+  </ul>
+</div>
+
+<hr>
+
+<!-- ==================== PART 1: SETUP AND CAPTIONING ==================== -->
+<h2>Part 1: Generate Captions</h2>
+
+<!-- CELL 1 -->
+<pre># Cell 1: Setup</pre>
+<div class="section-card">
+  <p><strong>What it does:</strong> Installs the Google GenAI SDK, imports all packages, configures the Gemini API key, and sends a test image to confirm the vision API works.</p>
+
+  <p><strong>Takes in:</strong> Nothing. This is the first cell.</p>
+
+  <p><strong>Must produce:</strong></p>
+  <ul>
+    <li><code>client</code>: a <code>genai.Client</code> object, configured with your API key from <code>google.colab.userdata.get('GEMINI_API_KEY')</code>.</li>
+    <li>Imports: <code>google.genai</code>, <code>google.genai.types</code>, <code>PIL.Image</code>, <code>json</code>, <code>time</code>, <code>pandas</code> (as <code>pd</code>), <code>matplotlib.pyplot</code> (as <code>plt</code>), <code>numpy</code> (as <code>np</code>), <code>collections.Counter</code>, <code>io</code>, <code>requests</code>.</li>
+    <li>Install <code>google-genai</code> with <code>!pip install -q google-genai</code>.</li>
+    <li>Set <code>MODEL_ID = "gemini-2.0-flash"</code> (or <code>"gemini-1.5-flash"</code>).</li>
+    <li>Test: load a sample image (from URL or file), send it to Gemini with the prompt <code>"Describe this image in one sentence."</code>, and print the response.</li>
+  </ul>
+
+  <p><strong>Notes:</strong> You will make ~60 API calls in this lab (30 images &times; 2 prompts). Add <code>time.sleep(2)</code> between calls to stay within free-tier rate limits.</p>
+</div>
+
+<!-- CELL 2 -->
+<pre># Cell 2: Load Images and Reference Descriptions</pre>
+<div class="section-card">
+  <p><strong>What it does:</strong> Loads your 30 images, resizes them, and pairs each with a category label and a human-written reference description.</p>
+
+  <p><strong>Takes in:</strong> PIL, numpy, matplotlib from Cell 1.</p>
+
+  <p><strong>Must produce:</strong></p>
+  <ul>
+    <li><code>images</code>: a list of 30 PIL Image objects, each resized so the longest side is 800 pixels.</li>
+    <li><code>image_data</code>: a list of 30 dictionaries, each with keys: <code>'image'</code> (PIL Image), <code>'category'</code> (string, e.g., "animals"), <code>'filename'</code> (string), <code>'reference'</code> (string, your 1&ndash;2 sentence description of what's in the image).</li>
+    <li>Print: a 5&times;6 thumbnail grid of all 30 images, labeled with category and filename.</li>
+  </ul>
+
+  <p><strong>Notes:</strong></p>
+  <ul>
+    <li>Write reference descriptions before you run the model. The point is to have an independent ground truth. Describe what is actually visible: "A brown dog lying on a red couch" rather than "A cute dog relaxing at home" (the couch color matters for hallucination detection).</li>
+    <li>If using COCO, the reference captions are already provided. If using your own images, write the references in a Python dictionary or a CSV file.</li>
+    <li>Resize helper: <code>img.thumbnail((800, 800), Image.LANCZOS)</code> preserves aspect ratio.</li>
+  </ul>
+</div>
+<div class="tip">
+  <strong>Markdown cell:</strong> Why does writing reference descriptions before running the model matter? How would your evaluation change if you wrote references after seeing the model's captions?
+</div>
+
+<!-- CELL 3 -->
+<pre># Cell 3: Generate Captions with Gemini Vision</pre>
+<div class="section-card">
+  <p><strong>What it does:</strong> Sends each image to Gemini with a captioning prompt and collects the generated descriptions.</p>
+
+  <p><strong>Takes in:</strong> <code>client</code>, <code>MODEL_ID</code>, <code>image_data</code>.</p>
+
+  <p><strong>Must produce:</strong></p>
+  <ul>
+    <li>For each image, call Gemini with two prompts:
+      <ol>
+        <li><strong>Brief caption:</strong> <code>"Describe this image in one detailed sentence. Include the main subject, its key attributes (color, size, position), and the setting."</code></li>
+        <li><strong>Detailed caption:</strong> <code>"Describe everything you can see in this image. List all objects, people, animals, colors, text, and spatial relationships. Be exhaustive."</code></li>
+      </ol>
+    </li>
+    <li>Add two new keys to each dictionary in <code>image_data</code>: <code>'caption_brief'</code> and <code>'caption_detailed'</code>.</li>
+    <li>Print: 3 sample images with their reference, brief caption, and detailed caption side by side.</li>
+  </ul>
+
+  <p><strong>Notes:</strong></p>
+  <ul>
+    <li>Add <code>time.sleep(2)</code> between API calls. You're making 60 calls total &mdash; rate limits are real.</li>
+    <li>Wrap the API call in a try/except. If a call fails (rate limit, content filter), log the error and continue. Don't let one failed image stop the entire batch.</li>
+    <li>The brief caption tests whether the model gets the main subject right. The detailed caption tests whether the model hallucinates objects. You need both for the evaluation in Part 2.</li>
+  </ul>
+</div>
+<div class="tip">
+  <strong>Markdown cell:</strong> Compare the brief and detailed captions for your sample images. Does the model add more accurate detail in the detailed caption, or does it add more hallucinated objects?
+</div>
+
+<hr>
+
+<!-- ==================== PART 2: EVALUATION ==================== -->
+<h2>Part 2: Evaluate Caption Quality</h2>
+
+<!-- CELL 4 -->
+<pre># Cell 4: Object Accuracy — What's Real and What's Hallucinated</pre>
+<div class="section-card">
+  <p><strong>What it does:</strong> For each image, extracts the objects mentioned in the detailed caption and compares them to the objects in the reference description. Classifies each mentioned object as correct (in the image), hallucinated (not in the image), or missed (in the reference but not the caption).</p>
+
+  <p><strong>Takes in:</strong> <code>client</code>, <code>MODEL_ID</code>, <code>image_data</code>.</p>
+
+  <p><strong>Must produce:</strong></p>
+  <ul>
+    <li>For each image, use Gemini as a judge: send it the image, the model's detailed caption, and your reference description. Ask it to output a JSON object with three lists: <code>correct_objects</code>, <code>hallucinated_objects</code>, <code>missed_objects</code>.</li>
+    <li><code>eval_results</code>: a list of 30 dictionaries, each with keys: <code>'category'</code>, <code>'n_correct'</code>, <code>'n_hallucinated'</code>, <code>'n_missed'</code>, <code>'hallucinated_objects'</code> (list of strings), <code>'precision'</code> (correct / (correct + hallucinated)), <code>'recall'</code> (correct / (correct + missed)).</li>
+    <li>Print: overall hallucination rate (total hallucinated / total objects mentioned), overall precision, overall recall.</li>
+  </ul>
+
+  <p><strong>Notes:</strong></p>
+  <ul>
+    <li>The LLM-as-judge technique from Module 5 works here too. Prompt Gemini carefully: <code>"You are an image analysis judge. Given the image, a model's caption, and a human reference, list which mentioned objects are actually in the image (correct), which are NOT in the image (hallucinated), and which are in the reference but missing from the caption (missed). Output ONLY valid JSON."</code></li>
+    <li>Parse the JSON response. If parsing fails (the model sometimes wraps JSON in markdown code blocks), strip the backticks and retry.</li>
+    <li>This is the same model judging its own captions. The circular evaluation problem from Module 5 applies. Note this limitation in your reflection.</li>
+  </ul>
+</div>
+<div class="tip">
+  <strong>Markdown cell:</strong> What was your overall hallucination rate? Was it higher or lower than you expected? Did certain categories of images produce more hallucinated objects than others?
+</div>
+
+<!-- CELL 5 -->
+<pre># Cell 5: Per-Category Analysis</pre>
+<div class="section-card">
+  <p><strong>What it does:</strong> Groups the evaluation results by image category and computes per-category precision, recall, and hallucination rate.</p>
+
+  <p><strong>Takes in:</strong> <code>eval_results</code>.</p>
+
+  <p><strong>Must produce:</strong></p>
+  <ul>
+    <li><code>category_metrics</code>: a pandas DataFrame with columns <code>['category', 'n_images', 'avg_precision', 'avg_recall', 'avg_hallucination_rate', 'total_hallucinated']</code>.</li>
+    <li>A grouped bar chart showing precision and recall per category, with a dashed line at the overall average.</li>
+    <li>A horizontal bar chart of hallucination rate per category, sorted from highest to lowest. Color-code: green if &lt; 10%, yellow if 10&ndash;20%, red if &gt; 20%.</li>
+    <li>Print: the category with the highest hallucination rate and the category with the lowest. List the most commonly hallucinated objects across all images (use <code>Counter</code>).</li>
+  </ul>
+
+  <p><strong>Notes:</strong> Some categories are inherently harder. Complex scenes (indoor, food) may produce more hallucinations than simple scenes (landscapes). The per-category breakdown reveals whether the model has systematic weaknesses, not just random errors.</p>
+</div>
+<div class="tip">
+  <strong>Markdown cell:</strong> Which category had the highest hallucination rate? Can you hypothesize why? Is it about the complexity of the scene, the diversity of objects, or something about the model's training data?
+</div>
+
+<!-- CELL 6 -->
+<pre># Cell 6: Hallucination Gallery</pre>
+<div class="section-card">
+  <p><strong>What it does:</strong> Displays the images with the most hallucinated objects, annotated with what the model invented.</p>
+
+  <p><strong>Takes in:</strong> <code>image_data</code>, <code>eval_results</code>.</p>
+
+  <p><strong>Must produce:</strong></p>
+  <ul>
+    <li>Select the 8 images with the most hallucinated objects.</li>
+    <li>Display in a 2&times;4 grid. Below each image, show:
+      <ul>
+        <li>The model's brief caption.</li>
+        <li>The hallucinated objects (highlighted in red text or bold).</li>
+        <li>The number of correct vs. hallucinated objects.</li>
+      </ul>
+    </li>
+    <li>Print: for each image in the gallery, a one-line explanation of why the model might have hallucinated those objects (e.g., "The model described a 'vase of flowers' on the table, but the table is empty. Possible reason: flowers are commonly associated with dining tables in training data.").</li>
+  </ul>
+
+  <p><strong>Notes:</strong> The explanations are your analysis, not the model's. Look at the image and the hallucinated object and reason about why the model might have added it. Common patterns: objects that are statistically associated with the scene (flowers on tables, sunglasses on beach photos), objects that are partially visible or ambiguous, and details fabricated to fill the "detailed description" prompt.</p>
+</div>
+<div class="tip">
+  <strong>Markdown cell:</strong> Look at the hallucinated objects. Do they follow patterns? Are they random inventions, or are they objects that "make sense" in the scene even though they aren't there? What does this tell you about how VLMs generate descriptions?
+</div>
+
+<!-- CELL 7 -->
+<pre># Cell 7: Prompt Sensitivity Test</pre>
+<div class="section-card">
+  <p><strong>What it does:</strong> Tests whether the captioning prompt affects hallucination rate. Runs a subset of images with three different prompts and compares the results.</p>
+
+  <p><strong>Takes in:</strong> <code>client</code>, <code>MODEL_ID</code>, <code>image_data</code>.</p>
+
+  <p><strong>Must produce:</strong></p>
+  <ul>
+    <li>Select 10 images (2 from each of 5 categories).</li>
+    <li>Run each image with three prompts:
+      <ol>
+        <li><strong>Minimal:</strong> <code>"What is in this image?"</code></li>
+        <li><strong>Cautious:</strong> <code>"Describe only the objects you can clearly see in this image. If you are uncertain about an object, do not mention it."</code></li>
+        <li><strong>Exhaustive:</strong> <code>"List every single object, person, color, texture, and detail in this image. Be as thorough as possible."</code></li>
+      </ol>
+    </li>
+    <li>For each prompt, compute the average hallucination rate (using the same judge from Cell 4).</li>
+    <li>A bar chart comparing hallucination rate across the three prompts.</li>
+    <li>Print: which prompt produced the fewest hallucinations and which produced the most.</li>
+  </ul>
+
+  <p><strong>Notes:</strong> The cautious prompt should reduce hallucinations by telling the model to be conservative. The exhaustive prompt should increase them by encouraging the model to generate more content. If the cautious prompt doesn't reduce hallucinations, the model may not respond well to hedging instructions &mdash; that's an important finding.</p>
+</div>
+<div class="tip">
+  <strong>Markdown cell:</strong> Did the cautious prompt reduce hallucinations? By how much? What does this tell you about how much control you have over a VLM's behavior through prompt engineering alone?
+</div>
+
+<hr>
+
+<!-- ==================== BONUS ==================== -->
+<h2>Bonus: Visual Question Answering (10 Extra Credit Points)</h2>
+
+<pre># Bonus Cell: VQA Test</pre>
+<div class="section-card">
+  <p><strong>What it does:</strong> Extends the captioning pipeline into visual question answering (VQA). Instead of describing the whole image, you ask specific questions and evaluate whether the model answers correctly.</p>
+
+  <p><strong>Takes in:</strong> <code>client</code>, <code>MODEL_ID</code>, <code>image_data</code>.</p>
+
+  <p><strong>Must produce:</strong></p>
+  <ul>
+    <li>For 10 images, write 2 questions each (20 total). One easy question (answerable from the main subject) and one hard question (requires noticing a small detail).</li>
+    <li>Send each image + question to Gemini. Use a judge to score each answer as correct, partially correct, or wrong.</li>
+    <li>Print: VQA accuracy for easy vs. hard questions. Show examples of correct and incorrect VQA answers.</li>
+  </ul>
+
+  <p><strong>Notes:</strong> VQA is the next step beyond captioning: instead of open-ended description, the model answers targeted questions. This is how VLMs are used in accessibility tools (describing specific elements of an image for visually impaired users), medical imaging (answering diagnostic questions about X-rays), and document understanding (reading text from scanned documents).</p>
+</div>
+
+<hr>
+
+<!-- ========== PRESENTATION PREP ========== -->
+<h2>Presentation Prep</h2>
+
+<div class="section-card">
+  <p>Your Module 6 presentation is a <strong>three- to five-minute</strong> talk during Tuesday class (May 5, 7:00 PM). You may present from your notebook, slides, or a combination. Review the assignment sheet for what to cover and the rubric criteria.</p>
+  <p>The presentation should communicate your findings, not walk through code. Structure it around:</p>
+  <ol>
+    <li>What images you used and how you set up the evaluation.</li>
+    <li>Your key findings: overall hallucination rate, which categories were worst, what the hallucinated objects looked like.</li>
+    <li>The prompt sensitivity test: did the cautious prompt help?</li>
+    <li>Your takeaway on VLM reliability for real applications.</li>
+  </ol>
+  <p>The hallucination gallery (Cell 6) is your strongest visual aid. Show the images, show what the model invented, and explain the patterns. This is the slide (or notebook cell) people will remember.</p>
+</div>
+
+</body>
+</html>

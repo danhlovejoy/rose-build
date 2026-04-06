@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Module 5 Readings: Evaluating LLMs | AIML 2003</title>
+<link rel="stylesheet" href="../../course-styles.css">
+</head>
+<body>
+
+<h1>Module 5: Evaluating LLMs</h1>
+<p class="subtitle">Readings &amp; Prep: Complete before Tuesday, April 28</p>
+
+<div class="time-box">
+  <strong>Estimated prep time:</strong> ~1.5 hours (required materials). One optional deep dive on red-teaming. All materials are free.
+</div>
+
+<!-- ========== FRAMING ========== -->
+<div class="framing-box">
+  <p><strong>The big picture:</strong> In Module 4 you built a RAG pipeline that relied on Gemini to generate answers grounded in retrieved context. You tested whether it hallucinated on unanswerable questions. That was one test, on one failure mode, designed by you. This week you formalize that instinct into a structured evaluation.</p>
+  <p style="margin-top:0.5rem;">Evaluating an LLM is not like evaluating a classifier. A classifier's outputs are discrete labels &mdash; you compare predicted labels to ground truth and compute precision, recall, F1. An LLM's outputs are open-ended text. There is no single correct answer to "Summarize this article" or "Explain photosynthesis." So evaluation requires judgement: you decide what to test, how to score the response, and what counts as a passing grade. That makes the evaluator's design choices as important as the model's performance.</p>
+  <p style="margin-top:0.5rem;">This week's readings cover three things: how LLMs hallucinate (and why it's structural, not accidental), how researchers measure bias in text generation, and the "LLM-as-judge" technique you'll use in the lab to automate scoring.</p>
+</div>
+
+<!-- ========== NOTEBOOKLM ========== -->
+<div class="nlm-box">
+  <strong>NotebookLM tip:</strong> Upload the hallucination survey and the Gallegos et al. bias survey to a Module 5 notebook. Good questions: &ldquo;What is the difference between an intrinsic and extrinsic hallucination?&rdquo; &ldquo;Why might an LLM associate nurses with women even if the training data wasn't intentionally biased?&rdquo; &ldquo;What does it mean to use an LLM as a judge?&rdquo;
+</div>
+
+<!-- ================================================================
+     REQUIRED READINGS & VIDEOS
+     ================================================================ -->
+<h2>Required Readings &amp; Videos</h2>
+<p>Work through these in order. The hallucination video builds vocabulary for the types of errors you'll test; the bias survey explains what demographic bias looks like in language models; the LLM-as-judge paper introduces the scoring technique you'll implement.</p>
+
+<!-- RESOURCE 1: Hallucination Patterns -->
+<div class="resource-card">
+  <div class="resource-header">
+    <span class="resource-title">A Survey on Hallucination in Large Language Models</span>
+    <span class="tag tag-required">Required</span>
+    <span class="tag tag-video">Video</span>
+    <span class="tag tag-time">~20 min</span>
+  </div>
+  <p class="resource-meta">Yannic Kilcher &bull; YouTube</p>
+  <p class="resource-desc">Yannic Kilcher walks through the hallucination taxonomy from the Huang et al. survey paper. The key distinction is between intrinsic hallucinations (the model contradicts its own source material) and extrinsic hallucinations (the model adds information that cannot be verified from the source). Your RAG hallucination test in Module 4 caught extrinsic hallucinations &mdash; the model fabricated answers when no source was available. This video explains the full taxonomy and why hallucination is a structural property of how LLMs generate text, not a bug that can be patched.</p>
+  <p class="resource-link">
+    <a href="https://www.youtube.com/watch?v=r4jDWxPJFho" target="_blank">Watch: Survey on Hallucination in LLMs &rarr;</a>
+  </p>
+  <div class="focus-box">
+    <strong>Key concept to lock in:</strong> LLMs generate text by predicting the next token based on probability. They have no mechanism to verify whether a statement is true &mdash; they only know whether it is likely given the preceding tokens. Hallucination is not the model making a mistake; it is the model doing exactly what it was trained to do in a context where probability and truth diverge.
+  </div>
+</div>
+
+<!-- RESOURCE 2: Bias in Language Models -->
+<div class="resource-card">
+  <div class="resource-header">
+    <span class="resource-title">Bias and Fairness in Large Language Models: A Survey</span>
+    <span class="tag tag-required">Required</span>
+    <span class="tag tag-read">Read</span>
+    <span class="tag tag-time">~25 min</span>
+  </div>
+  <p class="resource-meta">Gallegos et al., 2024 &bull; arXiv</p>
+  <p class="resource-desc">Read Sections 1&ndash;3 and skim the evaluation methods in Section 5. This survey categorizes the types of bias that appear in language models: gender, race, religion, and intersectional biases. Section 3 explains how biases enter through training data, and Section 5 covers how researchers measure them. The profession-gender association test in your lab (Cell 5) is a simplified version of the techniques described in Section 5.2. You don't need to read the full paper &mdash; the first 12 pages and the evaluation methods section give you what you need.</p>
+  <p class="resource-link">
+    <a href="https://arxiv.org/abs/2309.00770" target="_blank">Read: Bias and Fairness in LLMs &rarr;</a>
+  </p>
+  <div class="focus-box">
+    <strong>Key concept to lock in:</strong> Bias in LLMs is not a single thing. Gender bias manifests differently from racial bias, and both manifest differently depending on the task (generation vs. classification vs. question answering). A model can show no gender bias on one benchmark and significant bias on another. That is why evaluation design matters &mdash; the test you build determines what you find.
+  </div>
+</div>
+
+<!-- RESOURCE 3: LLM-as-Judge -->
+<div class="resource-card">
+  <div class="resource-header">
+    <span class="resource-title">Judging LLM-as-a-Judge with MT-Bench and Chatbot Arena</span>
+    <span class="tag tag-required">Required</span>
+    <span class="tag tag-read">Read</span>
+    <span class="tag tag-time">~20 min</span>
+  </div>
+  <p class="resource-meta">Zheng et al., 2023 &bull; arXiv</p>
+  <p class="resource-desc">Read the abstract, introduction, and Section 3 (LLM-as-judge). This paper introduced the idea that you can use one LLM to evaluate another's output &mdash; the same technique you'll use in Cell 3 of the lab to score Gemini's factual answers. The paper shows that LLM judges agree with human judges about 80% of the time, which is roughly the same rate at which two human judges agree with each other. It also identifies the risks: position bias (the judge prefers the first answer), verbosity bias (the judge prefers longer answers), and self-enhancement bias (the judge rates its own model's outputs higher).</p>
+  <p class="resource-link">
+    <a href="https://arxiv.org/abs/2306.05685" target="_blank">Read: Judging LLM-as-a-Judge &rarr;</a>
+  </p>
+  <div class="focus-box">
+    <strong>Key concept to lock in:</strong> Using an LLM to judge an LLM is circular &mdash; the judge may share the same blind spots as the model being tested. But human evaluation doesn't scale, and automated metrics like BLEU and ROUGE miss semantic meaning. LLM-as-judge is a practical compromise, not a gold standard. You should know its failure modes as well as its strengths.
+  </div>
+</div>
+
+<!-- ================================================================
+     OPTIONAL
+     ================================================================ -->
+<h2>Optional Deeper Dive</h2>
+
+<div class="resource-card">
+  <div class="resource-header">
+    <span class="resource-title">Red Teaming Language Models to Reduce Harms</span>
+    <span class="tag tag-optional">Optional</span>
+    <span class="tag tag-read">Read</span>
+    <span class="tag tag-time">~30 min</span>
+  </div>
+  <p class="resource-meta">Ganguli et al. (Anthropic), 2022 &bull; arXiv</p>
+  <p class="resource-desc">Anthropic's red-teaming paper describes how human testers systematically probe a language model to find harmful outputs. The adversarial prompts they design are more creative than the structured evaluations in your lab, but the underlying logic is the same: you are trying to find the failure modes the model's developers didn't anticipate. Worth reading if the bonus cell (prompt injection testing) interests you.</p>
+  <p class="resource-link">
+    <a href="https://arxiv.org/abs/2209.07858" target="_blank">Read: Red Teaming Language Models &rarr;</a>
+  </p>
+</div>
+
+<!-- ================================================================
+     DISCUSSION PREP
+     ================================================================ -->
+<h2>Discussion Prep</h2>
+<p>These questions will frame our Tuesday class discussion. You don't need to write answers, but come prepared to talk about them.</p>
+
+<div class="section-card">
+  <ol>
+    <li style="margin-bottom:0.75rem;">You used LLM-as-judge to score factual answers in Cell 3. The judge is Gemini evaluating Gemini. What would change if you used a different model (say, GPT-4) as the judge? Would the scores be higher, lower, or different in ways you can't predict?</li>
+    <li style="margin-bottom:0.75rem;">Your profession-gender test (Cell 5) asks Gemini to write paragraphs about professionals and then counts gendered pronouns. Is pronoun frequency a good measure of bias? What kind of bias would it miss?</li>
+    <li style="margin-bottom:0.75rem;">The Gallegos survey describes bias as entering through training data. If the real-world distribution of nurses is 85% female, and the model reflects that distribution, is the model biased or accurate? Does the answer change depending on how the model's output will be used?</li>
+    <li style="margin-bottom:0.75rem;">A company publishes an evaluation showing their model scores 95% on a factual accuracy benchmark they designed. You don't know what questions were on the benchmark. How much should you trust the result?</li>
+  </ol>
+</div>
+
+<!-- ========== BRIDGE BOX ========== -->
+<div class="bridge-box" data-concurrent="true">
+  <strong>Taking AIML 2013 too?</strong> CV students are running a demographic accuracy audit on an image classifier this week. Both courses are measuring bias &mdash; NLP through text generation patterns, CV through per-group classification accuracy. The combined presentation asks you to compare the two: how does bias manifest differently when the output is text vs. when the output is a label?
+</div>
+
+</body>
+</html>

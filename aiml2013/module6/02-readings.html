@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Module 6 Readings: Generative Vision | AIML 2013</title>
+<link rel="stylesheet" href="../../course-styles.css">
+</head>
+<body>
+
+<h1>Module 6: Generative Vision</h1>
+<p class="subtitle">Readings &amp; Prep: Complete before Tuesday, May 5</p>
+
+<div class="time-box">
+  <strong>Estimated prep time:</strong> ~1.5 hours (required materials). One optional deep dive on VLM architectures. All materials are free.
+</div>
+
+<!-- ========== FRAMING ========== -->
+<div class="framing-box">
+  <p><strong>The big picture:</strong> Every CV model you've used this semester has produced structured outputs: a class label, an embedding vector, a similarity score, an accuracy metric. This week you cross into generative territory. A vision-language model takes an image as input and produces open-ended text as output. The text might be a caption, an answer to a question, or a detailed scene description. And unlike a class label, there is no single correct answer &mdash; which makes evaluation much harder.</p>
+  <p style="margin-top:0.5rem;">VLMs hallucinate. They describe objects that aren't in the image, invent spatial relationships, and add details that "make sense" for the scene type but are factually wrong. The CHAIR metric (Caption Hallucination Assessment with Image Relevance) was designed specifically to measure this. Your lab builds a simplified version: you generate captions, compare them to reference descriptions, and catalog what the model invents.</p>
+  <p style="margin-top:0.5rem;">This week's readings cover three things: how vision-language models combine image encoders with language decoders, how researchers measure captioning hallucination, and how VLM accuracy matters for real applications like accessibility and medical imaging.</p>
+</div>
+
+<!-- ========== NOTEBOOKLM ========== -->
+<div class="nlm-box">
+  <strong>NotebookLM tip:</strong> Upload the CHAIR paper and the accessibility article to a Module 6 notebook. Good questions: &ldquo;What is the difference between a hallucinated object and an inferred object?&rdquo; &ldquo;How does the CHAIR metric work?&rdquo; &ldquo;What happens when a blind user relies on a VLM that hallucinates objects?&rdquo;
+</div>
+
+<!-- ================================================================
+     REQUIRED READINGS & VIDEOS
+     ================================================================ -->
+<h2>Required Readings &amp; Videos</h2>
+<p>Work through these in order. The video explains the architecture; the CHAIR paper introduces the evaluation metric; the accessibility reading shows why caption accuracy matters.</p>
+
+<!-- RESOURCE 1: VLM Overview -->
+<div class="resource-card">
+  <div class="resource-header">
+    <span class="resource-title">How Vision-Language Models See and Describe</span>
+    <span class="tag tag-required">Required</span>
+    <span class="tag tag-video">Video</span>
+    <span class="tag tag-time">~20 min</span>
+  </div>
+  <p class="resource-meta">Computerphile &bull; YouTube</p>
+  <p class="resource-desc">A clear overview of how VLMs work: an image encoder (like the MobileNetV2 you used in Module 4) extracts visual features, which are projected into the same embedding space as text tokens, then fed to a language model decoder that generates text. This is the architecture behind Gemini Vision, GPT-4V, and Claude's vision capabilities. Watch for the explanation of why the model can describe objects it has never seen &mdash; the language decoder generalizes from the visual features, the same way it generalizes from text context.</p>
+  <p class="resource-link">
+    <a href="https://www.youtube.com/watch?v=WkoytlA3MoQ" target="_blank">Watch: Vision-Language Models Explained &rarr;</a>
+  </p>
+  <div class="focus-box">
+    <strong>Key concept to lock in:</strong> A VLM is two models stitched together: a vision encoder that converts an image into feature vectors, and a language decoder that converts those vectors into text. The magic (and the risk) is in the stitching: the decoder generates text based on visual features, but it also draws on its language training &mdash; which is where hallucinated objects come from.
+  </div>
+</div>
+
+<!-- RESOURCE 2: CHAIR -->
+<div class="resource-card">
+  <div class="resource-header">
+    <span class="resource-title">Object Hallucination in Image Captioning</span>
+    <span class="tag tag-required">Required</span>
+    <span class="tag tag-read">Read</span>
+    <span class="tag tag-time">~25 min</span>
+  </div>
+  <p class="resource-meta">Rohrbach et al., 2018 &bull; EMNLP</p>
+  <p class="resource-desc">Read Sections 1&ndash;4. This paper introduced CHAIR (Caption Hallucination Assessment with Image Relevance), the standard metric for measuring how often captioning models describe objects that aren't in the image. CHAIR compares the objects mentioned in a generated caption against the objects annotated in the ground truth (COCO object labels). Your lab does the same thing, using LLM-as-judge instead of COCO annotations. The paper also categorizes hallucination patterns: objects from the same scene type (a caption about a kitchen mentions a microwave that isn't there), objects from similar categories (a caption about a dog mentions a cat), and entirely fabricated objects.</p>
+  <p class="resource-link">
+    <a href="https://arxiv.org/abs/1809.02156" target="_blank">Read: Object Hallucination in Image Captioning &rarr;</a>
+  </p>
+  <div class="focus-box">
+    <strong>Key concept to lock in:</strong> Hallucinated objects aren't random. They follow patterns: they belong to the scene type (kitchens get microwaves, beaches get umbrellas), they are visually similar to real objects (a brown pillow gets called a cat), or they fill expected slots (a dining table gets plates even when it's empty). Your lab's hallucination gallery will show these same patterns.
+  </div>
+</div>
+
+<!-- RESOURCE 3: Accessibility -->
+<div class="resource-card">
+  <div class="resource-header">
+    <span class="resource-title">AI-Generated Alt Text: Promise and Pitfalls for Accessibility</span>
+    <span class="tag tag-required">Required</span>
+    <span class="tag tag-read">Read</span>
+    <span class="tag tag-time">~15 min</span>
+  </div>
+  <p class="resource-meta">Google AI Blog &bull; blog.google</p>
+  <p class="resource-desc">Google uses VLMs to generate alt text for images on the web, making visual content accessible to screen reader users. This blog post describes the pipeline and the challenges: hallucinated objects are especially harmful when the user cannot see the image to verify the description. A sighted person can ignore a wrong caption; a blind person may form an entirely wrong mental model of the scene. This is the application context for your lab &mdash; caption accuracy is not an academic metric when someone depends on it.</p>
+  <p class="resource-link">
+    <a href="https://blog.google/technology/ai/alt-text-image-descriptions/" target="_blank">Read: AI-Generated Alt Text &rarr;</a>
+  </p>
+</div>
+
+<!-- ================================================================
+     OPTIONAL
+     ================================================================ -->
+<h2>Optional Deeper Dive</h2>
+
+<div class="resource-card">
+  <div class="resource-header">
+    <span class="resource-title">Visual Instruction Tuning (LLaVA)</span>
+    <span class="tag tag-optional">Optional</span>
+    <span class="tag tag-read">Read</span>
+    <span class="tag tag-time">~30 min</span>
+  </div>
+  <p class="resource-meta">Liu et al., 2023 &bull; NeurIPS</p>
+  <p class="resource-desc">LLaVA (Large Language and Vision Assistant) is one of the most influential open-source VLMs. This paper explains how visual instruction tuning works: you take a pre-trained language model, connect it to a vision encoder, and fine-tune it on image-text instruction pairs. The architecture is essentially what Gemini Vision does behind the scenes. Worth reading if you want to understand the training process, not just the inference API.</p>
+  <p class="resource-link">
+    <a href="https://arxiv.org/abs/2304.08485" target="_blank">Read: Visual Instruction Tuning &rarr;</a>
+  </p>
+</div>
+
+<!-- ================================================================
+     DISCUSSION PREP
+     ================================================================ -->
+<h2>Discussion Prep</h2>
+<p>These questions will frame our Tuesday class discussion. You don't need to write answers, but come prepared to talk about them.</p>
+
+<div class="section-card">
+  <ol>
+    <li style="margin-bottom:0.75rem;">Your lab showed that different prompts produce different hallucination rates. The "cautious" prompt reduced hallucinations but also reduced detail. If you're building an accessibility tool, should you prioritize completeness (describe everything, accept some hallucinations) or accuracy (describe only what's certain, miss some real objects)?</li>
+    <li style="margin-bottom:0.75rem;">The CHAIR paper measures hallucination against COCO object annotations. Your lab measures hallucination against your own reference descriptions. Both methods have blind spots: COCO only annotates 80 object categories, and your references reflect what you noticed. How does the choice of ground truth shape what counts as a hallucination?</li>
+    <li style="margin-bottom:0.75rem;">VLMs describe images in language, which means the caption reflects the biases of the language model. If a VLM captions an image of a person cooking as "a woman in the kitchen" when the person's gender is ambiguous, is that a hallucination or a bias? How do you distinguish between the two?</li>
+    <li style="margin-bottom:0.75rem;">Gemini Vision can generate detailed descriptions of medical images (X-rays, MRIs). Should VLMs be used in medical imaging without human radiologist review? What hallucination rate would be acceptable for a medical application?</li>
+  </ol>
+</div>
+
+</body>
+</html>

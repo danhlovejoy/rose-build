@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Module 4 Overview: Basic RAG | AIML 2003</title>
+<link rel="stylesheet" href="../../course-styles.css">
+</head>
+<body>
+
+<!-- ========== HERO ========== -->
+<div class="hero">
+  <h2>Module 4: Basic RAG</h2>
+  <p>AIML 2003 &bull; Introduction to Natural Language Processing &bull; Spring 2026</p>
+  <p class="highlight" style="margin-top:0.75rem;">Last week your search engine found the right sentences but couldn't explain them. This week you close the loop: retrieve the relevant passages, hand them to an LLM, and generate an answer grounded in a document the model has never seen.</p>
+</div>
+
+<!-- ========== AT A GLANCE ========== -->
+<div class="info-grid">
+  <div class="info-card">
+    <strong>This Week's Focus</strong>
+    <p>Build a Retrieval-Augmented Generation pipeline: load a PDF, chunk it, embed the chunks with <code>all-MiniLM-L6-v2</code>, store them in ChromaDB, retrieve context for a question, and generate an answer with Gemini.</p>
+  </div>
+  <div class="info-card">
+    <strong>Deliverables</strong>
+    <p>GitHub Repo + Demo (3&ndash;5 min)</p>
+    <p data-concurrent="true" style="margin-top:0.25rem; font-size:0.9em;">Dual-enrolled: Combined demo is 5&ndash;7 min</p>
+    <p>Ethics discussion post</p>
+  </div>
+  <div class="info-card">
+    <strong>Key Dates</strong>
+    <p>Tuesday April 14: Class (5:30 PM)</p>
+    <p>Thursday April 16: Lab (Zoom, 6:00 PM)</p>
+    <p>Due: By Tuesday, April 21 (by class time)</p>
+  </div>
+  <div class="info-card">
+    <strong>Prep Before Tuesday</strong>
+    <p>~2 hours of readings and videos on the attention mechanism, RAG architecture, and ChromaDB. See the Readings page in this module.</p>
+  </div>
+</div>
+
+<!-- ========== THIS WEEK ========== -->
+<h2>This Week</h2>
+
+<div class="week-block">
+  <h3>Before Tuesday</h3>
+  <ul>
+    <li>Complete the readings and watch the assigned videos (~2 hours). See the Readings &amp; Prep page.</li>
+    <li>Post your ethics discussion response (due by Tuesday class).</li>
+    <li>Finish the lab, push to GitHub, and prepare your demo.</li>
+    <li>Your Module 3 demo is on Tuesday. Practice once to stay within the 3&ndash;5 minute window. <span data-concurrent="true">(5&ndash;7 minutes for the combined demo)</span></li>
+  </ul>
+</div>
+
+<div class="week-block">
+  <h3>Tuesday April 14 <span class="tag tag-tue">In Person</span></h3>
+  <ul>
+    <li><strong>Demos:</strong> You demo what you built in Module 3 (3&ndash;5 minutes). Come ready to run your notebook live and take a question or two.</li>
+    <li>We discuss this week's concepts: how RAG combines retrieval and generation, why chunking strategy matters, and how the system prompt constrains hallucination.</li>
+    <li>New readings assigned for next week.</li>
+  </ul>
+</div>
+
+<div class="week-block">
+  <h3>Thursday April 16 <span class="tag tag-thu">Zoom</span></h3>
+  <ul>
+    <li>We work through the RAG pipeline together: extracting text from a PDF, chunking, building the ChromaDB collection, and wiring retrieval to Gemini.</li>
+    <li>Bring a PDF you want to use. If you don't have one, we'll use the default (OSTP AI Action Plan RFI).</li>
+    <li>Come with Cells 1&ndash;3 attempted so we can debug the text extraction and chunking steps together.</li>
+  </ul>
+</div>
+
+<!-- ========== WHAT'S IN THIS MODULE ========== -->
+<h2>What's in This Module</h2>
+
+<div class="week-block">
+  <ol>
+    <li style="margin-bottom:0.5rem;"><strong>Readings &amp; Prep:</strong> A conceptual introduction to the attention mechanism (3Blue1Brown), the RAG architecture pattern, the ChromaDB quickstart, and a short reading on chunking strategies. Together, these explain why transformers work, how RAG uses retrieval to ground generation, and how to set up the vector database you'll use in the lab.</li>
+    <li style="margin-bottom:0.5rem;"><strong>Module 4 Lab: Chat with a PDF.</strong> Build a complete RAG pipeline: PDF text extraction, chunking, embedding, ChromaDB storage, retrieval, and Gemini-powered answer generation. Test it with factual questions, unanswerable questions (hallucination probes), and a chunk-size experiment.</li>
+    <li style="margin-bottom:0.5rem;" data-concurrent="true"><strong>Combined Lab: The Universal Search Engine.</strong> For dual-enrolled students taking both NLP and CV. One notebook with a ChromaDB instance that indexes both text chunks and images, queryable in both modalities.</li>
+    <li style="margin-bottom:0.5rem;"><strong>Assignment Sheet:</strong> Deliverable details, abbreviated rubrics with Canvas links, and the due date for Tuesday, April 21.</li>
+    <li style="margin-bottom:0.5rem;"><strong>Ethics Discussion:</strong> This week's ethics prompt on who controls the context in a RAG system and what gets left out.</li>
+  </ol>
+</div>
+
+<div class="tip" style="margin-top:1rem;">
+  <strong>Tip:</strong> The readings this week include a conceptual introduction to how transformers work (the attention mechanism). You've been using transformer-based models since Module 3 without knowing what's inside them. This reading fills that gap &mdash; and gives you vocabulary you'll need for the portfolio presentation in Week 8.
+</div>
+
+</body>
+</html>

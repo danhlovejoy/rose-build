@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Module 6 Deliverables: Generative Vision (CV) | AIML 2013</title>
+<link rel="stylesheet" href="../../course-styles.css">
+</head>
+<body>
+
+<h1>Module 6 Deliverables: Generative Vision</h1>
+<p class="subtitle">AIML 2013: Introduction to Computer Vision</p>
+<div class="due-banner">All deliverables due: By Tuesday, May 5 (by class time).</div>
+
+<!-- ========== OVERVIEW ========== -->
+<div class="overview-card">
+  <strong>This week you will submit three things:</strong>
+  <table class="overview-table" style="margin-top: 0.75rem;">
+    <thead>
+      <tr>
+        <th>Deliverable</th>
+        <th>Type</th>
+        <th>Weight</th>
+        <th>Where</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Module 6 Lab: Image Captioning</td>
+        <td>Colab notebook via GitHub</td>
+        <td>Repos (25%)</td>
+        <td>GitHub + link in Canvas</td>
+      </tr>
+      <tr>
+        <td>Module 6 Presentation</td>
+        <td>3&ndash;5 minute presentation</td>
+        <td>Presentations (15%)</td>
+        <td>In class, Tuesday May 5</td>
+      </tr>
+      <tr>
+        <td>Ethics Discussion</td>
+        <td>Discussion post</td>
+        <td>Participation (20%)</td>
+        <td>Canvas Discussion</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- =====================================================================
+     DELIVERABLE 1: LAB
+     ===================================================================== -->
+<h2>Deliverable 1: Module 6 Lab <span class="tag tag-lab">Lab</span></h2>
+
+<div class="section-card">
+  <h3>Overview</h3>
+  <p>In the readings and in class, you learned how vision-language models generate captions by combining visual features with a language decoder, and how captioning hallucination is measured using metrics like CHAIR. This lab puts those ideas into practice. You will generate captions for 30 images using Gemini Vision, evaluate object accuracy against your reference descriptions using LLM-as-judge, compute per-category hallucination rates, and test how prompt wording affects what the model invents.</p>
+  <p>The hallucination gallery in Cell 6 is where the evaluation becomes tangible. You see the images, the invented objects, and the patterns. This is the artifact your presentation should center on.</p>
+
+  <h3>What to Submit</h3>
+  <ul>
+    <li>A completed Colab notebook (<code>.ipynb</code>) saved to your GitHub repo at <code>week7/lab6_captioning.ipynb</code>.</li>
+    <li>All cells executed with visible outputs (don't clear outputs).</li>
+    <li>Each code cell preceded by a markdown cell with your LLM prompt and fix note.</li>
+    <li>No API keys or secrets anywhere in the notebook.</li>
+    <li>Submit the GitHub link in Canvas. If it's not in the repo, it doesn't exist for grading.</li>
+  </ul>
+</div>
+
+<div class="tip">
+  <strong>Start this in Thursday lab.</strong> We'll work through the captioning and evaluation pipeline together. Come with your images selected and reference descriptions written (Cells 1&ndash;2). We'll build the LLM-as-judge evaluation in Cell 4 together.
+</div>
+
+<div class="rubric-section">
+  <h4>Repository Rubric (Summary)</h4>
+  <p style="font-size:0.85rem; margin-bottom:0.75rem;">100 points possible. Each criterion is scored on a 4-level scale (Full Credit &rarr; No Credit). <a href="https://rose.instructure.com/courses/26944/rubrics/66064" target="_blank"><strong>View the full rubric with detailed scoring &rarr;</strong></a></p>
+  <p style="font-size:0.85rem; color: var(--muted); margin-bottom:0.75rem;">Criteria marked <strong>WEEKLY</strong> change per assignment; criteria marked <strong>STANDARD</strong> stay the same all semester.</p>
+  <table class="rubric-table">
+    <thead>
+      <tr><th style="width:30%">Criterion</th><th style="width:10%">Points</th><th style="width:10%">Type</th><th>Description</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Notebook Runs</td><td>/25</td><td>STANDARD</td><td>Notebook is in the correct week folder. Cells execute top-to-bottom without errors. All outputs visible.</td></tr>
+      <tr style="background:#fff3e0;"><td>Task Requirements</td><td>/40</td><td>WEEKLY</td><td><strong>This week:</strong>
+        <ul style="margin: 0.4rem 0 0 1rem; padding: 0;">
+          <li>30 images loaded across 6 categories with human-written reference descriptions.</li>
+          <li>Brief and detailed captions generated for all 30 images.</li>
+          <li>Object accuracy evaluation: correct, hallucinated, and missed objects identified per image.</li>
+          <li>Per-category hallucination rate computed and visualized.</li>
+          <li>Hallucination gallery: 8 worst images with annotated hallucinated objects.</li>
+          <li>Prompt sensitivity test: 3 prompts compared on hallucination rate.</li>
+        </ul></td></tr>
+      <tr><td>Reflection</td><td>/20</td><td>STANDARD</td><td>200&ndash;400 words. Connects results to the readings. Addresses what worked, what didn't, and what you'd change.</td></tr>
+      <tr><td>Repo Hygiene</td><td>/15</td><td>STANDARD</td><td>No active (unrevoked) secrets. README updated. Descriptive commit message. Files in the right folder.</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<hr>
+
+<!-- =====================================================================
+     DELIVERABLE 2: PRESENTATION
+     ===================================================================== -->
+<h2>Deliverable 2: Module 6 Presentation <span class="tag tag-pres">Presentation</span></h2>
+
+<div class="section-card">
+  <h3>Overview</h3>
+  <p>A <strong>three- to five-minute</strong> presentation during Tuesday's class (May 5, 7:00 PM). You may use your notebook, slides, or a combination. The goal is to communicate your findings, not to walk through code.</p>
+
+  <h3>What to Cover</h3>
+  <ol>
+    <li><strong>Setup (30 seconds):</strong> What images did you use? How many categories? How did you write your reference descriptions?</li>
+    <li><strong>Hallucination findings:</strong> Show the per-category hallucination chart (Cell 5). Which categories had the most hallucinations? Show 2&ndash;3 examples from the hallucination gallery with the invented objects highlighted.</li>
+    <li><strong>Prompt sensitivity:</strong> Show the Cell 7 comparison. Did the cautious prompt help? By how much?</li>
+    <li><strong>Patterns:</strong> What types of objects does the model hallucinate? Are they random, or do they follow the scene-type patterns described in the CHAIR paper?</li>
+    <li><strong>Implications:</strong> If this model were generating alt text for blind users, would you trust it? What hallucination rate would be acceptable?</li>
+  </ol>
+
+  <h3>Format</h3>
+  <p>Share your screen. You can present from your notebook, slides, or both. If you attend via Zoom, have your materials open and ready before your turn.</p>
+</div>
+
+<div class="rubric-section">
+  <h4>Presentation Rubric (Summary)</h4>
+  <p style="font-size:0.85rem; margin-bottom:0.75rem;">100 points possible. Each criterion is scored on a 4-level scale (Full Credit &rarr; No Credit). <a href="https://rose.instructure.com/courses/26944/rubrics/66062" target="_blank"><strong>View the full rubric with detailed scoring &rarr;</strong></a></p>
+  <table class="rubric-table">
+    <thead>
+      <tr><th style="width:35%">Criterion</th><th style="width:12%">Points</th><th>What I'm Looking For</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Focus &amp; Clarity</td><td>25</td><td>Presentation has a clear narrative: what you evaluated, what you found, and what it means. Not a code walkthrough.</td></tr>
+      <tr><td>Key Takeaways</td><td>25</td><td>Audience leaves understanding your main finding. You can state the VLM's hallucination pattern in one sentence.</td></tr>
+      <tr><td>Visual Aid Effectiveness</td><td>20</td><td>The hallucination gallery is shown and annotated. Charts are legible and labeled.</td></tr>
+      <tr><td>Verbal Delivery</td><td>20</td><td>You speak to the audience, not to the screen. You can answer a follow-up question about your evaluation methodology.</td></tr>
+      <tr><td>Time Management</td><td>10</td><td>Presentation fits within the 3&ndash;5 minute window (rubric window: 2:30&ndash;5:30).</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<hr>
+
+<!-- =====================================================================
+     DELIVERABLE 3: ETHICS DISCUSSION
+     ===================================================================== -->
+<h2>Deliverable 3: Ethics Discussion <span class="tag tag-ethics">Ethics</span></h2>
+
+<div class="section-card">
+  <h3>Overview</h3>
+  <p>Complete the ethics discussion thread for this module. The full prompt and context are on the <a href="04-ethics.html">Ethics Thread page</a> in this module.</p>
+
+  <h3>Requirements</h3>
+  <ul>
+    <li>Initial post: 150&ndash;250 words. Take a position: don't just summarize the question.</li>
+    <li>Reply to a classmate: at least one substantive reply (not just &ldquo;I agree&rdquo;).</li>
+    <li>Initial post due by Tuesday class (May 5). Reply due by the following Tuesday class (May 12).</li>
+  </ul>
+  <p style="margin-top:0.75rem; font-size:0.9rem; color:var(--muted);">The ethics discussion is worth 20% of your weekly Participation grade. Whether you attend in person or via Zoom, this post is required every week.</p>
+</div>
+
+<!-- ========== SUBMISSION CHECKLIST ========== -->
+<div class="overview-card" style="margin-top:1.5rem;">
+  <strong>Submission Checklist</strong>
+  <ul>
+    <li>Module 6 Lab notebook runs cleanly top-to-bottom with all outputs visible</li>
+    <li>Each code cell has a preceding markdown cell with your LLM prompt and fix note</li>
+    <li>No API keys exposed in any committed file</li>
+    <li>Notebook saved to GitHub at <code>week7/lab6_captioning.ipynb</code></li>
+    <li>README updated to reflect Module 6 contents</li>
+    <li>GitHub repo link submitted in Canvas</li>
+    <li>Presentation prepared for Tuesday class (May 5)</li>
+    <li>Ethics discussion post submitted in Canvas by Tuesday class (May 5)</li>
+  </ul>
+</div>
+
+<div class="warning" style="margin-top:1.5rem;">
+  <strong>Reminder:</strong> If it's not in your GitHub repo, it doesn't exist for grading. Save your final work before the deadline.
+</div>
+
+<div class="tip" style="margin-top: 1rem;">
+  <strong>Need help?</strong> Start your work during Thursday lab (April 30, Zoom, 6:00 PM): that's what lab time is for. If you get stuck after lab, email me before the weekend so I can help. Don't wait until Monday night.
+</div>
+
+</body>
+</html>

@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lab 6: Simple Agents | AIML 2003</title>
+<link rel="stylesheet" href="../../course-styles.css">
+</head>
+<body>
+
+<h1>Lab 6: Simple Agents</h1>
+<p class="subtitle">Build a chatbot that can use tools, then watch it decide when to use them.</p>
+
+<!-- ========== LAB FRAMING ========== -->
+<div class="warning">
+  <strong>How this lab works.</strong>
+  <p style="margin: 0.75rem 0 0;">Same format as Modules 3&ndash;5: specification boxes, not code scaffolds. Give the spec to an LLM, generate the code, fix anything that doesn't match the output contract.</p>
+  <p style="margin: 0.75rem 0 0;">For each code cell, include a markdown cell with your prompt and a one-sentence fix note.</p>
+  <p style="margin: 0.75rem 0 0;"><strong>This is the most technically complex lab of the semester.</strong> The cells build on each other more tightly than previous labs. Read all the specs before you start coding &mdash; understanding the full architecture will make each cell easier to implement. If you get stuck, come to Thursday lab with Cells 1&ndash;3 attempted and we will debug together.</p>
+</div>
+
+<!-- ========== THE TASK ========== -->
+<div class="section-card">
+  <h3>The Task</h3>
+  <p>In the readings and in class, you learned that function calling lets an LLM decide when to use external tools instead of generating an answer from its own parameters. The model doesn't run the tools itself &mdash; it outputs a structured request (tool name + arguments), your code executes the tool, and you feed the result back to the model so it can incorporate the answer into its response.</p>
+  <p>This changes what an LLM can do. Without tools, Gemini cannot tell you today's date, cannot do reliable arithmetic, and cannot look up current information. With tools, it can do all three &mdash; as long as you define the tools and wire the execution loop.</p>
+  <p>You will build a multi-turn chatbot with three tools:</p>
+  <ul>
+    <li><strong>Calculator:</strong> Evaluates mathematical expressions.</li>
+    <li><strong>Date/Time:</strong> Returns the current date and time.</li>
+    <li><strong>Knowledge Base:</strong> Looks up information from a small fact dictionary you define.</li>
+  </ul>
+  <p>The chatbot maintains conversation history across turns, decides when to call a tool vs. answer directly, and handles tool results gracefully. By the end, you will have a working agent loop &mdash; the same pattern used by ChatGPT plugins, Claude tools, and production AI assistants.</p>
+</div>
+
+<!-- ========== HOW TO READ ========== -->
+<div class="section-card">
+  <h3>How to Read This Page</h3>
+  <p>Each cell below follows the same format as previous labs. The gray <code># Cell N</code> header goes at the top of your code cell. Below it:</p>
+  <ul>
+    <li><strong>What it does:</strong> plain English description of the cell's purpose.</li>
+    <li><strong>Takes in:</strong> variables already in the notebook that this cell uses.</li>
+    <li><strong>Must produce:</strong> the exact variable names, types, and shapes this cell must create.</li>
+    <li><strong>Notes:</strong> constraints, pitfalls, and things to watch for.</li>
+  </ul>
+</div>
+
+<hr>
+
+<!-- ==================== PART 1: SETUP AND TOOL DEFINITIONS ==================== -->
+<h2>Part 1: Setup and Tool Definitions</h2>
+
+<!-- CELL 1 -->
+<pre># Cell 1: Setup</pre>
+<div class="section-card">
+  <p><strong>What it does:</strong> Installs the Google GenAI SDK, imports all packages, configures the Gemini API key from Colab Secrets, and sends a test prompt to confirm the connection.</p>
+
+  <p><strong>Takes in:</strong> Nothing. This is the first cell.</p>
+
+  <p><strong>Must produce:</strong></p>
+  <ul>
+    <li><code>client</code>: a <code>genai.Client</code> object, configured with your API key from <code>google.colab.userdata.get('GEMINI_API_KEY')</code>.</li>
+    <li>Imports: <code>google.genai</code>, <code>google.genai.types</code>, <code>json</code>, <code>datetime</code>, <code>math</code>, <code>textwrap</code>, <code>IPython.display</code> (Markdown).</li>
+    <li>Install <code>google-genai</code> with <code>!pip install -q google-genai</code>.</li>
+    <li>Set <code>MODEL_ID = "gemini-2.0-flash"</code> (or <code>"gemini-1.5-flash"</code> if 2.0 is unavailable).</li>
+    <li>Printed output: a test response from Gemini confirming the API works.</li>
+  </ul>
+
+  <p><strong>Notes:</strong> You will make many API calls in this lab. Add <code>import time</code> and use <code>time.sleep(1)</code> between calls in loops to avoid rate limits.</p>
+</div>
+
+<!-- CELL 2 -->
+<pre># Cell 2: Define Tool Functions</pre>
+<div class="section-card">
+  <p><strong>What it does:</strong> Implements three Python functions that serve as the tools your chatbot can call. These are regular Python functions &mdash; they know nothing about Gemini. The agent loop in Cell 4 will call them when the model requests a tool.</p>
+
+  <p><strong>Takes in:</strong> <code>datetime</code>, <code>math</code> from Cell 1.</p>
+
+  <p><strong>Must produce:</strong></p>
+  <ul>
+    <li><code>calculator(expression: str) -> str</code>: Takes a mathematical expression as a string (e.g., <code>"2 + 3 * 4"</code>), evaluates it safely, and returns the result as a string. Use Python's <code>eval()</code> with a restricted namespace that only allows math operations (no builtins, no imports). Return an error message string if the expression is invalid.</li>
+    <li><code>get_datetime() -> str</code>: Returns the current date, time, and day of the week as a formatted string (e.g., <code>"Tuesday, April 29, 2026, 3:45 PM CDT"</code>).</li>
+    <li><code>knowledge_lookup(topic: str) -> str</code>: Looks up a topic in a predefined dictionary of 10&ndash;15 facts. Topics should be things Gemini might get wrong or not know (e.g., current course information, made-up facts for testing, or very recent events). Return the fact if found, or <code>"No information available for: {topic}"</code> if not found. Use case-insensitive matching.</li>
+    <li><code>TOOL_FUNCTIONS</code>: a dictionary mapping tool names to their Python functions: <code>{"calculator": calculator, "get_datetime": get_datetime, "knowledge_lookup": knowledge_lookup}</code>.</li>
+    <li>Printed output: test each function once and print the result.</li>
+  </ul>
+
+  <p><strong>Notes:</strong></p>
+  <ul>
+    <li>The <code>calculator</code> function must be safe. Use <code>eval(expression, {"__builtins__": {}}, {"math": math})</code> to prevent code injection. This allows expressions like <code>"math.sqrt(144)"</code> but blocks <code>"__import__('os').system('rm -rf /')"</code>.</li>
+    <li>The knowledge base is intentionally small. The point is to show that the model can retrieve facts it doesn't have in its parameters. Include at least one fact about this course (e.g., "The instructor is Dan Lovejoy") and one fact that contradicts common knowledge (to test whether the model trusts the tool over its own training).</li>
+  </ul>
+</div>
+<div class="tip">
+  <strong>Markdown cell:</strong> Why is it important to restrict what <code>eval()</code> can execute? What could happen if you passed user input directly to an unrestricted <code>eval()</code>?
+</div>
+
+<!-- CELL 3 -->
+<pre># Cell 3: Define Tool Schemas for Gemini</pre>
+<div class="section-card">
+  <p><strong>What it does:</strong> Creates the tool declarations that tell Gemini what tools are available, what arguments they take, and what they return. Gemini uses these schemas to decide when to call a tool and how to format its request.</p>
+
+  <p><strong>Takes in:</strong> <code>genai.types</code> from Cell 1.</p>
+
+  <p><strong>Must produce:</strong></p>
+  <ul>
+    <li><code>tools</code>: a list of <code>genai.types.Tool</code> objects (or the equivalent dict format), one for each tool function. Each tool declaration must include:
+      <ul>
+        <li><code>name</code>: matches the key in <code>TOOL_FUNCTIONS</code> (e.g., <code>"calculator"</code>).</li>
+        <li><code>description</code>: a clear sentence explaining when to use this tool. Gemini reads this to decide whether to call it.</li>
+        <li><code>parameters</code>: a JSON Schema object describing the function's arguments (type, description, required).</li>
+      </ul>
+    </li>
+    <li>Print: the tool declarations in a readable format so you can verify the schema is correct.</li>
+  </ul>
+
+  <p><strong>Notes:</strong></p>
+  <ul>
+    <li>The schema format for <code>google-genai</code> uses <code>genai.types.FunctionDeclaration</code> wrapped in <code>genai.types.Tool</code>. Consult the <a href="https://ai.google.dev/gemini-api/docs/function-calling" target="_blank">Gemini function calling docs</a> for the exact syntax.</li>
+    <li>The <code>get_datetime</code> tool takes no parameters. Declare it with an empty parameters schema or omit the parameters field entirely.</li>
+    <li>The tool description is critical. A vague description like "does math" will cause Gemini to call the tool unpredictably. A precise description like "Evaluates a mathematical expression and returns the numeric result. Use this for any arithmetic, algebra, or math operation" gives the model clear decision criteria.</li>
+  </ul>
+</div>
+<div class="tip">
+  <strong>Markdown cell:</strong> The model decides whether to call a tool based on the tool's description. How would you test whether your descriptions are good enough? What would happen if two tools had overlapping descriptions?
+</div>
+
+<hr>
+
+<!-- ==================== PART 2: THE AGENT LOOP ==================== -->
+<h2>Part 2: The Agent Loop</h2>
+
+<!-- CELL 4 -->
+<pre># Cell 4: Build the Agent Loop</pre>
+<div class="section-card">
+  <p><strong>What it does:</strong> Implements the core agent loop: send a user message to Gemini with tool declarations, check if the response contains a tool call, execute the tool, send the result back to Gemini, and return the final text response. This is the heart of the lab.</p>
+
+  <p><strong>Takes in:</strong> <code>client</code>, <code>MODEL_ID</code>, <code>tools</code>, <code>TOOL_FUNCTIONS</code>.</p>
+
+  <p><strong>Must produce:</strong></p>
+  <ul>
+    <li><code>chat_history</code>: a list that stores the full conversation (user messages, model responses, tool calls, and tool results). Initialize as empty.</li>
+    <li><code>SYSTEM_INSTRUCTION</code>: a string that tells Gemini its role and behavior. Include: "You are a helpful assistant with access to tools. Use the calculator for any math. Use get_datetime for time questions. Use knowledge_lookup for factual questions about specific topics. If a tool returns an error, explain the error to the user. Always tell the user when you used a tool to get information."</li>
+    <li><code>agent_turn(user_message: str) -> str</code>: a function that:
+      <ol>
+        <li>Appends the user message to <code>chat_history</code>.</li>
+        <li>Calls <code>client.models.generate_content()</code> with the model ID, conversation history, tools, and system instruction.</li>
+        <li>Checks if the response contains a <code>function_call</code> in <code>response.candidates[0].content.parts</code>.</li>
+        <li>If yes: extracts the function name and arguments, looks up the function in <code>TOOL_FUNCTIONS</code>, calls it, wraps the result in a <code>genai.types.Part.from_function_response()</code>, appends both the model's tool-call response and the function result to history, and calls <code>generate_content()</code> again so the model can produce a final text answer.</li>
+        <li>If no: the model answered directly without tools. Extract the text.</li>
+        <li>Appends the final model response to <code>chat_history</code>.</li>
+        <li>Returns the text of the final response.</li>
+      </ol>
+    </li>
+    <li>Test: call <code>agent_turn("What is 247 * 19?")</code> and print the result. Verify Gemini used the calculator tool.</li>
+  </ul>
+
+  <p><strong>Notes:</strong></p>
+  <ul>
+    <li>The agent loop must handle the case where the model makes a tool call AND the case where it answers directly. Check <code>part.function_call</code> on each part of the response.</li>
+    <li>The <code>google-genai</code> SDK's chat history format expects alternating <code>user</code> and <code>model</code> roles. After a tool call, the tool result goes in as a <code>user</code> role message (or a <code>function</code> role, depending on SDK version). Check the <a href="https://ai.google.dev/gemini-api/docs/function-calling" target="_blank">function calling docs</a> for the exact format your SDK version expects.</li>
+    <li>The model may return multiple parts in one response (e.g., text + function call, or multiple function calls). For this lab, handle one tool call per turn. If you want to handle multiple, that's bonus territory.</li>
+    <li>Print a log line each time a tool is called: <code>"[TOOL CALL] calculator('247 * 19') -> 4693"</code>. This makes debugging much easier and is great for the demo.</li>
+  </ul>
+</div>
+<div class="tip">
+  <strong>Markdown cell:</strong> Trace the data flow for a single tool-using turn. How many API calls did it take? Why does the model need to be called twice &mdash; once to decide to use the tool, and again to incorporate the tool's result?
+</div>
+
+<!-- CELL 5 -->
+<pre># Cell 5: Multi-Turn Conversation Test</pre>
+<div class="section-card">
+  <p><strong>What it does:</strong> Runs a scripted multi-turn conversation that exercises all three tools and tests the model's ability to maintain context across turns.</p>
+
+  <p><strong>Takes in:</strong> <code>agent_turn</code>, <code>chat_history</code>.</p>
+
+  <p><strong>Must produce:</strong></p>
+  <ul>
+    <li>Run these test messages in order, printing each user message and the agent's response:
+      <ol>
+        <li><code>"What time is it right now?"</code> &mdash; should trigger <code>get_datetime</code>.</li>
+        <li><code>"What is the square root of 2025?"</code> &mdash; should trigger <code>calculator</code>.</li>
+        <li><code>"Who teaches this course?"</code> &mdash; should trigger <code>knowledge_lookup</code> (if you included a course fact).</li>
+        <li><code>"Take that number from question 2 and multiply it by 3."</code> &mdash; tests context retention across turns. Should trigger <code>calculator</code> with the previous result.</li>
+        <li><code>"What is the meaning of life?"</code> &mdash; should NOT trigger any tool. The model should answer directly.</li>
+      </ol>
+    </li>
+    <li>After all turns, print a summary: how many turns used tools, how many were direct answers, which tools were called.</li>
+  </ul>
+
+  <p><strong>Notes:</strong></p>
+  <ul>
+    <li>Question 4 is the critical test. The model needs to remember that the answer to question 2 was 45 and construct the expression <code>"45 * 3"</code> to send to the calculator. If it fails, the conversation history may not be formatted correctly &mdash; go back to Cell 4 and check that all messages (including tool results) are in the history.</li>
+    <li>Question 5 tests that the model does NOT call a tool when none is needed. If it calls <code>knowledge_lookup("meaning of life")</code>, your tool descriptions may be too broad.</li>
+    <li>Reset <code>chat_history = []</code> at the top of this cell so you start with a clean conversation.</li>
+  </ul>
+</div>
+<div class="tip">
+  <strong>Markdown cell:</strong> Did the model correctly decide when to use tools and when to answer directly? Were there any cases where it made the wrong decision? What would you change about the tool descriptions to improve its routing?
+</div>
+
+<hr>
+
+<!-- ==================== PART 3: ANALYSIS ==================== -->
+<h2>Part 3: Analysis and Edge Cases</h2>
+
+<!-- CELL 6 -->
+<pre># Cell 6: Tool Routing Analysis</pre>
+<div class="section-card">
+  <p><strong>What it does:</strong> Tests the model's tool-routing accuracy with a batch of 10 questions, some requiring tools and some not. Measures how often the model routes correctly.</p>
+
+  <p><strong>Takes in:</strong> <code>agent_turn</code>.</p>
+
+  <p><strong>Must produce:</strong></p>
+  <ul>
+    <li><code>test_questions</code>: a list of 10 tuples, each containing <code>(question_text, expected_tool_or_none)</code>. Include:
+      <ul>
+        <li>3 questions that should use <code>calculator</code> (varying difficulty: simple arithmetic, a word problem, a unit conversion).</li>
+        <li>2 questions that should use <code>get_datetime</code> (e.g., "What day of the week is it?", "How many days until Friday?").</li>
+        <li>2 questions that should use <code>knowledge_lookup</code>.</li>
+        <li>3 questions that should NOT use any tool (general knowledge, opinion, creative).</li>
+      </ul>
+    </li>
+    <li>Run each question in a fresh conversation (reset history each time). Log which tool was called (or "none").</li>
+    <li><code>routing_accuracy</code>: float, the fraction of questions where the model called the expected tool (or correctly used no tool).</li>
+    <li>A summary table showing each question, expected tool, actual tool, and correct/incorrect.</li>
+  </ul>
+
+  <p><strong>Notes:</strong> The model won't be perfect. Some questions are ambiguous (e.g., "How many days until Friday?" could be answered with <code>get_datetime</code> + <code>calculator</code>, or the model might just count in its head). Score generously &mdash; the point is to understand the routing patterns, not to hit 100%.</p>
+</div>
+<div class="tip">
+  <strong>Markdown cell:</strong> What was your routing accuracy? Were the errors predictable? For the questions where the model made the wrong routing decision, could you rewrite the tool description to fix it without breaking something else?
+</div>
+
+<!-- CELL 7 -->
+<pre># Cell 7: Error Handling and Edge Cases</pre>
+<div class="section-card">
+  <p><strong>What it does:</strong> Tests what happens when tools fail or return unexpected results. A robust agent handles errors gracefully instead of crashing.</p>
+
+  <p><strong>Takes in:</strong> <code>agent_turn</code>.</p>
+
+  <p><strong>Must produce:</strong></p>
+  <ul>
+    <li>Test these edge cases (fresh conversation for each):
+      <ol>
+        <li><code>"What is 1 divided by 0?"</code> &mdash; the calculator should return an error. Does the model explain the error to the user?</li>
+        <li><code>"Tell me about quantum computing."</code> &mdash; not in the knowledge base. Does the model handle the "not found" response and fall back to its own knowledge?</li>
+        <li><code>"Calculate the answer to life, the universe, and everything, then look it up in the knowledge base."</code> &mdash; a request that could chain two tools. Does the model attempt both?</li>
+        <li><code>"What is sqrt(-1)?"</code> &mdash; the calculator may raise an error for complex numbers. How does the model respond?</li>
+      </ol>
+    </li>
+    <li>Print each test case, the tool call(s) made, the tool result, and the model's final response.</li>
+    <li>Print a summary: how many edge cases were handled gracefully vs. resulted in confusing outputs.</li>
+  </ul>
+
+  <p><strong>Notes:</strong> "Handled gracefully" means the model acknowledged the error and gave a useful response. "Confusing" means the model ignored the error, hallucinated an answer, or produced gibberish. If your agent loop crashes on an error instead of returning it to the model, go back to Cell 4 and add a try/except around the tool execution.</p>
+</div>
+<div class="tip">
+  <strong>Markdown cell:</strong> How did the model handle tool errors? Did it acknowledge the failure, or did it try to cover it up? What does this tell you about the model's relationship to its tools &mdash; does it trust them unconditionally?
+</div>
+
+<hr>
+
+<!-- ==================== BONUS ==================== -->
+<h2>Bonus: Interactive Chat Mode (10 Extra Credit Points)</h2>
+
+<pre># Bonus Cell: Interactive Agent</pre>
+<div class="section-card">
+  <p><strong>What it does:</strong> Turns your agent into an interactive chatbot that accepts user input from a text box in Colab and responds in real time, with tool-call logging visible as it works.</p>
+
+  <p><strong>Takes in:</strong> <code>agent_turn</code>.</p>
+
+  <p><strong>Must produce:</strong></p>
+  <ul>
+    <li>An input loop using <code>input()</code> or Colab's <code>widgets</code> that:
+      <ul>
+        <li>Accepts user messages.</li>
+        <li>Calls <code>agent_turn()</code>.</li>
+        <li>Displays the response with tool-call logs.</li>
+        <li>Continues until the user types <code>"quit"</code> or <code>"exit"</code>.</li>
+      </ul>
+    </li>
+    <li>Display conversation in a formatted way: user messages in one color, agent responses in another, tool calls highlighted.</li>
+  </ul>
+
+  <p><strong>Notes:</strong> This is the ideal demo mode. Instead of running scripted questions, you can take live questions from the audience during your demo. If you implement this, use it as your demo format &mdash; it's much more engaging than running pre-written cells.</p>
+</div>
+
+<hr>
+
+<!-- ========== DEMO PREP ========== -->
+<h2>Demo Prep</h2>
+
+<div class="section-card">
+  <p>Your Module 6 demo is a <strong>three- to five-minute</strong> live walkthrough during Tuesday class (May 5, 5:30 PM). Your notebook is your demo. Review the assignment sheet for what to cover and the rubric criteria.</p>
+  <p>The demo should show:</p>
+  <ol>
+    <li>The agent answering a question that requires a tool (and the tool-call log showing which tool was called).</li>
+    <li>The agent answering a question that does NOT require a tool.</li>
+    <li>A multi-turn exchange where the model uses a previous answer in a new tool call (the "take that number and multiply it" pattern).</li>
+    <li>A live modification: change a tool description, add a new fact to the knowledge base, or ask a question designed to break the routing. Re-run and explain what happened.</li>
+  </ol>
+  <p>The demo rubric awards 25 points for the live modification. The interactive chat mode (bonus cell) makes the demo much easier &mdash; consider implementing it even if you skip the extra credit reflection.</p>
+</div>
+
+</body>
+</html>

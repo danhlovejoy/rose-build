@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Module 7: Portfolio Prep Guide | AIML 2003</title>
+<link rel="stylesheet" href="../../course-styles.css">
+</head>
+<body>
+
+<h1>Portfolio Prep Guide</h1>
+<p class="subtitle">How to build a five- to seven-minute presentation from a semester of work</p>
+
+<!-- ========== FRAMING ========== -->
+<div class="framing-box">
+  <p><strong>What this is:</strong> Your final portfolio presentation is not a summary of every lab you did. It is a curated selection of your best work, tied together by a narrative about what you learned. Think of it as your answer to the question: &ldquo;You spent eight weeks studying NLP. What can you do now that you couldn't do before, and how do you know?&rdquo;</p>
+</div>
+
+<!-- ========== CHOOSING PROJECTS ========== -->
+<h2>Step 1: Choose 2&ndash;3 Projects</h2>
+
+<div class="section-card">
+  <p>You built projects across six modules. You do not need to cover all of them. Pick 2&ndash;3 that best demonstrate your growth and understanding. Good selection criteria:</p>
+  <ul>
+    <li><strong>Range:</strong> Don't pick three projects from the same category. Show breadth &mdash; one early project and one late project shows growth. Mixing a pipeline project (RAG, agents) with an analysis project (evaluation, bias) shows versatility.</li>
+    <li><strong>Depth:</strong> Pick projects where you have something interesting to say. The project where you struggled and learned something is often more compelling than the one that worked perfectly on the first try.</li>
+    <li><strong>Results:</strong> Pick projects with strong visual outputs. Charts, scorecards, conversation logs, and failure analyses are easier to present than code.</li>
+  </ul>
+  <p>Your NLP projects, by module:</p>
+  <table class="overview-table" style="margin-top:0.75rem;">
+    <thead><tr><th>Module</th><th>Project</th><th>Good for showing...</th></tr></thead>
+    <tbody>
+      <tr><td>2</td><td>TF-IDF Sentiment Analysis</td><td>Foundational NLP, hand-crafted features, baseline comparisons</td></tr>
+      <tr><td>3</td><td>Semantic Search with Embeddings</td><td>Embeddings, cosine similarity, the jump from bag-of-words to meaning</td></tr>
+      <tr><td>4</td><td>Chat with a PDF (RAG)</td><td>Full pipeline, chunking, vector databases, hallucination testing</td></tr>
+      <tr><td>5</td><td>Evaluating LLMs</td><td>Evaluation methodology, bias detection, LLM-as-judge</td></tr>
+      <tr><td>6</td><td>Simple Agents</td><td>Function calling, agent loops, tool routing, error handling</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- ========== STRUCTURING THE NARRATIVE ========== -->
+<h2>Step 2: Structure Your Narrative</h2>
+
+<div class="section-card">
+  <p>A portfolio presentation has three parts. Budget your time accordingly.</p>
+  <ol>
+    <li style="margin-bottom:0.75rem;"><strong>The arc (1 minute):</strong> Open with where you started and where you ended up. What could you do in Week 1? What can you do now? The arc gives the audience a frame for everything that follows. Don't list every module &mdash; describe the trajectory. Example: &ldquo;In Week 2, I didn't know what an embedding was. By Week 6, I built an agent that uses embeddings to decide when to call external tools.&rdquo;</li>
+    <li style="margin-bottom:0.75rem;"><strong>The projects (3&ndash;4 minutes):</strong> For each project, cover three things:
+      <ul>
+        <li><em>What you built:</em> One sentence. &ldquo;A RAG pipeline that answers questions about PDF documents.&rdquo;</li>
+        <li><em>What you learned:</em> The technical insight, not the code. &ldquo;I learned that chunk size controls the tradeoff between precision and context, and that a well-written system prompt is the difference between a model that hallucinates and one that says 'I don't know.'&rdquo;</li>
+        <li><em>What you'd change:</em> Show critical thinking. &ldquo;My chunking was fixed-size with overlap. If I rebuilt it, I'd use semantic chunking to keep paragraph boundaries intact.&rdquo;</li>
+      </ul>
+      <p>Show a visual for each project: the bias scorecard, the hallucination test results, the agent conversation log. The visual is what the audience remembers.</p>
+    </li>
+    <li style="margin-bottom:0.75rem;"><strong>The reflection (1 minute):</strong> Close with what you'd tell someone starting this course. What's the most important thing you learned that isn't a technical skill? This is where the best presentations distinguish themselves &mdash; the students who connect technical work to bigger ideas (about AI's limitations, about evaluation mattering more than performance, about the gap between demos and deployed systems) leave a lasting impression.</li>
+  </ol>
+</div>
+
+<!-- ========== VISUAL AIDS ========== -->
+<h2>Step 3: Build Your Visual Aids</h2>
+
+<div class="section-card">
+  <p>You can present from slides, your notebooks, or a mix. Each format has tradeoffs:</p>
+  <ul>
+    <li><strong>Slides only:</strong> Clean and controlled. Good for narrative flow. Bad if you want to show live code or interactive outputs.</li>
+    <li><strong>Notebook only:</strong> Authentic and detailed. Good for showing real outputs. Bad for pacing &mdash; scrolling through a notebook is slow and easy to lose the audience.</li>
+    <li><strong>Mix (recommended):</strong> Use slides for your arc and reflection. Switch to the notebook for project screenshots or live cells. Practice the transitions so they're smooth.</li>
+  </ul>
+  <p>If you use slides, keep them minimal: one key visual per slide, no walls of text, no bullet points you read aloud. The slides support your talk; they don't replace it.</p>
+</div>
+
+<!-- ========== PRACTICE ========== -->
+<h2>Step 4: Practice and Time Yourself</h2>
+
+<div class="section-card">
+  <p>The portfolio presentation window is <strong>five to seven minutes</strong> (rubric window: 4:30&ndash;7:30). Going under five minutes suggests you haven't prepared enough. Going over seven minutes suggests you haven't practiced enough. Both cost points.</p>
+  <ul>
+    <li>Practice at least twice before Tuesday. Time yourself with a stopwatch.</li>
+    <li>The first run-through is always too long. Cut material. The second run-through reveals the rough transitions. Smooth them.</li>
+    <li>Thursday lab (May 7) is a dedicated practice session. Use it. Getting feedback before the real presentation is the single most effective thing you can do.</li>
+  </ul>
+</div>
+
+<div class="warning" style="margin-top:1rem;">
+  <strong>Common pitfalls:</strong> Don't try to cover every module. Don't read code aloud. Don't spend three minutes on setup and run out of time before your best project. Don't skip the reflection &mdash; it's where the presentation comes together. And don't wing it. Practice.
+</div>
+
+</body>
+</html>
