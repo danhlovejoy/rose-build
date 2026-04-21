@@ -3,8 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Attention: How Context Changes Meaning &mdash; AIML 2003</title>
-<script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+<title>Attention: How Every Word Reaches Across the Sentence &mdash; AIML 2003 / 2013</title>
 <style>
   :root {
     --primary: #1a3a5c;
@@ -21,6 +20,14 @@
     --purple: #5e35b1;
     --purple-bg: #ede7f6;
     --orange: #e65100;
+
+    /* demo-specific: QKV role colors */
+    --q-color: #1565c0;
+    --q-bg: #e3f2fd;
+    --k-color: #2e7d32;
+    --k-bg: #e8f5e9;
+    --v-color: #5e35b1;
+    --v-bg: #ede7f6;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
@@ -93,496 +100,756 @@
     font-family: "SF Mono", Consolas, monospace; font-size: 0.95rem;
   }
 
-  .vec-table { width: 100%; border-collapse: collapse; font-size: 0.88rem; margin: 1rem 0; }
-  .vec-table th {
-    text-align: center; padding: 0.5rem 0.6rem;
-    background: var(--primary); color: #fff; font-size: 0.8rem;
-    text-transform: uppercase; letter-spacing: 0.04em;
-  }
-  .vec-table th:first-child { text-align: left; }
-  .vec-table td {
-    padding: 0.5rem 0.6rem; border-bottom: 1px solid var(--border);
-    text-align: center; font-family: "SF Mono", Consolas, monospace; font-size: 0.85rem;
-  }
-  .vec-table td:first-child {
-    text-align: left; font-family: inherit; font-weight: 600; color: var(--primary);
-  }
-  .vec-table tr:hover { background: #eef3fa; }
-  .vec-table tr.active-row { background: #dbe8f5; }
-  .vec-table .cell-hot { background: #c8e6c9; color: #1b5e20; font-weight: 700; }
-  .vec-table .cell-warm { background: #fff9c4; color: #f57f17; font-weight: 600; }
-  .vec-table .cell-zero { background: #f5f5f5; color: #bbb; }
-
   /* Sentence word tokens */
-  .sentence-display { display: flex; gap: 0.5rem; flex-wrap: wrap; margin: 1rem 0; align-items: stretch; }
+  .sentence-display {
+    display: flex; gap: 0.5rem; flex-wrap: wrap; margin: 1rem 0;
+    align-items: center; justify-content: center;
+  }
   .sentence-word {
-    padding: 0.6rem 1.2rem; border: 2px solid var(--border); border-radius: 8px;
+    padding: 0.6rem 1rem; border: 2px solid var(--border); border-radius: 8px;
     background: #fff; cursor: pointer; font-family: inherit; font-size: 1rem;
-    font-weight: 600; color: var(--text); transition: border-color 0.15s, background 0.15s;
-    text-align: center; min-width: 80px; position: relative;
+    font-weight: 600; color: var(--text); transition: all 0.25s;
+    text-align: center; min-width: 60px; position: relative;
   }
   .sentence-word:hover { border-color: var(--primary); }
-  .sentence-word.active {
-    border-color: var(--primary); background: var(--light-bg); color: var(--primary);
-    box-shadow: 0 0 0 3px rgba(26,58,92,0.15);
-  }
-  .sentence-word .attn-bar {
-    position: absolute; bottom: 0; left: 0; right: 0; height: 4px;
-    border-radius: 0 0 6px 6px; background: var(--accent); transition: opacity 0.2s;
+  .sentence-word.static { cursor: default; }
+  .sentence-word.static:hover { border-color: var(--border); }
+  .sentence-word.query {
+    border-color: var(--primary); background: var(--primary); color: #fff;
+    box-shadow: 0 0 0 3px rgba(26,58,92,0.2);
   }
   .sentence-word .attn-label {
     display: block; font-size: 0.7rem; color: var(--muted); margin-top: 0.2rem;
     font-family: "SF Mono", Consolas, monospace;
   }
+  .sentence-word.query .attn-label { color: rgba(255,255,255,0.8); }
 
-  /* QKV diagram */
+  /* Explain box */
+  .explain-box {
+    background: var(--light-bg); border-left: 4px solid var(--primary);
+    padding: 1rem 1.25rem; margin-top: 1rem; font-size: 0.9rem;
+    min-height: 50px; transition: all 0.3s;
+  }
+  .explain-box strong {
+    color: var(--primary); font-family: "SF Mono", Consolas, monospace;
+    font-size: 0.8rem; letter-spacing: 0.03em;
+  }
+
+  /* Score bars */
+  .score-list { display: flex; flex-direction: column; gap: 8px; margin: 1rem 0; }
+  .score-row {
+    display: grid; grid-template-columns: 100px 1fr 50px;
+    gap: 12px; align-items: center; font-size: 0.9rem;
+  }
+  .score-word {
+    font-weight: 600; text-align: right; color: var(--primary);
+    font-size: 0.9rem;
+  }
+  .score-bar-bg {
+    background: var(--light-bg); height: 20px; border-radius: 4px;
+    border: 1px solid var(--border); position: relative; overflow: hidden;
+  }
+  .score-bar {
+    height: 100%; border-radius: 3px;
+    background: linear-gradient(90deg, #a5d6a7, var(--accent));
+    transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    width: 0;
+  }
+  .score-val {
+    font-family: "SF Mono", Consolas, monospace;
+    font-size: 0.8rem; color: var(--muted); text-align: right;
+  }
+
+  /* QKV cards */
   .qkv-row { display: flex; gap: 1.5rem; justify-content: center; flex-wrap: wrap; margin: 1.5rem 0; }
   .qkv-card {
-    flex: 1; min-width: 200px; max-width: 280px; padding: 1.25rem;
-    border-radius: 8px; text-align: center;
+    flex: 1; min-width: 200px; max-width: 300px; padding: 1.25rem;
+    border-radius: 8px; text-align: center; cursor: pointer;
+    transition: transform 0.15s, box-shadow 0.15s;
   }
+  .qkv-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+  .qkv-card.active { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
   .qkv-card h3 { margin-bottom: 0.4rem; font-size: 1.1rem; }
   .qkv-card p { font-size: 0.85rem; margin: 0; line-height: 1.5; }
-  .qkv-card.query { background: #e3f2fd; border: 2px solid #1565c0; }
-  .qkv-card.query h3 { color: #1565c0; }
-  .qkv-card.key { background: var(--pos-bg); border: 2px solid var(--accent); }
-  .qkv-card.key h3 { color: var(--accent); }
-  .qkv-card.value { background: var(--purple-bg); border: 2px solid var(--purple); }
-  .qkv-card.value h3 { color: var(--purple); }
+  .qkv-card.q-card { background: var(--q-bg); border: 2px solid var(--q-color); }
+  .qkv-card.q-card h3 { color: var(--q-color); }
+  .qkv-card.k-card { background: var(--k-bg); border: 2px solid var(--k-color); }
+  .qkv-card.k-card h3 { color: var(--k-color); }
+  .qkv-card.v-card { background: var(--v-bg); border: 2px solid var(--v-color); }
+  .qkv-card.v-card h3 { color: var(--v-color); }
+
+  .qkv-detail {
+    margin-top: 1rem; padding: 1rem 1.25rem; border-radius: 6px;
+    font-size: 0.9rem; display: none;
+  }
+  .qkv-detail.visible { display: block; }
+  .qkv-detail.q-detail { background: var(--q-bg); border: 1px solid var(--q-color); }
+  .qkv-detail.k-detail { background: var(--k-bg); border: 1px solid var(--k-color); }
+  .qkv-detail.v-detail { background: var(--v-bg); border: 1px solid var(--v-color); }
+
+  /* Pipeline steps */
+  .pipeline-steps { display: flex; flex-direction: column; gap: 0; margin: 1.5rem 0; }
+  .pipeline-step {
+    display: grid; grid-template-columns: 48px 1fr; gap: 1rem;
+    padding: 1rem 1rem 1.25rem; border: 1px solid var(--border); border-bottom: none;
+    background: #fff;
+  }
+  .pipeline-step:first-child { border-radius: 8px 8px 0 0; }
+  .pipeline-step:last-child { border-bottom: 1px solid var(--border); border-radius: 0 0 8px 8px; }
+  .pipeline-step .step-num {
+    width: 36px; height: 36px; line-height: 36px; border-radius: 50%;
+    background: var(--primary); color: #fff;
+    text-align: center; font-weight: 700; font-size: 0.85rem;
+  }
+  .pipeline-step .step-text h4 { font-size: 0.95rem; color: var(--primary); margin-bottom: 0.3rem; }
+  .pipeline-step .step-text p { font-size: 0.88rem; margin: 0; color: var(--text); line-height: 1.55; }
+
+  /* Head tabs */
+  .head-tabs { display: flex; gap: 0; margin: 1rem 0 0.5rem; border-bottom: 2px solid var(--border); }
+  .head-tab {
+    padding: 0.5rem 1rem; font-size: 0.82rem; font-weight: 600;
+    cursor: pointer; border: none; background: none; font-family: inherit;
+    color: var(--muted); border-bottom: 3px solid transparent;
+    margin-bottom: -2px; transition: color 0.15s, border-color 0.15s;
+  }
+  .head-tab:hover { color: var(--text); }
+  .head-tab.active { color: var(--primary); border-bottom-color: var(--primary); }
+  .head-tab.active[data-head="coref"] { color: #1565c0; border-bottom-color: #1565c0; }
+  .head-tab.active[data-head="syntax"] { color: var(--accent); border-bottom-color: var(--accent); }
+  .head-tab.active[data-head="proximity"] { color: var(--orange); border-bottom-color: var(--orange); }
+  .head-tab.active[data-head="descriptor"] { color: var(--purple); border-bottom-color: var(--purple); }
+
+  .head-desc {
+    font-size: 0.85rem; color: var(--muted); margin-bottom: 1rem;
+    padding: 0.5rem 0; min-height: 2.5rem;
+  }
+
+  /* Combined view */
+  .combined-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 0.75rem; margin: 1rem 0;
+  }
+  .combined-card {
+    background: var(--light-bg); border: 1px solid var(--border); border-radius: 8px;
+    padding: 0.75rem; text-align: center;
+  }
+  .combined-card .cc-head {
+    font-size: 0.7rem; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.04em; margin-bottom: 0.3rem;
+  }
+  .combined-card .cc-word { font-size: 1.1rem; font-weight: 700; color: var(--primary); }
+  .combined-card .cc-pct {
+    font-size: 0.75rem; color: var(--muted);
+    font-family: "SF Mono", Consolas, monospace;
+  }
+  .combined-card[data-head="coref"] { border-left: 3px solid #1565c0; }
+  .combined-card[data-head="syntax"] { border-left: 3px solid var(--accent); }
+  .combined-card[data-head="proximity"] { border-left: 3px solid var(--orange); }
+  .combined-card[data-head="descriptor"] { border-left: 3px solid var(--purple); }
 
   .footer {
     text-align: center; padding: 2rem 0; color: var(--muted); font-size: 0.85rem;
     border-top: 1px solid var(--border); margin-top: 3rem;
+  }
+
+  @media (max-width: 640px) {
+    .hero { padding: 1.5rem 1rem; }
+    .hero h1 { font-size: 1.4rem; }
+    .container { padding: 0 1rem 2rem; }
+    .sentence-word { padding: 0.4rem 0.6rem; font-size: 0.85rem; min-width: 40px; }
+    .score-row { grid-template-columns: 80px 1fr 40px; }
+    .qkv-card { min-width: 160px; }
   }
 </style>
 </head>
 <body>
 
 <div class="hero">
-  <h1>Attention: How Context Changes Meaning</h1>
-  <p>AIML 2003 &bull; Interactive Walkthrough</p>
-  <p class="hl">The same word gets a different vector depending on the words around it.</p>
+  <h1>Attention: How Every Word Reaches Across the Sentence</h1>
+  <p>AIML 2003 / 2013 &bull; Interactive Demo</p>
+  <p class="hl">Click a word. See which other words it pays attention to &mdash; and how swapping one adjective rewires the whole sentence.</p>
 </div>
 
 <div class="container">
 
-<!-- ========== REVIEW: DOT PRODUCTS ========== -->
-<div class="card" style="margin-top:1rem;">
-  <strong>Quick review: dot products</strong>
-  <p style="margin:0.5rem 0 0;">A dot product multiplies two vectors element-by-element and sums the results. If two vectors share high values in the same dimensions, the dot product is large. If they have nothing in common, it&rsquo;s near zero.</p>
-  <div class="eq-box" style="margin:0.75rem 0;">
-    dot([0.9, 0.0, 0.3], [0.3, 0.5, 0.7]) = (0.9 &times; 0.3) + (0.0 &times; 0.5) + (0.3 &times; 0.7) = 0.27 + 0 + 0.21 = <strong>0.48</strong>
-  </div>
-  <p style="margin:0;">You used dot products in the cosine similarity demo. Cosine similarity normalizes by vector length; the raw dot product does not. Attention uses raw dot products because the magnitude carries useful information &mdash; longer vectors (stronger signals) should contribute more.</p>
-</div>
-
 <!-- ================================================================
-     STAGE 1: ONE WORD, TWO MEANINGS
+     STAGE 1: THE PROBLEM
      ================================================================ -->
 <div class="stage">
-  <div class="stage-line"><span class="stage-num">1</span><h2>One Word, Two Meanings</h2></div>
-  <p>Word2Vec and similar models assign one vector per word. &ldquo;Bank&rdquo; gets the same list of numbers whether it appears next to &ldquo;river&rdquo; or &ldquo;account.&rdquo; That&rsquo;s a problem. The two meanings share a spelling but almost nothing else.</p>
-
-  <div class="card">
-    <strong>Two sentences, same word</strong>
-    <p style="margin:0.5rem 0;"><span style="font-size:1.1rem;">&ldquo;The <strong>river bank</strong> was steep.&rdquo;</span></p>
-    <p style="margin:0;"><span style="font-size:1.1rem;">&ldquo;The <strong>bank account</strong> was empty.&rdquo;</span></p>
-  </div>
-
-  <p>Here is the single static vector for &ldquo;bank&rdquo; in our toy space. It scores moderately on both Water and Money because the vector tries to cover both meanings at once. It commits to neither.</p>
-
-  <div id="s1Chart" style="width:100%; height:260px;"></div>
-
-  <div class="warn-tip">
-    <strong>One vector cannot represent two meanings.</strong> A system that encodes &ldquo;bank&rdquo; the same way regardless of context will confuse river banks with financial institutions. Something needs to look at the surrounding words and adjust.
-  </div>
-</div>
-
-<div class="arrow-box">&darr;</div>
-
-<!-- ================================================================
-     STAGE 2: WHICH WORDS MATTER?
-     ================================================================ -->
-<div class="stage">
-  <div class="stage-line"><span class="stage-num">2</span><h2>Which Words Matter?</h2></div>
-  <p>The fix: before producing a final vector for &ldquo;bank,&rdquo; look at every other word in the sentence and ask how relevant it is. You already know how to measure relevance between two vectors. Take the dot product. A higher dot product means the vectors share more structure, which means the words are more related in this context.</p>
-  <p>After computing dot products, normalize them with softmax so they sum to 1.0. These normalized scores are the <em>attention weights</em>: how much each word should influence the representation of the word you&rsquo;re encoding.</p>
-
-  <p>Here are the toy vectors. For this demo, we use just the content words (real transformers process every token, including &ldquo;the&rdquo; and &ldquo;was&rdquo;).</p>
-
-  <table class="vec-table">
-    <thead><tr><th>Word</th><th>Water</th><th>Money</th><th>Edge</th><th>Living</th><th>Action</th><th>Object</th></tr></thead>
-    <tbody id="s2VecBody"></tbody>
-  </table>
+  <div class="stage-line"><span class="stage-num">1</span><h2>The Problem: Long-Distance Relationships</h2></div>
+  <p>Read this sentence: &ldquo;The trophy didn&rsquo;t fit in the suitcase because <em>it</em> was too big.&rdquo;</p>
+  <p>What does &ldquo;it&rdquo; refer to &mdash; the trophy or the suitcase? You resolve this by scanning backward through the sentence. Toggle the last word and the referent flips.</p>
 
   <div class="btn-group">
-    <button class="btn btn-primary" id="s2BtnNature" onclick="selectS2Sentence('nature')">river &middot; bank &middot; fish</button>
-    <button class="btn btn-accent" id="s2BtnFinance" onclick="selectS2Sentence('finance')">bank &middot; account &middot; deposit</button>
+    <button class="btn btn-primary" id="s1BtnBig" onclick="toggleSentence('big')">too big (trophy)</button>
+    <button class="btn btn-outline" id="s1BtnSmall" onclick="toggleSentence('small')">too small (suitcase)</button>
   </div>
 
-  <p style="font-size:0.88rem; color:var(--muted);">Click a word below to see what it attends to:</p>
-  <div class="sentence-display" id="s2Sentence"></div>
-
-  <div class="eq-box" id="s2Eq" style="display:none;"></div>
-
-  <div id="s2Heatmap" style="width:100%; height:320px;"></div>
-
-  <div class="tip" id="s2Tip" style="display:none;">
-    <strong>Softmax weights always sum to 1.0.</strong> Each word distributes its full attention across the sentence. A word that attends strongly to one neighbor necessarily attends less to the others. The attention pattern for &ldquo;bank&rdquo; shifts depending on which sentence it appears in &mdash; and that shift is what resolves the ambiguity.
-  </div>
-</div>
-
-<div class="arrow-box">&darr;</div>
-
-<!-- ================================================================
-     STAGE 3: THE WEIGHTED MIX
-     ================================================================ -->
-<div class="stage">
-  <div class="stage-line"><span class="stage-num">3</span><h2>The Weighted Mix</h2></div>
-  <p>Attention weights tell you how relevant each word is. Now use them. Multiply each word&rsquo;s vector by its attention weight and sum the results. The output is a new vector for &ldquo;bank&rdquo; that blends in context from the surrounding words.</p>
-
-  <div class="eq-box">
-    context(<strong>bank</strong>) = w<sub>1</sub> &times; v<sub>word1</sub> + w<sub>2</sub> &times; v<sub>word2</sub> + w<sub>3</sub> &times; v<sub>word3</sub>
-  </div>
-
-  <div class="btn-group">
-    <button class="btn btn-primary" id="s3BtnNature" onclick="selectS3Sentence('nature')">river &middot; bank &middot; fish</button>
-    <button class="btn btn-accent" id="s3BtnFinance" onclick="selectS3Sentence('finance')">bank &middot; account &middot; deposit</button>
-  </div>
-
-  <div id="s3ArithTable"></div>
-
-  <p>Now compare. The same word &ldquo;bank&rdquo; produces two different context vectors:</p>
-
-  <div id="s3CompareChart" style="width:100%; height:340px;"></div>
+  <div class="sentence-display" id="s1Sentence"></div>
 
   <div class="stats-row">
-    <div class="stat-card"><div class="val" id="s3WaterNature">&mdash;</div><div class="lbl">Water (nature)</div></div>
-    <div class="stat-card"><div class="val" id="s3MoneyNature">&mdash;</div><div class="lbl">Money (nature)</div></div>
-    <div class="stat-card"><div class="val" id="s3WaterFinance">&mdash;</div><div class="lbl">Water (finance)</div></div>
-    <div class="stat-card"><div class="val" id="s3MoneyFinance">&mdash;</div><div class="lbl">Money (finance)</div></div>
+    <div class="stat-card"><div class="val" id="s1TrophyPct">&mdash;</div><div class="lbl">&ldquo;it&rdquo; &rarr; trophy</div></div>
+    <div class="stat-card"><div class="val" id="s1SuitcasePct">&mdash;</div><div class="lbl">&ldquo;it&rdquo; &rarr; suitcase</div></div>
+  </div>
+
+  <div class="warn-tip">
+    <strong>Early models had no mechanism for this.</strong> They processed words sequentially, passing a fixed-size state vector forward. By the time a pronoun appeared 8 tokens later, the noun it referred to had often decayed out of that state.
+  </div>
+</div>
+
+<div class="arrow-box">&darr;</div>
+
+<!-- ================================================================
+     STAGE 2: ATTENTION IN ACTION
+     ================================================================ -->
+<div class="stage">
+  <div class="stage-line"><span class="stage-num">2</span><h2>Attention in Action</h2></div>
+  <p>Attention scrapped the relay. Instead, every word scores every other word for relevance in a single pass. Click any word below to see its scores. Brighter highlight means more attention.</p>
+
+  <p style="font-size:0.85rem; color:#656d76; font-family:'SF Mono', Consolas, monospace;">Click any word:</p>
+  <div class="sentence-display" id="s2Sentence"></div>
+
+  <div class="explain-box" id="s2Explain">
+    <strong>TRY IT &rarr;</strong> Click &ldquo;it&rdquo; to see how the model figures out what &ldquo;it&rdquo; refers to by looking at surrounding words.
   </div>
 
   <div class="tip">
-    <strong>Context resolved the ambiguity.</strong> In the nature sentence, the context vector for &ldquo;bank&rdquo; scores high on Water and low on Money. In the finance sentence, the opposite. The surrounding words pulled the representation in different directions. That pull is attention.
+    <strong>Position 12 reaches position 2 in one step.</strong> The 2017 &ldquo;Attention Is All You Need&rdquo; paper replaced sequential state-passing with this all-pairs scoring.
   </div>
 </div>
 
 <div class="arrow-box">&darr;</div>
 
 <!-- ================================================================
-     STAGE 4: PREVIEW — Q, K, V
+     STAGE 3: QUERY, KEY, VALUE
      ================================================================ -->
 <div class="stage">
-  <div class="stage-line"><span class="stage-num">4</span><h2>Preview: Query, Key, Value</h2></div>
-  <p>In Stages 2 and 3, we used the raw word vectors for everything: to compute relevance scores and to mix into the output. Real transformers don&rsquo;t do that. They learn three separate projections of each word vector, each with a different job.</p>
+  <div class="stage-line"><span class="stage-num">3</span><h2>Three Roles Every Word Plays</h2></div>
+  <p>Each word gets multiplied by three learned weight matrices, producing three vectors with different jobs. Click each card to see what the role does.</p>
 
   <div class="qkv-row">
-    <div class="qkv-card query">
+    <div class="qkv-card q-card" onclick="showQKV('q')">
       <h3>Query (Q)</h3>
       <p>&ldquo;What am I looking for?&rdquo;</p>
-      <p style="margin-top:0.4rem; font-size:0.8rem; color:#1565c0;">Used by the word that&rsquo;s asking for context.</p>
     </div>
-    <div class="qkv-card key">
+    <div class="qkv-card k-card" onclick="showQKV('k')">
       <h3>Key (K)</h3>
-      <p>&ldquo;What do I contain?&rdquo;</p>
-      <p style="margin-top:0.4rem; font-size:0.8rem; color:var(--accent);">Used by each candidate word to advertise its content.</p>
+      <p>&ldquo;What do I advertise?&rdquo;</p>
     </div>
-    <div class="qkv-card value">
+    <div class="qkv-card v-card" onclick="showQKV('v')">
       <h3>Value (V)</h3>
       <p>&ldquo;What do I pass along?&rdquo;</p>
-      <p style="margin-top:0.4rem; font-size:0.8rem; color:var(--purple);">The actual information that gets mixed into the output.</p>
     </div>
   </div>
 
-  <p>In our demo, the same vector played all three roles. A real transformer multiplies each word vector by three learned weight matrices to produce Q, K, and V separately. The attention score becomes dot(Q, K) instead of dot(raw, raw), and the weighted sum uses V instead of the raw vectors.</p>
+  <div class="qkv-detail q-detail" id="qkvDetailQ">
+    <p>The word&rsquo;s question. For &ldquo;it,&rdquo; the query encodes something like &ldquo;I&rsquo;m a pronoun &mdash; which noun do I refer to?&rdquo; It gets compared against every key to produce scores.</p>
+  </div>
+  <div class="qkv-detail k-detail" id="qkvDetailK">
+    <p>The word&rsquo;s label. &ldquo;Trophy&rdquo; broadcasts a key encoding &ldquo;singular noun, physical object, potential referent.&rdquo; A high dot product between a query and this key produces a high attention score.</p>
+  </div>
+  <div class="qkv-detail v-detail" id="qkvDetailV">
+    <p>The payload. Once a word wins a high score, its value is what actually gets blended into the output. Values carry the semantic content forward; queries and keys are just the routing mechanism.</p>
+  </div>
 
-  <p>This separation is what makes attention trainable. The model can learn to search for one pattern (Q), advertise a different pattern (K), and pass along a third (V). Our toy demo used fixed vectors and got reasonable results; learned projections are what make the mechanism powerful enough for language.</p>
+  <div class="eq-box" style="margin-top:1.5rem;">
+    attention(Q, K, V) = softmax(Q &middot; K<sup>T</sup>) &times; V
+  </div>
 
-  <div class="card">
-    <strong>What changes with Q, K, V?</strong>
-    <p style="margin:0;">The core operation stays the same: dot products to measure relevance, softmax to normalize, weighted sum to mix. The difference is that the vectors fed into each step are specialized rather than shared. That specialization is learned during training on billions of sentences. The full mechanics are a separate demo.</p>
+  <div class="tip">
+    <strong>Query meets all keys; the best-matching keys let their values through.</strong> Because Q, K, and V are separate projections, the model can learn to search for one pattern (Q), advertise another (K), and transmit a third (V).
+  </div>
+</div>
+
+<div class="arrow-box">&darr;</div>
+
+<!-- ================================================================
+     STAGE 4: SCORE COMPUTATION
+     ================================================================ -->
+<div class="stage">
+  <div class="stage-line"><span class="stage-num">4</span><h2>The Arithmetic: From Scores to Weights</h2></div>
+  <p>Pick a word. Its Query is dot-producted against the Key of every word, producing raw scores. Softmax converts those scores into percentages that sum to 100%. The percentages control how much each Value contributes to the output.</p>
+
+  <div class="btn-group">
+    <button class="btn btn-primary" id="s4BtnIt" onclick="selectScoreWord(8)">it</button>
+    <button class="btn btn-outline" id="s4BtnTrophy" onclick="selectScoreWord(1)">trophy</button>
+    <button class="btn btn-outline" id="s4BtnFit" onclick="selectScoreWord(3)">fit</button>
+    <button class="btn btn-outline" id="s4BtnBig" onclick="selectScoreWord(11)">big</button>
+  </div>
+
+  <p id="s4QueryLabel" style="font-size:0.85rem; color:#656d76;">Attention scores when <strong>&ldquo;it&rdquo;</strong> queries the sentence:</p>
+  <div class="score-list" id="s4ScoreList"></div>
+
+  <div class="tip" style="margin-top:1.5rem;">
+    <strong>The weighted sum is the output.</strong> Each Value gets multiplied by its weight and summed. &ldquo;It&rdquo; ends up with a representation that&rsquo;s ~52% trophy and ~15% suitcase &mdash; the pronoun resolved in one step.
+  </div>
+</div>
+
+<div class="arrow-box">&darr;</div>
+
+<!-- ================================================================
+     STAGE 5: THE FULL PIPELINE
+     ================================================================ -->
+<div class="stage">
+  <div class="stage-line"><span class="stage-num">5</span><h2>The Full Pipeline</h2></div>
+  <p>Transformers stack dozens of attention layers and run multiple heads per layer. Here is what one layer does, end to end.</p>
+
+  <div class="pipeline-steps">
+    <div class="pipeline-step">
+      <div><span class="step-num">1</span></div>
+      <div class="step-text"><h4>Project into Q, K, V</h4><p>Each word&rsquo;s embedding (a single vector) gets multiplied by three separate weight matrices &mdash; W<sub>Q</sub>, W<sub>K</sub>, W<sub>V</sub> &mdash; producing three specialized vectors. The model learns these matrices during training. A word like &ldquo;it&rdquo; ends up with a Query that encodes &ldquo;I need a noun referent,&rdquo; while &ldquo;trophy&rdquo; gets a Key that says &ldquo;I am a referent.&rdquo;</p></div>
+    </div>
+    <div class="pipeline-step">
+      <div><span class="step-num">2</span></div>
+      <div class="step-text"><h4>Compute compatibility scores</h4><p>The current word&rsquo;s Query is dot-producted with every Key in the sentence, including its own. High dot product = strong match. For &ldquo;it&rdquo; querying &ldquo;trophy,&rdquo; the score is high because the pronoun&rsquo;s query aligns with the noun&rsquo;s key.</p></div>
+    </div>
+    <div class="pipeline-step">
+      <div><span class="step-num">3</span></div>
+      <div class="step-text"><h4>Normalize with softmax</h4><p>Softmax exponentiates each score and divides by the total, producing weights that are all positive and sum to 1.0. The highest score gets the largest share; the lowest gets a sliver but never zero.</p></div>
+    </div>
+    <div class="pipeline-step">
+      <div><span class="step-num">4</span></div>
+      <div class="step-text"><h4>Weighted sum of Values</h4><p>Each Value is scaled by its softmax weight and the results are summed. The output for &ldquo;it&rdquo; is a vector that&rsquo;s ~52% trophy, ~15% suitcase, and small fractions of everything else.</p></div>
+    </div>
+    <div class="pipeline-step">
+      <div><span class="step-num">5</span></div>
+      <div class="step-text"><h4>Repeat across heads and layers</h4><p>8&ndash;64 heads run in parallel per layer, each tracking a different relationship type (coreference, syntax, proximity, etc.). Their outputs concatenate and feed into the next layer. GPT-4 class models stack 80+ layers. Stage 6 below shows what four heads look like on this sentence.</p></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <strong>Parallelism is why this scales.</strong> Sequential models processed one word at a time; attention processes every pair at once. That tradeoff &mdash; more compute per step, but far fewer steps &mdash; is what made training on the entire internet feasible.
+  </div>
+</div>
+
+<div class="arrow-box">&darr;</div>
+
+<!-- ================================================================
+     STAGE 6: MULTI-HEAD ATTENTION
+     ================================================================ -->
+<div class="stage">
+  <div class="stage-line"><span class="stage-num">6</span><h2>Multiple Heads, Multiple Perspectives</h2></div>
+  <p>Stage 2 used one attention head. Real transformers run many heads in parallel, each trained to track a different type of relationship. Switch between heads below, then click any word to see how the attention pattern reorganizes.</p>
+
+  <div class="head-tabs" id="headTabs">
+    <button class="head-tab active" data-head="coref" onclick="selectHead('coref')">Coreference</button>
+    <button class="head-tab" data-head="syntax" onclick="selectHead('syntax')">Syntax</button>
+    <button class="head-tab" data-head="proximity" onclick="selectHead('proximity')">Proximity</button>
+    <button class="head-tab" data-head="descriptor" onclick="selectHead('descriptor')">Descriptor</button>
+  </div>
+
+  <div class="head-desc" id="headDesc">Tracks pronoun &rarr; noun and determiner &rarr; noun references. Click &ldquo;it&rdquo; to see it resolve to &ldquo;trophy.&rdquo;</div>
+
+  <p style="font-size:0.85rem; color:#656d76; font-family:'SF Mono', Consolas, monospace;">Click any word:</p>
+  <div class="sentence-display" id="s6Sentence"></div>
+
+  <div class="explain-box" id="s6Explain">
+    <strong>TRY IT &rarr;</strong> Click &ldquo;it&rdquo; under each head tab. The top-attended word changes every time.
+  </div>
+
+  <div class="card" style="margin-top:1.5rem;">
+    <strong>Combined view</strong>
+    <p style="margin:0.3rem 0 0.5rem; font-size:0.88rem; color:#656d76;" id="combinedLabel">Click a word above to see the combined view.</p>
+    <div class="combined-grid" id="combinedGrid"></div>
+  </div>
+
+  <div class="tip">
+    <strong>No single head sees the full picture.</strong> The coreference head resolves &ldquo;it&rdquo; &rarr; &ldquo;trophy&rdquo; but misses that &ldquo;big&rdquo; describes &ldquo;trophy&rdquo; (descriptor head&rsquo;s job). The syntax head binds &ldquo;didn&rsquo;t&rdquo; to &ldquo;fit&rdquo; but ignores pronouns. Concatenating all four heads yields a representation that encodes referents, grammar, locality, and description at once.
   </div>
 </div>
 
 </div><!-- /.container -->
 
 <div class="footer">
-  AIML 2003 &bull; Introduction to Natural Language Processing &bull; Module 4: Attention &bull; Spring 2026
+  AIML 2003 / 2013 &bull; Module 5: Attention &bull; Spring 2026
 </div>
 
 <!-- ================================================================
      JAVASCRIPT
      ================================================================ -->
 <script>
-// ── Data ──
+// ── Attention patterns (pedagogically designed, not real model outputs) ──
 
-const DIMS = ['Water', 'Money', 'Edge', 'Living', 'Action', 'Object'];
+const TOKENS_BIG = ['The', 'trophy', "didn\u2019t", 'fit', 'in', 'the', 'suitcase', 'because', 'it', 'was', 'too', 'big'];
+const TOKENS_SMALL = ['The', 'trophy', "didn\u2019t", 'fit', 'in', 'the', 'suitcase', 'because', 'it', 'was', 'too', 'small'];
 
-// assert: dot(0.3,0.5,0.7,0.0,0.1,0.6, 0.9,0.0,0.3,0.2,0.4,0.1) = 0.58
-// assert: dot(0.3,0.5,0.7,0.0,0.1,0.6, 0.3,0.5,0.7,0.0,0.1,0.6) = 1.20
-// assert: dot(0.3,0.5,0.7,0.0,0.1,0.6, 0.0,0.9,0.0,0.0,0.2,0.5) = 0.77
-// assert: dot(0.3,0.5,0.7,0.0,0.1,0.6, 0.7,0.0,0.0,0.9,0.3,0.1) = 0.30
-// assert: dot(0.3,0.5,0.7,0.0,0.1,0.6, 0.1,0.8,0.0,0.0,0.7,0.3) = 0.68
-const WORDS = {
-  'river':   [0.9, 0.0, 0.3, 0.2, 0.4, 0.1],
-  'bank':    [0.3, 0.5, 0.7, 0.0, 0.1, 0.6],
-  'account': [0.0, 0.9, 0.0, 0.0, 0.2, 0.5],
-  'fish':    [0.7, 0.0, 0.0, 0.9, 0.3, 0.1],
-  'deposit': [0.1, 0.8, 0.0, 0.0, 0.7, 0.3],
+// assert: sum(attentionBig[8]) = 1.0 (softmax output sums to 1)
+// assert: attentionBig[8][1] > attentionBig[8][6] (it attends more to trophy than suitcase when "big")
+const attentionBig = {
+  0:  [0.20, 0.55, 0.02, 0.02, 0.02, 0.03, 0.08, 0.01, 0.02, 0.02, 0.01, 0.02],
+  1:  [0.08, 0.30, 0.06, 0.12, 0.02, 0.03, 0.10, 0.02, 0.05, 0.03, 0.04, 0.15],
+  2:  [0.02, 0.15, 0.20, 0.35, 0.03, 0.02, 0.08, 0.02, 0.03, 0.04, 0.02, 0.04],
+  3:  [0.02, 0.25, 0.12, 0.20, 0.08, 0.04, 0.18, 0.02, 0.02, 0.02, 0.02, 0.03],
+  4:  [0.02, 0.08, 0.03, 0.15, 0.15, 0.10, 0.35, 0.02, 0.02, 0.02, 0.03, 0.03],
+  5:  [0.03, 0.05, 0.02, 0.03, 0.05, 0.20, 0.55, 0.01, 0.02, 0.01, 0.01, 0.02],
+  6:  [0.03, 0.18, 0.03, 0.15, 0.08, 0.08, 0.28, 0.03, 0.05, 0.02, 0.03, 0.04],
+  7:  [0.02, 0.08, 0.05, 0.12, 0.02, 0.02, 0.10, 0.15, 0.10, 0.08, 0.05, 0.21],
+  8:  [0.03, 0.52, 0.02, 0.04, 0.02, 0.02, 0.15, 0.03, 0.08, 0.03, 0.02, 0.04],
+  9:  [0.02, 0.12, 0.03, 0.05, 0.02, 0.02, 0.08, 0.08, 0.18, 0.15, 0.10, 0.15],
+  10: [0.02, 0.08, 0.02, 0.03, 0.02, 0.02, 0.05, 0.05, 0.10, 0.12, 0.15, 0.34],
+  11: [0.02, 0.32, 0.03, 0.05, 0.02, 0.02, 0.12, 0.05, 0.10, 0.08, 0.12, 0.07],
 };
 
-const SENTENCES = {
-  'nature':  ['river', 'bank', 'fish'],
-  'finance': ['bank', 'account', 'deposit'],
+// assert: attentionSmall[8][6] > attentionSmall[8][1] (it attends more to suitcase than trophy when "small")
+const attentionSmall = {
+  0:  [0.20, 0.55, 0.02, 0.02, 0.02, 0.03, 0.08, 0.01, 0.02, 0.02, 0.01, 0.02],
+  1:  [0.08, 0.30, 0.06, 0.12, 0.02, 0.03, 0.10, 0.02, 0.05, 0.03, 0.04, 0.15],
+  2:  [0.02, 0.15, 0.20, 0.35, 0.03, 0.02, 0.08, 0.02, 0.03, 0.04, 0.02, 0.04],
+  3:  [0.02, 0.25, 0.12, 0.20, 0.08, 0.04, 0.18, 0.02, 0.02, 0.02, 0.02, 0.03],
+  4:  [0.02, 0.08, 0.03, 0.15, 0.15, 0.10, 0.35, 0.02, 0.02, 0.02, 0.03, 0.03],
+  5:  [0.03, 0.05, 0.02, 0.03, 0.05, 0.20, 0.55, 0.01, 0.02, 0.01, 0.01, 0.02],
+  6:  [0.03, 0.18, 0.03, 0.15, 0.08, 0.08, 0.28, 0.03, 0.05, 0.02, 0.03, 0.04],
+  7:  [0.02, 0.05, 0.05, 0.12, 0.02, 0.02, 0.15, 0.15, 0.10, 0.08, 0.05, 0.19],
+  8:  [0.03, 0.14, 0.02, 0.04, 0.02, 0.03, 0.48, 0.03, 0.08, 0.03, 0.04, 0.06],
+  9:  [0.02, 0.08, 0.03, 0.05, 0.02, 0.02, 0.12, 0.08, 0.18, 0.15, 0.10, 0.15],
+  10: [0.02, 0.05, 0.02, 0.03, 0.02, 0.02, 0.08, 0.05, 0.10, 0.12, 0.15, 0.34],
+  11: [0.02, 0.12, 0.03, 0.05, 0.02, 0.02, 0.32, 0.05, 0.10, 0.08, 0.12, 0.07],
 };
+
+const explanations = {
+  0:  '<strong>THE &rarr;</strong> A determiner searching for its noun. Attention flows to &ldquo;trophy.&rdquo;',
+  1:  '<strong>TROPHY &rarr;</strong> Attends to itself, to &ldquo;big&rdquo; (its descriptor), and to &ldquo;fit&rdquo; and &ldquo;suitcase&rdquo; (the spatial relationship it participates in).',
+  2:  '<strong>DIDN&rsquo;T &rarr;</strong> A negation binding to its verb: &ldquo;fit.&rdquo;',
+  3:  '<strong>FIT &rarr;</strong> The verb needs a subject and an object. It attends to &ldquo;trophy&rdquo; (what&rsquo;s fitting) and &ldquo;suitcase&rdquo; (where it fits).',
+  4:  '<strong>IN &rarr;</strong> A preposition that needs an object. Strongest connection: &ldquo;suitcase.&rdquo;',
+  5:  '<strong>THE &rarr;</strong> Second determiner, reaching to its noun &mdash; &ldquo;suitcase.&rdquo;',
+  6:  '<strong>SUITCASE &rarr;</strong> Attends to itself, to &ldquo;trophy&rdquo; (the thing not fitting), and to &ldquo;fit&rdquo; (the action).',
+  7:  '<strong>BECAUSE &rarr;</strong> A causal connector reaching forward to the reason &mdash; the adjective at the end.',
+  8:  '<strong>IT &rarr;</strong> The pronoun resolves its reference. With &ldquo;big,&rdquo; it attends most to &ldquo;trophy&rdquo; (a big trophy wouldn&rsquo;t fit). With &ldquo;small,&rdquo; attention shifts to &ldquo;suitcase&rdquo; (a small suitcase can&rsquo;t hold it).',
+  9:  '<strong>WAS &rarr;</strong> A linking verb distributing attention across the subject (&ldquo;it&rdquo;) and description (&ldquo;big&rdquo;).',
+  10: '<strong>TOO &rarr;</strong> An intensifier attaching to the adjective it modifies.',
+  11: '<strong>BIG/SMALL &rarr;</strong> The adjective reaches back to what it describes. With &ldquo;big,&rdquo; attention flows to &ldquo;trophy.&rdquo; With &ldquo;small,&rdquo; to &ldquo;suitcase.&rdquo;',
+};
+
+
+// ── Multi-head attention patterns (Stage 6) ──
+// Each head tracks a different relationship type in the same sentence.
+// Only the "big" variant is shown for multi-head (pedagogical simplification).
+
+// assert: headCoref[8][1] > 0.5 (it strongly attends to trophy in coreference head)
+const headCoref = {
+  0:  [0.05, 0.70, 0.02, 0.02, 0.01, 0.02, 0.10, 0.01, 0.03, 0.01, 0.01, 0.02],
+  1:  [0.05, 0.40, 0.02, 0.03, 0.01, 0.02, 0.08, 0.02, 0.25, 0.02, 0.02, 0.08],
+  2:  [0.03, 0.10, 0.30, 0.25, 0.02, 0.02, 0.05, 0.02, 0.08, 0.05, 0.03, 0.05],
+  3:  [0.03, 0.30, 0.08, 0.20, 0.03, 0.03, 0.22, 0.02, 0.03, 0.02, 0.02, 0.02],
+  4:  [0.03, 0.05, 0.02, 0.08, 0.10, 0.05, 0.55, 0.02, 0.03, 0.02, 0.02, 0.03],
+  5:  [0.02, 0.05, 0.01, 0.02, 0.02, 0.05, 0.72, 0.01, 0.03, 0.02, 0.02, 0.03],
+  6:  [0.03, 0.20, 0.02, 0.10, 0.05, 0.05, 0.35, 0.02, 0.10, 0.02, 0.02, 0.04],
+  7:  [0.02, 0.08, 0.03, 0.05, 0.02, 0.02, 0.08, 0.20, 0.15, 0.05, 0.05, 0.25],
+  8:  [0.02, 0.62, 0.01, 0.02, 0.01, 0.02, 0.18, 0.02, 0.05, 0.01, 0.01, 0.03],
+  9:  [0.02, 0.08, 0.02, 0.03, 0.01, 0.02, 0.05, 0.05, 0.45, 0.10, 0.05, 0.12],
+  10: [0.02, 0.05, 0.01, 0.02, 0.01, 0.01, 0.03, 0.03, 0.08, 0.08, 0.15, 0.51],
+  11: [0.02, 0.45, 0.02, 0.03, 0.01, 0.02, 0.15, 0.03, 0.15, 0.03, 0.05, 0.04],
+};
+
+// assert: headSyntax[2][3] > 0.5 (didn't strongly attends to fit in syntax head)
+const headSyntax = {
+  0:  [0.25, 0.35, 0.05, 0.05, 0.03, 0.15, 0.05, 0.02, 0.02, 0.01, 0.01, 0.01],
+  1:  [0.15, 0.20, 0.12, 0.15, 0.05, 0.03, 0.05, 0.05, 0.03, 0.05, 0.04, 0.08],
+  2:  [0.02, 0.05, 0.10, 0.58, 0.03, 0.02, 0.05, 0.02, 0.03, 0.05, 0.02, 0.03],
+  3:  [0.02, 0.15, 0.18, 0.12, 0.20, 0.03, 0.18, 0.02, 0.03, 0.03, 0.02, 0.02],
+  4:  [0.02, 0.03, 0.03, 0.30, 0.10, 0.08, 0.32, 0.02, 0.03, 0.02, 0.02, 0.03],
+  5:  [0.08, 0.03, 0.02, 0.03, 0.08, 0.20, 0.45, 0.02, 0.02, 0.02, 0.02, 0.03],
+  6:  [0.03, 0.08, 0.03, 0.22, 0.15, 0.10, 0.18, 0.03, 0.03, 0.05, 0.05, 0.05],
+  7:  [0.02, 0.03, 0.08, 0.10, 0.02, 0.02, 0.05, 0.15, 0.05, 0.15, 0.08, 0.25],
+  8:  [0.02, 0.05, 0.03, 0.05, 0.02, 0.02, 0.05, 0.05, 0.10, 0.35, 0.08, 0.18],
+  9:  [0.02, 0.03, 0.03, 0.05, 0.02, 0.02, 0.03, 0.08, 0.15, 0.10, 0.12, 0.35],
+  10: [0.01, 0.02, 0.01, 0.02, 0.01, 0.01, 0.02, 0.02, 0.03, 0.10, 0.10, 0.65],
+  11: [0.02, 0.08, 0.03, 0.05, 0.02, 0.02, 0.05, 0.05, 0.05, 0.22, 0.30, 0.11],
+};
+
+// Proximity head: strong diagonal — each word attends mostly to immediate neighbors
+const headProximity = {
+  0:  [0.36, 0.26, 0.11, 0.03, 0.03, 0.03, 0.03, 0.03, 0.03, 0.03, 0.03, 0.03],
+  1:  [0.21, 0.33, 0.21, 0.09, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02],
+  2:  [0.08, 0.20, 0.30, 0.20, 0.08, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02],
+  3:  [0.02, 0.08, 0.20, 0.30, 0.20, 0.08, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02],
+  4:  [0.02, 0.02, 0.08, 0.20, 0.30, 0.20, 0.08, 0.02, 0.02, 0.02, 0.02, 0.02],
+  5:  [0.02, 0.02, 0.02, 0.08, 0.20, 0.30, 0.20, 0.08, 0.02, 0.02, 0.02, 0.02],
+  6:  [0.02, 0.02, 0.02, 0.02, 0.08, 0.20, 0.30, 0.20, 0.08, 0.02, 0.02, 0.02],
+  7:  [0.02, 0.02, 0.02, 0.02, 0.02, 0.08, 0.20, 0.30, 0.20, 0.08, 0.02, 0.02],
+  8:  [0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.08, 0.20, 0.30, 0.20, 0.08, 0.02],
+  9:  [0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.08, 0.20, 0.30, 0.20, 0.08],
+  10: [0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.09, 0.21, 0.33, 0.21],
+  11: [0.03, 0.03, 0.03, 0.03, 0.03, 0.03, 0.03, 0.03, 0.03, 0.11, 0.26, 0.36],
+};
+
+// assert: headDescriptor[11][1] > 0.3 (big strongly attends to trophy in descriptor head)
+// assert: headDescriptor[1][11] > 0.3 (trophy strongly attends to big in descriptor head)
+const headDescriptor = {
+  0:  [0.10, 0.50, 0.02, 0.02, 0.02, 0.05, 0.20, 0.01, 0.02, 0.02, 0.02, 0.02],
+  1:  [0.05, 0.15, 0.03, 0.10, 0.03, 0.02, 0.12, 0.02, 0.05, 0.03, 0.05, 0.35],
+  2:  [0.03, 0.08, 0.20, 0.35, 0.03, 0.02, 0.08, 0.03, 0.03, 0.05, 0.05, 0.05],
+  3:  [0.03, 0.25, 0.08, 0.15, 0.10, 0.03, 0.25, 0.02, 0.02, 0.02, 0.02, 0.03],
+  4:  [0.02, 0.05, 0.02, 0.12, 0.10, 0.08, 0.48, 0.02, 0.02, 0.02, 0.03, 0.04],
+  5:  [0.03, 0.05, 0.02, 0.03, 0.05, 0.12, 0.58, 0.02, 0.02, 0.02, 0.02, 0.04],
+  6:  [0.02, 0.15, 0.02, 0.18, 0.08, 0.08, 0.20, 0.02, 0.03, 0.03, 0.04, 0.15],
+  7:  [0.02, 0.05, 0.03, 0.08, 0.02, 0.02, 0.08, 0.15, 0.08, 0.10, 0.08, 0.29],
+  8:  [0.03, 0.20, 0.02, 0.05, 0.02, 0.03, 0.20, 0.03, 0.10, 0.05, 0.05, 0.22],
+  9:  [0.02, 0.08, 0.02, 0.03, 0.02, 0.02, 0.05, 0.05, 0.15, 0.12, 0.12, 0.32],
+  10: [0.02, 0.05, 0.01, 0.02, 0.01, 0.01, 0.03, 0.02, 0.05, 0.08, 0.12, 0.58],
+  11: [0.02, 0.40, 0.02, 0.05, 0.02, 0.03, 0.25, 0.03, 0.05, 0.03, 0.05, 0.05],
+};
+
+const HEADS = {
+  coref:     { data: headCoref,     color: '#1565c0', label: 'Coreference',
+               desc: 'Tracks pronoun \u2192 noun and determiner \u2192 noun references. Click \u201cit\u201d to see it resolve to \u201ctrophy.\u201d' },
+  syntax:    { data: headSyntax,    color: '#2e7d32', label: 'Syntax',
+               desc: 'Tracks grammatical bindings: negation \u2192 verb, linking verb \u2192 predicate, preposition \u2192 object. Click \u201cdidn\u2019t\u201d to see it lock onto \u201cfit.\u201d' },
+  proximity: { data: headProximity, color: '#e65100', label: 'Proximity',
+               desc: 'Each word attends mostly to its immediate neighbors. Not glamorous, but necessary \u2014 local context carries word order and phrase boundaries.' },
+  descriptor:{ data: headDescriptor,color: '#5e35b1', label: 'Descriptor',
+               desc: 'Tracks adjective \u2192 noun and noun \u2192 adjective connections. Click \u201cbig\u201d to see it reach back to \u201ctrophy\u201d and \u201csuitcase.\u201d' },
+};
+
+// ── State ──
+
+let currentVariant = 'big';
+let s4QueryIdx = 8;
+let s6Head = 'coref';
+let s6Query = null;
 
 // ── Utilities ──
 
-function dot(a, b) {
-  let s = 0;
-  for (let i = 0; i < a.length; i++) s += a[i] * b[i];
-  return s;
+function getTokens() { return currentVariant === 'big' ? TOKENS_BIG : TOKENS_SMALL; }
+function getAttention() { return currentVariant === 'big' ? attentionBig : attentionSmall; }
+
+// ── Stage 1: Toggle sentence ──
+
+function toggleSentence(variant) {
+  currentVariant = variant;
+  document.getElementById('s1BtnBig').className = 'btn ' + (variant === 'big' ? 'btn-primary' : 'btn-outline');
+  document.getElementById('s1BtnSmall').className = 'btn ' + (variant === 'small' ? 'btn-primary' : 'btn-outline');
+  renderS1();
+  renderS2();
+  renderS4();
 }
-
-function softmax(scores) {
-  const mx = Math.max(...scores);
-  const exps = scores.map(s => Math.exp(s - mx));
-  const total = exps.reduce((a, b) => a + b, 0);
-  return exps.map(e => e / total);
-}
-
-function cellClass(v) {
-  if (v >= 0.7) return 'cell-hot';
-  if (v >= 0.2) return 'cell-warm';
-  return 'cell-zero';
-}
-
-function computeAttentionMatrix(sentenceKey) {
-  const words = SENTENCES[sentenceKey];
-  const n = words.length;
-  const matrix = [];
-  for (let i = 0; i < n; i++) {
-    const scores = [];
-    for (let j = 0; j < n; j++) {
-      scores.push(dot(WORDS[words[i]], WORDS[words[j]]));
-    }
-    matrix.push(softmax(scores));
-  }
-  return matrix;
-}
-
-function computeContextVector(sentenceKey, queryWord) {
-  const words = SENTENCES[sentenceKey];
-  const qi = words.indexOf(queryWord);
-  const matrix = computeAttentionMatrix(sentenceKey);
-  const weights = matrix[qi];
-  const ctx = new Array(DIMS.length).fill(0);
-  for (let j = 0; j < words.length; j++) {
-    const vec = WORDS[words[j]];
-    for (let d = 0; d < DIMS.length; d++) {
-      ctx[d] += weights[j] * vec[d];
-    }
-  }
-  return { weights, ctx };
-}
-
-const PLOTLY_LAYOUT = {
-  plot_bgcolor: '#fff', paper_bgcolor: '#fff',
-  font: { family: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif', size: 11 },
-};
-
-// ── Stage 1 ──
 
 function renderS1() {
-  const bankVec = WORDS['bank'];
-  Plotly.react('s1Chart', [{
-    x: DIMS,
-    y: bankVec,
-    type: 'bar',
-    marker: { color: DIMS.map((_, i) => bankVec[i] >= 0.5 ? '#1565c0' : '#90caf9') },
-    showlegend: false,
-  }], {
-    ...PLOTLY_LAYOUT,
-    title: { text: 'Static vector for "bank"', font: { size: 13, color: '#1a3a5c' } },
-    xaxis: { gridcolor: '#e8ecf0' },
-    yaxis: { title: 'Value', range: [0, 1.05], gridcolor: '#e8ecf0' },
-    margin: { l: 50, r: 20, t: 40, b: 50 },
-  }, { responsive: true });
-}
+  const tokens = getTokens();
+  const attn = getAttention();
+  const itWeights = attn[8];
 
-// ── Stage 2 ──
-
-let s2Sentence = 'nature';
-let s2Query = null;
-
-function renderS2VecTable() {
-  const names = Object.keys(WORDS);
-  document.getElementById('s2VecBody').innerHTML = names.map(w => {
-    const v = WORDS[w];
-    return `<tr>
-      <td>${w}</td>${v.map(val => `<td class="${cellClass(val)}">${val.toFixed(1)}</td>`).join('')}
-    </tr>`;
+  const container = document.getElementById('s1Sentence');
+  container.innerHTML = tokens.map((t, i) => {
+    let cls = 'sentence-word';
+    let style = '';
+    if (i === 8) {
+      cls += ' query';
+    } else {
+      const intensity = Math.min(itWeights[i] / 0.55, 1);
+      const alpha = 0.05 + intensity * 0.6;
+      if (intensity > 0.2) {
+        style = `border-color: rgba(26,58,92,${alpha}); background: rgba(26,58,92,${alpha * 0.3});`;
+      }
+    }
+    return '<div class="' + cls + ' static" style="' + style + '">' + t + '</div>';
   }).join('');
+
+  // Update stat cards
+  const trophyPct = (itWeights[1] * 100).toFixed(0);
+  const suitcasePct = (itWeights[6] * 100).toFixed(0);
+  document.getElementById('s1TrophyPct').textContent = trophyPct + '%';
+  document.getElementById('s1SuitcasePct').textContent = suitcasePct + '%';
 }
 
-function selectS2Sentence(which) {
-  s2Sentence = which;
-  s2Query = null;
-  document.getElementById('s2BtnNature').className = 'btn ' + (which === 'nature' ? 'btn-primary' : 'btn-outline');
-  document.getElementById('s2BtnFinance').className = 'btn ' + (which === 'finance' ? 'btn-accent' : 'btn-outline');
-  renderS2Sentence();
-  updateS2Heatmap();
-  document.getElementById('s2Eq').style.display = 'none';
-  document.getElementById('s2Tip').style.display = 'none';
+// ── Stage 2: Click any word ──
+
+function renderS2() {
+  const tokens = getTokens();
+  const container = document.getElementById('s2Sentence');
+  container.innerHTML = tokens.map((t, i) =>
+    '<div class="sentence-word" id="s2w' + i + '" onclick="selectS2Word(' + i + ')">' +
+      t + '<span class="attn-label" id="s2lbl' + i + '"></span></div>'
+  ).join('');
+  document.getElementById('s2Explain').innerHTML = '<strong>TRY IT &rarr;</strong> Click &ldquo;it&rdquo; to see how it resolves its reference.';
 }
 
-function renderS2Sentence() {
-  const words = SENTENCES[s2Sentence];
-  document.getElementById('s2Sentence').innerHTML = words.map(w =>
-    `<div class="sentence-word" id="s2w_${w}" onclick="selectS2Query('${w}')">
-      ${w}
-      <span class="attn-label" id="s2lbl_${w}"></span>
-    </div>`
+function selectS2Word(idx) {
+  const tokens = getTokens();
+  const attn = getAttention();
+  const weights = attn[idx];
+
+  tokens.forEach((_, i) => {
+    const el = document.getElementById('s2w' + i);
+    const lbl = document.getElementById('s2lbl' + i);
+    if (i === idx) {
+      el.className = 'sentence-word query';
+      el.style.cssText = '';
+      lbl.textContent = '';
+    } else {
+      el.className = 'sentence-word';
+      const intensity = Math.min(weights[i] / 0.55, 1);
+      const alpha = 0.08 + intensity * 0.85;
+      el.style.cssText = 'border-color: rgba(46,125,50,' + alpha + '); background: rgba(46,125,50,' + (alpha * 0.25) + ');';
+      lbl.textContent = (weights[i] * 100).toFixed(0) + '%';
+    }
+  });
+
+  document.getElementById('s2Explain').innerHTML = explanations[idx];
+}
+
+// ── Stage 3: QKV cards ──
+
+function showQKV(role) {
+  ['q', 'k', 'v'].forEach(r => {
+    document.getElementById('qkvDetail' + r.toUpperCase()).className =
+      'qkv-detail ' + r + '-detail' + (r === role ? ' visible' : '');
+  });
+}
+
+// ── Stage 4: Score bars ──
+
+function selectScoreWord(idx) {
+  s4QueryIdx = idx;
+  const tokens = getTokens();
+
+  // Update button states
+  [['s4BtnIt', 8], ['s4BtnTrophy', 1], ['s4BtnFit', 3], ['s4BtnBig', 11]].forEach(([id, btnIdx]) => {
+    document.getElementById(id).className = 'btn ' + (btnIdx === idx ? 'btn-primary' : 'btn-outline');
+  });
+
+  document.getElementById('s4QueryLabel').innerHTML =
+    'Attention scores when <strong>&ldquo;' + tokens[idx] + '&rdquo;</strong> queries the sentence:';
+
+  renderS4();
+}
+
+function renderS4() {
+  const tokens = getTokens();
+  const attn = getAttention();
+  const weights = attn[s4QueryIdx];
+
+  // Sort by weight descending
+  const indices = tokens.map((_, i) => i).sort((a, b) => weights[b] - weights[a]);
+  const maxWeight = Math.max(...weights);
+
+  const container = document.getElementById('s4ScoreList');
+  container.innerHTML = indices.map(i => {
+    const pct = (weights[i] * 100).toFixed(0);
+    const barWidth = (weights[i] / maxWeight) * 100;
+    const isSelf = i === s4QueryIdx;
+    return '<div class="score-row">' +
+      '<div class="score-word">' + tokens[i] + (isSelf ? ' (self)' : '') + '</div>' +
+      '<div class="score-bar-bg"><div class="score-bar" style="width:0" data-w="' + barWidth + '"></div></div>' +
+      '<div class="score-val">' + pct + '%</div>' +
+    '</div>';
+  }).join('');
+
+  // Animate bars
+  requestAnimationFrame(() => {
+    container.querySelectorAll('.score-bar').forEach((bar, i) => {
+      setTimeout(() => { bar.style.width = bar.dataset.w + '%'; }, i * 60);
+    });
+  });
+}
+
+// ── Stage 6: Multi-head attention ──
+
+function selectHead(headKey) {
+  s6Head = headKey;
+  const head = HEADS[headKey];
+
+  // Update tabs
+  document.querySelectorAll('.head-tab').forEach(tab => {
+    tab.className = 'head-tab' + (tab.dataset.head === headKey ? ' active' : '');
+  });
+
+  // Update description
+  document.getElementById('headDesc').textContent = head.desc;
+
+  // Re-render sentence with current query if one is selected
+  if (s6Query !== null) {
+    renderS6Weights(s6Query);
+  } else {
+    renderS6Sentence();
+  }
+}
+
+function renderS6Sentence() {
+  const tokens = TOKENS_BIG;
+  const container = document.getElementById('s6Sentence');
+  container.innerHTML = tokens.map((t, i) =>
+    '<div class="sentence-word" id="s6w' + i + '" onclick="selectS6Word(' + i + ')">' +
+      t + '<span class="attn-label" id="s6lbl' + i + '"></span></div>'
   ).join('');
 }
 
-function selectS2Query(word) {
-  s2Query = word;
-  const words = SENTENCES[s2Sentence];
+function selectS6Word(idx) {
+  s6Query = idx;
+  renderS6Weights(idx);
+  renderCombinedView(idx);
+}
 
-  // Highlight active word
-  words.forEach(w => {
-    const el = document.getElementById('s2w_' + w);
-    el.className = 'sentence-word' + (w === word ? ' active' : '');
+function renderS6Weights(idx) {
+  const tokens = TOKENS_BIG;
+  const head = HEADS[s6Head];
+  const weights = head.data[idx];
+  const color = head.color;
+
+  // Parse color for rgba
+  const r = parseInt(color.slice(1,3), 16);
+  const g = parseInt(color.slice(3,5), 16);
+  const b = parseInt(color.slice(5,7), 16);
+
+  tokens.forEach((_, i) => {
+    const el = document.getElementById('s6w' + i);
+    const lbl = document.getElementById('s6lbl' + i);
+    if (!el) return;
+    if (i === idx) {
+      el.className = 'sentence-word query';
+      el.style.cssText = 'background:' + color + '; border-color:' + color + ';';
+      lbl.textContent = '';
+    } else {
+      el.className = 'sentence-word';
+      const intensity = Math.min(weights[i] / 0.55, 1);
+      const alpha = 0.08 + intensity * 0.85;
+      el.style.cssText = 'border-color: rgba(' + r + ',' + g + ',' + b + ',' + alpha + '); background: rgba(' + r + ',' + g + ',' + b + ',' + (alpha * 0.2) + ');';
+      lbl.textContent = (weights[i] * 100).toFixed(0) + '%';
+    }
   });
 
-  // Compute attention
-  const qi = words.indexOf(word);
-  const rawScores = words.map(w => dot(WORDS[word], WORDS[w]));
-  const weights = softmax(rawScores);
+  // Update explain box
+  const topIdx = weights.map((w, i) => [w, i]).filter(([_, i]) => i !== idx).sort((a, b) => b[0] - a[0])[0][1];
+  document.getElementById('s6Explain').innerHTML =
+    '<strong>' + head.label.toUpperCase() + ' HEAD &rarr;</strong> &ldquo;' + tokens[idx] +
+    '&rdquo; &rarr; &ldquo;' + tokens[topIdx] + '&rdquo; (' +
+    (weights[topIdx] * 100).toFixed(0) + '%). Try the other tabs for this word.';
+}
 
-  // Show weights under words
-  words.forEach((w, i) => {
-    document.getElementById('s2lbl_' + w).textContent = weights[i].toFixed(3);
+function renderCombinedView(idx) {
+  const tokens = TOKENS_BIG;
+  const grid = document.getElementById('combinedGrid');
+  const label = document.getElementById('combinedLabel');
+
+  label.innerHTML = 'Top-attended word for &ldquo;<strong>' + tokens[idx] + '</strong>&rdquo; in each head:';
+
+  let html = '';
+  const headKeys = ['coref', 'syntax', 'proximity', 'descriptor'];
+  headKeys.forEach(key => {
+    const head = HEADS[key];
+    const weights = head.data[idx];
+    // Find top word (excluding self)
+    let topW = 0, topI = 0;
+    weights.forEach((w, i) => { if (i !== idx && w > topW) { topW = w; topI = i; } });
+
+    html += '<div class="combined-card" data-head="' + key + '">' +
+      '<div class="cc-head" style="color:' + head.color + ';">' + head.label + '</div>' +
+      '<div class="cc-word">' + tokens[topI] + '</div>' +
+      '<div class="cc-pct">' + (topW * 100).toFixed(0) + '%</div>' +
+    '</div>';
   });
 
-  // Show equation
-  const eqParts = words.map((w, i) => `dot(${word}, ${w}) = ${rawScores[i].toFixed(2)}`).join(' &nbsp;|&nbsp; ');
-  document.getElementById('s2Eq').style.display = '';
-  document.getElementById('s2Eq').innerHTML = `<strong>${word}</strong> attends to: ${eqParts}<br>softmax &rarr; [${weights.map(w => w.toFixed(3)).join(', ')}]`;
-
-  document.getElementById('s2Tip').style.display = '';
-
-  updateS2Heatmap(qi);
+  grid.innerHTML = html;
 }
-
-function updateS2Heatmap(highlightRow) {
-  const words = SENTENCES[s2Sentence];
-  const matrix = computeAttentionMatrix(s2Sentence);
-
-  Plotly.react('s2Heatmap', [{
-    z: matrix,
-    x: words.map(w => w + ' (key)'),
-    y: words.map(w => w + ' (query)'),
-    type: 'heatmap',
-    colorscale: [[0, '#f5f5f5'], [0.3, '#fff9c4'], [0.6, '#a5d6a7'], [1, '#2e7d32']],
-    showscale: true,
-    colorbar: { title: 'Weight', titleside: 'right' },
-    text: matrix.map(row => row.map(v => v.toFixed(3))),
-    texttemplate: '%{text}',
-    textfont: { size: 12 },
-    hovertemplate: '<b>%{y}</b> &rarr; %{x}: %{z:.3f}<extra></extra>',
-  }], {
-    ...PLOTLY_LAYOUT,
-    title: { text: 'Attention weights (who attends to whom)', font: { size: 13, color: '#1a3a5c' } },
-    xaxis: { side: 'top', automargin: true },
-    yaxis: { autorange: 'reversed', automargin: true },
-    margin: { l: 100, r: 20, t: 60, b: 20 },
-  }, { responsive: true });
-}
-
-// ── Stage 3 ──
-
-let s3Sentence = 'nature';
-
-function renderS3() {
-  selectS3Sentence('nature');
-}
-
-function selectS3Sentence(which) {
-  s3Sentence = which;
-  document.getElementById('s3BtnNature').className = 'btn ' + (which === 'nature' ? 'btn-primary' : 'btn-outline');
-  document.getElementById('s3BtnFinance').className = 'btn ' + (which === 'finance' ? 'btn-accent' : 'btn-outline');
-  updateS3();
-}
-
-function updateS3() {
-  const words = SENTENCES[s3Sentence];
-  const bankIdx = words.indexOf('bank');
-  const { weights, ctx } = computeContextVector(s3Sentence, 'bank');
-
-  // Build arithmetic table
-  let html = '<table class="vec-table"><thead><tr><th>Word</th><th>Weight</th>';
-  DIMS.forEach(d => html += `<th>${d}</th>`);
-  html += '</tr></thead><tbody>';
-
-  words.forEach((w, i) => {
-    const vec = WORDS[w];
-    html += `<tr><td>${w}</td><td class="cell-warm">${weights[i].toFixed(3)}</td>`;
-    vec.forEach((v, d) => {
-      const product = weights[i] * v;
-      html += `<td class="${product > 0.1 ? 'cell-warm' : 'cell-zero'}">${product.toFixed(3)}</td>`;
-    });
-    html += '</tr>';
-  });
-
-  // Sum row
-  html += '<tr style="border-top:3px solid #1a3a5c; font-weight:700;"><td>context(bank)</td><td></td>';
-  ctx.forEach(v => {
-    html += `<td class="${v >= 0.4 ? 'cell-hot' : (v >= 0.15 ? 'cell-warm' : 'cell-zero')}">${v.toFixed(3)}</td>`;
-  });
-  html += '</tr></tbody></table>';
-  document.getElementById('s3ArithTable').innerHTML = html;
-
-  updateS3Compare();
-}
-
-function updateS3Compare() {
-  const ctxNature = computeContextVector('nature', 'bank').ctx;
-  const ctxFinance = computeContextVector('finance', 'bank').ctx;
-
-  Plotly.react('s3CompareChart', [
-    { x: DIMS, y: ctxNature, type: 'bar', name: 'bank in "river bank fish"',
-      marker: { color: '#1565c0' } },
-    { x: DIMS, y: ctxFinance, type: 'bar', name: 'bank in "bank account deposit"',
-      marker: { color: '#e65100' } },
-  ], {
-    ...PLOTLY_LAYOUT,
-    barmode: 'group',
-    title: { text: 'Context vectors for "bank" — two different meanings', font: { size: 13, color: '#1a3a5c' } },
-    xaxis: { gridcolor: '#e8ecf0' },
-    yaxis: { title: 'Value', range: [0, 0.75], gridcolor: '#e8ecf0' },
-    margin: { l: 50, r: 20, t: 40, b: 50 },
-    legend: { orientation: 'h', y: 1.15 },
-  }, { responsive: true });
-
-  // Update stat cards
-  document.getElementById('s3WaterNature').textContent = ctxNature[0].toFixed(2);
-  document.getElementById('s3MoneyNature').textContent = ctxNature[1].toFixed(2);
-  document.getElementById('s3WaterFinance').textContent = ctxFinance[0].toFixed(2);
-  document.getElementById('s3MoneyFinance').textContent = ctxFinance[1].toFixed(2);
-}
-
-// ── Stage 4 (static — QKV diagram is rendered in HTML) ──
 
 // ── Init ──
 
 function init() {
   renderS1();
-  renderS2VecTable();
-  selectS2Sentence('nature');
-  renderS3();
+  renderS2();
+  renderS4();
+  renderS6Sentence();
 }
 
 document.addEventListener('DOMContentLoaded', init);
