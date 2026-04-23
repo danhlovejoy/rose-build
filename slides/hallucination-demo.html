@@ -1,0 +1,841 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hallucination: Why Models Lie Fluently &mdash; AIML 2003</title>
+<script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+<style>
+  :root {
+    --primary: #1a3a5c;
+    --primary-light: #2e5a88;
+    --accent: #2e7d32;
+    --light-bg: #f7f9fc;
+    --border: #d0d7de;
+    --text: #1f2328;
+    --muted: #656d76;
+    --neg: #c62828;
+    --neg-bg: #fce4ec;
+    --pos: #2e7d32;
+    --pos-bg: #e8f5e9;
+    --purple: #5e35b1;
+    --purple-bg: #ede7f6;
+    --orange: #e65100;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    color: var(--text); line-height: 1.6; background: #fff;
+  }
+  .container { max-width: 1100px; margin: 0 auto; padding: 0 2rem 3rem; }
+
+  .hero {
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+    color: #fff; padding: 2.5rem 2rem; text-align: center; margin-bottom: 2rem;
+  }
+  .hero h1 { font-size: 1.8rem; margin-bottom: 0.3rem; font-weight: 700; }
+  .hero p { color: #c0d4e8; font-size: 1rem; }
+  .hero .hl { color: #fff; font-weight: 500; margin-top: 0.75rem; font-size: 1.05rem; }
+
+  .stage { margin-top: 3rem; }
+  .stage-num {
+    display: inline-block; width: 2rem; height: 2rem; line-height: 2rem;
+    border-radius: 50%; background: var(--primary); color: #fff;
+    text-align: center; font-weight: 700; font-size: 0.9rem;
+    margin-right: 0.5rem; vertical-align: middle;
+  }
+  .stage-line h2 { font-size: 1.3rem; color: var(--primary); margin-bottom: 0.75rem; display: inline; vertical-align: middle; }
+  .stage-line { border-bottom: 2px solid var(--primary); margin-bottom: 1rem; padding-bottom: 0.4rem; }
+  p { font-size: 0.95rem; margin-bottom: 0.75rem; }
+
+  .card {
+    background: var(--light-bg); border: 1px solid var(--border);
+    border-radius: 8px; padding: 1.25rem; margin-bottom: 1rem;
+  }
+  .card strong { color: var(--primary); display: block; margin-bottom: 0.3rem; }
+
+  .tip {
+    background: #e8f5e9; border-left: 4px solid var(--accent);
+    padding: 1rem 1.25rem; border-radius: 4px; margin: 1rem 0; font-size: 0.9rem;
+  }
+  .tip strong { color: var(--accent); }
+  .warn-tip {
+    background: #fff3e0; border-left: 4px solid #e65100;
+    padding: 1rem 1.25rem; border-radius: 4px; margin: 1rem 0; font-size: 0.9rem;
+  }
+  .warn-tip strong { color: #e65100; }
+  .arrow-box { text-align: center; padding: 1rem 0; color: var(--muted); font-size: 1.5rem; }
+
+  .row { display: flex; gap: 1.5rem; align-items: flex-start; flex-wrap: wrap; }
+  .col-main { flex: 1; min-width: 400px; }
+  .col-side { width: 320px; flex-shrink: 0; }
+  @media (max-width: 900px) {
+    .row { flex-direction: column; }
+    .col-side { width: 100%; }
+    .col-main { min-width: 0; }
+  }
+
+  .stats-row { display: flex; gap: 1rem; flex-wrap: wrap; margin: 1rem 0; }
+  .stat-card {
+    flex: 1; min-width: 110px; background: var(--light-bg);
+    border: 1px solid var(--border); border-radius: 8px;
+    padding: 0.75rem 1rem; text-align: center;
+  }
+  .stat-card .val { font-size: 1.5rem; font-weight: 700; color: var(--primary); }
+  .stat-card .lbl { font-size: 0.8rem; color: var(--muted); }
+
+  .btn {
+    display: inline-block; padding: 0.5rem 1.1rem; border: none; border-radius: 6px;
+    font-size: 0.85rem; font-weight: 600; cursor: pointer; font-family: inherit;
+    transition: opacity 0.15s;
+  }
+  .btn:hover { opacity: 0.85; }
+  .btn-accent { background: var(--accent); color: #fff; }
+  .btn-primary { background: var(--primary); color: #fff; }
+  .btn-outline { background: #fff; color: var(--primary); border: 1px solid var(--border); }
+  .btn-group { display: flex; gap: 0.5rem; flex-wrap: wrap; margin: 0.75rem 0; }
+
+  .eq-box {
+    background: var(--light-bg); border: 1px solid var(--border); border-radius: 8px;
+    padding: 1rem 1.25rem; margin: 1rem 0; text-align: center;
+    font-family: "SF Mono", Consolas, monospace; font-size: 1rem;
+  }
+
+  .slider-row { margin: 0.75rem 0; }
+  .slider-row label { display: block; font-size: 0.85rem; color: var(--muted); margin-bottom: 0.15rem; }
+  .slider-row input[type="range"] { width: 100%; }
+  .slider-val { font-weight: 600; color: var(--primary); float: right; font-size: 0.9rem; }
+
+  .footer {
+    text-align: center; padding: 2rem 0; color: var(--muted); font-size: 0.85rem;
+    border-top: 1px solid var(--border); margin-top: 3rem;
+  }
+
+  /* ── Demo-specific ── */
+  .sentence-display {
+    font-size: 1.15rem; line-height: 1.8; padding: 1.25rem;
+    background: #fff; border: 2px solid var(--border); border-radius: 8px;
+    min-height: 3.5rem; margin-bottom: 1rem;
+  }
+  .sentence-display .token-prompt { color: var(--muted); }
+  .sentence-display .token-correct { color: #2e7d32; font-weight: 600; }
+  .sentence-display .token-wrong { color: #c62828; font-weight: 600; }
+  .sentence-display .token-neutral { color: var(--primary); }
+  .sentence-display .cursor {
+    display: inline-block; width: 2px; height: 1.1em; background: var(--primary);
+    vertical-align: text-bottom; animation: blink 1s step-end infinite;
+  }
+  @keyframes blink { 50% { opacity: 0; } }
+
+  .token-btn {
+    display: inline-block; padding: 0.4rem 0.9rem; margin: 0.25rem;
+    border: 2px solid var(--border); border-radius: 6px; cursor: pointer;
+    font-family: inherit; font-size: 0.9rem; font-weight: 600;
+    background: #fff; transition: all 0.15s;
+  }
+  .token-btn:hover { border-color: var(--primary); background: var(--light-bg); }
+  .token-btn.correct-hint { border-color: #2e7d32; background: #e8f5e9; }
+  .token-btn.wrong-hint { border-color: #c62828; background: #fce4ec; }
+  .token-btn.disabled { opacity: 0.4; pointer-events: none; }
+
+  .passage-box {
+    border: 2px solid var(--border); border-radius: 8px; padding: 1rem 1.25rem;
+    margin-bottom: 0.75rem; font-size: 0.95rem; line-height: 1.8;
+  }
+  .passage-box.correct-box { border-color: #2e7d32; }
+  .passage-box.wrong-box { border-color: #c62828; }
+  .prob-word {
+    padding: 0.1rem 0.15rem; border-radius: 3px; cursor: default;
+  }
+
+  .scenario-pills { display: flex; gap: 0.5rem; flex-wrap: wrap; margin: 0.75rem 0; }
+  .scenario-pill {
+    padding: 0.4rem 1rem; border-radius: 20px; font-size: 0.85rem;
+    font-weight: 600; cursor: pointer; border: 2px solid var(--border);
+    background: #fff; color: var(--text); transition: all 0.15s;
+  }
+  .scenario-pill:hover { border-color: var(--primary); }
+  .scenario-pill.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <h1>Hallucination: Why Models Lie Fluently</h1>
+  <p>AIML 2003 &mdash; Interactive Walkthrough</p>
+  <p class="hl">A language model doesn't know facts. It predicts the next token. Sometimes the most likely token is wrong.</p>
+</div>
+
+<div class="container">
+
+<!-- ================================================================
+     STAGE 1: THE NEXT-TOKEN MACHINE
+     ================================================================ -->
+<div class="stage">
+  <div class="stage-line"><span class="stage-num">1</span><h2>One Token at a Time</h2></div>
+  <p>A language model generates text by predicting one token at a time. At each step, it computes a probability for every token in its vocabulary and picks one. The chosen token becomes part of the context, and the process repeats. The model never "looks up" a fact &mdash; it asks "what word is most likely to come next, given everything so far?"</p>
+
+  <div class="scenario-pills" id="scenarioPills"></div>
+
+  <div class="sentence-display" id="sentenceDisplay"></div>
+
+  <div class="row">
+    <div class="col-main">
+      <div id="tokenPlot" style="width:100%; height:300px;"></div>
+      <div id="tokenButtons"></div>
+    </div>
+    <div class="col-side">
+      <div class="card" id="stepCard">
+        <strong>Pick the next token</strong>
+        <p style="font-size:0.85rem;">Click a word below the chart or click a bar in the chart. The sentence extends with your choice, then the model shows probabilities for the next position.</p>
+      </div>
+      <div class="btn-group">
+        <button class="btn btn-accent" onclick="autoGreedy()">Greedy (always pick top)</button>
+        <button class="btn btn-outline" onclick="resetScenario()">Reset</button>
+      </div>
+      <div class="stat-card" style="margin-top:0.75rem;">
+        <div class="val" id="avgProbVal">&mdash;</div>
+        <div class="lbl">avg probability of chosen tokens</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <strong>Try both paths.</strong> Pick the top-probability token first (greedy), then reset and pick the second-most-likely token. Both continuations read fluently. The model is equally confident in each &mdash; the only difference is that one is true and the other isn't.
+  </div>
+</div>
+
+<div class="arrow-box">&darr;</div>
+
+<!-- ================================================================
+     STAGE 2: THE BRANCH POINT
+     ================================================================ -->
+<div class="stage">
+  <div class="stage-line"><span class="stage-num">2</span><h2>The Branch Point</h2></div>
+  <p>Hallucination often starts at a single token. The model assigns higher probability to a wrong token than the correct one &mdash; because the wrong answer appears more frequently in training text. Once that wrong token is chosen, the rest of the sentence follows logically from the error. The continuation is fluent, specific, and confident. The only mistake was one word.</p>
+
+  <div id="branchDisplay"></div>
+
+  <div class="btn-group">
+    <button class="btn btn-primary" onclick="showBranch('correct')">Show correct path</button>
+    <button class="btn btn-outline" onclick="showBranch('wrong')">Show hallucinated path</button>
+    <button class="btn btn-accent" onclick="showBranch('both')">Show both</button>
+  </div>
+
+  <div id="branchViz"></div>
+
+  <div class="warn-tip">
+    <strong>The wrong path isn't random.</strong> The model didn't produce gibberish. It produced a coherent, detailed, wrong sentence &mdash; because once "Sydney" is chosen, the most likely next tokens are facts about Sydney, and those facts are individually correct. The hallucination is in the framing, not the details.
+  </div>
+</div>
+
+<div class="arrow-box">&darr;</div>
+
+<!-- ================================================================
+     STAGE 3: TEMPERATURE AND SAMPLING
+     ================================================================ -->
+<div class="stage">
+  <div class="stage-line"><span class="stage-num">3</span><h2>Temperature Changes the Odds</h2></div>
+  <p>Before picking a token, the model divides its raw scores (logits) by a number called temperature. Low temperature makes the top token dominate; high temperature flattens the distribution so any token has a chance. Temperature doesn't make the model smarter or more accurate. It controls how adventurous the sampling is.</p>
+
+  <div class="row">
+    <div class="col-main">
+      <div id="tempPlot" style="width:100%; height:340px;"></div>
+    </div>
+    <div class="col-side">
+      <div class="card">
+        <strong>Adjust temperature</strong>
+        <div class="slider-row">
+          <label>Temperature <span class="slider-val" id="tempVal">1.00</span></label>
+          <input type="range" id="tempSlider" min="0.1" max="3.0" step="0.05" value="1.0" oninput="updateTemp()">
+        </div>
+      </div>
+      <div class="btn-group">
+        <button class="btn btn-outline" onclick="setTemp(0.1)">T = 0.1 (greedy)</button>
+        <button class="btn btn-outline" onclick="setTemp(1.0)">T = 1.0 (default)</button>
+        <button class="btn btn-outline" onclick="setTemp(2.0)">T = 2.0 (creative)</button>
+      </div>
+      <div class="btn-group">
+        <button class="btn btn-accent" onclick="sampleOnce()">Sample one token</button>
+        <button class="btn btn-primary" onclick="sampleMany()">Sample 50 times</button>
+      </div>
+      <div id="sampleResult" style="font-size:0.88rem; margin-top:0.5rem; min-height:2rem;"></div>
+    </div>
+  </div>
+
+  <div class="eq-box">
+    P(token<sub>i</sub>) = exp(logit<sub>i</sub> / T) &nbsp;/&nbsp; &sum; exp(logit<sub>j</sub> / T)
+  </div>
+
+  <div class="tip">
+    <strong>Temperature doesn't fix hallucination.</strong> At T=0.1, the model always picks the top token &mdash; but if the top token is wrong (as in Stage 1), low temperature guarantees the hallucination. At T=2.0, the correct token gets a better chance, but so does every other wrong token. Temperature redistributes probability; it doesn't add knowledge.
+  </div>
+</div>
+
+<div class="arrow-box">&darr;</div>
+
+<!-- ================================================================
+     STAGE 4: CONFIDENCE WITHOUT KNOWLEDGE
+     ================================================================ -->
+<div class="stage">
+  <div class="stage-line"><span class="stage-num">4</span><h2>Fluent &ne; Factual</h2></div>
+  <p>Here are two completions for the same prompt. One is correct. One is a hallucination. Each word is shaded by its predicted probability &mdash; darker means the model assigned higher probability to that token. Look at the shading. The hallucinated passage is just as dark as the correct one.</p>
+
+  <div class="scenario-pills" id="passagePills"></div>
+
+  <div class="row" style="align-items:stretch;">
+    <div style="flex:1; min-width:300px;">
+      <div style="text-align:center; font-weight:700; color:#2e7d32; margin-bottom:0.3rem;">&#x2713; Correct</div>
+      <div class="passage-box correct-box" id="correctPassage"></div>
+      <div class="stats-row">
+        <div class="stat-card"><div class="val" id="correctAvg">&mdash;</div><div class="lbl">avg token probability</div></div>
+        <div class="stat-card"><div class="val" id="correctMin">&mdash;</div><div class="lbl">lowest token prob</div></div>
+      </div>
+    </div>
+    <div style="flex:1; min-width:300px;">
+      <div style="text-align:center; font-weight:700; color:#c62828; margin-bottom:0.3rem;">&#x2717; Hallucinated</div>
+      <div class="passage-box wrong-box" id="wrongPassage"></div>
+      <div class="stats-row">
+        <div class="stat-card"><div class="val" id="wrongAvg">&mdash;</div><div class="lbl">avg token probability</div></div>
+        <div class="stat-card"><div class="val" id="wrongMin">&mdash;</div><div class="lbl">lowest token prob</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="warn-tip">
+    <strong>You cannot tell which passage is wrong by looking at the probabilities.</strong> Both passages are fluent. Both have high average token probabilities. The model generated them using the same process. Confidence is a property of the generation mechanism, not of the underlying facts. A model that has absorbed a myth from ten thousand web pages will state the myth with the same confidence it states a truth from ten thousand textbooks.
+  </div>
+
+  <div class="card">
+    <strong>Why the wrong answer can win</strong>
+    <p style="font-size:0.85rem; margin-top:0.5rem;">Token probability comes from pattern frequency in training data. The phrase "the capital of Australia is Sydney" appears on countless web pages, travel blogs, and casual references &mdash; because people talk about Sydney more than Canberra. The phrase "humans only use 10% of their brain" has been repeated in movies, self-help books, and clickbait for decades. The model learned that these patterns are common, and common patterns get high probability. Frequency is not truth.</p>
+  </div>
+</div>
+
+</div><!-- /.container -->
+
+<div class="footer">
+  AIML 2003 &bull; Module 5: Evaluating LLMs &bull; Spring 2026
+</div>
+
+<!-- ================================================================
+     JAVASCRIPT
+     ================================================================ -->
+<script>
+// ================================================================
+// DATA: Scenarios with logits, tokens, and pre-written paths
+// ================================================================
+
+// assert: softmax([-0.87, -1.27, -1.71, -2.66, -3.00], T=1) ≈ [0.42, 0.28, 0.18, 0.07, 0.05]
+const SCENARIOS = [
+  {
+    id: 'australia',
+    label: 'Capital of Australia',
+    prompt: 'The capital of Australia is',
+    steps: [
+      {
+        tokens: ['Sydney', 'Canberra', 'Melbourne', 'Brisbane', 'Perth'],
+        logits: [-0.87, -1.27, -1.71, -2.66, -3.00],
+        correctIdx: 1,
+        wrongIdx: 0
+      },
+      {
+        // After correct token "Canberra"
+        forToken: 'Canberra',
+        tokens: [',', '.', '—', 'which', 'the'],
+        logits: [-0.36, -1.20, -1.90, -2.10, -2.30],
+        auto: true
+      },
+      {
+        forToken: 'Sydney',
+        tokens: [',', '.', '—', 'the', 'which'],
+        logits: [-0.30, -1.10, -1.80, -2.20, -2.40],
+        auto: true
+      }
+    ],
+    paths: {
+      correct: {
+        label: 'Canberra',
+        text: 'The capital of Australia is Canberra, a planned city built in 1913 to resolve the rivalry between Sydney and Melbourne for the title.',
+        probs: [null,null,null,null,null, 0.28, 0.55, 0.62, 0.48, 0.53, 0.44, 0.39, 0.72, 0.41, 0.57, 0.45, 0.38, 0.61, 0.50, 0.44, 0.33, 0.48]
+      },
+      wrong: {
+        label: 'Sydney',
+        text: 'The capital of Australia is Sydney, the largest and most iconic city in the country, famous for its Opera House and Harbour Bridge.',
+        probs: [null,null,null,null,null, 0.42, 0.58, 0.65, 0.51, 0.47, 0.55, 0.49, 0.44, 0.38, 0.60, 0.52, 0.42, 0.58, 0.71, 0.46, 0.64, 0.55]
+      }
+    }
+  },
+  {
+    id: 'brain',
+    label: 'Brain usage myth',
+    prompt: 'Scientific research shows that humans use',
+    steps: [
+      {
+        tokens: ['10%', '100%', 'only', 'approximately', 'all'],
+        logits: [-0.69, -1.39, -1.05, -2.30, -2.00],
+        correctIdx: 1,
+        wrongIdx: 0
+      }
+    ],
+    paths: {
+      correct: {
+        label: '100%',
+        text: 'Scientific research shows that humans use 100% of their brain, though not all regions are active simultaneously. Brain imaging studies confirm that over the course of a day, virtually every area serves a function.',
+        probs: [null,null,null,null,null, 0.25, 0.62, 0.58, 0.47, 0.55, 0.41, 0.50, 0.44, 0.52, 0.60, 0.48, 0.39, 0.56, 0.43, 0.51, 0.47, 0.53, 0.40, 0.58, 0.46, 0.50, 0.44, 0.55, 0.42]
+      },
+      wrong: {
+        label: '10%',
+        text: 'Scientific research shows that humans use 10% of their brain, leaving the remaining 90% largely untapped. This suggests enormous potential for cognitive enhancement through training and technology.',
+        probs: [null,null,null,null,null, 0.50, 0.58, 0.55, 0.62, 0.48, 0.54, 0.60, 0.45, 0.52, 0.57, 0.49, 0.61, 0.44, 0.53, 0.50, 0.46, 0.55, 0.48, 0.59, 0.52, 0.43]
+      }
+    }
+  },
+  {
+    id: 'bacteria',
+    label: 'Bacterial cell ratio',
+    prompt: 'The ratio of bacterial cells to human cells in the body is approximately',
+    steps: [
+      {
+        tokens: ['10:1', '3:1', '1:1', '100:1', '2:1'],
+        logits: [-0.51, -1.20, -1.61, -2.50, -2.30],
+        correctIdx: 2,
+        wrongIdx: 0
+      }
+    ],
+    paths: {
+      correct: {
+        label: '1:1',
+        text: 'The ratio of bacterial cells to human cells in the body is approximately 1:1, according to a 2016 revision by Sender, Fuchs, and Milo. The earlier estimate of 10:1 was based on rough calculations from the 1970s that overestimated gut bacteria counts.',
+        probs: [null,null,null,null,null,null,null,null,null,null,null,null, 0.18, 0.45, 0.52, 0.38, 0.56, 0.41, 0.50, 0.44, 0.37, 0.48, 0.53, 0.46, 0.39, 0.55, 0.42, 0.51, 0.47, 0.40, 0.54, 0.43, 0.50, 0.46, 0.38, 0.49]
+      },
+      wrong: {
+        label: '10:1',
+        text: 'The ratio of bacterial cells to human cells in the body is approximately 10:1, meaning bacteria outnumber our own cells by an order of magnitude. This vast microbial population plays a critical role in digestion, immunity, and metabolism.',
+        probs: [null,null,null,null,null,null,null,null,null,null,null,null, 0.60, 0.52, 0.58, 0.49, 0.55, 0.62, 0.47, 0.54, 0.50, 0.59, 0.45, 0.53, 0.48, 0.56, 0.51, 0.60, 0.44, 0.52, 0.49, 0.57]
+      }
+    }
+  }
+];
+
+// ================================================================
+// STATE
+// ================================================================
+let currentScenario = 0;
+let chosenTokens = [];       // tokens chosen so far
+let chosenProbs = [];         // probability of each chosen token
+let currentStepIdx = 0;
+let sentenceFinished = false;
+
+// ================================================================
+// MATH HELPERS
+// ================================================================
+function softmax(logits, T) {
+  const scaled = logits.map(l => l / T);
+  const maxS = Math.max(...scaled);
+  const exps = scaled.map(s => Math.exp(s - maxS));
+  const sumExps = exps.reduce((a, b) => a + b, 0);
+  return exps.map(e => e / sumExps);
+}
+
+function weightedSample(probs) {
+  const r = Math.random();
+  let cumulative = 0;
+  for (let i = 0; i < probs.length; i++) {
+    cumulative += probs[i];
+    if (r <= cumulative) return i;
+  }
+  return probs.length - 1;
+}
+
+// ================================================================
+// STAGE 1: NEXT-TOKEN MACHINE
+// ================================================================
+function renderScenarioPills() {
+  const el = document.getElementById('scenarioPills');
+  el.innerHTML = SCENARIOS.map((s, i) =>
+    `<div class="scenario-pill ${i === currentScenario ? 'active' : ''}" onclick="switchScenario(${i})">${s.label}</div>`
+  ).join('');
+}
+
+function switchScenario(idx) {
+  currentScenario = idx;
+  resetScenario();
+}
+
+function resetScenario() {
+  chosenTokens = [];
+  chosenProbs = [];
+  currentStepIdx = 0;
+  sentenceFinished = false;
+  renderScenarioPills();
+  renderSentence();
+  renderTokenStep();
+  document.getElementById('avgProbVal').textContent = '\u2014';
+  renderBranchViz('both');
+  renderPassages();
+}
+
+function renderSentence() {
+  const sc = SCENARIOS[currentScenario];
+  const el = document.getElementById('sentenceDisplay');
+  let html = `<span class="token-prompt">${sc.prompt} </span>`;
+  for (let i = 0; i < chosenTokens.length; i++) {
+    const step = sc.steps[0];
+    let cls = 'token-neutral';
+    if (i === 0) {
+      cls = (chosenTokens[i] === sc.steps[0].tokens[sc.steps[0].correctIdx]) ? 'token-correct' : 'token-wrong';
+    }
+    html += `<span class="${cls}">${chosenTokens[i]}</span> `;
+  }
+  if (!sentenceFinished) html += '<span class="cursor"></span>';
+  el.innerHTML = html;
+}
+
+function renderTokenStep() {
+  const sc = SCENARIOS[currentScenario];
+  if (sentenceFinished || currentStepIdx >= sc.steps.length) {
+    finishSentence();
+    return;
+  }
+
+  const step = sc.steps[currentStepIdx];
+  // If this step is for a specific prior token and doesn't match, skip
+  if (step.forToken && chosenTokens.length > 0 && chosenTokens[0] !== step.forToken) {
+    // Try to find the matching step
+    const matchStep = sc.steps.find(s => s.forToken === chosenTokens[0]);
+    if (matchStep && matchStep.auto) {
+      finishSentence();
+      return;
+    }
+  }
+
+  const probs = softmax(step.logits, 1.0);
+  const barColors = step.tokens.map((_, i) => {
+    if (step.correctIdx !== undefined && i === step.correctIdx) return '#2e7d32';
+    if (step.wrongIdx !== undefined && i === step.wrongIdx) return '#c62828';
+    return '#1a3a5c';
+  });
+
+  Plotly.react('tokenPlot', [{
+    y: step.tokens,
+    x: probs,
+    type: 'bar',
+    orientation: 'h',
+    marker: { color: barColors },
+    text: probs.map(p => (p * 100).toFixed(1) + '%'),
+    textposition: 'outside',
+    hovertemplate: '%{y}: %{x:.1%}<extra></extra>'
+  }], {
+    xaxis: { title: 'Probability', range: [0, Math.max(...probs) * 1.3], gridcolor: '#e8ecf0' },
+    yaxis: { autorange: 'reversed' },
+    plot_bgcolor: '#fff', paper_bgcolor: '#fff',
+    margin: { l: 110, r: 60, t: 10, b: 40 },
+    font: { family: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif', size: 12 }
+  }, { responsive: true });
+
+  // Wire clicks on bars
+  const plotEl = document.getElementById('tokenPlot');
+  plotEl.removeAllListeners('plotly_click');
+  plotEl.on('plotly_click', function(data) {
+    if (data.points.length > 0) {
+      const idx = data.points[0].pointIndex;
+      pickToken(idx);
+    }
+  });
+
+  // Render clickable token buttons
+  const btnEl = document.getElementById('tokenButtons');
+  btnEl.innerHTML = step.tokens.map((t, i) => {
+    let cls = 'token-btn';
+    if (step.correctIdx !== undefined && i === step.correctIdx) cls += ' correct-hint';
+    if (step.wrongIdx !== undefined && i === step.wrongIdx) cls += ' wrong-hint';
+    return `<span class="${cls}" onclick="pickToken(${i})">${t} <span style="font-size:0.75rem; color:#656d76;">${(probs[i]*100).toFixed(1)}%</span></span>`;
+  }).join('');
+}
+
+function pickToken(idx) {
+  if (sentenceFinished) return;
+  const sc = SCENARIOS[currentScenario];
+  const step = sc.steps[currentStepIdx];
+  const probs = softmax(step.logits, 1.0);
+
+  chosenTokens.push(step.tokens[idx]);
+  chosenProbs.push(probs[idx]);
+  currentStepIdx++;
+
+  renderSentence();
+  updateAvgProb();
+
+  if (currentStepIdx >= sc.steps.length || (sc.steps[currentStepIdx] && sc.steps[currentStepIdx].forToken && sc.steps[currentStepIdx].forToken !== chosenTokens[0])) {
+    finishSentence();
+  } else {
+    renderTokenStep();
+  }
+}
+
+function finishSentence() {
+  sentenceFinished = true;
+  const sc = SCENARIOS[currentScenario];
+  const firstToken = chosenTokens[0];
+  const isCorrect = (firstToken === sc.steps[0].tokens[sc.steps[0].correctIdx]);
+  const path = isCorrect ? sc.paths.correct : sc.paths.wrong;
+
+  // Show full sentence
+  const el = document.getElementById('sentenceDisplay');
+  const words = path.text.split(' ');
+  const promptWords = sc.prompt.split(' ');
+  let html = '';
+  for (let i = 0; i < words.length; i++) {
+    if (i < promptWords.length) {
+      html += `<span class="token-prompt">${words[i]}</span> `;
+    } else {
+      const cls = isCorrect ? 'token-correct' : 'token-wrong';
+      html += `<span class="${cls}">${words[i]}</span> `;
+    }
+  }
+  el.innerHTML = html;
+
+  // Update card
+  document.getElementById('stepCard').innerHTML = `
+    <strong>${isCorrect ? '&#x2713; Correct path' : '&#x2717; Hallucinated path'}</strong>
+    <p style="font-size:0.85rem;">The model chose "${firstToken}" (probability ${(chosenProbs[0]*100).toFixed(1)}%) and continued fluently from there. ${isCorrect ? 'This time it got lucky — the correct token won.' : 'The wrong token had higher probability, so greedy decoding produced a hallucination.'}</p>
+  `;
+
+  // Clear buttons and chart
+  document.getElementById('tokenButtons').innerHTML = '';
+  Plotly.react('tokenPlot', [], {
+    xaxis: { visible: false }, yaxis: { visible: false },
+    plot_bgcolor: '#fff', paper_bgcolor: '#fff',
+    margin: { l: 20, r: 20, t: 20, b: 20 },
+    annotations: [{
+      x: 0.5, y: 0.5, xref: 'paper', yref: 'paper',
+      text: isCorrect ? 'Correct — the model got this one right' : 'Hallucination — fluent, confident, wrong',
+      showarrow: false,
+      font: { size: 16, color: isCorrect ? '#2e7d32' : '#c62828' }
+    }]
+  }, { responsive: true });
+
+  // Compute avg prob from the full path
+  const pathProbs = path.probs.filter(p => p !== null);
+  const avg = pathProbs.reduce((a, b) => a + b, 0) / pathProbs.length;
+  document.getElementById('avgProbVal').textContent = (avg * 100).toFixed(1) + '%';
+}
+
+function autoGreedy() {
+  if (sentenceFinished) resetScenario();
+  // Pick top token at each step
+  const sc = SCENARIOS[currentScenario];
+  while (!sentenceFinished && currentStepIdx < sc.steps.length) {
+    const step = sc.steps[currentStepIdx];
+    if (step.forToken && chosenTokens.length > 0 && step.forToken !== chosenTokens[0]) {
+      finishSentence();
+      return;
+    }
+    const probs = softmax(step.logits, 1.0);
+    const topIdx = probs.indexOf(Math.max(...probs));
+    pickToken(topIdx);
+  }
+}
+
+function updateAvgProb() {
+  if (chosenProbs.length === 0) return;
+  const avg = chosenProbs.reduce((a, b) => a + b, 0) / chosenProbs.length;
+  document.getElementById('avgProbVal').textContent = (avg * 100).toFixed(1) + '%';
+}
+
+// ================================================================
+// STAGE 2: BRANCH POINT
+// ================================================================
+function renderBranchViz(mode) {
+  const sc = SCENARIOS[currentScenario];
+  const el = document.getElementById('branchViz');
+  const promptWords = sc.prompt;
+
+  if (mode === 'correct' || mode === 'both') {
+    var correctHTML = `<div class="passage-box correct-box" style="margin-top:0.75rem;">
+      <div style="font-weight:700; color:#2e7d32; margin-bottom:0.3rem;">&#x2713; Correct: "${sc.paths.correct.label}"</div>
+      <p style="margin:0;">${sc.paths.correct.text}</p>
+    </div>`;
+  }
+  if (mode === 'wrong' || mode === 'both') {
+    var wrongHTML = `<div class="passage-box wrong-box" style="margin-top:0.75rem;">
+      <div style="font-weight:700; color:#c62828; margin-bottom:0.3rem;">&#x2717; Hallucination: "${sc.paths.wrong.label}"</div>
+      <p style="margin:0;">${sc.paths.wrong.text}</p>
+    </div>`;
+  }
+
+  let html = '';
+  if (mode === 'correct') html = correctHTML;
+  else if (mode === 'wrong') html = wrongHTML;
+  else html = `<div class="row" style="align-items:stretch;""><div style="flex:1;">${correctHTML}</div><div style="flex:1;">${wrongHTML}</div></div>`;
+
+  el.innerHTML = html;
+}
+
+function showBranch(mode) { renderBranchViz(mode); }
+
+// ================================================================
+// STAGE 3: TEMPERATURE
+// ================================================================
+function updateTemp() {
+  const T = parseFloat(document.getElementById('tempSlider').value);
+  document.getElementById('tempVal').textContent = T.toFixed(2);
+  renderTempChart(T);
+  document.getElementById('sampleResult').textContent = '';
+}
+
+function setTemp(t) {
+  document.getElementById('tempSlider').value = t;
+  updateTemp();
+}
+
+function renderTempChart(T) {
+  const sc = SCENARIOS[currentScenario];
+  const step = sc.steps[0];
+  const probs = softmax(step.logits, T);
+  const barColors = step.tokens.map((_, i) => {
+    if (i === step.correctIdx) return '#2e7d32';
+    if (i === step.wrongIdx) return '#c62828';
+    return '#1a3a5c';
+  });
+
+  Plotly.react('tempPlot', [{
+    y: step.tokens,
+    x: probs,
+    type: 'bar',
+    orientation: 'h',
+    marker: { color: barColors },
+    text: probs.map(p => (p * 100).toFixed(1) + '%'),
+    textposition: 'outside',
+    hovertemplate: '%{y}: %{x:.1%}<extra></extra>'
+  }], {
+    xaxis: { title: 'Probability', range: [0, 1.0], gridcolor: '#e8ecf0' },
+    yaxis: { autorange: 'reversed' },
+    plot_bgcolor: '#fff', paper_bgcolor: '#fff',
+    margin: { l: 110, r: 60, t: 10, b: 40 },
+    font: { family: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif', size: 12 },
+    annotations: [{
+      x: 0.98, y: -0.12, xref: 'paper', yref: 'paper',
+      text: `T = ${T.toFixed(2)}`, showarrow: false,
+      font: { size: 14, color: '#1a3a5c', family: '"SF Mono", Consolas, monospace' }
+    }]
+  }, { responsive: true });
+}
+
+function sampleOnce() {
+  const sc = SCENARIOS[currentScenario];
+  const step = sc.steps[0];
+  const T = parseFloat(document.getElementById('tempSlider').value);
+  const probs = softmax(step.logits, T);
+  const idx = weightedSample(probs);
+  const token = step.tokens[idx];
+  const isCorrect = (idx === step.correctIdx);
+  const color = isCorrect ? '#2e7d32' : (idx === step.wrongIdx ? '#c62828' : '#1a3a5c');
+  document.getElementById('sampleResult').innerHTML =
+    `Sampled: <strong style="color:${color};">${token}</strong> (${(probs[idx]*100).toFixed(1)}%) ${isCorrect ? '&#x2713;' : '&#x2717;'}`;
+}
+
+function sampleMany() {
+  const sc = SCENARIOS[currentScenario];
+  const step = sc.steps[0];
+  const T = parseFloat(document.getElementById('tempSlider').value);
+  const probs = softmax(step.logits, T);
+  const counts = new Array(step.tokens.length).fill(0);
+  for (let i = 0; i < 50; i++) counts[weightedSample(probs)]++;
+
+  let html = '<div style="margin-top:0.5rem; font-size:0.85rem;">';
+  html += '<strong style="color:#1a3a5c;">50 samples:</strong> ';
+  for (let i = 0; i < step.tokens.length; i++) {
+    if (counts[i] === 0) continue;
+    const color = (i === step.correctIdx) ? '#2e7d32' : (i === step.wrongIdx ? '#c62828' : '#1a3a5c');
+    html += `<span style="color:${color}; font-weight:600;">${step.tokens[i]}</span>=${counts[i]} &nbsp;`;
+  }
+  const correctCount = counts[step.correctIdx];
+  html += `<br>Correct answer chosen ${correctCount}/50 times (${(correctCount/50*100).toFixed(0)}%)`;
+  html += '</div>';
+  document.getElementById('sampleResult').innerHTML = html;
+}
+
+// ================================================================
+// STAGE 4: FLUENT ≠ FACTUAL
+// ================================================================
+function renderPassagePills() {
+  const el = document.getElementById('passagePills');
+  el.innerHTML = SCENARIOS.map((s, i) =>
+    `<div class="scenario-pill ${i === currentScenario ? 'active' : ''}" onclick="switchPassageScenario(${i})">${s.label}</div>`
+  ).join('');
+}
+
+function switchPassageScenario(idx) {
+  currentScenario = idx;
+  renderScenarioPills();
+  renderPassagePills();
+  renderPassages();
+  updateTemp();
+  resetScenario();
+}
+
+function probToColor(p) {
+  if (p === null) return 'transparent';
+  // Map probability 0..1 to opacity of blue
+  const intensity = Math.round(p * 200 + 55);
+  return `rgba(26, 58, 92, ${(p * 0.5 + 0.05).toFixed(2)})`;
+}
+
+function renderPassages() {
+  const sc = SCENARIOS[currentScenario];
+  renderPassagePills();
+
+  function renderPassage(elId, path) {
+    const el = document.getElementById(elId);
+    const words = path.text.split(' ');
+    const promptLen = sc.prompt.split(' ').length;
+    let html = '';
+    for (let i = 0; i < words.length; i++) {
+      if (i < promptLen) {
+        html += `<span style="color:#656d76;">${words[i]}</span> `;
+      } else {
+        const pIdx = i;
+        const prob = (pIdx < path.probs.length && path.probs[pIdx] !== null) ? path.probs[pIdx] : 0.45;
+        html += `<span class="prob-word" style="background:${probToColor(prob)}; color:#fff;" title="P = ${(prob*100).toFixed(1)}%">${words[i]}</span> `;
+      }
+    }
+    el.innerHTML = html;
+  }
+
+  renderPassage('correctPassage', sc.paths.correct);
+  renderPassage('wrongPassage', sc.paths.wrong);
+
+  // Compute stats
+  function pathStats(path) {
+    const probs = path.probs.filter(p => p !== null);
+    const avg = probs.reduce((a, b) => a + b, 0) / probs.length;
+    const min = Math.min(...probs);
+    return { avg, min };
+  }
+
+  const cs = pathStats(sc.paths.correct);
+  const ws = pathStats(sc.paths.wrong);
+
+  document.getElementById('correctAvg').textContent = (cs.avg * 100).toFixed(1) + '%';
+  document.getElementById('correctMin').textContent = (cs.min * 100).toFixed(1) + '%';
+  document.getElementById('wrongAvg').textContent = (ws.avg * 100).toFixed(1) + '%';
+  document.getElementById('wrongMin').textContent = (ws.min * 100).toFixed(1) + '%';
+}
+
+// ================================================================
+// INIT
+// ================================================================
+document.addEventListener('DOMContentLoaded', function() {
+  renderScenarioPills();
+  renderSentence();
+  renderTokenStep();
+  renderTempChart(1.0);
+  renderBranchViz('both');
+  renderPassages();
+});
+</script>
+
+</body>
+</html>
