@@ -1,0 +1,879 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Neural Networks: Why Layers Matter &mdash; AIML 2013</title>
+<script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+<style>
+  :root {
+    --primary: #1a3a5c;
+    --primary-light: #2e5a88;
+    --accent: #2e7d32;
+    --light-bg: #f7f9fc;
+    --border: #d0d7de;
+    --text: #1f2328;
+    --muted: #656d76;
+    --neg: #c62828;
+    --neg-bg: #fce4ec;
+    --pos: #2e7d32;
+    --pos-bg: #e8f5e9;
+    --purple: #5e35b1;
+    --purple-bg: #ede7f6;
+    --orange: #e65100;
+    /* Demo-specific */
+    --class0: #2196F3;
+    --class1: #FF9800;
+    --class0-light: rgba(33,150,243,0.15);
+    --class1-light: rgba(255,152,0,0.15);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    color: var(--text); line-height: 1.6; background: #fff;
+  }
+  .container { max-width: 1100px; margin: 0 auto; padding: 0 2rem 3rem; }
+
+  .hero {
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+    color: #fff; padding: 2.5rem 2rem; text-align: center; margin-bottom: 2rem;
+  }
+  .hero h1 { font-size: 1.8rem; margin-bottom: 0.3rem; font-weight: 700; }
+  .hero p { color: #c0d4e8; font-size: 1rem; }
+  .hero .hl { color: #fff; font-weight: 500; margin-top: 0.75rem; font-size: 1.05rem; }
+
+  .stage { margin-top: 3rem; }
+  .stage-num {
+    display: inline-block; width: 2rem; height: 2rem; line-height: 2rem;
+    border-radius: 50%; background: var(--primary); color: #fff;
+    text-align: center; font-weight: 700; font-size: 0.9rem;
+    margin-right: 0.5rem; vertical-align: middle;
+  }
+  .stage-line h2 { font-size: 1.3rem; color: var(--primary); margin-bottom: 0.75rem; display: inline; vertical-align: middle; }
+  .stage-line { border-bottom: 2px solid var(--primary); margin-bottom: 1rem; padding-bottom: 0.4rem; }
+  p { font-size: 0.95rem; margin-bottom: 0.75rem; }
+
+  .card {
+    background: var(--light-bg); border: 1px solid var(--border);
+    border-radius: 8px; padding: 1.25rem; margin-bottom: 1rem;
+  }
+  .card strong { color: var(--primary); display: block; margin-bottom: 0.3rem; }
+
+  .tip {
+    background: var(--pos-bg); border-left: 4px solid var(--accent);
+    padding: 1rem 1.25rem; border-radius: 4px; margin: 1rem 0; font-size: 0.9rem;
+  }
+  .tip strong { color: var(--accent); }
+  .warn-tip {
+    background: #fff3e0; border-left: 4px solid var(--orange);
+    padding: 1rem 1.25rem; border-radius: 4px; margin: 1rem 0; font-size: 0.9rem;
+  }
+  .warn-tip strong { color: var(--orange); }
+  .arrow-box { text-align: center; padding: 1rem 0; color: var(--muted); font-size: 1.5rem; }
+
+  .btn {
+    display: inline-block; padding: 0.5rem 1.1rem; border: none; border-radius: 6px;
+    font-size: 0.85rem; font-weight: 600; cursor: pointer; font-family: inherit;
+    transition: opacity 0.15s;
+  }
+  .btn:hover { opacity: 0.85; }
+  .btn-accent { background: var(--accent); color: #fff; }
+  .btn-primary { background: var(--primary); color: #fff; }
+  .btn-outline { background: #fff; color: var(--primary); border: 1px solid var(--border); }
+  .btn-purple { background: var(--purple); color: #fff; }
+  .btn-group { display: flex; gap: 0.5rem; flex-wrap: wrap; margin: 0.75rem 0; }
+
+  .stats-row { display: flex; gap: 1rem; flex-wrap: wrap; margin: 1rem 0; }
+  .stat-card {
+    flex: 1; min-width: 110px; background: var(--light-bg);
+    border: 1px solid var(--border); border-radius: 8px;
+    padding: 0.75rem 1rem; text-align: center;
+  }
+  .stat-card .val { font-size: 1.5rem; font-weight: 700; color: var(--primary); }
+  .stat-card .lbl { font-size: 0.8rem; color: var(--muted); }
+
+  .eq-box {
+    background: var(--light-bg); border: 1px solid var(--border); border-radius: 8px;
+    padding: 1rem 1.25rem; margin: 1rem 0; text-align: center;
+    font-family: "SF Mono", Consolas, monospace; font-size: 0.95rem;
+  }
+
+  .row { display: flex; gap: 1.5rem; flex-wrap: wrap; }
+  .col-main { flex: 1; min-width: 400px; }
+  .col-side { flex: 1; min-width: 400px; }
+  .col-half { flex: 1; min-width: 300px; }
+
+  .footer {
+    text-align: center; padding: 2rem; color: var(--muted); font-size: 0.85rem;
+    border-top: 1px solid var(--border); margin-top: 3rem;
+  }
+
+  /* Slider styling */
+  .slider-group { margin: 0.5rem 0; display: flex; align-items: center; gap: 0.75rem; }
+  .slider-group label { min-width: 80px; font-size: 0.85rem; font-weight: 600; color: var(--primary); }
+  .slider-group input[type="range"] { flex: 1; accent-color: var(--primary); }
+  .slider-group .slider-val {
+    min-width: 50px; text-align: right; font-family: "SF Mono", Consolas, monospace;
+    font-size: 0.85rem; color: var(--muted);
+  }
+
+  /* Network diagram */
+  .net-diagram {
+    display: flex; align-items: center; justify-content: center;
+    gap: 1.5rem; margin: 1.25rem 0; flex-wrap: wrap;
+  }
+  .net-layer {
+    display: flex; flex-direction: column; align-items: center; gap: 0.4rem;
+  }
+  .net-layer .layer-label {
+    font-size: 0.75rem; color: var(--muted); font-weight: 600; text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+  .net-neuron {
+    width: 2rem; height: 2rem; border-radius: 50%; border: 2px solid var(--primary);
+    background: var(--light-bg);
+  }
+  .net-neuron.active { background: var(--primary); }
+  .net-neuron.stripped {
+    border-color: var(--neg); background: var(--neg-bg);
+    position: relative;
+  }
+  .net-neuron.stripped::after {
+    content: '✕'; position: absolute; top: 50%; left: 50%;
+    transform: translate(-50%, -50%); color: var(--neg);
+    font-weight: 700; font-size: 0.9rem;
+  }
+  .net-arrow { font-size: 1.2rem; color: var(--muted); }
+
+  /* Neighbor cards in Stage 4 */
+  .neighbor-list { display: flex; gap: 0.75rem; flex-wrap: wrap; margin-top: 0.75rem; }
+  .neighbor-card {
+    background: var(--light-bg); border: 1px solid var(--border);
+    border-radius: 6px; padding: 0.6rem 0.9rem; font-size: 0.85rem;
+    min-width: 120px; text-align: center;
+  }
+  .neighbor-card .sim-val { font-weight: 700; font-size: 1.1rem; }
+  .neighbor-card .sim-lbl { color: var(--muted); font-size: 0.75rem; }
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <h1>Neural Networks: Why Layers Matter</h1>
+  <p>AIML 2013 &bull; Module 3: Learned Embeddings</p>
+  <p class="hl">A single neuron can only draw a straight line. Stack a few neurons in a hidden layer and the network learns to untangle data no line could separate.</p>
+</div>
+
+<div class="container">
+
+  <!-- ========== STAGE 1 ========== -->
+  <div class="stage">
+    <div class="stage-line"><span class="stage-num">1</span><h2>A Problem a Line Can't Solve</h2></div>
+    <p>Below are 200 data points in two classes: blue crescents and orange crescents. They interleave. No straight line can perfectly separate them. Click the button to let a single neuron try its best.</p>
+    <div id="plot1" style="width:100%;height:400px;"></div>
+    <div class="btn-group">
+      <button class="btn btn-primary" onclick="trainPerceptron()">Classify with a Straight Line</button>
+      <button class="btn btn-outline" onclick="resetStage1()">Reset</button>
+    </div>
+    <div class="stats-row">
+      <div class="stat-card"><div class="val" id="s1-acc">&mdash;</div><div class="lbl">Accuracy</div></div>
+      <div class="stat-card"><div class="val" id="s1-verdict">&mdash;</div><div class="lbl">Verdict</div></div>
+    </div>
+    <div class="tip">
+      <strong>Why this matters:</strong> In Module 2 you designed HOG features by choosing gradient bins and cell sizes. That was the hand-crafted approach: you picked the representation, then fit a classifier on top. A single neuron <em>is</em> that classifier. If the representation isn't right for the task, no linear boundary can fix it.
+    </div>
+  </div>
+
+  <div class="arrow-box">&darr;</div>
+
+  <!-- ========== STAGE 2 ========== -->
+  <div class="stage">
+    <div class="stage-line"><span class="stage-num">2</span><h2>Inside a Single Neuron</h2></div>
+    <p>A neuron computes a weighted sum of its inputs, adds a bias, and applies a sigmoid function that squashes the result between 0 and 1. The weights and bias define a straight line. Points on one side are classified as blue; points on the other side, orange. Drag the sliders to move the line and try to separate both classes.</p>
+    <div class="eq-box" id="s2-equation">&sigma;(w<sub>1</sub> &middot; x + w<sub>2</sub> &middot; y + b)</div>
+    <div id="plot2" style="width:100%;height:400px;"></div>
+    <div style="max-width:500px;">
+      <div class="slider-group">
+        <label>w<sub>1</sub></label>
+        <input type="range" id="s2-w1" min="-5" max="5" step="0.1" value="2" oninput="updateStage2()">
+        <span class="slider-val" id="s2-w1-val">2.0</span>
+      </div>
+      <div class="slider-group">
+        <label>w<sub>2</sub></label>
+        <input type="range" id="s2-w2" min="-5" max="5" step="0.1" value="-1" oninput="updateStage2()">
+        <span class="slider-val" id="s2-w2-val">-1.0</span>
+      </div>
+      <div class="slider-group">
+        <label>bias</label>
+        <input type="range" id="s2-bias" min="-5" max="5" step="0.1" value="0" oninput="updateStage2()">
+        <span class="slider-val" id="s2-bias-val">0.0</span>
+      </div>
+    </div>
+    <div class="stats-row">
+      <div class="stat-card"><div class="val" id="s2-acc">&mdash;</div><div class="lbl">Accuracy</div></div>
+    </div>
+    <div class="tip">
+      <strong>Notice:</strong> No matter how you adjust the sliders, the boundary stays straight. The neuron computes a weighted sum and applies a threshold. Geometrically, that weighted sum defines a line. To draw a curved boundary, you need more neurons working together.
+    </div>
+  </div>
+
+  <div class="arrow-box">&darr;</div>
+
+  <!-- ========== STAGE 3 ========== -->
+  <div class="stage">
+    <div class="stage-line"><span class="stage-num">3</span><h2>A Hidden Layer Untangles the Data</h2></div>
+    <p>Adding a layer of neurons between input and output lets the network learn its own coordinate system. Each hidden neuron draws a line in the original space; the output neuron combines them to carve out a curved region. The left plot shows the decision boundary in the original space. The right plot shows the same data after the hidden layer has transformed it &mdash; each point's position is determined by two of the hidden neurons' outputs.</p>
+    <div class="row">
+      <div class="col-half">
+        <div style="text-align:center;font-size:0.8rem;color:#656d76;font-weight:600;margin-bottom:0.25rem;">ORIGINAL SPACE</div>
+        <div id="plot3a" style="width:100%;height:380px;"></div>
+      </div>
+      <div class="col-half">
+        <div style="text-align:center;font-size:0.8rem;color:#656d76;font-weight:600;margin-bottom:0.25rem;">HIDDEN LAYER SPACE</div>
+        <div id="plot3b" style="width:100%;height:380px;"></div>
+      </div>
+    </div>
+    <div class="btn-group">
+      <button class="btn btn-accent" id="s3-train-btn" onclick="toggleTraining()">Train</button>
+      <button class="btn btn-outline" onclick="resetStage3()">Reset</button>
+    </div>
+    <div class="stats-row">
+      <div class="stat-card"><div class="val" id="s3-epoch">0</div><div class="lbl">Epoch</div></div>
+      <div class="stat-card"><div class="val" id="s3-acc">—</div><div class="lbl">Accuracy</div></div>
+      <div class="stat-card"><div class="val" id="s3-arch">2 → 4 → 1</div><div class="lbl">Architecture</div></div>
+    </div>
+    <div class="tip">
+      <strong>Watch the right plot.</strong> The hidden layer learns a new coordinate system where the two classes pull apart. In the original space the crescents interleave, but in the hidden layer's space they separate into distinct clusters. Once they're separated, the output neuron can draw a straight line between them. Each layer in a deep network does the same thing: it transforms the data so the next layer's job becomes easier.
+    </div>
+  </div>
+
+  <div class="arrow-box">&darr;</div>
+
+  <!-- ========== STAGE 4 ========== -->
+  <div class="stage">
+    <div class="stage-line"><span class="stage-num">4</span><h2>The Representation Is the Embedding</h2></div>
+    <p>After training, each input passes through the hidden layer and comes out as a 4-dimensional vector &mdash; one value per hidden neuron. That vector is the <strong>embedding</strong>: a learned representation that captures class-relevant structure. Strip the output neuron away and you're left with a coordinate system where similar inputs land near each other.</p>
+
+    <div class="net-diagram">
+      <div class="net-layer">
+        <div class="net-neuron active"></div>
+        <div class="net-neuron active"></div>
+        <div class="layer-label">Input (2)</div>
+      </div>
+      <div class="net-arrow">→</div>
+      <div class="net-layer">
+        <div class="net-neuron active"></div>
+        <div class="net-neuron active"></div>
+        <div class="net-neuron active"></div>
+        <div class="net-neuron active"></div>
+        <div class="layer-label">Hidden (4) = Embedding</div>
+      </div>
+      <div class="net-arrow">→</div>
+      <div class="net-layer">
+        <div class="net-neuron stripped"></div>
+        <div class="layer-label">Output (stripped)</div>
+      </div>
+    </div>
+
+    <p>Click any point in the embedding space below to find its three nearest neighbors by cosine similarity. Points from the same class should be close; points from different classes should be far apart.</p>
+    <div id="plot4" style="width:100%;height:420px;"></div>
+    <div id="s4-info" style="min-height:60px;">
+      <div class="card" style="text-align:center;color:#656d76;">Click a point above to see its nearest neighbors.</div>
+    </div>
+    <div class="tip">
+      <strong>From 4 dimensions to 1,280.</strong> This toy network learned a 4-dimensional embedding from 200 points. MobileNetV2, which you'll use in Thursday's lab, learns a 1,280-dimensional embedding from 1.2 million ImageNet images. The principle is identical: strip the classification head, keep the representation, and use cosine similarity to find what's nearby. The only differences are scale and what the network was trained to see.
+    </div>
+  </div>
+
+</div>
+
+<div class="footer">
+  AIML 2013 &bull; Module 3: Learned Embeddings &bull; Spring 2026
+</div>
+
+<script>
+/* ===== Seeded PRNG ===== */
+let _seed = 42;
+function srand(s) { _seed = s; }
+function rand() {
+  _seed = (_seed * 1664525 + 1013904223) & 0x7FFFFFFF;
+  return _seed / 0x7FFFFFFF;
+}
+
+/* ===== Data ===== */
+const DATA = [];
+const N_POINTS = 200;
+const X_RANGE = [-1.5, 2.5];
+const Y_RANGE = [-1.0, 1.5];
+
+function generateMoons() {
+  DATA.length = 0;
+  const half = Math.floor(N_POINTS / 2);
+  const noise = 0.12;
+  for (let i = 0; i < half; i++) {
+    const t = Math.PI * i / (half - 1);
+    DATA.push([
+      Math.cos(t) + (rand() - 0.5) * noise * 2,
+      Math.sin(t) + (rand() - 0.5) * noise * 2,
+      0
+    ]);
+  }
+  for (let i = 0; i < N_POINTS - half; i++) {
+    const t = Math.PI * i / (N_POINTS - half - 1);
+    DATA.push([
+      1 - Math.cos(t) + (rand() - 0.5) * noise * 2,
+      0.5 - Math.sin(t) + (rand() - 0.5) * noise * 2,
+      1
+    ]);
+  }
+}
+
+function getClass(c) {
+  return DATA.filter(d => d[2] === c);
+}
+
+/* ===== Network ===== */
+function sigmoid(x) {
+  if (x > 500) return 1;
+  if (x < -500) return 0;
+  return 1 / (1 + Math.exp(-x));
+}
+
+function createNet(sizes) {
+  const W = [], B = [];
+  for (let l = 0; l < sizes.length - 1; l++) {
+    const fanIn = sizes[l];
+    const scale = Math.sqrt(2 / fanIn);
+    const w = [];
+    for (let j = 0; j < sizes[l + 1]; j++) {
+      const row = [];
+      for (let k = 0; k < sizes[l]; k++) {
+        row.push((rand() - 0.5) * 2 * scale);
+      }
+      w.push(row);
+    }
+    W.push(w);
+    const b = [];
+    for (let j = 0; j < sizes[l + 1]; j++) {
+      b.push((rand() - 0.5) * 0.2);
+    }
+    B.push(b);
+  }
+  return { sizes, W, B };
+}
+
+function forward(net, x) {
+  const acts = [x.slice()];
+  let cur = x.slice();
+  for (let l = 0; l < net.W.length; l++) {
+    const next = [];
+    for (let j = 0; j < net.W[l].length; j++) {
+      let z = net.B[l][j];
+      for (let k = 0; k < cur.length; k++) {
+        z += net.W[l][j][k] * cur[k];
+      }
+      next.push(sigmoid(z));
+    }
+    acts.push(next);
+    cur = next;
+  }
+  return acts;
+}
+
+function trainEpoch(net, data, lr) {
+  /* Shuffle indices */
+  const idx = data.map((_, i) => i);
+  for (let i = idx.length - 1; i > 0; i--) {
+    const j = Math.floor(rand() * (i + 1));
+    [idx[i], idx[j]] = [idx[j], idx[i]];
+  }
+
+  for (let di = 0; di < idx.length; di++) {
+    const d = data[idx[di]];
+    const x = [d[0], d[1]];
+    const target = d[2];
+    const acts = forward(net, x);
+    const L = net.W.length;
+
+    /* Compute deltas */
+    const deltas = new Array(L);
+    /* Output layer */
+    deltas[L - 1] = [];
+    for (let j = 0; j < net.W[L - 1].length; j++) {
+      const o = acts[L][j];
+      deltas[L - 1][j] = (o - target) * o * (1 - o);
+    }
+    /* Hidden layers */
+    for (let l = L - 2; l >= 0; l--) {
+      deltas[l] = [];
+      for (let j = 0; j < net.W[l].length; j++) {
+        let sum = 0;
+        for (let k = 0; k < net.W[l + 1].length; k++) {
+          sum += net.W[l + 1][k][j] * deltas[l + 1][k];
+        }
+        const a = acts[l + 1][j];
+        deltas[l][j] = sum * a * (1 - a);
+      }
+    }
+
+    /* Update weights and biases */
+    for (let l = 0; l < L; l++) {
+      for (let j = 0; j < net.W[l].length; j++) {
+        for (let k = 0; k < acts[l].length; k++) {
+          net.W[l][j][k] -= lr * deltas[l][j] * acts[l][k];
+        }
+        net.B[l][j] -= lr * deltas[l][j];
+      }
+    }
+  }
+}
+
+function getAccuracy(net, data) {
+  let correct = 0;
+  for (let i = 0; i < data.length; i++) {
+    const acts = forward(net, [data[i][0], data[i][1]]);
+    const pred = acts[acts.length - 1][0] > 0.5 ? 1 : 0;
+    if (pred === data[i][2]) correct++;
+  }
+  return correct / data.length;
+}
+
+/* ===== Plotting helpers ===== */
+const PLOTLY_LAYOUT_BASE = {
+  plot_bgcolor: '#fff',
+  paper_bgcolor: '#fff',
+  font: { family: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif', size: 12 },
+  xaxis: { gridcolor: '#e8ecf0' },
+  yaxis: { gridcolor: '#e8ecf0' },
+};
+
+function scatterTraces(data, opts) {
+  const c0 = data.filter(d => d[2] === 0);
+  const c1 = data.filter(d => d[2] === 1);
+  const xKey = opts && opts.xKey || 0;
+  const yKey = opts && opts.yKey || 1;
+  return [
+    {
+      x: c0.map(d => d[xKey]), y: c0.map(d => d[yKey]),
+      mode: 'markers', type: 'scatter',
+      marker: { color: '#2196F3', size: 6, opacity: 0.7, line: { width: 0.5, color: '#1565C0' } },
+      name: 'Class 0', showlegend: false, hoverinfo: 'skip'
+    },
+    {
+      x: c1.map(d => d[xKey]), y: c1.map(d => d[yKey]),
+      mode: 'markers', type: 'scatter',
+      marker: { color: '#FF9800', size: 6, opacity: 0.7, line: { width: 0.5, color: '#E65100' } },
+      name: 'Class 1', showlegend: false, hoverinfo: 'skip'
+    }
+  ];
+}
+
+function computeBoundary(net, res) {
+  const xs = [], ys = [], zs = [];
+  const xStep = (X_RANGE[1] - X_RANGE[0]) / res;
+  const yStep = (Y_RANGE[1] - Y_RANGE[0]) / res;
+  for (let i = 0; i <= res; i++) xs.push(X_RANGE[0] + i * xStep);
+  for (let j = 0; j <= res; j++) ys.push(Y_RANGE[0] + j * yStep);
+  for (let j = 0; j <= res; j++) {
+    const row = [];
+    for (let i = 0; i <= res; i++) {
+      const acts = forward(net, [xs[i], ys[j]]);
+      row.push(acts[acts.length - 1][0]);
+    }
+    zs.push(row);
+  }
+  return { xs, ys, zs };
+}
+
+function heatmapTrace(boundary) {
+  return {
+    x: boundary.xs, y: boundary.ys, z: boundary.zs,
+    type: 'heatmap',
+    colorscale: [[0, 'rgba(33,150,243,0.18)'], [0.5, 'rgba(255,255,255,0.0)'], [1, 'rgba(255,152,0,0.18)']],
+    showscale: false, hoverinfo: 'skip', zmin: 0, zmax: 1
+  };
+}
+
+/* ===== STAGE 1: Perceptron ===== */
+let perceptronNet = null;
+let s1Drawn = false;
+
+function drawStage1() {
+  const traces = scatterTraces(DATA);
+  const layout = Object.assign({}, PLOTLY_LAYOUT_BASE, {
+    margin: { l: 50, r: 20, t: 10, b: 45 },
+    xaxis: { range: X_RANGE, gridcolor: '#e8ecf0', title: 'x₁' },
+    yaxis: { range: Y_RANGE, gridcolor: '#e8ecf0', title: 'x₂', scaleanchor: 'x' },
+  });
+  Plotly.react('plot1', traces, layout, { responsive: true });
+  document.getElementById('s1-acc').textContent = '—';
+  document.getElementById('s1-verdict').textContent = '—';
+  s1Drawn = false;
+}
+
+function trainPerceptron() {
+  srand(123);
+  perceptronNet = createNet([2, 1]);
+  for (let e = 0; e < 500; e++) {
+    trainEpoch(perceptronNet, DATA, 1.0);
+  }
+  const acc = getAccuracy(perceptronNet, DATA);
+
+  /* Draw decision line */
+  const w0 = perceptronNet.W[0][0][0];
+  const w1 = perceptronNet.W[0][0][1];
+  const b = perceptronNet.B[0][0];
+  let lineX, lineY;
+  if (Math.abs(w1) > 1e-6) {
+    lineX = [X_RANGE[0], X_RANGE[1]];
+    lineY = [-(w0 * X_RANGE[0] + b) / w1, -(w0 * X_RANGE[1] + b) / w1];
+  } else {
+    const xVal = -b / w0;
+    lineX = [xVal, xVal];
+    lineY = [Y_RANGE[0], Y_RANGE[1]];
+  }
+
+  const boundary = computeBoundary(perceptronNet, 40);
+  const traces = [
+    heatmapTrace(boundary),
+    ...scatterTraces(DATA),
+    {
+      x: lineX, y: lineY, mode: 'lines', type: 'scatter',
+      line: { color: '#c62828', width: 2.5, dash: 'dash' },
+      showlegend: false, hoverinfo: 'skip'
+    }
+  ];
+  const layout = Object.assign({}, PLOTLY_LAYOUT_BASE, {
+    margin: { l: 50, r: 20, t: 10, b: 45 },
+    xaxis: { range: X_RANGE, gridcolor: '#e8ecf0', title: 'x₁' },
+    yaxis: { range: Y_RANGE, gridcolor: '#e8ecf0', title: 'x₂', scaleanchor: 'x' },
+  });
+  Plotly.react('plot1', traces, layout, { responsive: true });
+  document.getElementById('s1-acc').textContent = (acc * 100).toFixed(0) + '%';
+  document.getElementById('s1-acc').style.color = acc < 0.9 ? '#c62828' : '#2e7d32';
+  document.getElementById('s1-verdict').textContent = acc < 0.9 ? 'Not enough' : 'Solved';
+  document.getElementById('s1-verdict').style.color = acc < 0.9 ? '#c62828' : '#2e7d32';
+  s1Drawn = true;
+}
+
+function resetStage1() {
+  drawStage1();
+}
+
+/* ===== STAGE 2: Manual neuron ===== */
+function drawStage2() {
+  updateStage2();
+}
+
+function updateStage2() {
+  const w1 = parseFloat(document.getElementById('s2-w1').value);
+  const w2 = parseFloat(document.getElementById('s2-w2').value);
+  const bias = parseFloat(document.getElementById('s2-bias').value);
+
+  document.getElementById('s2-w1-val').textContent = w1.toFixed(1);
+  document.getElementById('s2-w2-val').textContent = w2.toFixed(1);
+  document.getElementById('s2-bias-val').textContent = bias.toFixed(1);
+
+  /* Compute accuracy with these manual weights */
+  const manualNet = { sizes: [2, 1], W: [[[w1, w2]]], B: [[bias]] };
+  const acc = getAccuracy(manualNet, DATA);
+
+  /* Decision line */
+  let lineX, lineY;
+  if (Math.abs(w2) > 1e-6) {
+    lineX = [X_RANGE[0], X_RANGE[1]];
+    lineY = [-(w1 * X_RANGE[0] + bias) / w2, -(w1 * X_RANGE[1] + bias) / w2];
+  } else if (Math.abs(w1) > 1e-6) {
+    const xVal = -bias / w1;
+    lineX = [xVal, xVal];
+    lineY = [Y_RANGE[0], Y_RANGE[1]];
+  } else {
+    lineX = []; lineY = [];
+  }
+
+  const boundary = computeBoundary(manualNet, 40);
+  const traces = [
+    heatmapTrace(boundary),
+    ...scatterTraces(DATA),
+    {
+      x: lineX, y: lineY, mode: 'lines', type: 'scatter',
+      line: { color: '#c62828', width: 2.5, dash: 'dash' },
+      showlegend: false, hoverinfo: 'skip'
+    }
+  ];
+  const layout = Object.assign({}, PLOTLY_LAYOUT_BASE, {
+    margin: { l: 50, r: 20, t: 10, b: 45 },
+    xaxis: { range: X_RANGE, gridcolor: '#e8ecf0', title: 'x₁' },
+    yaxis: { range: Y_RANGE, gridcolor: '#e8ecf0', title: 'x₂', scaleanchor: 'x' },
+  });
+  Plotly.react('plot2', traces, layout, { responsive: true });
+
+  document.getElementById('s2-acc').textContent = (acc * 100).toFixed(0) + '%';
+  document.getElementById('s2-acc').style.color = acc < 0.9 ? '#c62828' : '#2e7d32';
+
+  /* Update equation display */
+  document.getElementById('s2-equation').innerHTML =
+    '&sigma;(' + w1.toFixed(1) + ' &middot; x + ' + w2.toFixed(1) + ' &middot; y + ' + bias.toFixed(1) + ')';
+}
+
+/* ===== STAGE 3: Hidden layer ===== */
+let hiddenNet = null;
+let trainInterval = null;
+let epoch = 0;
+let isTraining = false;
+
+function initStage3() {
+  srand(77);
+  hiddenNet = createNet([2, 4, 1]);
+  epoch = 0;
+  drawStage3();
+}
+
+function getHiddenActivations() {
+  const result = [];
+  for (let i = 0; i < DATA.length; i++) {
+    const acts = forward(hiddenNet, [DATA[i][0], DATA[i][1]]);
+    result.push({ hidden: acts[1], label: DATA[i][2], idx: i });
+  }
+  return result;
+}
+
+function drawStage3() {
+  /* Left plot: original space with decision boundary */
+  const boundary = computeBoundary(hiddenNet, 40);
+  const tracesLeft = [heatmapTrace(boundary), ...scatterTraces(DATA)];
+  const layoutLeft = Object.assign({}, PLOTLY_LAYOUT_BASE, {
+    margin: { l: 45, r: 10, t: 10, b: 40 },
+    xaxis: { range: X_RANGE, gridcolor: '#e8ecf0', title: 'x₁' },
+    yaxis: { range: Y_RANGE, gridcolor: '#e8ecf0', title: 'x₂' },
+  });
+  Plotly.react('plot3a', tracesLeft, layoutLeft, { responsive: true });
+
+  /* Right plot: hidden layer space (neurons 0 and 1) */
+  const hActs = getHiddenActivations();
+  const c0 = hActs.filter(h => h.label === 0);
+  const c1 = hActs.filter(h => h.label === 1);
+  const tracesRight = [
+    {
+      x: c0.map(h => h.hidden[0]), y: c0.map(h => h.hidden[1]),
+      mode: 'markers', type: 'scatter',
+      marker: { color: '#2196F3', size: 6, opacity: 0.7, line: { width: 0.5, color: '#1565C0' } },
+      showlegend: false, hoverinfo: 'skip'
+    },
+    {
+      x: c1.map(h => h.hidden[0]), y: c1.map(h => h.hidden[1]),
+      mode: 'markers', type: 'scatter',
+      marker: { color: '#FF9800', size: 6, opacity: 0.7, line: { width: 0.5, color: '#E65100' } },
+      showlegend: false, hoverinfo: 'skip'
+    }
+  ];
+  const layoutRight = Object.assign({}, PLOTLY_LAYOUT_BASE, {
+    margin: { l: 45, r: 10, t: 10, b: 40 },
+    xaxis: { range: [-0.05, 1.05], gridcolor: '#e8ecf0', title: 'Hidden Neuron 1' },
+    yaxis: { range: [-0.05, 1.05], gridcolor: '#e8ecf0', title: 'Hidden Neuron 2' },
+  });
+  Plotly.react('plot3b', tracesRight, layoutRight, { responsive: true });
+
+  /* Stats */
+  const acc = getAccuracy(hiddenNet, DATA);
+  document.getElementById('s3-epoch').textContent = epoch;
+  document.getElementById('s3-acc').textContent = (acc * 100).toFixed(0) + '%';
+  document.getElementById('s3-acc').style.color = acc >= 0.95 ? '#2e7d32' : acc >= 0.85 ? '#e65100' : '#c62828';
+
+  /* Also update Stage 4 */
+  drawStage4();
+}
+
+function trainAnimationStep() {
+  for (let i = 0; i < 5; i++) {
+    trainEpoch(hiddenNet, DATA, 1.5);
+    epoch++;
+  }
+  drawStage3();
+
+  /* Auto-stop at high accuracy or 1000 epochs */
+  const acc = getAccuracy(hiddenNet, DATA);
+  if (acc >= 0.98 || epoch >= 1000) {
+    stopTraining();
+  }
+}
+
+function toggleTraining() {
+  if (isTraining) {
+    stopTraining();
+  } else {
+    startTraining();
+  }
+}
+
+function startTraining() {
+  if (trainInterval) clearInterval(trainInterval);
+  isTraining = true;
+  document.getElementById('s3-train-btn').textContent = 'Pause';
+  trainInterval = setInterval(trainAnimationStep, 60);
+}
+
+function stopTraining() {
+  if (trainInterval) clearInterval(trainInterval);
+  trainInterval = null;
+  isTraining = false;
+  document.getElementById('s3-train-btn').textContent = 'Train';
+}
+
+function resetStage3() {
+  stopTraining();
+  srand(Math.floor(Math.random() * 10000));
+  hiddenNet = createNet([2, 4, 1]);
+  epoch = 0;
+  drawStage3();
+}
+
+/* ===== STAGE 4: Embedding explorer ===== */
+let selectedPoint = null;
+
+function drawStage4() {
+  if (!hiddenNet) return;
+  const hActs = getHiddenActivations();
+  const c0 = hActs.filter(h => h.label === 0);
+  const c1 = hActs.filter(h => h.label === 1);
+
+  const traces = [
+    {
+      x: c0.map(h => h.hidden[0]), y: c0.map(h => h.hidden[1]),
+      mode: 'markers', type: 'scatter',
+      marker: { color: '#2196F3', size: 8, opacity: 0.7, line: { width: 0.5, color: '#1565C0' } },
+      showlegend: false,
+      text: c0.map(h => 'Point ' + h.idx + ' (Class 0)'),
+      hoverinfo: 'text',
+      customdata: c0.map(h => h.idx)
+    },
+    {
+      x: c1.map(h => h.hidden[0]), y: c1.map(h => h.hidden[1]),
+      mode: 'markers', type: 'scatter',
+      marker: { color: '#FF9800', size: 8, opacity: 0.7, line: { width: 0.5, color: '#E65100' } },
+      showlegend: false,
+      text: c1.map(h => 'Point ' + h.idx + ' (Class 1)'),
+      hoverinfo: 'text',
+      customdata: c1.map(h => h.idx)
+    }
+  ];
+
+  /* Add highlight markers if a point is selected */
+  if (selectedPoint !== null) {
+    const sp = hActs[selectedPoint];
+    const neighbors = findNeighbors(sp, hActs, 3);
+
+    /* Selected point */
+    traces.push({
+      x: [sp.hidden[0]], y: [sp.hidden[1]],
+      mode: 'markers', type: 'scatter',
+      marker: { color: sp.label === 0 ? '#2196F3' : '#FF9800', size: 16,
+                line: { width: 3, color: '#1a3a5c' }, symbol: 'diamond' },
+      showlegend: false, hoverinfo: 'skip'
+    });
+
+    /* Neighbor points */
+    traces.push({
+      x: neighbors.map(n => n.point.hidden[0]),
+      y: neighbors.map(n => n.point.hidden[1]),
+      mode: 'markers', type: 'scatter',
+      marker: {
+        color: neighbors.map(n => n.point.label === 0 ? '#2196F3' : '#FF9800'),
+        size: 14, line: { width: 2.5, color: '#5e35b1' }, symbol: 'circle'
+      },
+      showlegend: false, hoverinfo: 'skip'
+    });
+
+    /* Lines from selected to neighbors */
+    for (const n of neighbors) {
+      traces.push({
+        x: [sp.hidden[0], n.point.hidden[0]],
+        y: [sp.hidden[1], n.point.hidden[1]],
+        mode: 'lines', type: 'scatter',
+        line: { color: '#5e35b1', width: 1.5, dash: 'dot' },
+        showlegend: false, hoverinfo: 'skip'
+      });
+    }
+  }
+
+  const layout = Object.assign({}, PLOTLY_LAYOUT_BASE, {
+    margin: { l: 50, r: 20, t: 10, b: 45 },
+    xaxis: { range: [-0.05, 1.05], gridcolor: '#e8ecf0', title: 'Hidden Neuron 1' },
+    yaxis: { range: [-0.05, 1.05], gridcolor: '#e8ecf0', title: 'Hidden Neuron 2' },
+  });
+  Plotly.react('plot4', traces, layout, { responsive: true });
+}
+
+function cosine(a, b) {
+  let dot = 0, magA = 0, magB = 0;
+  for (let i = 0; i < a.length; i++) {
+    dot += a[i] * b[i];
+    magA += a[i] * a[i];
+    magB += b[i] * b[i];
+  }
+  if (magA === 0 || magB === 0) return 0;
+  return dot / (Math.sqrt(magA) * Math.sqrt(magB));
+}
+
+function findNeighbors(point, allPoints, k) {
+  const scored = allPoints
+    .filter(p => p.idx !== point.idx)
+    .map(p => ({ point: p, sim: cosine(point.hidden, p.hidden) }))
+    .sort((a, b) => b.sim - a.sim);
+  return scored.slice(0, k);
+}
+
+function setupStage4Click() {
+  const plotEl = document.getElementById('plot4');
+  plotEl.on('plotly_click', function(eventData) {
+    if (!eventData || !eventData.points || !eventData.points[0]) return;
+    const pt = eventData.points[0];
+    if (pt.customdata === undefined) return;
+    const dataIdx = pt.customdata;
+    selectedPoint = dataIdx;
+
+    const hActs = getHiddenActivations();
+    const sp = hActs[dataIdx];
+    const neighbors = findNeighbors(sp, hActs, 3);
+
+    /* Update info panel */
+    const classLabel = sp.label === 0 ? 'Blue (Class 0)' : 'Orange (Class 1)';
+    const classColor = sp.label === 0 ? '#2196F3' : '#FF9800';
+    let html = '<div class="card"><strong style="color:' + classColor + '">Selected: Point ' + dataIdx + ' — ' + classLabel + '</strong>';
+    html += '<div style="font-size:0.85rem;color:#656d76;margin-bottom:0.5rem;">Embedding: [' +
+      sp.hidden.map(v => v.toFixed(3)).join(', ') + ']</div>';
+    html += '<div class="neighbor-list">';
+    for (let i = 0; i < neighbors.length; i++) {
+      const n = neighbors[i];
+      const nClass = n.point.label === 0 ? 'Blue' : 'Orange';
+      const nColor = n.point.label === 0 ? '#2196F3' : '#FF9800';
+      const match = n.point.label === sp.label;
+      html += '<div class="neighbor-card" style="border-color:' + (match ? '#2e7d32' : '#c62828') + '">';
+      html += '<div class="sim-val" style="color:' + (n.sim > 0.95 ? '#2e7d32' : n.sim > 0.8 ? '#e65100' : '#c62828') + '">' + n.sim.toFixed(3) + '</div>';
+      html += '<div class="sim-lbl">cosine similarity</div>';
+      html += '<div style="font-size:0.8rem;margin-top:0.25rem;color:' + nColor + ';font-weight:600;">Point ' + n.point.idx + ' (' + nClass + ')</div>';
+      html += '</div>';
+    }
+    html += '</div></div>';
+    document.getElementById('s4-info').innerHTML = html;
+
+    drawStage4();
+  });
+}
+
+/* ===== INIT ===== */
+function init() {
+  srand(42);
+  generateMoons();
+  drawStage1();
+  drawStage2();
+  initStage3();
+  drawStage4();
+  setupStage4Click();
+}
+
+document.addEventListener('DOMContentLoaded', init);
+</script>
+
+</body>
+</html>

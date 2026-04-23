@@ -1,0 +1,834 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Confusion Matrix: Measuring What a Classifier Gets Wrong &mdash; AIML 2013</title>
+<script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+<style>
+  :root {
+    --primary: #1a3a5c;
+    --primary-light: #2e5a88;
+    --accent: #2e7d32;
+    --light-bg: #f7f9fc;
+    --border: #d0d7de;
+    --text: #1f2328;
+    --muted: #656d76;
+    --neg: #c62828;
+    --neg-bg: #fce4ec;
+    --pos: #2e7d32;
+    --pos-bg: #e8f5e9;
+    --purple: #5e35b1;
+    --purple-bg: #ede7f6;
+    --orange: #e65100;
+    /* demo-specific */
+    --tp-color: #2e7d32;
+    --tp-bg: #e8f5e9;
+    --fp-color: #e65100;
+    --fp-bg: #fff3e0;
+    --fn-color: #c62828;
+    --fn-bg: #fce4ec;
+    --tn-color: #1a3a5c;
+    --tn-bg: #e3f2fd;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    color: var(--text); line-height: 1.6; background: #fff;
+  }
+  .container { max-width: 1100px; margin: 0 auto; padding: 0 2rem 3rem; }
+
+  .hero {
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+    color: #fff; padding: 2.5rem 2rem; text-align: center; margin-bottom: 2rem;
+  }
+  .hero h1 { font-size: 1.8rem; margin-bottom: 0.3rem; font-weight: 700; }
+  .hero p { color: #c0d4e8; font-size: 1rem; }
+  .hero .hl { color: #fff; font-weight: 500; margin-top: 0.75rem; font-size: 1.05rem; }
+
+  .stage { margin-top: 3rem; }
+  .stage-num {
+    display: inline-block; width: 2rem; height: 2rem; line-height: 2rem;
+    border-radius: 50%; background: var(--primary); color: #fff;
+    text-align: center; font-weight: 700; font-size: 0.9rem;
+    margin-right: 0.5rem; vertical-align: middle;
+  }
+  .stage-line h2 { font-size: 1.3rem; color: var(--primary); margin-bottom: 0.75rem; display: inline; vertical-align: middle; }
+  .stage-line { border-bottom: 2px solid var(--primary); margin-bottom: 1rem; padding-bottom: 0.4rem; }
+  p { font-size: 0.95rem; margin-bottom: 0.75rem; }
+
+  .card {
+    background: var(--light-bg); border: 1px solid var(--border);
+    border-radius: 8px; padding: 1.25rem; margin-bottom: 1rem;
+  }
+  .card strong { color: var(--primary); display: block; margin-bottom: 0.3rem; }
+  .card code {
+    background: #e8ecf0; padding: 0.1rem 0.35rem; border-radius: 3px;
+    font-size: 0.9em; font-family: "SF Mono", Consolas, monospace;
+  }
+
+  .tip {
+    background: #e8f5e9; border-left: 4px solid var(--accent);
+    padding: 1rem 1.25rem; border-radius: 4px; margin: 1rem 0; font-size: 0.9rem;
+  }
+  .tip strong { color: var(--accent); }
+  .warn-tip {
+    background: #fff3e0; border-left: 4px solid #e65100;
+    padding: 1rem 1.25rem; border-radius: 4px; margin: 1rem 0; font-size: 0.9rem;
+  }
+  .warn-tip strong { color: #e65100; }
+  .arrow-box { text-align: center; padding: 1rem 0; color: var(--muted); font-size: 1.5rem; }
+
+  .row { display: flex; gap: 1.5rem; align-items: flex-start; flex-wrap: wrap; }
+  .col-main { flex: 1; min-width: 400px; }
+  .col-side { width: 320px; flex-shrink: 0; }
+  @media (max-width: 900px) {
+    .row { flex-direction: column; }
+    .col-side { width: 100%; }
+    .col-main { min-width: 0; }
+  }
+
+  .stats-row { display: flex; gap: 1rem; flex-wrap: wrap; margin: 1rem 0; }
+  .stat-card {
+    flex: 1; min-width: 110px; background: var(--light-bg);
+    border: 1px solid var(--border); border-radius: 8px;
+    padding: 0.75rem 1rem; text-align: center;
+  }
+  .stat-card .val { font-size: 1.5rem; font-weight: 700; color: var(--primary); }
+  .stat-card .lbl { font-size: 0.8rem; color: var(--muted); }
+
+  .btn {
+    display: inline-block; padding: 0.5rem 1.1rem; border: none; border-radius: 6px;
+    font-size: 0.85rem; font-weight: 600; cursor: pointer; font-family: inherit;
+    transition: opacity 0.15s;
+  }
+  .btn:hover { opacity: 0.85; }
+  .btn-accent { background: var(--accent); color: #fff; }
+  .btn-primary { background: var(--primary); color: #fff; }
+  .btn-outline { background: #fff; color: var(--primary); border: 1px solid var(--border); }
+  .btn-purple { background: var(--purple); color: #fff; }
+  .btn-group { display: flex; gap: 0.5rem; flex-wrap: wrap; margin: 0.75rem 0; }
+
+  .eq-box {
+    background: var(--light-bg); border: 1px solid var(--border); border-radius: 8px;
+    padding: 1rem 1.25rem; margin: 1rem 0; text-align: center;
+    font-family: "SF Mono", Consolas, monospace; font-size: 1rem;
+  }
+
+  .footer {
+    text-align: center; padding: 2rem 0; color: var(--muted); font-size: 0.85rem;
+    border-top: 1px solid var(--border); margin-top: 3rem;
+  }
+
+  /* ── Confusion matrix table ── */
+  .cm-wrap { overflow-x: auto; margin: 1rem 0; }
+  .cm-table { border-collapse: collapse; margin: 0 auto; }
+  .cm-table th, .cm-table td {
+    padding: 0; text-align: center; font-size: 0.85rem;
+    border: 2px solid #fff;
+  }
+  .cm-table th {
+    background: var(--primary); color: #fff; padding: 0.5rem 0.8rem;
+    font-weight: 600; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.03em;
+  }
+  .cm-table th.corner { background: transparent; }
+  .cm-table th.row-label {
+    background: var(--primary-light); writing-mode: horizontal-tb;
+    padding: 0.5rem 0.8rem;
+  }
+  .cm-table td { position: relative; }
+  .cm-cell {
+    width: 80px; height: 70px; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; cursor: pointer;
+    transition: box-shadow 0.15s, transform 0.15s;
+  }
+  .cm-cell:hover { box-shadow: inset 0 0 0 2px var(--primary); transform: scale(1.04); }
+  .cm-cell .cm-val { font-size: 1.4rem; font-weight: 700; }
+  .cm-cell .cm-pct { font-size: 0.72rem; color: var(--muted); margin-top: 2px; }
+  .cm-cell.diagonal { background: #e8f5e9; }
+  .cm-cell.off-diag { background: #fce4ec; }
+  .cm-cell.highlight-tp { background: var(--tp-bg); box-shadow: inset 0 0 0 3px var(--tp-color); }
+  .cm-cell.highlight-fp { background: var(--fp-bg); box-shadow: inset 0 0 0 3px var(--fp-color); }
+  .cm-cell.highlight-fn { background: var(--fn-bg); box-shadow: inset 0 0 0 3px var(--fn-color); }
+  .cm-cell.highlight-tn { background: var(--tn-bg); box-shadow: inset 0 0 0 3px var(--tn-color); }
+  .cm-cell.dimmed { opacity: 0.3; }
+  .cm-axis-label {
+    font-size: 0.82rem; color: var(--muted); text-align: center;
+    font-weight: 600; padding: 0.3rem;
+  }
+
+  /* ── Edit overlay ── */
+  .cm-edit-input {
+    width: 60px; font-size: 1.2rem; text-align: center; border: 2px solid var(--primary);
+    border-radius: 4px; padding: 0.2rem; font-family: inherit; font-weight: 700;
+  }
+
+  /* ── Legend items ── */
+  .legend-row { display: flex; gap: 1.5rem; flex-wrap: wrap; margin: 0.75rem 0; font-size: 0.85rem; }
+  .legend-item { display: flex; align-items: center; gap: 0.4rem; }
+  .legend-swatch {
+    width: 16px; height: 16px; border-radius: 3px; border: 2px solid;
+    flex-shrink: 0;
+  }
+
+  /* ── Type selector pills ── */
+  .class-pills { display: flex; gap: 0.5rem; flex-wrap: wrap; margin: 0.75rem 0; }
+  .class-pill {
+    padding: 0.4rem 1rem; border-radius: 20px; font-size: 0.85rem;
+    font-weight: 600; cursor: pointer; border: 2px solid var(--border);
+    background: #fff; color: var(--text); transition: all 0.15s;
+  }
+  .class-pill:hover { border-color: var(--primary); }
+  .class-pill.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+
+  /* ── Metric formula display ── */
+  .metric-formula {
+    display: flex; align-items: center; gap: 1rem; padding: 0.75rem 1rem;
+    background: var(--light-bg); border: 1px solid var(--border); border-radius: 8px;
+    margin: 0.5rem 0; font-size: 0.9rem;
+  }
+  .metric-formula .metric-name {
+    font-weight: 700; color: var(--primary); min-width: 90px;
+  }
+  .metric-formula .metric-calc {
+    font-family: "SF Mono", Consolas, monospace; flex: 1;
+  }
+  .metric-formula .metric-result {
+    font-weight: 700; font-size: 1.1rem; min-width: 60px; text-align: right;
+  }
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <h1>Confusion Matrix: Measuring What a Classifier Gets Wrong</h1>
+  <p>AIML 2013 &mdash; Interactive Walkthrough</p>
+  <p class="hl">A classifier's accuracy is one number. The confusion matrix is the whole story.</p>
+</div>
+
+<div class="container">
+
+<!-- ================================================================
+     STAGE 1: THE 3-CLASS MATRIX
+     ================================================================ -->
+<div class="stage">
+  <div class="stage-line"><span class="stage-num">1</span><h2>A Classifier's Scorecard</h2></div>
+  <p>You built an image classifier. It looks at photos of cats, dogs, and birds, and predicts a label for each one. Some predictions are right. Some are wrong. The confusion matrix records every outcome in one table.</p>
+  <p>Rows are the true labels &mdash; what the image actually shows. Columns are the model's predictions. Each cell counts how many images with that true label received that predicted label. Diagonal cells are correct predictions. Everything off the diagonal is an error.</p>
+
+  <div class="row">
+    <div class="col-main">
+      <div class="cm-axis-label">&darr; True label &nbsp;&nbsp;|&nbsp;&nbsp; Predicted label &rarr;</div>
+      <div class="cm-wrap" id="cmSmall"></div>
+      <div class="btn-group">
+        <button class="btn btn-accent" onclick="resetSmallCM()">Reset</button>
+        <button class="btn btn-outline" onclick="randomizeSmallCM()">Randomize</button>
+        <button class="btn btn-primary" onclick="loadGoodClassifier()">Good Classifier</button>
+        <button class="btn btn-outline" onclick="loadBadClassifier()">Bad Classifier</button>
+      </div>
+    </div>
+    <div class="col-side">
+      <div class="card">
+        <strong>Click any cell to edit</strong>
+        <p style="font-size:0.85rem;">Change the counts and watch the metrics update. Each cell represents a group of images: the row tells you what the image actually was, and the column tells you what the classifier predicted.</p>
+      </div>
+      <div class="stats-row" style="flex-direction:column; gap:0.5rem;">
+        <div class="stat-card"><div class="val" id="smallTotal">?</div><div class="lbl">total predictions</div></div>
+        <div class="stat-card"><div class="val" id="smallCorrect">?</div><div class="lbl">correct (on diagonal)</div></div>
+        <div class="stat-card"><div class="val" id="smallAccuracy">?</div><div class="lbl">overall accuracy</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <strong>The diagonal is your friend.</strong> A classifier that gets everything right has all its counts on the diagonal and zeros everywhere else. The off-diagonal cells tell you exactly which classes are being confused for which &mdash; that's where the name comes from.
+  </div>
+</div>
+
+<div class="arrow-box">&darr;</div>
+
+<!-- ================================================================
+     STAGE 2: TYPE I AND TYPE II
+     ================================================================ -->
+<div class="stage">
+  <div class="stage-line"><span class="stage-num">2</span><h2>Type I and Type II Errors</h2></div>
+  <p>Pick a class below. The matrix highlights four zones from that class's perspective: the images it correctly identified (true positives), the images it missed (false negatives, Type II), the images it claimed but got wrong (false positives, Type I), and everything else (true negatives).</p>
+
+  <div class="class-pills" id="classPills"></div>
+
+  <div class="row">
+    <div class="col-main">
+      <div class="cm-wrap" id="cmHighlight"></div>
+      <div class="legend-row">
+        <div class="legend-item"><div class="legend-swatch" style="background:#e8f5e9; border-color:#2e7d32;"></div> True Positive (TP)</div>
+        <div class="legend-item"><div class="legend-swatch" style="background:#fce4ec; border-color:#c62828;"></div> False Negative (FN) &mdash; Type II</div>
+        <div class="legend-item"><div class="legend-swatch" style="background:#fff3e0; border-color:#e65100;"></div> False Positive (FP) &mdash; Type I</div>
+        <div class="legend-item"><div class="legend-swatch" style="background:#e3f2fd; border-color:#1a3a5c;"></div> True Negative (TN)</div>
+      </div>
+    </div>
+    <div class="col-side">
+      <div class="card" id="errorCard">
+        <strong id="errorCardTitle">Select a class</strong>
+        <div id="errorCardBody"></div>
+      </div>
+      <div class="card">
+        <strong>Type I vs. Type II</strong>
+        <p style="font-size:0.85rem; margin-bottom:0.5rem;"><span style="color:#e65100; font-weight:600;">Type I error (false positive):</span> The model raises a false alarm. It labels an image as this class when it isn't. A spam filter that sends your real email to junk is making a Type I error.</p>
+        <p style="font-size:0.85rem;"><span style="color:#c62828; font-weight:600;">Type II error (false negative):</span> The model misses a real case. The image belongs to this class, but the model assigned a different label. A spam filter that lets spam through is making a Type II error.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="warn-tip">
+    <strong>Which error is worse depends on the application.</strong> A medical screening test that misses a disease (Type II) is far more dangerous than one that flags a healthy patient for follow-up (Type I). A self-driving car that hallucinates a pedestrian (Type I) stops unnecessarily; one that misses a real pedestrian (Type II) causes a collision. The confusion matrix shows both. The application decides which matters more.
+  </div>
+</div>
+
+<div class="arrow-box">&darr;</div>
+
+<!-- ================================================================
+     STAGE 3: ACCURACY, PRECISION, RECALL, F1
+     ================================================================ -->
+<div class="stage">
+  <div class="stage-line"><span class="stage-num">3</span><h2>Four Metrics from Four Numbers</h2></div>
+  <p>The four cells from Stage 2 &mdash; TP, FP, FN, TN &mdash; are the raw ingredients. Four metrics extract different information from them. Each answers a different question about the classifier's performance on the selected class.</p>
+
+  <div class="class-pills" id="metricPills"></div>
+
+  <div id="metricFormulas"></div>
+
+  <div class="card" id="metricExplainer">
+    <strong>What each metric tells you</strong>
+    <div id="metricExplainerBody"></div>
+  </div>
+
+  <div class="tip">
+    <strong>Accuracy uses all four cells. Precision and recall each ignore two. F1 combines the two it can't ignore.</strong> A model can have 95% accuracy and still have terrible precision or recall for a rare class. Accuracy counts total correct predictions across all classes; precision and recall zoom in on one class at a time. F1 collapses precision and recall into one number, but it punishes imbalance between them &mdash; if either is low, F1 drops.
+  </div>
+</div>
+
+<div class="arrow-box">&darr;</div>
+
+<!-- ================================================================
+     STAGE 4: WHEN ACCURACY LIES
+     ================================================================ -->
+<div class="stage">
+  <div class="stage-line"><span class="stage-num">4</span><h2>When Accuracy Lies</h2></div>
+  <p>A classifier that predicts "not bird" for every image gets 0% on birds. But if birds are only 5% of the dataset, the overall accuracy is still 95%. The confusion matrix exposes this immediately &mdash; an entire row of zeros where the bird predictions should be.</p>
+
+  <div class="btn-group">
+    <button class="btn btn-primary" onclick="loadImbalanced()">Load Imbalanced Dataset</button>
+    <button class="btn btn-outline" onclick="loadLazyClassifier()">Show "Lazy" Classifier</button>
+    <button class="btn btn-accent" onclick="resetSmallCM()">Reset to Balanced</button>
+  </div>
+
+  <div class="row">
+    <div class="col-main">
+      <div class="cm-wrap" id="cmImbalance"></div>
+    </div>
+    <div class="col-side">
+      <div class="stats-row" style="flex-direction:column; gap:0.5rem;">
+        <div class="stat-card"><div class="val" id="imbAccuracy">?</div><div class="lbl">overall accuracy</div></div>
+        <div class="stat-card"><div class="val" id="imbBirdRecall">?</div><div class="lbl">bird recall</div></div>
+        <div class="stat-card"><div class="val" id="imbBirdPrecision">?</div><div class="lbl">bird precision</div></div>
+        <div class="stat-card"><div class="val" id="imbBirdF1">?</div><div class="lbl">bird F1</div></div>
+      </div>
+      <div class="card" id="imbCard">
+        <strong>The lesson</strong>
+        <p style="font-size:0.85rem;" id="imbCardText">Load a scenario to see how class imbalance can make accuracy misleading.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="arrow-box">&darr;</div>
+
+<!-- ================================================================
+     STAGE 5: 10-CLASS HEATMAP
+     ================================================================ -->
+<div class="stage">
+  <div class="stage-line"><span class="stage-num">5</span><h2>Scaling to 10 Classes</h2></div>
+  <p>With three classes you can read every cell. With ten, you need a heatmap. The matrix below shows a HOG-based classifier's results on CIFAR-10 &mdash; the same pipeline you built in the lab. Dark cells mean high counts. The diagonal should be the darkest stripe; any bright off-diagonal cell means two classes are systematically confused.</p>
+
+  <div id="heatmapPlot" style="width:100%; height:520px;"></div>
+
+  <div id="tenClassTable"></div>
+
+  <div class="tip">
+    <strong>The off-diagonal hot spots are the most informative cells.</strong> They tell you which classes the feature extractor cannot distinguish. In a HOG-based classifier, automobile and truck share similar edge profiles &mdash; both are boxy, horizontal shapes. Cat and dog share similar fur textures and body proportions. Those pairs light up off the diagonal.
+  </div>
+
+  <div class="card">
+    <strong>Per-class metrics</strong>
+    <div id="perClassMetrics"></div>
+  </div>
+
+  <div class="card">
+    <strong>Macro Average vs. Weighted Average</strong>
+    <p style="font-size:0.85rem; margin-top:0.5rem; margin-bottom:0.5rem;">The per-class table above ends with two summary rows. Both compress ten per-class scores into one number, but they weight the classes differently.</p>
+    <p style="font-size:0.85rem; margin-bottom:0.5rem;"><span style="color:#1a3a5c; font-weight:600;">Macro average</span> treats every class equally: add up the ten precision scores and divide by ten. A class with 5 images counts the same as a class with 500. This makes macro average sensitive to performance on rare classes &mdash; if the model ignores a small class, the macro average drops noticeably.</p>
+    <p style="font-size:0.85rem;"><span style="color:#1a3a5c; font-weight:600;">Weighted average</span> weights each class by its support &mdash; how many images actually belong to that class. A class with 500 images has 100&times; the influence of a class with 5. This gives a number closer to what the model does on a "typical" image. In a balanced dataset (equal class sizes), macro and weighted averages are identical.</p>
+  </div>
+
+  <div class="warn-tip">
+    <strong>When to use which.</strong> Report macro average when every class matters equally regardless of frequency &mdash; a medical classifier should detect rare diseases as well as common ones. Report weighted average when overall throughput matters and rare-class failures are acceptable. Most classification reports (including scikit-learn's) print both, plus support, so the reader can decide.
+  </div>
+</div>
+
+</div><!-- /.container -->
+
+<div class="footer">
+  AIML 2013 &bull; Spring 2026 &bull; Built for in-class demonstration.
+</div>
+
+<!-- ================================================================
+     JAVASCRIPT
+     ================================================================ -->
+<script>
+// ── Constants ──
+const CLASSES_3 = ['Cat', 'Dog', 'Bird'];
+
+// assert: default matrix diagonal sum = 30+25+28 = 83 (correct predictions)
+// assert: default matrix total = 30+3+2+4+25+1+2+5+28 = 100
+const DEFAULT_CM = [
+  [30, 3, 2],
+  [4, 25, 1],
+  [2, 5, 28]
+];
+
+// assert: good classifier diagonal sum = 45+43+42 = 130 out of 150 total
+const GOOD_CM = [
+  [45, 3, 2],
+  [2, 43, 5],
+  [2, 6, 42]
+];
+
+// assert: bad classifier diagonal sum = 18+15+12 = 45 out of 100 total (45% accuracy)
+const BAD_CM = [
+  [18, 10, 7],
+  [12, 15, 8],
+  [8, 10, 12]
+];
+
+// assert: imbalanced total = 85+85+10+10+5 = 195
+const IMBALANCED_CM = [
+  [85, 5, 0],
+  [3, 85, 2],
+  [5, 5, 5]
+];
+
+// assert: lazy classifier total = 90+90+5+5+5 = 195, accuracy = (90+90+0)/195 ≈ 92.3%
+// assert: lazy classifier bird recall = 0/(0+10) = 0%
+const LAZY_CM = [
+  [90, 0, 0],
+  [5, 90, 0],
+  [5, 5, 0]
+];
+
+// CIFAR-10 HOG-based classifier confusion matrix (realistic values, 100 per class)
+const CLASSES_10 = ['airplane','automobile','bird','cat','deer',
+                    'dog','frog','horse','ship','truck'];
+
+// assert: 10-class diagonal sum = 62+58+38+35+40+42+55+52+65+54 = 501 out of 1000 (50.1% accuracy)
+// assert: automobile-truck confusion: cm[1][9]=17, cm[9][1]=12 (highest off-diagonal pair)
+// assert: cat-dog confusion: cm[3][5]=14, cm[5][3]=12 (second highest pair)
+const CM_10 = [
+  [62, 2, 5, 1, 3, 1, 2, 2,15, 7],
+  [ 5,58, 1, 2, 1, 1, 2, 1,12,17],
+  [ 6, 1,38,11, 9, 9,12, 7, 3, 4],
+  [ 2, 2,10,35, 7,14,10, 6, 3,11],
+  [ 4, 2, 9, 8,40, 6, 8,12, 4, 7],
+  [ 1, 1, 7,12, 7,42, 6,10, 4,10],
+  [ 3, 2,11, 8, 6, 4,55, 3, 4, 4],
+  [ 3, 2, 5, 5,10, 7, 2,52, 3,11],
+  [10, 7, 2, 2, 2, 0, 3, 1,65, 8],
+  [ 6,12, 2, 3, 3, 2, 2, 6,10,54]
+];
+
+// ── State ──
+let cm3 = DEFAULT_CM.map(r => [...r]);
+let selectedClass = 0;
+let editingCell = null;
+
+// ── Helpers ──
+function sumAll(cm) {
+  let s = 0;
+  for (const row of cm) for (const v of row) s += v;
+  return s;
+}
+function diagSum(cm) {
+  let s = 0;
+  for (let i = 0; i < cm.length; i++) s += cm[i][i];
+  return s;
+}
+function getTP(cm, cls) { return cm[cls][cls]; }
+function getFP(cm, cls) {
+  let s = 0;
+  for (let r = 0; r < cm.length; r++) if (r !== cls) s += cm[r][cls];
+  return s;
+}
+function getFN(cm, cls) {
+  let s = 0;
+  for (let c = 0; c < cm[cls].length; c++) if (c !== cls) s += cm[cls][c];
+  return s;
+}
+function getTN(cm, cls) {
+  let s = 0;
+  for (let r = 0; r < cm.length; r++)
+    for (let c = 0; c < cm[r].length; c++)
+      if (r !== cls && c !== cls) s += cm[r][c];
+  return s;
+}
+
+function precision(cm, cls) {
+  const tp = getTP(cm, cls), fp = getFP(cm, cls);
+  return (tp + fp) === 0 ? 0 : tp / (tp + fp);
+}
+function recall(cm, cls) {
+  const tp = getTP(cm, cls), fn = getFN(cm, cls);
+  return (tp + fn) === 0 ? 0 : tp / (tp + fn);
+}
+function overallAccuracy(cm) {
+  const total = sumAll(cm);
+  return total === 0 ? 0 : diagSum(cm) / total;
+}
+
+// ── Render 3-class confusion matrix ──
+function renderCM(containerId, cm, classes, highlightClass) {
+  const el = document.getElementById(containerId);
+  const total = sumAll(cm);
+  const highlight = (highlightClass !== undefined && highlightClass !== null);
+
+  let html = '<table class="cm-table">';
+  // Header row
+  html += '<tr><th class="corner"></th>';
+  for (const cls of classes) html += `<th>${cls}</th>`;
+  html += '</tr>';
+
+  for (let r = 0; r < cm.length; r++) {
+    html += `<tr><th class="row-label">${classes[r]}</th>`;
+    for (let c = 0; c < cm[r].length; c++) {
+      const isDiag = (r === c);
+      let cellClass = isDiag ? 'diagonal' : 'off-diag';
+
+      if (highlight) {
+        const hc = highlightClass;
+        if (r === hc && c === hc) cellClass = 'highlight-tp';
+        else if (r !== hc && c === hc) cellClass = 'highlight-fp';
+        else if (r === hc && c !== hc) cellClass = 'highlight-fn';
+        else cellClass = 'highlight-tn';
+      }
+
+      const pct = total > 0 ? (cm[r][c] / total * 100).toFixed(1) + '%' : '';
+      const editable = (containerId === 'cmSmall');
+      const clickHandler = editable ? ` onclick="startEdit(${r},${c})"` : '';
+
+      html += `<td><div class="cm-cell ${cellClass}" id="cell-${containerId}-${r}-${c}"${clickHandler}>`;
+      html += `<span class="cm-val">${cm[r][c]}</span>`;
+      html += `<span class="cm-pct">${pct}</span>`;
+      html += '</div></td>';
+    }
+    html += '</tr>';
+  }
+  html += '</table>';
+  el.innerHTML = html;
+}
+
+// ── Cell editing ──
+function startEdit(r, c) {
+  const cellEl = document.getElementById(`cell-cmSmall-${r}-${c}`);
+  const currentVal = cm3[r][c];
+  cellEl.innerHTML = `<input type="number" class="cm-edit-input" value="${currentVal}" min="0" max="999"
+    onblur="finishEdit(${r},${c},this)" onkeydown="if(event.key==='Enter')this.blur();" autofocus>`;
+  cellEl.querySelector('input').focus();
+  cellEl.querySelector('input').select();
+}
+
+function finishEdit(r, c, input) {
+  const val = Math.max(0, parseInt(input.value) || 0);
+  cm3[r][c] = val;
+  updateAll();
+}
+
+// ── Preset loaders ──
+function setCM(newCM) {
+  cm3 = newCM.map(r => [...r]);
+  updateAll();
+}
+function resetSmallCM() { setCM(DEFAULT_CM); }
+function randomizeSmallCM() {
+  const cm = [];
+  for (let r = 0; r < 3; r++) {
+    cm.push([]);
+    for (let c = 0; c < 3; c++) {
+      cm[r].push(r === c ? Math.floor(Math.random() * 30 + 15) : Math.floor(Math.random() * 12));
+    }
+  }
+  setCM(cm);
+}
+function loadGoodClassifier() { setCM(GOOD_CM); }
+function loadBadClassifier() { setCM(BAD_CM); }
+
+function loadImbalanced() {
+  setCM(IMBALANCED_CM);
+  document.getElementById('imbCardText').textContent =
+    'This dataset has 90 cats, 90 dogs, but only 15 birds. The classifier struggles with the rare class, but overall accuracy stays high because cats and dogs dominate the count.';
+}
+function loadLazyClassifier() {
+  setCM(LAZY_CM);
+  document.getElementById('imbCardText').textContent =
+    'This classifier never predicts "bird." It gets 92.3% accuracy by ignoring the rare class entirely. The confusion matrix reveals the fraud: the bird column is all zeros. Accuracy cannot catch this; recall can.';
+}
+
+// ── Class selection ──
+function selectClass(cls) {
+  selectedClass = cls;
+  document.querySelectorAll('.class-pill').forEach((pill, i) => {
+    pill.classList.toggle('active', i % 3 === cls);
+  });
+  updateHighlight();
+  updateMetrics();
+}
+
+// ── Update everything ──
+function updateAll() {
+  renderCM('cmSmall', cm3, CLASSES_3);
+  updateSmallStats();
+  updateHighlight();
+  updateMetrics();
+  updateImbalanceStats();
+}
+
+function updateSmallStats() {
+  const total = sumAll(cm3);
+  const correct = diagSum(cm3);
+  const acc = overallAccuracy(cm3);
+  document.getElementById('smallTotal').textContent = total;
+  document.getElementById('smallCorrect').textContent = correct;
+  document.getElementById('smallAccuracy').textContent = total > 0 ? (acc * 100).toFixed(1) + '%' : '—';
+  document.getElementById('smallAccuracy').style.color = acc > 0.8 ? '#2e7d32' : acc > 0.6 ? '#e65100' : '#c62828';
+}
+
+function updateHighlight() {
+  renderCM('cmHighlight', cm3, CLASSES_3, selectedClass);
+  renderCM('cmImbalance', cm3, CLASSES_3, selectedClass);
+
+  const cls = selectedClass;
+  const tp = getTP(cm3, cls), fp = getFP(cm3, cls), fn = getFN(cm3, cls), tn = getTN(cm3, cls);
+  const name = CLASSES_3[cls];
+
+  document.getElementById('errorCardTitle').textContent = `Viewing: ${name}`;
+  document.getElementById('errorCardBody').innerHTML = `
+    <div style="font-size:0.85rem; margin-top:0.5rem;">
+      <p style="margin-bottom:0.4rem;"><span style="color:#2e7d32; font-weight:600;">TP = ${tp}</span> &mdash; truly ${name.toLowerCase()}, predicted ${name.toLowerCase()}</p>
+      <p style="margin-bottom:0.4rem;"><span style="color:#e65100; font-weight:600;">FP = ${fp}</span> &mdash; not ${name.toLowerCase()}, but predicted ${name.toLowerCase()} <em>(Type I)</em></p>
+      <p style="margin-bottom:0.4rem;"><span style="color:#c62828; font-weight:600;">FN = ${fn}</span> &mdash; truly ${name.toLowerCase()}, but predicted something else <em>(Type II)</em></p>
+      <p><span style="color:#1a3a5c; font-weight:600;">TN = ${tn}</span> &mdash; not ${name.toLowerCase()}, not predicted ${name.toLowerCase()}</p>
+    </div>
+  `;
+}
+
+function updateMetrics() {
+  const cls = selectedClass;
+  const name = CLASSES_3[cls];
+  const tp = getTP(cm3, cls), fp = getFP(cm3, cls), fn = getFN(cm3, cls), tn = getTN(cm3, cls);
+  const total = sumAll(cm3);
+  const correct = diagSum(cm3);
+
+  const acc = total > 0 ? correct / total : 0;
+  const prec = (tp + fp) > 0 ? tp / (tp + fp) : 0;
+  const rec = (tp + fn) > 0 ? tp / (tp + fn) : 0;
+  const f1 = (prec + rec) > 0 ? 2 * prec * rec / (prec + rec) : 0;
+
+  const el = document.getElementById('metricFormulas');
+  el.innerHTML = `
+    <div class="metric-formula">
+      <span class="metric-name">Accuracy</span>
+      <span class="metric-calc">(TP + TN) / Total = (${tp} + ${tn}) / ${total}</span>
+      <span class="metric-result" style="color:${acc > 0.8 ? '#2e7d32' : acc > 0.6 ? '#e65100' : '#c62828'};">${(acc * 100).toFixed(1)}%</span>
+    </div>
+    <div class="metric-formula">
+      <span class="metric-name">Precision</span>
+      <span class="metric-calc">TP / (TP + FP) = ${tp} / (${tp} + ${fp})</span>
+      <span class="metric-result" style="color:${prec > 0.8 ? '#2e7d32' : prec > 0.6 ? '#e65100' : '#c62828'};">${(tp + fp) > 0 ? (prec * 100).toFixed(1) + '%' : 'N/A'}</span>
+    </div>
+    <div class="metric-formula">
+      <span class="metric-name">Recall</span>
+      <span class="metric-calc">TP / (TP + FN) = ${tp} / (${tp} + ${fn})</span>
+      <span class="metric-result" style="color:${rec > 0.8 ? '#2e7d32' : rec > 0.6 ? '#e65100' : '#c62828'};">${(tp + fn) > 0 ? (rec * 100).toFixed(1) + '%' : 'N/A'}</span>
+    </div>
+    <div class="metric-formula">
+      <span class="metric-name">F1 Score</span>
+      <span class="metric-calc">2 &times; (P &times; R) / (P + R) = 2 &times; (${prec.toFixed(3)} &times; ${rec.toFixed(3)}) / (${prec.toFixed(3)} + ${rec.toFixed(3)})</span>
+      <span class="metric-result" style="color:${f1 > 0.8 ? '#2e7d32' : f1 > 0.6 ? '#e65100' : '#c62828'};">${(prec + rec) > 0 ? (f1 * 100).toFixed(1) + '%' : 'N/A'}</span>
+    </div>
+  `;
+
+  document.getElementById('metricExplainerBody').innerHTML = `
+    <p style="font-size:0.85rem; margin-top:0.5rem; margin-bottom:0.5rem;">
+      <strong style="color:#1a3a5c; display:inline;">Accuracy</strong> asks: of all ${total} predictions, how many were correct? It treats every class equally in the count, which makes it blind to per-class failures.
+    </p>
+    <p style="font-size:0.85rem; margin-bottom:0.5rem;">
+      <strong style="color:#1a3a5c; display:inline;">Precision</strong> asks: of everything the model labeled "${name}," how much was actually ${name.toLowerCase()}? High precision means few false alarms. When precision is low, the model is crying wolf.
+    </p>
+    <p style="font-size:0.85rem; margin-bottom:0.5rem;">
+      <strong style="color:#1a3a5c; display:inline;">Recall</strong> asks: of all the real ${name.toLowerCase()} images, how many did the model find? High recall means few misses. When recall is low, the model is letting real cases slip through.
+    </p>
+    <p style="font-size:0.85rem;">
+      <strong style="color:#1a3a5c; display:inline;">F1 Score</strong> is the harmonic mean of precision and recall. An arithmetic mean would let a high precision mask a low recall (or vice versa). The harmonic mean penalizes that imbalance: if either metric is near zero, F1 drops to near zero regardless of the other. A classifier with 100% precision and 0% recall scores 0% F1, not 50%.
+    </p>
+  `;
+}
+
+function updateImbalanceStats() {
+  const acc = overallAccuracy(cm3);
+  const birdRecall = recall(cm3, 2);
+  const birdPrec = precision(cm3, 2);
+  const birdF1 = (birdPrec + birdRecall) > 0 ? 2 * birdPrec * birdRecall / (birdPrec + birdRecall) : 0;
+
+  document.getElementById('imbAccuracy').textContent = (acc * 100).toFixed(1) + '%';
+  document.getElementById('imbAccuracy').style.color = acc > 0.8 ? '#2e7d32' : acc > 0.6 ? '#e65100' : '#c62828';
+  document.getElementById('imbBirdRecall').textContent = (birdRecall * 100).toFixed(1) + '%';
+  document.getElementById('imbBirdRecall').style.color = birdRecall > 0.5 ? '#2e7d32' : birdRecall > 0.2 ? '#e65100' : '#c62828';
+  document.getElementById('imbBirdPrecision').textContent = (getTP(cm3, 2) + getFP(cm3, 2)) > 0 ? (birdPrec * 100).toFixed(1) + '%' : 'N/A';
+  document.getElementById('imbBirdF1').textContent = (birdPrec + birdRecall) > 0 ? (birdF1 * 100).toFixed(1) + '%' : '0.0%';
+  document.getElementById('imbBirdF1').style.color = birdF1 > 0.5 ? '#2e7d32' : birdF1 > 0.2 ? '#e65100' : '#c62828';
+}
+
+// ── 10-class heatmap ──
+function render10ClassHeatmap() {
+  const zText = CM_10.map((row, r) =>
+    row.map((val, c) => `True: ${CLASSES_10[r]}<br>Predicted: ${CLASSES_10[c]}<br>Count: ${val}`)
+  );
+
+  Plotly.react('heatmapPlot', [{
+    z: CM_10,
+    x: CLASSES_10,
+    y: CLASSES_10,
+    type: 'heatmap',
+    colorscale: [
+      [0, '#f7f9fc'],
+      [0.15, '#bbdefb'],
+      [0.35, '#64b5f6'],
+      [0.55, '#1976d2'],
+      [0.75, '#0d47a1'],
+      [1, '#1a237e']
+    ],
+    text: CM_10.map(row => row.map(v => v.toString())),
+    texttemplate: '%{text}',
+    textfont: { size: 11 },
+    hovertext: zText,
+    hoverinfo: 'text',
+    showscale: true,
+    colorbar: { title: 'Count', titleside: 'right' }
+  }], {
+    xaxis: {
+      title: 'Predicted Label', side: 'bottom',
+      tickangle: -45, tickfont: { size: 11 },
+      gridcolor: '#e8ecf0'
+    },
+    yaxis: {
+      title: 'True Label', autorange: 'reversed',
+      tickfont: { size: 11 }, gridcolor: '#e8ecf0'
+    },
+    plot_bgcolor: '#fff', paper_bgcolor: '#fff',
+    margin: { l: 90, r: 80, t: 20, b: 90 },
+    font: { family: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif', size: 12 }
+  }, { responsive: true });
+
+  // Per-class metrics table
+  let tableHTML = '<table class="cm-per-class" style="width:100%; border-collapse:collapse; font-size:0.85rem; margin-top:0.75rem;">';
+  tableHTML += '<thead><tr style="background:#1a3a5c; color:#fff;">';
+  tableHTML += '<th style="padding:0.4rem 0.6rem; text-align:left;">Class</th>';
+  tableHTML += '<th style="padding:0.4rem 0.6rem; text-align:right;">Precision</th>';
+  tableHTML += '<th style="padding:0.4rem 0.6rem; text-align:right;">Recall</th>';
+  tableHTML += '<th style="padding:0.4rem 0.6rem; text-align:right;">F1</th>';
+  tableHTML += '<th style="padding:0.4rem 0.6rem; text-align:right;">Support</th>';
+  tableHTML += '</tr></thead><tbody>';
+
+  let macroPrecSum = 0, macroRecSum = 0, macroF1Sum = 0;
+  let weightPrecSum = 0, weightRecSum = 0, weightF1Sum = 0;
+  let totalSupport = 0;
+
+  for (let i = 0; i < 10; i++) {
+    const tp = CM_10[i][i];
+    const fp = getFP(CM_10, i);
+    const fn = getFN(CM_10, i);
+    const support = tp + fn;
+    const p = (tp + fp) > 0 ? tp / (tp + fp) : 0;
+    const r = support > 0 ? tp / support : 0;
+    const f1 = (p + r) > 0 ? 2 * p * r / (p + r) : 0;
+    const pColor = p > 0.6 ? '#2e7d32' : p > 0.4 ? '#e65100' : '#c62828';
+    const rColor = r > 0.6 ? '#2e7d32' : r > 0.4 ? '#e65100' : '#c62828';
+    const f1Color = f1 > 0.6 ? '#2e7d32' : f1 > 0.4 ? '#e65100' : '#c62828';
+
+    macroPrecSum += p; macroRecSum += r; macroF1Sum += f1;
+    weightPrecSum += p * support; weightRecSum += r * support; weightF1Sum += f1 * support;
+    totalSupport += support;
+
+    tableHTML += `<tr style="border-bottom:1px solid #d0d7de;">`;
+    tableHTML += `<td style="padding:0.4rem 0.6rem; font-weight:600;">${CLASSES_10[i]}</td>`;
+    tableHTML += `<td style="padding:0.4rem 0.6rem; text-align:right; color:${pColor}; font-weight:600;">${(p * 100).toFixed(1)}%</td>`;
+    tableHTML += `<td style="padding:0.4rem 0.6rem; text-align:right; color:${rColor}; font-weight:600;">${(r * 100).toFixed(1)}%</td>`;
+    tableHTML += `<td style="padding:0.4rem 0.6rem; text-align:right; color:${f1Color}; font-weight:600;">${(f1 * 100).toFixed(1)}%</td>`;
+    tableHTML += `<td style="padding:0.4rem 0.6rem; text-align:right; color:#656d76;">${support}</td>`;
+    tableHTML += '</tr>';
+  }
+
+  const totalAcc = diagSum(CM_10) / sumAll(CM_10);
+  const n = 10;
+
+  // Overall accuracy row
+  tableHTML += `<tr style="border-top:2px solid #1a3a5c; font-weight:700;">`;
+  tableHTML += `<td style="padding:0.4rem 0.6rem;">Accuracy</td>`;
+  tableHTML += `<td colspan="2" style="padding:0.4rem 0.6rem;"></td>`;
+  tableHTML += `<td style="padding:0.4rem 0.6rem; text-align:right; color:#1a3a5c;">${(totalAcc * 100).toFixed(1)}%</td>`;
+  tableHTML += `<td style="padding:0.4rem 0.6rem; text-align:right; color:#656d76;">${totalSupport}</td>`;
+  tableHTML += '</tr>';
+
+  // Macro average row
+  const macroP = macroPrecSum / n, macroR = macroRecSum / n, macroF1 = macroF1Sum / n;
+  tableHTML += `<tr style="font-weight:700;">`;
+  tableHTML += `<td style="padding:0.4rem 0.6rem;">Macro Avg</td>`;
+  tableHTML += `<td style="padding:0.4rem 0.6rem; text-align:right; color:#1a3a5c;">${(macroP * 100).toFixed(1)}%</td>`;
+  tableHTML += `<td style="padding:0.4rem 0.6rem; text-align:right; color:#1a3a5c;">${(macroR * 100).toFixed(1)}%</td>`;
+  tableHTML += `<td style="padding:0.4rem 0.6rem; text-align:right; color:#1a3a5c;">${(macroF1 * 100).toFixed(1)}%</td>`;
+  tableHTML += `<td style="padding:0.4rem 0.6rem; text-align:right; color:#656d76;">${totalSupport}</td>`;
+  tableHTML += '</tr>';
+
+  // Weighted average row
+  const weightP = weightPrecSum / totalSupport, weightR = weightRecSum / totalSupport, weightF1 = weightF1Sum / totalSupport;
+  tableHTML += `<tr style="font-weight:700; border-bottom:2px solid #1a3a5c;">`;
+  tableHTML += `<td style="padding:0.4rem 0.6rem;">Weighted Avg</td>`;
+  tableHTML += `<td style="padding:0.4rem 0.6rem; text-align:right; color:#1a3a5c;">${(weightP * 100).toFixed(1)}%</td>`;
+  tableHTML += `<td style="padding:0.4rem 0.6rem; text-align:right; color:#1a3a5c;">${(weightR * 100).toFixed(1)}%</td>`;
+  tableHTML += `<td style="padding:0.4rem 0.6rem; text-align:right; color:#1a3a5c;">${(weightF1 * 100).toFixed(1)}%</td>`;
+  tableHTML += `<td style="padding:0.4rem 0.6rem; text-align:right; color:#656d76;">${totalSupport}</td>`;
+  tableHTML += '</tr>';
+
+  tableHTML += '</tbody></table>';
+
+  document.getElementById('perClassMetrics').innerHTML = tableHTML;
+}
+
+// ── Class pill buttons ──
+function renderClassPills() {
+  const containers = ['classPills', 'metricPills'];
+  for (const id of containers) {
+    const el = document.getElementById(id);
+    el.innerHTML = CLASSES_3.map((cls, i) =>
+      `<div class="class-pill ${i === selectedClass ? 'active' : ''}" onclick="selectClass(${i})">${cls}</div>`
+    ).join('');
+  }
+}
+
+// ── Init ──
+document.addEventListener('DOMContentLoaded', function() {
+  renderClassPills();
+  updateAll();
+  render10ClassHeatmap();
+});
+</script>
+
+</body>
+</html>
