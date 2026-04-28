@@ -1,0 +1,1251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Inside a CNN: From Pixels to Features &mdash; AIML 2013</title>
+<style>
+  :root {
+    --primary: #1a3a5c;
+    --primary-light: #2e5a88;
+    --accent: #2e7d32;
+    --light-bg: #f7f9fc;
+    --border: #d0d7de;
+    --text: #1f2328;
+    --muted: #656d76;
+    --neg: #c62828;
+    --neg-bg: #fce4ec;
+    --pos: #2e7d32;
+    --pos-bg: #e8f5e9;
+    --purple: #5e35b1;
+    --purple-bg: #ede7f6;
+    --orange: #e65100;
+    /* Demo-specific */
+    --heat-cold: #1565C0;
+    --heat-zero: #f7f9fc;
+    --heat-hot: #c62828;
+    --highlight: rgba(46,125,50,0.35);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    color: var(--text); line-height: 1.6; background: #fff;
+  }
+  .container { max-width: 1100px; margin: 0 auto; padding: 0 2rem 3rem; }
+
+  .hero {
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+    color: #fff; padding: 2.5rem 2rem; text-align: center; margin-bottom: 2rem;
+  }
+  .hero h1 { font-size: 1.8rem; margin-bottom: 0.3rem; font-weight: 700; }
+  .hero p { color: #c0d4e8; font-size: 1rem; }
+  .hero .hl { color: #fff; font-weight: 500; margin-top: 0.75rem; font-size: 1.05rem; }
+
+  .stage { margin-top: 3rem; }
+  .stage-num {
+    display: inline-block; width: 2rem; height: 2rem; line-height: 2rem;
+    border-radius: 50%; background: var(--primary); color: #fff;
+    text-align: center; font-weight: 700; font-size: 0.9rem;
+    margin-right: 0.5rem; vertical-align: middle;
+  }
+  .stage-line h2 { font-size: 1.3rem; color: var(--primary); margin-bottom: 0.75rem; display: inline; vertical-align: middle; }
+  .stage-line { border-bottom: 2px solid var(--primary); margin-bottom: 1rem; padding-bottom: 0.4rem; }
+  p { font-size: 0.95rem; margin-bottom: 0.75rem; }
+
+  .card {
+    background: var(--light-bg); border: 1px solid var(--border);
+    border-radius: 8px; padding: 1.25rem; margin-bottom: 1rem;
+  }
+  .card strong { color: var(--primary); display: block; margin-bottom: 0.3rem; }
+
+  .tip {
+    background: var(--pos-bg); border-left: 4px solid var(--accent);
+    padding: 1rem 1.25rem; border-radius: 4px; margin: 1rem 0; font-size: 0.9rem;
+  }
+  .tip strong { color: var(--accent); }
+  .warn-tip {
+    background: #fff3e0; border-left: 4px solid var(--orange);
+    padding: 1rem 1.25rem; border-radius: 4px; margin: 1rem 0; font-size: 0.9rem;
+  }
+  .warn-tip strong { color: var(--orange); }
+  .arrow-box { text-align: center; padding: 1rem 0; color: var(--muted); font-size: 1.5rem; }
+
+  .btn {
+    display: inline-block; padding: 0.5rem 1.1rem; border: none; border-radius: 6px;
+    font-size: 0.85rem; font-weight: 600; cursor: pointer; font-family: inherit;
+    transition: opacity 0.15s;
+  }
+  .btn:hover { opacity: 0.85; }
+  .btn-accent { background: var(--accent); color: #fff; }
+  .btn-primary { background: var(--primary); color: #fff; }
+  .btn-outline { background: #fff; color: var(--primary); border: 1px solid var(--border); }
+  .btn-purple { background: var(--purple); color: #fff; }
+  .btn-group { display: flex; gap: 0.5rem; flex-wrap: wrap; margin: 0.75rem 0; }
+
+  .stats-row { display: flex; gap: 1rem; flex-wrap: wrap; margin: 1rem 0; }
+  .stat-card {
+    flex: 1; min-width: 110px; background: var(--light-bg);
+    border: 1px solid var(--border); border-radius: 8px;
+    padding: 0.75rem 1rem; text-align: center;
+  }
+  .stat-card .val { font-size: 1.5rem; font-weight: 700; color: var(--primary); }
+  .stat-card .lbl { font-size: 0.8rem; color: var(--muted); }
+
+  .eq-box {
+    background: var(--light-bg); border: 1px solid var(--border); border-radius: 8px;
+    padding: 1rem 1.25rem; margin: 1rem 0; text-align: center;
+    font-family: "SF Mono", Consolas, monospace; font-size: 0.95rem;
+  }
+
+  .row { display: flex; gap: 1.5rem; flex-wrap: wrap; }
+  .col-main { flex: 1; min-width: 400px; }
+  .col-side { width: 320px; min-width: 260px; }
+  .col-half { flex: 1; min-width: 300px; }
+
+  .footer {
+    text-align: center; padding: 2rem; color: var(--muted); font-size: 0.85rem;
+    border-top: 1px solid var(--border); margin-top: 3rem;
+  }
+
+  /* Grid canvases */
+  canvas.grid-canvas {
+    border: 1px solid var(--border); border-radius: 4px;
+    image-rendering: pixelated;
+  }
+  .grid-label {
+    font-size: 0.8rem; font-weight: 600; color: var(--muted);
+    text-transform: uppercase; letter-spacing: 0.03em;
+    text-align: center; margin-bottom: 0.4rem;
+  }
+  .grid-wrap { display: inline-block; text-align: center; vertical-align: top; }
+
+  /* Kernel table */
+  .kernel-table { border-collapse: collapse; margin: 0.5rem auto; }
+  .kernel-table td {
+    width: 42px; height: 42px; text-align: center; vertical-align: middle;
+    border: 1px solid var(--border); font-family: "SF Mono", Consolas, monospace;
+    font-size: 0.85rem; font-weight: 600;
+  }
+  .kernel-table td.pos { background: var(--pos-bg); color: var(--pos); }
+  .kernel-table td.neg { background: var(--neg-bg); color: var(--neg); }
+  .kernel-table td.zero { background: #fff; color: var(--muted); }
+
+  /* Feature map grid for Stage 2 */
+  .fmap-grid { display: flex; gap: 1rem; flex-wrap: wrap; margin: 1rem 0; justify-content: center; }
+  .fmap-item { text-align: center; cursor: pointer; }
+  .fmap-item canvas { border: 2px solid transparent; border-radius: 4px; transition: border-color 0.15s; }
+  .fmap-item.selected canvas { border-color: var(--accent); }
+  .fmap-item .fmap-label { font-size: 0.75rem; color: var(--muted); margin-top: 0.25rem; }
+
+  /* Pipeline diagram for Stage 4 */
+  .pipeline { display: flex; align-items: center; gap: 0.3rem; flex-wrap: wrap; justify-content: center; margin: 1.5rem 0; }
+  .pipe-block {
+    background: var(--light-bg); border: 1px solid var(--border); border-radius: 6px;
+    padding: 0.5rem 0.75rem; text-align: center; min-width: 70px;
+    transition: background 0.3s, border-color 0.3s;
+    cursor: pointer; user-select: none;
+  }
+  .pipe-block:hover { background: #e8ecf0; border-color: #9ba4ad; }
+  .pipe-block.active { background: #e3f2fd; border-color: var(--primary); }
+  .pipe-block.active:hover { background: #c9e2f7; }
+  .pipe-block .pipe-name { font-size: 0.7rem; font-weight: 600; color: var(--primary); text-transform: uppercase; }
+  .pipe-block .pipe-dim { font-size: 0.75rem; color: var(--muted); font-family: "SF Mono", Consolas, monospace; margin-top: 0.15rem; }
+  .pipe-arrow { color: var(--muted); font-size: 1rem; }
+
+  /* Stage 5/6 network */
+  .net-diagram {
+    display: flex; align-items: center; justify-content: center;
+    gap: 1.5rem; margin: 1.25rem 0; flex-wrap: wrap;
+  }
+  .net-layer { display: flex; flex-direction: column; align-items: center; gap: 0.3rem; }
+  .net-layer .layer-label {
+    font-size: 0.7rem; color: var(--muted); font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.03em; margin-top: 0.2rem;
+  }
+  .net-neuron {
+    width: 1.6rem; height: 1.6rem; border-radius: 50%; border: 2px solid var(--primary);
+    background: var(--light-bg);
+  }
+  .net-neuron.active { background: var(--primary); }
+  .net-neuron.stripped {
+    border-color: var(--neg); background: var(--neg-bg); position: relative;
+  }
+  .net-neuron.stripped::after {
+    content: '✕'; position: absolute; top: 50%; left: 50%;
+    transform: translate(-50%, -50%); color: var(--neg);
+    font-weight: 700; font-size: 0.8rem;
+  }
+  .net-neuron.embed { border-color: var(--accent); background: var(--pos-bg); }
+  .net-arrow { font-size: 1.2rem; color: var(--muted); }
+
+  /* Computation display */
+  .comp-display {
+    background: var(--light-bg); border: 1px solid var(--border); border-radius: 6px;
+    padding: 0.75rem 1rem; margin: 0.75rem 0; font-family: "SF Mono", Consolas, monospace;
+    font-size: 0.85rem; min-height: 2.5rem; line-height: 1.8;
+  }
+  .comp-display .pos-val { color: var(--pos); font-weight: 700; }
+  .comp-display .neg-val { color: var(--neg); font-weight: 700; }
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <h1>Inside a CNN: From Pixels to Features</h1>
+  <p>AIML 2013 &bull; Module 6: Generative Vision</p>
+  <p class="hl">You have used MobileNetV2 as a black box since Module 3. This demo opens the box.</p>
+</div>
+
+<div class="container">
+
+  <!-- ========== STAGE 1 ========== -->
+  <div class="stage">
+    <div class="stage-line"><span class="stage-num">1</span><h2>One Filter Sliding Across an Image</h2></div>
+    <p>In Module 1 you applied Sobel edge-detection kernels to photographs. A CNN does the same operation: slide a small kernel across the image and compute a weighted sum at each position. The output is a <strong>feature map</strong> where each pixel records how strongly that patch matched the kernel's pattern.</p>
+    <p>Below is an 8&times;8 grayscale image of the letter L. The green highlight shows where the 3&times;3 kernel is positioned. Click <strong>Step</strong> to advance one position, or <strong>Play</strong> to animate.</p>
+
+    <div class="row" style="align-items:flex-start; margin-top:1rem;">
+      <div class="col-main" style="min-width:300px;">
+        <div style="display:flex;gap:1.5rem;flex-wrap:wrap;justify-content:center;align-items:flex-start;">
+          <div class="grid-wrap">
+            <div class="grid-label">Input (8&times;8)</div>
+            <canvas id="s1-input" class="grid-canvas" width="320" height="320"></canvas>
+          </div>
+          <div class="grid-wrap">
+            <div class="grid-label">Feature Map (6&times;6)</div>
+            <canvas id="s1-output" class="grid-canvas" width="240" height="240"></canvas>
+          </div>
+        </div>
+        <div class="btn-group" style="justify-content:center;">
+          <button class="btn btn-accent" onclick="s1Step()">Step</button>
+          <button class="btn btn-primary" id="s1-play-btn" onclick="s1TogglePlay()">Play</button>
+          <button class="btn btn-outline" onclick="s1Reset()">Reset</button>
+        </div>
+      </div>
+      <div class="col-side" style="min-width:240px;">
+        <div class="grid-label">Kernel (3&times;3)</div>
+        <table class="kernel-table" id="s1-kernel-table"></table>
+        <div class="btn-group" style="justify-content:center;margin-top:0.75rem;">
+          <!-- verified: conv(IMAGE, horiz, 0, 0) = 400 (dark-to-bright transition at top of L) -->
+          <button class="btn btn-outline" onclick="s1SetKernel('horiz')">Horizontal Edge</button>
+          <!-- verified: conv(IMAGE, vert, 1, 0) = 600 (dark-to-bright transition at left of L) -->
+          <button class="btn btn-outline" onclick="s1SetKernel('vert')">Vertical Edge</button>
+          <button class="btn btn-outline" onclick="s1SetKernel('sharpen')">Sharpen</button>
+        </div>
+        <div class="comp-display" id="s1-comp">Click Step or Play to start.</div>
+        <div class="stats-row">
+          <div class="stat-card"><div class="val" id="s1-pos">0,0</div><div class="lbl">Position</div></div>
+          <div class="stat-card"><div class="val" id="s1-val">&mdash;</div><div class="lbl">Output</div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="tip">
+      <strong>Module 1 connection:</strong> The horizontal edge kernel is a simplified Sobel filter. It produces large positive values where pixel intensity increases downward (a dark-to-light transition) and large negative values where it decreases. The vertical edge kernel does the same for left-to-right transitions. Switch between them and watch which edges of the L light up in the feature map.
+    </div>
+  </div>
+
+  <div class="arrow-box">&darr;</div>
+
+  <!-- ========== STAGE 2 ========== -->
+  <div class="stage">
+    <div class="stage-line"><span class="stage-num">2</span><h2>A Layer Applies Many Filters at Once</h2></div>
+    <p>A single convolutional layer does not apply one filter. It applies many in parallel, each looking for a different pattern. The first layer of MobileNetV2 runs 32 different 3&times;3 kernels across the input. Each one produces its own feature map. Below, four filters run on the same image simultaneously. Click any filter to inspect its kernel and output.</p>
+
+    <div class="fmap-grid" id="s2-maps"></div>
+
+    <div class="row" style="align-items:flex-start;">
+      <div class="col-half" style="text-align:center;">
+        <div class="grid-label" id="s2-kernel-label">Filter 1: Horizontal Edge</div>
+        <table class="kernel-table" id="s2-kernel-table"></table>
+      </div>
+      <div class="col-half" style="text-align:center;">
+        <div class="grid-label">Selected Feature Map (6&times;6)</div>
+        <canvas id="s2-detail" class="grid-canvas" width="240" height="240"></canvas>
+      </div>
+    </div>
+
+    <div class="stats-row">
+      <div class="stat-card"><div class="val">8&times;8&times;1</div><div class="lbl">Input</div></div>
+      <div class="stat-card"><div class="val">6&times;6&times;4</div><div class="lbl">Output</div></div>
+      <div class="stat-card"><div class="val">36</div><div class="lbl">Parameters (4 &times; 9)</div></div>
+    </div>
+
+    <div class="tip">
+      <strong>One image, four interpretations.</strong> The horizontal edge filter sees the top and bottom of the L. The vertical edge filter sees the left side. The diagonal filter picks up corners. The blur filter smooths everything. A trained CNN learns which filters produce useful distinctions for its classification task. Nobody hand-picks them.
+    </div>
+  </div>
+
+  <div class="arrow-box">&darr;</div>
+
+  <!-- ========== STAGE 3 ========== -->
+  <div class="stage">
+    <div class="stage-line"><span class="stage-num">3</span><h2>ReLU and Max Pooling</h2></div>
+    <p>After convolution, two operations clean up the feature maps. <strong>ReLU</strong> (Rectified Linear Unit) zeroes out all negative values: if the kernel's pattern wasn't present, the activation is exactly zero. <strong>Max pooling</strong> then shrinks each map by keeping only the maximum value in each 2&times;2 block. The spatial resolution halves, but the strongest activations survive.</p>
+
+    <div style="text-align:center; margin:1rem 0;">
+      <div style="display:inline-flex;gap:1.5rem;flex-wrap:wrap;justify-content:center;align-items:flex-start;">
+        <div class="grid-wrap">
+          <div class="grid-label">After Convolution (6&times;6)</div>
+          <canvas id="s3-conv" class="grid-canvas" width="240" height="240"></canvas>
+        </div>
+        <div class="grid-wrap">
+          <div class="grid-label">After ReLU (6&times;6)</div>
+          <canvas id="s3-relu" class="grid-canvas" width="240" height="240"></canvas>
+        </div>
+        <div class="grid-wrap">
+          <div class="grid-label">After Max Pool (3&times;3)</div>
+          <canvas id="s3-pool" class="grid-canvas" width="150" height="150"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <div class="btn-group" style="justify-content:center;">
+      <button class="btn btn-outline" onclick="s3Select(0)">Horizontal Edge</button>
+      <button class="btn btn-outline" onclick="s3Select(1)">Vertical Edge</button>
+      <button class="btn btn-outline" onclick="s3Select(2)">Diagonal</button>
+      <button class="btn btn-outline" onclick="s3Select(3)">Blur</button>
+    </div>
+
+    <div class="stats-row">
+      <div class="stat-card"><div class="val" id="s3-neg-count">0</div><div class="lbl">Negatives zeroed by ReLU</div></div>
+      <div class="stat-card"><div class="val">6&times;6 &rarr; 3&times;3</div><div class="lbl">Pooling reduction</div></div>
+      <div class="stat-card"><div class="val" id="s3-kept">0%</div><div class="lbl">Values kept</div></div>
+    </div>
+
+    <div class="tip">
+      <strong>Why pool?</strong> Pooling makes the representation smaller (less computation in subsequent layers) and slightly translation-invariant: a feature detected at pixel (2,3) and one at (3,3) collapse into the same pooled cell. The network cares that a vertical edge exists in that region, not its exact pixel coordinate.
+    </div>
+  </div>
+
+  <div class="arrow-box">&darr;</div>
+
+  <!-- ========== STAGE 4 ========== -->
+  <div class="stage">
+    <div class="stage-line"><span class="stage-num">4</span><h2>Stack the Layers</h2></div>
+    <p>A CNN repeats the conv &rarr; ReLU &rarr; pool sequence multiple times. Each repetition shrinks the spatial dimensions and grows the channel count. Early layers detect edges. Later layers combine those edges into textures, shapes, and object parts. The table below shows what happens when you stack two convolutional layers on the 8&times;8 L image.</p>
+
+    <div id="s4-viz" style="min-height:140px;display:flex;align-items:center;justify-content:center;gap:0.5rem;flex-wrap:wrap;margin:1rem 0;"></div>
+    <p id="s4-caption" style="text-align:center;font-size:0.85rem;color:#656d76;min-height:1.2em;margin-bottom:0.75rem;"></p>
+
+    <div class="pipeline" id="s4-pipeline" style="margin-bottom:1.5rem;"></div>
+
+    <div class="card">
+      <strong>Dimension tracking</strong>
+      <table style="width:100%;font-size:0.85rem;margin-top:0.5rem;border-collapse:collapse;">
+        <thead>
+          <tr style="border-bottom:2px solid var(--border);">
+            <th style="text-align:left;padding:0.4rem;">Layer</th>
+            <th style="text-align:center;padding:0.4rem;">Height</th>
+            <th style="text-align:center;padding:0.4rem;">Width</th>
+            <th style="text-align:center;padding:0.4rem;">Channels</th>
+            <th style="text-align:center;padding:0.4rem;">Total values</th>
+          </tr>
+        </thead>
+        <tbody id="s4-dim-table">
+        </tbody>
+      </table>
+    </div>
+
+    <div class="warn-tip">
+      <strong>MobileNetV2 does this 53 layers deep.</strong> The input is 224&times;224&times;3 (an RGB image). After 53 convolutional layers with ReLU and various pooling operations, the output is 7&times;7&times;1280. Spatial detail has been compressed from 150,528 pixels down to 49 cells, while the channel count grew from 3 (red, green, blue) to 1,280 learned feature detectors.
+    </div>
+  </div>
+
+  <div class="arrow-box">&darr;</div>
+
+  <!-- ========== STAGE 5 ========== -->
+  <div class="stage">
+    <div class="stage-line"><span class="stage-num">5</span><h2>Fully Connected: Features Become Class Scores</h2></div>
+    <p>After the final pooling layer, the remaining feature maps are collapsed into a single vector. In MobileNetV2, global average pooling computes the mean of each 7&times;7 feature map, producing one number per channel: a 1,280-dimensional vector. A fully-connected layer then multiplies that vector by a weight matrix to produce 1,000 class scores (one per ImageNet category).</p>
+
+    <div class="net-diagram">
+      <div class="net-layer">
+        <div style="width:3rem;height:3rem;border:2px solid var(--primary);border-radius:4px;background:var(--light-bg);display:flex;align-items:center;justify-content:center;font-size:0.65rem;color:var(--muted);">7&times;7<br>&times;1280</div>
+        <div class="layer-label">Final Conv Output</div>
+      </div>
+      <div class="net-arrow">&rarr;</div>
+      <div class="net-layer">
+        <div style="font-size:0.75rem;color:var(--muted);font-style:italic;">avg each map</div>
+        <div class="layer-label">Global Avg Pool</div>
+      </div>
+      <div class="net-arrow">&rarr;</div>
+      <div class="net-layer">
+        <div class="net-neuron active"></div>
+        <div class="net-neuron active"></div>
+        <div class="net-neuron active"></div>
+        <div style="color:var(--muted);font-size:0.7rem;">&#8942;</div>
+        <div class="net-neuron active"></div>
+        <div class="layer-label">1,280-d Vector</div>
+      </div>
+      <div class="net-arrow">&rarr;</div>
+      <div class="net-layer">
+        <div style="width:2.5rem;height:2.5rem;border:2px solid var(--primary);border-radius:4px;background:var(--primary);display:flex;align-items:center;justify-content:center;">
+          <span style="color:#fff;font-size:0.6rem;font-weight:700;">W</span>
+        </div>
+        <div class="layer-label">FC Layer</div>
+      </div>
+      <div class="net-arrow">&rarr;</div>
+      <div class="net-layer">
+        <div class="net-neuron" style="border-color:var(--orange);"></div>
+        <div class="net-neuron" style="border-color:var(--orange);"></div>
+        <div style="color:var(--muted);font-size:0.7rem;">&#8942;</div>
+        <div class="net-neuron" style="border-color:var(--orange);"></div>
+        <div class="layer-label">1,000 Class Scores</div>
+      </div>
+    </div>
+
+    <p>Our toy CNN produced an 8-d feature vector from the L-shaped input image. Below, we classify it against five possible letter shapes: L, T, I, O, and Z. Each class has its own row of 8 weights. The dot product of those weights with the feature vector determines the score. (MobileNetV2 does the same thing at scale: 1,280-d vector, 1,000 classes.) Click a class to see the computation.</p>
+
+    <div class="btn-group" style="justify-content:center;" id="s5-class-btns"></div>
+    <div class="eq-box" id="s5-equation">Select a class above.</div>
+    <div class="stats-row" id="s5-scores"></div>
+
+    <div class="tip">
+      <strong>The FC layer is a lookup.</strong> Each of the 1,000 rows in the weight matrix encodes "what does a [class] look like in the 1,280-dimensional feature space?" The dot product measures how well the input's feature vector matches each template. The highest score wins. This is the same dot-product-as-similarity you used with cosine similarity in Module 3 and Module 4.
+    </div>
+  </div>
+
+  <div class="arrow-box">&darr;</div>
+
+  <!-- ========== STAGE 6 ========== -->
+  <div class="stage">
+    <div class="stage-line"><span class="stage-num">6</span><h2>Strip the Classifier, Keep the Features</h2></div>
+    <p>For image classification, you keep the FC layer and take the argmax. For everything else you have done this semester, you strip it off. The 1,280-dimensional vector before the FC layer is the <strong>embedding</strong>: a learned representation where similar images land near each other in vector space.</p>
+
+    <div class="net-diagram">
+      <div class="net-layer">
+        <div style="width:3rem;height:3rem;border:2px solid var(--primary);border-radius:4px;background:var(--light-bg);display:flex;align-items:center;justify-content:center;font-size:0.65rem;color:var(--muted);">7&times;7<br>&times;1280</div>
+        <div class="layer-label">Final Conv Output</div>
+      </div>
+      <div class="net-arrow">&rarr;</div>
+      <div class="net-layer">
+        <div style="font-size:0.75rem;color:var(--muted);font-style:italic;">avg each map</div>
+        <div class="layer-label">Global Avg Pool</div>
+      </div>
+      <div class="net-arrow">&rarr;</div>
+      <div class="net-layer">
+        <div class="net-neuron embed"></div>
+        <div class="net-neuron embed"></div>
+        <div class="net-neuron embed"></div>
+        <div style="color:var(--muted);font-size:0.7rem;">&#8942;</div>
+        <div class="net-neuron embed"></div>
+        <div class="layer-label" style="color:var(--accent);">Embedding (1,280-d)</div>
+      </div>
+      <div class="net-arrow">&rarr;</div>
+      <div class="net-layer">
+        <div class="net-neuron stripped"></div>
+        <div class="net-neuron stripped"></div>
+        <div style="color:var(--muted);font-size:0.7rem;">&#8942;</div>
+        <div class="net-neuron stripped"></div>
+        <div class="layer-label">FC (stripped)</div>
+      </div>
+    </div>
+
+    <div class="eq-box">
+      <span style="color:var(--muted);">Python:</span>&nbsp;
+      model = MobileNetV2(weights='imagenet', <span style="color:var(--accent);font-weight:700;">include_top=False</span>, pooling='avg')
+    </div>
+
+    <p>That one argument &mdash; <code>include_top=False</code> &mdash; removes the 1,000-class FC layer and returns the 1,280-dimensional feature vector. This is the line of code you ran in Module 3, Cell 1. Every retrieval query, every similarity score, every t-SNE plot you built this semester started from this vector.</p>
+
+    <div class="card">
+      <strong>Where embeddings appear in this course</strong>
+      <table style="width:100%;font-size:0.85rem;margin-top:0.5rem;border-collapse:collapse;">
+        <thead>
+          <tr style="border-bottom:2px solid var(--border);">
+            <th style="text-align:left;padding:0.4rem;">Module</th>
+            <th style="text-align:left;padding:0.4rem;">What you did with the embedding</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr style="border-bottom:1px solid var(--border);">
+            <td style="padding:0.4rem;">3: Embeddings</td>
+            <td style="padding:0.4rem;">Extracted 1,280-d vectors. Built cosine similarity retrieval. Compared to HOG. Ran t-SNE.</td>
+          </tr>
+          <tr style="border-bottom:1px solid var(--border);">
+            <td style="padding:0.4rem;">4: Visual Similarity</td>
+            <td style="padding:0.4rem;">Stored embeddings in ChromaDB. Ran precision@k evaluation. Tried embedding arithmetic.</td>
+          </tr>
+          <tr style="border-bottom:1px solid var(--border);">
+            <td style="padding:0.4rem;">5: Metrics &amp; Bias</td>
+            <td style="padding:0.4rem;">Fed embeddings to a logistic regression head. Measured demographic bias in the resulting classifier.</td>
+          </tr>
+          <tr>
+            <td style="padding:0.4rem;">6: Generative Vision</td>
+            <td style="padding:0.4rem;">The VLM's image encoder produces an embedding that the language decoder converts to text.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="tip">
+      <strong>The CNN is the feature extractor.</strong> Classification, retrieval, bias auditing, and captioning are different tasks built on the same foundation: a convolutional network that converts pixels into a compact vector encoding what is in the image. The architecture you stepped through in Stages 1&ndash;4 — conv, ReLU, pool, repeat — is the engine behind every lab notebook you have written this semester.
+    </div>
+  </div>
+
+</div>
+
+<div class="footer">
+  AIML 2013 &bull; Module 6: Generative Vision &bull; Spring 2026
+</div>
+
+<script>
+/* ===================================================================
+   DATA
+   =================================================================== */
+
+// 8x8 grayscale "L" shape (values 0–255)
+const IMAGE = [
+  [  0,  0,  0,  0,  0,  0,  0,  0],
+  [  0,200,200,  0,  0,  0,  0,  0],
+  [  0,200,200,  0,  0,  0,  0,  0],
+  [  0,200,200,  0,  0,  0,  0,  0],
+  [  0,200,200,  0,  0,  0,  0,  0],
+  [  0,200,200,200,200,200,  0,  0],
+  [  0,200,200,200,200,200,  0,  0],
+  [  0,  0,  0,  0,  0,  0,  0,  0],
+];
+
+const KERNELS = {
+  // conv(IMAGE, horiz, 0, 0) = 400; conv(IMAGE, horiz, 4, 0) = 0
+  horiz:   { name: 'Horizontal Edge', k: [[-1,-1,-1],[0,0,0],[1,1,1]] },
+  // conv(IMAGE, vert, 1, 0) = 600; conv(IMAGE, vert, 0, 0) = 400
+  vert:    { name: 'Vertical Edge',   k: [[-1,0,1],[-1,0,1],[-1,0,1]] },
+  sharpen: { name: 'Sharpen',         k: [[0,-1,0],[-1,5,-1],[0,-1,0]] },
+  diag:    { name: 'Diagonal',        k: [[-1,-1,0],[-1,0,1],[0,1,1]] },
+  blur:    { name: 'Blur (Box)',      k: [[1,1,1],[1,1,1],[1,1,1]] },
+};
+
+const S2_FILTERS = ['horiz','vert','diag','blur'];
+
+/* ===================================================================
+   UTILITY: Convolution, ReLU, MaxPool
+   =================================================================== */
+
+function convolve(img, kernel) {
+  const h = img.length, w = img[0].length;
+  const kh = kernel.length, kw = kernel[0].length;
+  const oh = h - kh + 1, ow = w - kw + 1;
+  const out = [];
+  for (let r = 0; r < oh; r++) {
+    out[r] = [];
+    for (let c = 0; c < ow; c++) {
+      let sum = 0;
+      for (let kr = 0; kr < kh; kr++)
+        for (let kc = 0; kc < kw; kc++)
+          sum += img[r + kr][c + kc] * kernel[kr][kc];
+      out[r][c] = sum;
+    }
+  }
+  return out;
+}
+
+function applyReLU(fmap) {
+  return fmap.map(row => row.map(v => Math.max(0, v)));
+}
+
+function maxPool2x2(fmap) {
+  const h = fmap.length, w = fmap[0].length;
+  const oh = Math.floor(h / 2), ow = Math.floor(w / 2);
+  const out = [];
+  for (let r = 0; r < oh; r++) {
+    out[r] = [];
+    for (let c = 0; c < ow; c++) {
+      out[r][c] = Math.max(
+        fmap[r*2][c*2], fmap[r*2][c*2+1],
+        fmap[r*2+1][c*2], fmap[r*2+1][c*2+1]
+      );
+    }
+  }
+  return out;
+}
+
+/* ===================================================================
+   UTILITY: Drawing grids on Canvas
+   =================================================================== */
+
+function heatColor(val, minV, maxV) {
+  // Diverging blue (neg) → white (0) → red (pos)
+  if (maxV === minV) return 'rgb(200,200,200)';
+  let t;
+  if (val <= 0) {
+    t = minV === 0 ? 0 : val / minV; // 0..1 where 1 = most negative
+    const r = Math.round(21 + (247 - 21) * (1 - t));
+    const g = Math.round(101 + (249 - 101) * (1 - t));
+    const b = Math.round(192 + (252 - 192) * (1 - t));
+    return `rgb(${r},${g},${b})`;
+  } else {
+    t = maxV === 0 ? 0 : val / maxV;
+    const r = Math.round(247 - (247 - 198) * t);
+    const g = Math.round(249 - (249 - 40) * t);
+    const b = Math.round(252 - (252 - 40) * t);
+    return `rgb(${r},${g},${b})`;
+  }
+}
+
+function grayColor(val) {
+  const v = Math.max(0, Math.min(255, Math.round(val)));
+  return `rgb(${v},${v},${v})`;
+}
+
+function drawGrid(canvasId, data, opts = {}) {
+  const canvas = document.getElementById(canvasId);
+  const ctx = canvas.getContext('2d');
+  const rows = data.length, cols = data[0].length;
+  const cellW = canvas.width / cols, cellH = canvas.height / rows;
+
+  // Find range for heat coloring
+  let minV = Infinity, maxV = -Infinity;
+  for (let r = 0; r < rows; r++)
+    for (let c = 0; c < cols; c++) {
+      if (data[r][c] < minV) minV = data[r][c];
+      if (data[r][c] > maxV) maxV = data[r][c];
+    }
+
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      const x = c * cellW, y = r * cellH;
+      if (opts.gray) {
+        ctx.fillStyle = grayColor(data[r][c]);
+      } else {
+        ctx.fillStyle = heatColor(data[r][c], minV, maxV);
+      }
+      ctx.fillRect(x, y, cellW, cellH);
+
+      // Grid lines
+      ctx.strokeStyle = 'rgba(0,0,0,0.1)';
+      ctx.strokeRect(x, y, cellW, cellH);
+
+      // Value text
+      if (opts.showValues !== false && cellW >= 28) {
+        const val = Math.round(data[r][c]);
+        ctx.fillStyle = (opts.gray && data[r][c] > 127) || (!opts.gray && data[r][c] > maxV * 0.5) ? '#fff' : '#333';
+        if (!opts.gray && data[r][c] < minV * 0.5) ctx.fillStyle = '#fff';
+        ctx.font = `bold ${Math.min(12, cellW * 0.3)}px "SF Mono", Consolas, monospace`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(val, x + cellW / 2, y + cellH / 2);
+      }
+    }
+  }
+
+  // Highlight region if specified
+  if (opts.highlightRow !== undefined && opts.highlightCol !== undefined) {
+    const hr = opts.highlightRow, hc = opts.highlightCol;
+    const hs = opts.highlightSize || 3;
+    ctx.strokeStyle = 'rgba(46,125,50,0.9)';
+    ctx.lineWidth = 3;
+    ctx.strokeRect(hc * cellW, hr * cellH, hs * cellW, hs * cellH);
+    ctx.fillStyle = 'rgba(46,125,50,0.15)';
+    ctx.fillRect(hc * cellW, hr * cellH, hs * cellW, hs * cellH);
+    ctx.lineWidth = 1;
+  }
+
+  // Highlight single output cell
+  if (opts.outputRow !== undefined && opts.outputCol !== undefined) {
+    const or2 = opts.outputRow, oc = opts.outputCol;
+    ctx.strokeStyle = 'rgba(46,125,50,0.9)';
+    ctx.lineWidth = 3;
+    ctx.strokeRect(oc * cellW, or2 * cellH, cellW, cellH);
+    ctx.lineWidth = 1;
+  }
+}
+
+function drawKernelTable(tableId, kernel) {
+  const table = document.getElementById(tableId);
+  let html = '';
+  for (let r = 0; r < kernel.length; r++) {
+    html += '<tr>';
+    for (let c = 0; c < kernel[r].length; c++) {
+      const v = kernel[r][c];
+      const cls = v > 0 ? 'pos' : (v < 0 ? 'neg' : 'zero');
+      html += `<td class="${cls}">${v}</td>`;
+    }
+    html += '</tr>';
+  }
+  table.innerHTML = html;
+}
+
+
+/* ===================================================================
+   STAGE 1: Single filter convolution animation
+   =================================================================== */
+
+let s1Kernel = KERNELS.horiz.k;
+let s1Row = 0, s1Col = 0;
+let s1Playing = false;
+let s1Interval = null;
+let s1Output = null;
+let s1Done = false;
+
+function s1Init() {
+  s1Output = [];
+  for (let r = 0; r < 6; r++) {
+    s1Output[r] = [];
+    for (let c = 0; c < 6; c++) s1Output[r][c] = null;
+  }
+  s1Row = 0; s1Col = 0; s1Done = false;
+  drawGrid('s1-input', IMAGE, { gray: true });
+  s1DrawOutput();
+  drawKernelTable('s1-kernel-table', s1Kernel);
+  document.getElementById('s1-comp').innerHTML = 'Click Step or Play to start.';
+  document.getElementById('s1-pos').textContent = '0,0';
+  document.getElementById('s1-val').textContent = '—';
+}
+
+function s1DrawOutput() {
+  // Draw output grid with computed values; uncomputed cells are gray
+  const canvas = document.getElementById('s1-output');
+  const ctx = canvas.getContext('2d');
+  const cellW = canvas.width / 6, cellH = canvas.height / 6;
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  // Compute range from completed values
+  let minV = 0, maxV = 0;
+  for (let r = 0; r < 6; r++)
+    for (let c = 0; c < 6; c++)
+      if (s1Output[r][c] !== null) {
+        if (s1Output[r][c] < minV) minV = s1Output[r][c];
+        if (s1Output[r][c] > maxV) maxV = s1Output[r][c];
+      }
+
+  for (let r = 0; r < 6; r++) {
+    for (let c = 0; c < 6; c++) {
+      const x = c * cellW, y = r * cellH;
+      if (s1Output[r][c] !== null) {
+        ctx.fillStyle = heatColor(s1Output[r][c], minV, maxV);
+        ctx.fillRect(x, y, cellW, cellH);
+        const val = Math.round(s1Output[r][c]);
+        ctx.fillStyle = (s1Output[r][c] > maxV * 0.5 || s1Output[r][c] < minV * 0.5) ? '#fff' : '#333';
+        ctx.font = 'bold 11px "SF Mono", Consolas, monospace';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(val, x + cellW / 2, y + cellH / 2);
+      } else {
+        ctx.fillStyle = '#eee';
+        ctx.fillRect(x, y, cellW, cellH);
+      }
+      ctx.strokeStyle = 'rgba(0,0,0,0.1)';
+      ctx.strokeRect(x, y, cellW, cellH);
+    }
+  }
+}
+
+function s1Step() {
+  if (s1Done) return;
+
+  // Compute convolution at current position
+  let sum = 0;
+  let compParts = [];
+  for (let kr = 0; kr < 3; kr++)
+    for (let kc = 0; kc < 3; kc++) {
+      const pixel = IMAGE[s1Row + kr][s1Col + kc];
+      const weight = s1Kernel[kr][kc];
+      sum += pixel * weight;
+      if (weight !== 0 && pixel !== 0) {
+        compParts.push(`${pixel}&times;${weight >= 0 ? weight : '(' + weight + ')'}`);
+      }
+    }
+
+  s1Output[s1Row][s1Col] = sum;
+
+  // Update displays
+  drawGrid('s1-input', IMAGE, { gray: true, highlightRow: s1Row, highlightCol: s1Col });
+  s1DrawOutput();
+
+  const compStr = compParts.length > 0 ? compParts.join(' + ') + ' = ' : '';
+  const valClass = sum >= 0 ? 'pos-val' : 'neg-val';
+  document.getElementById('s1-comp').innerHTML =
+    `Position (${s1Row},${s1Col}): ${compStr}<span class="${valClass}">${sum}</span>`;
+  document.getElementById('s1-pos').textContent = `${s1Row},${s1Col}`;
+  document.getElementById('s1-val').innerHTML = `<span style="color:${sum >= 0 ? '#2e7d32' : '#c62828'}">${sum}</span>`;
+
+  // Advance position
+  s1Col++;
+  if (s1Col >= 6) { s1Col = 0; s1Row++; }
+  if (s1Row >= 6) {
+    s1Done = true;
+    s1StopPlay();
+    // Redraw input without highlight
+    drawGrid('s1-input', IMAGE, { gray: true });
+    document.getElementById('s1-comp').innerHTML += ' &mdash; <strong>Done!</strong>';
+  }
+}
+
+function s1TogglePlay() {
+  if (s1Playing) { s1StopPlay(); return; }
+  if (s1Done) s1Reset();
+  s1Playing = true;
+  document.getElementById('s1-play-btn').textContent = 'Pause';
+  s1Interval = setInterval(() => {
+    s1Step();
+    if (s1Done) s1StopPlay();
+  }, 150);
+}
+
+function s1StopPlay() {
+  s1Playing = false;
+  if (s1Interval) clearInterval(s1Interval);
+  s1Interval = null;
+  document.getElementById('s1-play-btn').textContent = 'Play';
+}
+
+function s1Reset() {
+  s1StopPlay();
+  s1Row = 0; s1Col = 0; s1Done = false;
+  s1Init();
+}
+
+function s1SetKernel(name) {
+  s1StopPlay();
+  s1Kernel = KERNELS[name].k;
+  s1Row = 0; s1Col = 0; s1Done = false;
+  s1Init();
+}
+
+
+/* ===================================================================
+   STAGE 2: Multiple filters
+   =================================================================== */
+
+let s2FeatureMaps = [];
+let s2Selected = 0;
+
+function s2Init() {
+  // Compute all four feature maps
+  s2FeatureMaps = S2_FILTERS.map(name => convolve(IMAGE, KERNELS[name].k));
+
+  // Create clickable feature map thumbnails
+  const container = document.getElementById('s2-maps');
+  container.innerHTML = '';
+  S2_FILTERS.forEach((name, i) => {
+    const div = document.createElement('div');
+    div.className = 'fmap-item' + (i === 0 ? ' selected' : '');
+    div.onclick = () => s2Select(i);
+
+    const canvas = document.createElement('canvas');
+    canvas.className = 'grid-canvas';
+    canvas.width = 120; canvas.height = 120;
+    canvas.id = 's2-thumb-' + i;
+    div.appendChild(canvas);
+
+    const label = document.createElement('div');
+    label.className = 'fmap-label';
+    label.textContent = KERNELS[name].name;
+    div.appendChild(label);
+
+    container.appendChild(div);
+  });
+
+  // Draw thumbnails
+  S2_FILTERS.forEach((name, i) => {
+    drawGrid('s2-thumb-' + i, s2FeatureMaps[i], { showValues: false });
+  });
+
+  s2Select(0);
+}
+
+function s2Select(idx) {
+  s2Selected = idx;
+  // Update selected state
+  document.querySelectorAll('.fmap-item').forEach((el, i) => {
+    el.className = 'fmap-item' + (i === idx ? ' selected' : '');
+  });
+  // Draw detail view
+  drawGrid('s2-detail', s2FeatureMaps[idx]);
+  // Update kernel table
+  const name = S2_FILTERS[idx];
+  drawKernelTable('s2-kernel-table', KERNELS[name].k);
+  document.getElementById('s2-kernel-label').textContent =
+    `Filter ${idx + 1}: ${KERNELS[name].name}`;
+}
+
+
+/* ===================================================================
+   STAGE 3: ReLU + MaxPool
+   =================================================================== */
+
+let s3SelectedFilter = 0;
+
+function s3Init() {
+  s3Select(0);
+}
+
+function s3Select(idx) {
+  s3SelectedFilter = idx;
+  const name = S2_FILTERS[idx];
+  const convMap = convolve(IMAGE, KERNELS[name].k);
+  const reluMap = applyReLU(convMap);
+  const poolMap = maxPool2x2(reluMap);
+
+  drawGrid('s3-conv', convMap);
+  drawGrid('s3-relu', reluMap);
+  drawGrid('s3-pool', poolMap);
+
+  // Count negatives
+  let negCount = 0;
+  for (let r = 0; r < convMap.length; r++)
+    for (let c = 0; c < convMap[r].length; c++)
+      if (convMap[r][c] < 0) negCount++;
+
+  document.getElementById('s3-neg-count').textContent = negCount;
+  const totalPool = poolMap.length * poolMap[0].length;
+  const totalConv = convMap.length * convMap[0].length;
+  document.getElementById('s3-kept').textContent =
+    Math.round(totalPool / totalConv * 100) + '%';
+
+  // Highlight active button
+  const stage3 = document.getElementById('s3-conv').closest('.stage');
+  if (stage3) {
+    stage3.querySelectorAll('.btn-group .btn').forEach((btn, i) => {
+      btn.style.background = i === idx ? '#1a3a5c' : '';
+      btn.style.color = i === idx ? '#fff' : '';
+    });
+  }
+}
+
+
+/* ===================================================================
+   STAGE 4: Pipeline animation — shows real data at each layer
+   =================================================================== */
+
+// Second-layer kernels: 4 input channels combined into 8 output channels.
+// Each kernel is 3×3 applied to one of the 4 pooled feature maps, then summed.
+// For the toy demo we average the 4 pooled maps into one, then apply 8 different 3×3 kernels.
+const CONV2_KERNELS = [
+  [[1,0,-1],[1,0,-1],[1,0,-1]],
+  [[-1,0,1],[-1,0,1],[-1,0,1]],
+  [[1,1,1],[0,0,0],[-1,-1,-1]],
+  [[-1,-1,-1],[0,0,0],[1,1,1]],
+  [[0,1,0],[1,-2,1],[0,1,0]],
+  [[1,-1,1],[-1,1,-1],[1,-1,1]],
+  [[1,1,0],[1,0,-1],[0,-1,-1]],
+  [[-1,0,1],[0,1,0],[1,0,-1]],
+];
+
+const PIPELINE_STAGES = [
+  { name: 'Input',     dim: '8×8×1',    values: 64 },
+  { name: 'Conv1',     dim: '6×6×4',    values: 144 },
+  { name: 'ReLU',      dim: '6×6×4',    values: 144 },
+  { name: 'MaxPool',   dim: '3×3×4',    values: 36 },
+  { name: 'Conv2',     dim: '1×1×8',    values: 8 },
+  { name: 'ReLU',      dim: '1×1×8',    values: 8 },
+  { name: 'Vector',    dim: '8-d',      values: 8 },
+];
+
+// Precompute all intermediate representations
+let s4Data = [];
+
+function s4Precompute() {
+  s4Data = [];
+
+  // Step 0: Input (8×8, 1 channel)
+  s4Data.push({ grids: [IMAGE], label: 'Input image: 8×8 grayscale, 1 channel' });
+
+  // Step 1: Conv1 — 4 filters on the input
+  const conv1 = S2_FILTERS.map(name => convolve(IMAGE, KERNELS[name].k));
+  s4Data.push({ grids: conv1, label: 'After Conv1: 4 filters produce 4 feature maps, each 6×6' });
+
+  // Step 2: ReLU
+  const relu1 = conv1.map(fm => applyReLU(fm));
+  s4Data.push({ grids: relu1, label: 'After ReLU: negative values zeroed out' });
+
+  // Step 3: MaxPool 2×2
+  const pool1 = relu1.map(fm => maxPool2x2(fm));
+  s4Data.push({ grids: pool1, label: 'After MaxPool (2×2): each 6×6 map shrinks to 3×3' });
+
+  // Step 4: Conv2 — average the 4 channels, apply 8 kernels
+  // Each pooled map is 3×3, kernel is 3×3 → output is 1×1 per kernel
+  // We sum across all 4 input channels for each output kernel
+  const conv2 = CONV2_KERNELS.map(kernel => {
+    let total = 0;
+    pool1.forEach(pm => {
+      for (let r = 0; r < 3; r++)
+        for (let c = 0; c < 3; c++)
+          total += pm[r][c] * kernel[r][c];
+    });
+    return [[total]];
+  });
+  s4Data.push({ grids: conv2, label: 'After Conv2: 8 filters on 3×3 input → 8 single values (1×1×8)' });
+
+  // Step 5: ReLU
+  const relu2 = conv2.map(fm => applyReLU(fm));
+  s4Data.push({ grids: relu2, label: 'After ReLU: negatives zeroed again' });
+
+  // Step 6: Flatten to vector
+  const vec = relu2.map(fm => fm[0][0]);
+  s4Data.push({ grids: null, vector: vec, label: 'Flatten to 8-d feature vector — ready for classification' });
+}
+
+let s4ActiveIdx = -1;
+
+function s4DrawStep(idx) {
+  const viz = document.getElementById('s4-viz');
+  const cap = document.getElementById('s4-caption');
+  viz.innerHTML = '';
+
+  const step = s4Data[idx];
+  cap.textContent = step.label;
+
+  if (step.vector) {
+    // Draw horizontal bar chart for the final vector
+    const wrapper = document.createElement('div');
+    wrapper.style.cssText = 'width:100%;max-width:500px;';
+    const maxVal = Math.max(...step.vector, 1);
+    step.vector.forEach((v, i) => {
+      const row = document.createElement('div');
+      row.style.cssText = 'display:flex;align-items:center;gap:0.5rem;margin:0.2rem 0;';
+      const lbl = document.createElement('span');
+      lbl.style.cssText = 'font-size:0.75rem;color:#656d76;width:1.5rem;text-align:right;font-family:"SF Mono",Consolas,monospace;';
+      lbl.textContent = 'f' + i;
+      const barOuter = document.createElement('div');
+      barOuter.style.cssText = 'flex:1;height:18px;background:#f0f0f0;border-radius:3px;overflow:hidden;';
+      const barInner = document.createElement('div');
+      const pct = Math.max(0, v / maxVal * 100);
+      barInner.style.cssText = 'height:100%;background:#1a3a5c;border-radius:3px;transition:width 0.3s;width:' + pct + '%;';
+      barOuter.appendChild(barInner);
+      const valLbl = document.createElement('span');
+      valLbl.style.cssText = 'font-size:0.75rem;color:#1f2328;width:3.5rem;font-family:"SF Mono",Consolas,monospace;';
+      valLbl.textContent = v.toFixed(1);
+      row.appendChild(lbl);
+      row.appendChild(barOuter);
+      row.appendChild(valLbl);
+      wrapper.appendChild(row);
+    });
+    viz.appendChild(wrapper);
+    return;
+  }
+
+  // Draw grids — one canvas per channel
+  const grids = step.grids;
+  const numGrids = grids.length;
+  // Scale canvas size to grid dimensions: bigger grids get bigger canvases
+  const gridRows = grids[0].length;
+  const cellPx = gridRows >= 6 ? 22 : (gridRows >= 3 ? 32 : 60);
+  const canvasSize = gridRows * cellPx;
+
+  grids.forEach((grid, i) => {
+    const col = document.createElement('div');
+    col.style.cssText = 'text-align:center;';
+    const canvas = document.createElement('canvas');
+    canvas.width = canvasSize;
+    canvas.height = canvasSize;
+    canvas.style.cssText = 'border:1px solid #d0d7de;border-radius:4px;image-rendering:pixelated;';
+    // Draw on the canvas using the existing drawGrid logic
+    s4DrawCanvas(canvas, grid, gridRows <= 3);
+    col.appendChild(canvas);
+    if (numGrids > 1) {
+      const lbl = document.createElement('div');
+      lbl.style.cssText = 'font-size:0.65rem;color:#656d76;margin-top:0.2rem;';
+      lbl.textContent = numGrids <= 4 ? S2_FILTERS[i] : ('ch ' + i);
+      col.appendChild(lbl);
+    }
+    viz.appendChild(col);
+  });
+}
+
+function s4DrawCanvas(canvas, data, showVals) {
+  const ctx = canvas.getContext('2d');
+  const rows = data.length, cols = data[0].length;
+  const cellW = canvas.width / cols, cellH = canvas.height / rows;
+
+  let minV = Infinity, maxV = -Infinity;
+  for (let r = 0; r < rows; r++)
+    for (let c = 0; c < cols; c++) {
+      if (data[r][c] < minV) minV = data[r][c];
+      if (data[r][c] > maxV) maxV = data[r][c];
+    }
+
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      const x = c * cellW, y = r * cellH;
+      ctx.fillStyle = heatColor(data[r][c], minV, maxV);
+      ctx.fillRect(x, y, cellW, cellH);
+      ctx.strokeStyle = 'rgba(0,0,0,0.1)';
+      ctx.strokeRect(x, y, cellW, cellH);
+      if (showVals && cellW >= 28) {
+        const val = Math.round(data[r][c]);
+        ctx.fillStyle = data[r][c] > maxV * 0.5 ? '#fff' : '#333';
+        ctx.font = 'bold 11px -apple-system, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(val, x + cellW / 2, y + cellH / 2);
+      }
+    }
+  }
+}
+
+function s4SelectStep(idx) {
+  s4ActiveIdx = idx;
+  // Highlight the clicked block and all blocks before it
+  PIPELINE_STAGES.forEach((_, i) => {
+    document.getElementById('s4-block-' + i).classList.toggle('active', i <= idx);
+  });
+  s4DrawStep(idx);
+  s4HighlightRow(idx);
+}
+
+function s4Init() {
+  s4Precompute();
+
+  const container = document.getElementById('s4-pipeline');
+  container.innerHTML = '';
+  PIPELINE_STAGES.forEach((stage, i) => {
+    if (i > 0) {
+      const arrow = document.createElement('span');
+      arrow.className = 'pipe-arrow';
+      arrow.textContent = '→';
+      container.appendChild(arrow);
+    }
+    const block = document.createElement('div');
+    block.className = 'pipe-block';
+    block.id = 's4-block-' + i;
+    block.innerHTML = '<div class="pipe-name">' + stage.name + '</div><div class="pipe-dim">' + stage.dim + '</div>';
+    block.addEventListener('click', () => s4SelectStep(i));
+    container.appendChild(block);
+  });
+
+  // Dimension table
+  const tbody = document.getElementById('s4-dim-table');
+  tbody.innerHTML = '';
+  const dimDetails = [
+    { layer: 'Input',             h: 8, w: 8, ch: 1 },
+    { layer: 'Conv1 (4 filters, 3×3)', h: 6, w: 6, ch: 4 },
+    { layer: 'ReLU₁',            h: 6, w: 6, ch: 4 },
+    { layer: 'MaxPool₁ (2×2)',   h: 3, w: 3, ch: 4 },
+    { layer: 'Conv2 (8 filters, 3×3)', h: 1, w: 1, ch: 8 },
+    { layer: 'ReLU₂',            h: 1, w: 1, ch: 8 },
+    { layer: 'Flatten → Vector',  h: '—', w: '—', ch: 8 },
+  ];
+  dimDetails.forEach(d => {
+    const total = (typeof d.h === 'number' && typeof d.w === 'number') ? d.h * d.w * d.ch : d.ch;
+    const tr = document.createElement('tr');
+    tr.style.borderBottom = '1px solid #d0d7de';
+    tr.innerHTML = '<td style="padding:0.4rem;">' + d.layer + '</td>' +
+      '<td style="text-align:center;padding:0.4rem;">' + d.h + '</td>' +
+      '<td style="text-align:center;padding:0.4rem;">' + d.w + '</td>' +
+      '<td style="text-align:center;padding:0.4rem;">' + d.ch + '</td>' +
+      '<td style="text-align:center;padding:0.4rem;font-weight:600;">' + total + '</td>';
+    tbody.appendChild(tr);
+  });
+
+  // Start on the Input step
+  s4SelectStep(0);
+}
+
+function s4HighlightRow(idx) {
+  const rows = document.querySelectorAll('#s4-dim-table tr');
+  rows.forEach((tr, i) => {
+    tr.style.background = i === idx ? '#e3f2fd' : '';
+    tr.style.fontWeight = i === idx ? '600' : '';
+  });
+}
+
+
+/* ===================================================================
+   STAGE 5: FC layer class scores
+   =================================================================== */
+
+// Simulated: 8-d feature vector (from our toy pipeline) and 5 "classes"
+// L score = 3.264, T score = 1.770 — L is highest (correct classification)
+const FEATURE_VEC = [0.82, 0.45, 0.91, 0.12, 0.67, 0.33, 0.78, 0.55];
+const CLASSES = {
+  'L':       { w: [ 0.9,  0.4,  0.8,  0.1,  0.7,  0.3,  0.85, 0.5], bias: 0.1 },
+  'T':       { w: [ 0.3,  0.8,  0.2,  0.6,  0.1,  0.7,  0.15, 0.9], bias: 0.0 },
+  'I':       { w: [ 0.1,  0.9,  0.1,  0.8,  0.2,  0.85, 0.05, 0.7], bias: -0.1 },
+  'O':       { w: [ 0.5,  0.5,  0.5,  0.5,  0.5,  0.5,  0.5,  0.5], bias: 0.0 },
+  'Z':       { w: [-0.2,  0.6, -0.3,  0.7, -0.1,  0.8, -0.2,  0.4], bias: 0.2 },
+};
+
+function dot(a, b) {
+  let s = 0;
+  for (let i = 0; i < a.length; i++) s += a[i] * b[i];
+  return s;
+}
+
+// Verified: L=3.264, T=1.770, I=1.412, O=2.315, Z=0.378. L wins.
+
+function s5Init() {
+  const container = document.getElementById('s5-class-btns');
+  container.innerHTML = '';
+  Object.keys(CLASSES).forEach(name => {
+    const btn = document.createElement('button');
+    btn.className = 'btn btn-outline';
+    btn.textContent = name;
+    btn.onclick = () => s5SelectClass(name);
+    container.appendChild(btn);
+  });
+
+  // Compute all scores
+  const scores = {};
+  Object.keys(CLASSES).forEach(name => {
+    scores[name] = dot(FEATURE_VEC, CLASSES[name].w) + CLASSES[name].bias;
+  });
+
+  const scoresDiv = document.getElementById('s5-scores');
+  scoresDiv.innerHTML = '';
+  const maxScore = Math.max(...Object.values(scores));
+  Object.keys(CLASSES).forEach(name => {
+    const card = document.createElement('div');
+    card.className = 'stat-card';
+    card.id = 's5-score-' + name;
+    const isMax = Math.abs(scores[name] - maxScore) < 0.001;
+    card.innerHTML = `<div class="val" style="color:${isMax ? '#2e7d32' : '#1a3a5c'}">${scores[name].toFixed(2)}</div><div class="lbl">${name}${isMax ? ' ✓' : ''}</div>`;
+    scoresDiv.appendChild(card);
+  });
+}
+
+function s5SelectClass(name) {
+  const w = CLASSES[name].w;
+  const b = CLASSES[name].bias;
+  const score = dot(FEATURE_VEC, w) + b;
+
+  // Build equation string
+  let parts = [];
+  for (let i = 0; i < FEATURE_VEC.length; i++) {
+    parts.push(`${FEATURE_VEC[i]}×${w[i]}`);
+  }
+  const eqStr = parts.join(' + ') + (b !== 0 ? ` + ${b}` : '') + ` = <strong>${score.toFixed(2)}</strong>`;
+  document.getElementById('s5-equation').innerHTML = `score("${name}") = ` + eqStr;
+
+  // Highlight active button
+  document.querySelectorAll('#s5-class-btns .btn').forEach(btn => {
+    btn.className = btn.textContent === name ? 'btn btn-primary' : 'btn btn-outline';
+  });
+
+  // Highlight winning score card
+  const allScores = {};
+  Object.keys(CLASSES).forEach(n => {
+    allScores[n] = dot(FEATURE_VEC, CLASSES[n].w) + CLASSES[n].bias;
+  });
+  const maxScore = Math.max(...Object.values(allScores));
+  Object.keys(CLASSES).forEach(n => {
+    const card = document.getElementById('s5-score-' + n);
+    if (card) {
+      const isSelected = n === name;
+      card.style.borderColor = isSelected ? '#1a3a5c' : '';
+      card.style.borderWidth = isSelected ? '2px' : '';
+    }
+  });
+}
+
+
+/* ===================================================================
+   INIT
+   =================================================================== */
+
+document.addEventListener('DOMContentLoaded', function() {
+  s1Init();
+  s2Init();
+  s3Init();
+  s4Init();
+  s5Init();
+});
+</script>
+
+</body>
+</html>
