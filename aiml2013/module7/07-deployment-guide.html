@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Deployment Guide: Notebook to Web App | AIML 2013</title>
+<link rel="stylesheet" href="../../course-styles.css">
+</head>
+<body>
+
+<h1>Deployment Guide: Notebook to Web App</h1>
+<p class="subtitle">AIML 2013: Introduction to Computer Vision</p>
+
+<div class="section-card">
+  <p>This guide walks you through converting a Colab notebook into a Hugging Face Spaces web app. Your audience interacts with a live app instead of watching you scroll through cells, and the deployment itself shows that you know the difference between training code and inference code.</p>
+</div>
+
+<!-- ========== THE MENTAL MODEL ========== -->
+<h2>The Mental Model: Two Halves of a Notebook</h2>
+
+<div class="section-card">
+  <p>Every notebook you've written this semester has two kinds of code, even if you never thought about it that way:</p>
+
+  <ol>
+    <li style="margin-bottom:0.75rem;">Setup and training code runs once and produces artifacts: loading a dataset, training a model, computing embeddings for a collection, building a TF-IDF matrix. This code is expensive (needs GPU, large datasets, long loops) and its output can be saved to a file.</li>
+    <li style="margin-bottom:0.75rem;">Inference code runs on every user request, using those artifacts: classifying one sentence, embedding one query, computing cosine similarity against a saved matrix. This code is cheap. One input, one output, sub-second on CPU.</li>
+  </ol>
+
+  <p>The conversion separates these two halves. Your Colab notebook keeps the setup/training code and adds export cells at the end. Your <code>app.py</code> contains only the inference code, wrapped in a Gradio UI, loading artifacts from the files you exported.</p>
+</div>
+
+<div class="section-card">
+  <p>Visually:</p>
+  <pre><code>┌─────────────────────────────────────────────────┐
+│  YOUR COLAB NOTEBOOK                            │
+│                                                 │
+│  [Cell] Load dataset                            │  ← setup
+│  [Cell] Train model / compute embeddings        │  ← setup (expensive)
+│  [Cell] Test it works                           │  ← inference (but just for testing)
+│  [Cell] ★ EXPORT: save model/embeddings to file │  ← NEW: you add this
+│                                                 │
+└──────────────────────┬──────────────────────────┘
+                       │ files (.pkl, .npy, .json)
+                       ▼
+┌─────────────────────────────────────────────────┐
+│  YOUR app.py (Hugging Face Spaces)              │
+│                                                 │
+│  Load saved artifacts from disk                 │  ← startup (once)
+│  Define inference function                      │  ← copied from notebook
+│  Wrap in Gradio UI                              │  ← new code
+│                                                 │
+└─────────────────────────────────────────────────┘</code></pre>
+</div>
+
+<!-- ========== STEP 1: IDENTIFY ========== -->
+<h2>Step 1: Go Through Your Notebook Cell by Cell</h2>
+
+<div class="section-card">
+  <p>Open your notebook and label each cell. Ask: "Does this cell need to run every time a user submits a query?" If no, it's setup code and stays in the notebook. If yes, it's inference code and goes into <code>app.py</code>.</p>
+
+  <p>Here's the Art Style Explorer notebook, cell by cell:</p>
+
+  <table class="overview-table">
+    <thead>
+      <tr><th>Cell</th><th>What it does</th><th>Category</th><th>Goes in app.py?</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>3</td><td><code>!pip install transformers torch ...</code></td><td>Setup</td><td>No — goes in <code>requirements.txt</code></td></tr>
+      <tr><td>4</td><td>Import libraries</td><td>Both</td><td>Only the imports your inference needs</td></tr>
+      <tr><td>6</td><td>Load CLIP model + processor</td><td>Both</td><td>Yes — the app loads CLIP at startup to encode queries</td></tr>
+      <tr><td>8–9</td><td>Fetch 40 public-domain artworks from the Met API</td><td>Setup</td><td>No — the downloaded images are saved as thumbnails</td></tr>
+      <tr><td>11</td><td>Preview the collection (matplotlib grid)</td><td>Setup</td><td>No — exploration only</td></tr>
+      <tr><td>13</td><td>Compute image embeddings for all artworks</td><td>Setup (expensive)</td><td>No — the embedding matrix is saved to <code>.npy</code></td></tr>
+      <tr><td>15</td><td><code>search_by_text(query)</code></td><td><strong>Inference</strong></td><td><strong>Yes</strong> — this is the app's text search function</td></tr>
+      <tr><td>17</td><td>Interactive "your turn" cell</td><td>Setup</td><td>No — just a demo of Cell 15</td></tr>
+      <tr><td>19</td><td><code>search_by_image(query_image)</code></td><td><strong>Inference</strong></td><td><strong>Yes</strong> — this is the app's image search function</td></tr>
+      <tr><td>21–22</td><td>Export embeddings, metadata, thumbnails, zip</td><td>Setup</td><td>No — these produce the files that app.py loads</td></tr>
+    </tbody>
+  </table>
+
+  <p>Cells 15 and 19 are the inference cells. Each takes one input (a text query or an image), encodes it with CLIP, and dot-products it against the pre-computed embedding matrix. Everything before Cell 15 built that matrix. Cells 21–22 package it for export.</p>
+</div>
+
+<div class="tip">
+  <strong>Rule of thumb:</strong> If a cell touches your full dataset, it's setup. If it processes a single input, it's inference. The line between them is where you save artifacts.
+</div>
+
+<!-- ========== STEP 2: ADD EXPORT CELLS ========== -->
+<h2>Step 2: Add Export Cells to Your Notebook</h2>
+
+<div class="section-card">
+  <p>After your training/computation code, add cells that save the artifacts your app will need. In the Art Style Explorer, that means saving the embedding matrix, the metadata, and the thumbnail images. This is Cell 21 in the notebook:</p>
+
+  <pre><code>export_dir = "art_explorer_export"
+os.makedirs(export_dir, exist_ok=True)
+os.makedirs(f"{export_dir}/thumbnails", exist_ok=True)
+
+# 1. Save embeddings — the (N, 512) matrix computed in Step 4
+np.save(f"{export_dir}/image_embeddings.npy", image_embeddings)
+
+# 2. Save metadata — one dict per artwork, same row order as the embeddings
+metadata = []
+for i, art in enumerate(artworks):
+    metadata.append({
+        "index": i,
+        "title": art["title"],
+        "artist": art["artist"],
+        "date": art["date"],
+        "medium": art["medium"],
+    })
+
+with open(f"{export_dir}/metadata.json", "w") as f:
+    json.dump(metadata, f, indent=2)
+
+# 3. Save thumbnails (resized for web, JPEG for small file size)
+for i, art in enumerate(artworks):
+    thumb = art["image"].copy()
+    thumb.thumbnail((400, 400), Image.LANCZOS)
+    thumb.save(f"{export_dir}/thumbnails/{i:03d}.jpg", quality=85)</code></pre>
+
+  <p>The <code>.npy</code> file stores the embedding matrix. The <code>.json</code> file stores the metadata you want to display in search results (title, artist, date). The thumbnails are plain JPEGs that Gradio's Gallery component can render without any conversion.</p>
+
+  <p>Cell 22 zips everything for download:</p>
+
+  <pre><code>with zipfile.ZipFile("art_explorer_export.zip", "w", zipfile.ZIP_DEFLATED) as zf:
+    for root, dirs, files in os.walk(export_dir):
+        for file in files:
+            filepath = os.path.join(root, file)
+            arcname = os.path.relpath(filepath, ".")
+            zf.write(filepath, arcname)
+
+print(f"Download art_explorer_export.zip from the Files panel")</code></pre>
+</div>
+
+<div class="section-card">
+  <h3>Adapting this to your project</h3>
+  <p>The same pattern (computation output + metadata + display assets) applies to other project types, with different formats. An sklearn classifier uses <code>pickle.dump(model, f)</code> to serialize the trained model and vectorizer; the app loads them with <code>pickle.load()</code>. Other embedding projects (sentence-transformers, ChromaDB) use the same <code>.npy</code> + <code>.json</code> approach. Gemini API projects might still have pre-computed data like chunked documents or few-shot examples worth exporting as JSON, but if the app is purely API-driven with no saved state, you can skip this step.</p>
+</div>
+
+<div class="warning">
+  <strong>Download your exports before the Colab runtime disconnects.</strong> Click the folder icon in Colab's left sidebar, find your zip file, click the ⋮ menu, and choose Download. Colab deletes your files when the runtime recycles.
+</div>
+
+<div class="warning">
+  <strong>Always upload all exported files together.</strong> The embeddings, metadata, and thumbnails are row-aligned: row 0 in the embedding matrix corresponds to entry 0 in the metadata and thumbnail <code>000.jpg</code>. If you re-run the notebook with a new collection and only upload some of the files to your Space, the rows go out of sync and search results will pair the wrong titles with the wrong images. Upload the zip's contents as a unit.
+</div>
+
+<!-- ========== STEP 3: BUILD APP.PY ========== -->
+<h2>Step 3: Build <code>app.py</code> from Your Inference Code</h2>
+
+<div class="section-card">
+  <p>Your <code>app.py</code> has three sections in order: imports and artifact loading (runs once at startup), inference functions (copied from your notebook), and the Gradio UI (new code that wraps your functions in a web interface). Each section maps directly from the Art Style Explorer notebook.</p>
+</div>
+
+<!-- ========== SECTION 1: LOAD ARTIFACTS ========== -->
+<div class="section-card">
+  <h3>Section 1: Load artifacts</h3>
+
+  <p>In the notebook, the data came from the Met API (Cells 8–9) and the embeddings were computed in a GPU loop (Cell 13). None of that runs in the app. The app loads the pre-computed results from disk:</p>
+
+  <pre><code>import os, json
+import numpy as np
+import torch
+import gradio as gr
+from PIL import Image
+from transformers import CLIPProcessor, CLIPModel
+
+# ── Load the artifacts you exported from the notebook ──
+EMBEDDINGS = np.load("image_embeddings.npy")
+with open("metadata.json") as f:
+    METADATA = json.load(f)
+THUMB_DIR = "thumbnails"
+
+# Load CLIP for single-query encoding (~600 MB)
+device = "cuda" if torch.cuda.is_available() else "cpu"
+model = CLIPModel.from_pretrained("openai/clip-vit-base-patch32")
+processor = CLIPProcessor.from_pretrained("openai/clip-vit-base-patch32")
+model = model.to(device)
+model.eval()</code></pre>
+
+  <p>This replaces Cells 3, 4, 6, 8, 9, and 13 from the notebook. All of the data collection and batch embedding is gone. What remains is loading CLIP itself (needed to encode queries at runtime) and loading the files you exported.</p>
+</div>
+
+<!-- ========== SECTION 2: INFERENCE FUNCTIONS ========== -->
+<div class="section-card">
+  <h3>Section 2: Inference functions</h3>
+
+  <p>These come directly from the notebook. Here's <code>search_by_text</code> side by side:</p>
+
+  <h3>Notebook (Cell 15)</h3>
+  <pre><code>def search_by_text(query, top_k=5):
+    inputs = processor(text=[query], return_tensors="pt", padding=True)
+    inputs = {k: v.to(device) for k, v in inputs.items()}
+    with torch.no_grad():
+        text_out = model.text_model(**inputs)
+        text_emb = model.text_projection(text_out.pooler_output)
+    text_emb = text_emb / text_emb.norm(dim=-1, keepdim=True)
+    scores = (text_emb.cpu().numpy() @ image_embeddings.T).flatten()
+    top_idx = scores.argsort()[::-1][:top_k]
+    return [(artworks[i], float(scores[i])) for i in top_idx]</code></pre>
+
+  <h3>app.py</h3>
+  <pre><code>def search_by_text(query):
+    if not query or not query.strip():
+        return []
+    inputs = processor(text=[query.strip()], return_tensors="pt", padding=True)
+    inputs = {k: v.to(device) for k, v in inputs.items()}
+    with torch.no_grad():
+        text_out = model.text_model(**inputs)
+        text_emb = model.text_projection(text_out.pooler_output)
+    text_emb = text_emb / text_emb.norm(dim=-1, keepdim=True)
+    scores = (text_emb.cpu().numpy() @ EMBEDDINGS.T).flatten()
+    top_idx = scores.argsort()[::-1][:8]
+
+    results = []
+    for i in top_idx:
+        meta = METADATA[i]
+        thumb = os.path.join(THUMB_DIR, f"{i:03d}.jpg")
+        caption = f"{meta['title']}\n{meta['artist']}, {meta['date']}"
+        results.append((thumb, caption))
+    return results</code></pre>
+</div>
+
+<div class="section-card">
+  <p>Three things changed. The variable <code>image_embeddings</code> (computed by Cell 13 in the notebook) became <code>EMBEDDINGS</code>, loaded from the <code>.npy</code> file at startup. The return format switched from <code>(artwork_dict, score)</code> tuples (for matplotlib) to <code>(filepath, caption)</code> tuples (for Gradio's Gallery component). And the app validates input, checking for empty queries, because it accepts input from anyone.</p>
+
+  <p>The CLIP encoding logic is identical line for line: processor, <code>model.text_model()</code>, projection, normalization, dot product, device handling. You're changing the wrapper around the function, not the function.</p>
+
+  <p>The same four changes apply to <code>search_by_image</code> (Cell 19 → app.py). The CLIP encoding stays the same; the device handling and return format change.</p>
+</div>
+
+<!-- ========== FIGURING OUT YOUR UI ========== -->
+<div class="section-card">
+  <h3>Figuring out what UI your app needs</h3>
+
+  <p>In a notebook, inputs are hardcoded. You typed <code>query = "women in dresses"</code> into a cell and ran it. You set <code>query_idx = 0</code> to pick an artwork for image search. In a web app, a user provides those values, so each hardcoded input becomes a UI component.</p>
+
+  <p>Look at each inference function's arguments. Each argument the user should control maps to a Gradio input component:</p>
+
+  <table class="overview-table">
+    <thead>
+      <tr><th>Notebook code (hardcoded)</th><th>What the user provides</th><th>Gradio component</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><code>query = "women in dresses"</code></td><td>A text description</td><td><code>gr.Textbox</code></td></tr>
+      <tr><td><code>query_image = artworks[0]["image"]</code></td><td>An uploaded image</td><td><code>gr.Image</code></td></tr>
+      <tr><td><code>top_k=5</code></td><td>How many results to show</td><td><code>gr.Slider</code> (or keep it hardcoded)</td></tr>
+      <tr><td><code>results</code> (list of artworks rendered by matplotlib)</td><td>N/A (this is output)</td><td><code>gr.Gallery</code> expects <code>(filepath, caption)</code> tuples</td></tr>
+    </tbody>
+  </table>
+
+  <p>The last row is an output, not an input. In the notebook, <code>search_by_text</code> returned a list of dictionaries that matplotlib rendered as a grid. In the app, that grid becomes a <code>gr.Gallery</code>, so the function returns <code>(filepath, caption)</code> tuples instead.</p>
+
+  <p>The same logic applies to any project. If your notebook has a cell where you type <code>sentence = "This movie was terrible"</code> and pass it to a classifier, that string becomes a <code>gr.Textbox</code>. If you load a test image from disk with <code>Image.open("test.jpg")</code>, that becomes <code>gr.Image</code>. If you have a dropdown-style choice (model A vs. model B, or a list of categories), that becomes <code>gr.Dropdown</code>. Every hardcoded value that a user should be able to change becomes a component.</p>
+</div>
+
+<!-- ========== SECTION 3: GRADIO UI ========== -->
+<div class="section-card">
+  <h3>Section 3: Gradio UI</h3>
+
+  <p>The Gradio UI is the only section of <code>app.py</code> that doesn't come from the notebook. It defines what the user sees and wires components to your inference functions:</p>
+
+  <pre><code>with gr.Blocks(title="Art Style Explorer") as demo:
+    gr.Markdown("# Art Style Explorer")
+    gr.Markdown("Search public-domain artworks using OpenAI CLIP.")
+
+    with gr.Tab("Search by Text"):
+        text_input = gr.Textbox(
+            label="Describe what you're looking for",
+            placeholder='Try: "stormy ocean at night"',
+        )
+        text_btn = gr.Button("Search", variant="primary")
+        text_gallery = gr.Gallery(label="Results", columns=4, height="auto")
+        text_btn.click(fn=search_by_text, inputs=text_input, outputs=text_gallery)
+        text_input.submit(fn=search_by_text, inputs=text_input, outputs=text_gallery)
+
+    with gr.Tab("Search by Image"):
+        img_input = gr.Image(label="Upload an image", type="pil")
+        img_btn = gr.Button("Find Similar", variant="primary")
+        img_gallery = gr.Gallery(label="Similar Artworks", columns=4, height="auto")
+        img_btn.click(fn=search_by_image, inputs=img_input, outputs=img_gallery)
+
+demo.launch()</code></pre>
+
+  <p><code>gr.Blocks</code> gives you tabs, custom layout, and multiple inputs/outputs. The Art Style Explorer has two tabs (text search, image search), each wired to its own function. The <code>.click()</code> calls connect buttons to functions; <code>.submit()</code> lets the user press Enter in the text box.</p>
+</div>
+
+<!-- ========== STEP 4: GRADIO UI GUIDE ========== -->
+<h2>Step 4: Choosing the Right Gradio Layout</h2>
+
+<div class="section-card">
+  <p>Gradio has two API levels. The Art Style Explorer uses <code>gr.Blocks</code> because it has two modes (text search, image search). Simpler projects can use <code>gr.Interface</code>.</p>
+
+  <h3><code>gr.Interface</code> — one function, one set of inputs, one set of outputs</h3>
+  <pre><code>demo = gr.Interface(
+    fn=your_function,           # the function Gradio calls
+    inputs=gr.Textbox(...),     # what the user provides
+    outputs=gr.Textbox(...),    # what they see back
+    title="My App",
+)
+demo.launch()</code></pre>
+  <p>Use this when your app does one thing: text in → text out, image in → label out. A sentiment classifier, a single-mode RAG query, or a captioning tool each have one function and fit naturally in <code>gr.Interface</code>.</p>
+
+  <h3><code>gr.Blocks</code> — tabs, multiple functions, custom layout</h3>
+  <p>The Art Style Explorer uses <code>gr.Blocks</code> because it has two search modes that share the same embedding data but accept different input types. If your project has multiple modes, multiple steps, or needs a layout beyond "one input box → one output box," use <code>gr.Blocks</code>.</p>
+</div>
+
+<div class="section-card">
+  <h3>Common Gradio components</h3>
+  <table class="overview-table">
+    <thead>
+      <tr><th>Component</th><th>Use for</th><th>Your function receives</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><code>gr.Textbox</code></td><td>Text input/output</td><td>A string</td></tr>
+      <tr><td><code>gr.Image</code></td><td>Image upload or display</td><td>A PIL Image or numpy array (configurable)</td></tr>
+      <tr><td><code>gr.Gallery</code></td><td>Grid of images with captions</td><td>Return a list of <code>(filepath, caption)</code> tuples</td></tr>
+      <tr><td><code>gr.Slider</code></td><td>Numeric parameter (e.g., "number of results")</td><td>A number</td></tr>
+      <tr><td><code>gr.Dropdown</code></td><td>Choose from options</td><td>The selected string</td></tr>
+      <tr><td><code>gr.File</code></td><td>File upload (PDF, CSV, etc.)</td><td>A file path</td></tr>
+      <tr><td><code>gr.Markdown</code></td><td>Display formatted text (not an input)</td><td>—</td></tr>
+    </tbody>
+  </table>
+  <p>Full list: <a href="https://www.gradio.app/docs/gradio/components" target="_blank">gradio.app/docs/gradio/components</a></p>
+</div>
+
+<div class="section-card">
+  <h3>Connecting buttons to functions</h3>
+  <p>In <code>gr.Blocks</code>, you wire components together with <code>.click()</code>:</p>
+  <pre><code>button.click(fn=your_function, inputs=[input1, input2], outputs=[output1])</code></pre>
+  <p>When the user clicks the button, Gradio calls <code>your_function(input1_value, input2_value)</code> and puts the return value into <code>output1</code>. If your function returns a tuple, each element maps to the corresponding output component.</p>
+
+  <p>For text boxes, you can also use <code>.submit()</code> so pressing Enter triggers the function:</p>
+  <pre><code>textbox.submit(fn=your_function, inputs=textbox, outputs=output)</code></pre>
+</div>
+
+<div class="tip">
+  <strong>Test locally first.</strong> Before uploading to Hugging Face, test your <code>app.py</code> on your own machine or in Colab. Run <code>pip install gradio</code> then <code>python app.py</code>. Gradio opens a local URL you can interact with. Fix bugs here, not in the deployment logs.
+</div>
+
+<!-- ========== STEP 5: FILE STRUCTURE ========== -->
+<h2>Step 5: Assemble Your HF Space Files</h2>
+
+<div class="section-card">
+  <p>Your Space's repository contains everything the app needs to run. There's no cell-by-cell execution and no notebook state; <code>app.py</code> loads your exported files and starts a Gradio server.</p>
+
+  <p>The Art Style Explorer's file structure:</p>
+  <pre><code>art-style-explorer/
+├── app.py                  ← Gradio code (Section 1 + 2 + 3 from above)
+├── requirements.txt        ← transformers, torch, Pillow, gradio, numpy
+├── image_embeddings.npy    ← exported from notebook Cell 21
+├── metadata.json           ← exported from notebook Cell 21
+└── thumbnails/             ← exported from notebook Cell 21
+    ├── 000.jpg
+    ├── 001.jpg
+    └── ...</code></pre>
+
+  <p>Other project types look similar. An sklearn project replaces the <code>.npy</code> and thumbnails with <code>.pkl</code> files. A Gemini API project may need nothing beyond <code>app.py</code> and <code>requirements.txt</code> (with the API key stored in Settings → Secrets, never in the repo).</p>
+</div>
+
+<div class="section-card">
+  <h3>Writing <code>requirements.txt</code></h3>
+  <p>List every third-party package your <code>app.py</code> imports. One package per line. Do not include standard library modules (<code>os</code>, <code>json</code>, <code>pickle</code>).</p>
+
+  <p>Look at your <code>import</code> statements in <code>app.py</code>. Each one that isn't from the standard library needs a line in requirements.txt:</p>
+  <pre><code># If app.py has:           →  requirements.txt needs:
+import gradio               →  gradio
+import pickle               →  (nothing — standard library)
+from sklearn...             →  scikit-learn
+from transformers...        →  transformers
+import torch                →  torch
+from PIL import Image       →  Pillow
+import numpy                →  numpy</code></pre>
+</div>
+
+<!-- ========== STEP 6: DEPLOY ========== -->
+<h2>Step 6: Deploy to Hugging Face Spaces</h2>
+
+<div class="section-card">
+  <ol>
+    <li style="margin-bottom:0.75rem;"><strong>Create a free account</strong> at <a href="https://huggingface.co/join" target="_blank">huggingface.co</a>.</li>
+    <li style="margin-bottom:0.75rem;"><strong>Create a new Space.</strong> Click your avatar → New Space. Choose <strong>Gradio</strong> as the SDK. Name it (this becomes your public URL: <code>huggingface.co/spaces/yourname/yourapp</code>).</li>
+    <li style="margin-bottom:0.75rem;"><strong>Upload files.</strong> Use the "Files" tab in your Space to upload <code>app.py</code>, <code>requirements.txt</code>, and all your exported data files. You can drag and drop, or push via Git.</li>
+    <li style="margin-bottom:0.75rem;"><strong>Add secrets (if needed).</strong> For API keys: go to Settings → Variables and Secrets → New Secret. Name it (e.g., <code>GEMINI_API_KEY</code>). In your code, access it with <code>os.environ["GEMINI_API_KEY"]</code>. Never put API keys in <code>app.py</code> directly because the repository is public.</li>
+    <li style="margin-bottom:0.75rem;"><strong>Wait for the build.</strong> HF installs your requirements and runs <code>app.py</code>. Watch the "Logs" tab. A green "Running" badge means success. Red means check the logs for the error.</li>
+  </ol>
+</div>
+
+<div class="warning">
+  <strong>Common gotcha: file paths.</strong> In Colab, your files might be in <code>/content/</code> or a subdirectory. In your HF Space, everything is in the same directory as <code>app.py</code>. Use relative paths: <code>open("model.pkl")</code>, not <code>open("/content/drive/MyDrive/model.pkl")</code>. If your thumbnails are in a subfolder, use <code>"thumbnails/000.jpg"</code>.
+</div>
+
+<!-- ========== WHY NO GPU ========== -->
+<h2>Why This Works Without a GPU</h2>
+
+<div class="section-card">
+  <p>The free tier gives you 2 vCPU and 16 GB RAM, no GPU. That's enough.</p>
+
+  <p>The expensive operation, embedding 40 images through CLIP's vision transformer, already happened in Cell 13 of your Colab notebook. The app loads the resulting matrix from disk. At runtime, it encodes one query (a text string or an image) through CLIP and computes a dot product against the saved matrix. Encoding one input takes under a second on CPU. The dot product of a (1, 512) vector against a (40, 512) matrix takes microseconds.</p>
+
+  <p>The pattern generalizes: if you can save the expensive computation's output to a file, you can serve it on CPU. An sklearn classifier loads a pickled model and calls <code>.predict()</code> on one input. A Gemini API project sends a network request with no local GPU involved. The only projects that <em>need</em> a GPU at runtime are ones that run a large model on every request with no way to pre-compute (real-time image generation, for example). None of your course projects require that.</p>
+</div>
+
+<!-- ========== CHECKLIST ========== -->
+<h2>Pre-Flight Checklist</h2>
+
+<div class="section-card">
+  <p>Before you upload to HF Spaces, verify:</p>
+  <ol>
+    <li style="margin-bottom:0.5rem;">Your <code>app.py</code> runs locally (<code>python app.py</code> opens a Gradio page you can interact with)</li>
+    <li style="margin-bottom:0.5rem;">All files your code loads exist in the same directory (no absolute paths from Colab)</li>
+    <li style="margin-bottom:0.5rem;">Your <code>requirements.txt</code> lists every third-party import</li>
+    <li style="margin-bottom:0.5rem;">No API keys appear anywhere in your code (use <code>os.environ</code>)</li>
+    <li style="margin-bottom:0.5rem;">If using PyTorch/Transformers: test that inference works on CPU (set <code>device = "cpu"</code> and verify your function still returns correct results)</li>
+  </ol>
+</div>
+
+<!-- ========== TROUBLESHOOTING ========== -->
+<h2>Troubleshooting</h2>
+
+<div class="section-card">
+  <p><strong>"ModuleNotFoundError: No module named 'X'"</strong> — You're importing something not in <code>requirements.txt</code>. Add it. Remember that package names sometimes differ from import names: you <code>import sklearn</code> but install <code>scikit-learn</code>; you <code>from PIL import Image</code> but install <code>Pillow</code>.</p>
+
+  <p><strong>"FileNotFoundError"</strong> — Your code tries to load a file that isn't in the Space. Either you forgot to upload it, or the path is wrong. All paths should be relative to the directory containing <code>app.py</code>.</p>
+
+  <p><strong>"Space is sleeping"</strong> — Normal on the free tier. Apps sleep after ~48 hours of inactivity. The first visitor waits ~30 seconds for it to wake. Open your Space a minute before your presentation.</p>
+
+  <p><strong>Build takes forever</strong> — PyTorch is large (~2 GB). First build takes 5–10 minutes. Subsequent builds use cached layers. If you don't need PyTorch (pure sklearn project), remove <code>torch</code> and <code>transformers</code> from requirements, and your build will finish in under a minute.</p>
+
+  <p><strong>App loads but crashes on first query</strong> — Check for a hardcoded <code>device = "cuda"</code> from your notebook that fails on HF's CPU environment. The example <code>app.py</code> already handles this with <code>device = "cuda" if torch.cuda.is_available() else "cpu"</code>, but if you wrote your own, add that line.</p>
+</div>
+
+<!-- ========== OPTIONAL: BUILD ON SPACES ========== -->
+<h2>Optional: Skip the Export Step Entirely</h2>
+
+<div class="section-card">
+  <p>The example <code>app.py</code> has a <code>BUILD_COLLECTION</code> flag at the top. When set to <code>True</code>, the app fetches artworks from the Met API, computes CLIP embeddings, and caches everything to persistent storage — all at startup. You don't need to run the Colab notebook or upload any exported files. Your Space's repo contains only <code>app.py</code> and <code>requirements.txt</code>.</p>
+
+  <p>This requires two things in your Space's Settings:</p>
+
+  <ol>
+    <li style="margin-bottom:0.75rem;"><strong>Persistent storage.</strong> Go to Settings → Persistent Storage and enable it. This mounts a <code>/data/</code> directory that survives restarts. The app saves its cached collection there so it doesn't re-download and re-embed on every cold start.</li>
+    <li style="margin-bottom:0.75rem;"><strong>A paid hardware tier</strong> (optional but recommended). A T4 GPU costs about $0.60/hr and computes 40 embeddings in under 10 seconds. On CPU, the same computation takes 30–60 seconds. Either way it only happens once; after the cache is built, restarts load from disk in under a second.</li>
+  </ol>
+
+  <p>The first startup builds the cache: the app queries the Met API for public-domain object IDs across several departments, samples 40, downloads each artwork's image and metadata, computes CLIP embeddings, and saves the embedding matrix, metadata JSON, and thumbnails to <code>/data/art_cache/</code>. Every subsequent startup finds the cache and loads it directly. To get a different collection, delete the <code>/data/art_cache/</code> directory (in the terminal tab of your Space) and restart.</p>
+</div>
+
+<div class="section-card">
+  <h3>When to use each mode</h3>
+  <p>The default mode (<code>BUILD_COLLECTION = False</code>) is the one this guide teaches. It separates setup code from inference code, which is the skill the deployment exercise is designed to practice. Use it for your portfolio submission.</p>
+
+  <p><code>BUILD_COLLECTION = True</code> is a convenience for after the course, or for projects where you want the app to be fully self-contained. It's also useful if you want to iterate on collection size or department mix without round-tripping through Colab. The tradeoff: your app depends on the Met API being available at startup, and the first cold start is slow.</p>
+</div>
+
+<div class="tip">
+  <strong>Cost control.</strong> Set a spending cap in your Hugging Face account settings. If you use a GPU tier, set the Space to sleep when idle, and downgrade to CPU (or pause the Space) after your demo. Persistent storage itself costs a few cents per GB per month.
+</div>
+
+</body>
+</html>

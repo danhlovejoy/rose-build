@@ -9,7 +9,7 @@
 <body>
 
 <h1>Portfolio Prep Guide</h1>
-<p class="subtitle">How to build a five- to seven-minute presentation from a semester of work</p>
+<p class="subtitle">How to build your portfolio presentation</p>
 
 <!-- ========== FRAMING ========== -->
 <div class="framing-box">
@@ -25,6 +25,7 @@
     <li><strong>Range:</strong> Don't pick three projects from the same category. Show breadth &mdash; one early project and one late project shows growth. Mixing a pipeline project (RAG, agents) with an analysis project (evaluation, bias) shows versatility.</li>
     <li><strong>Depth:</strong> Pick projects where you have something interesting to say. The project where you struggled and learned something is often more compelling than the one that worked perfectly on the first try.</li>
     <li><strong>Results:</strong> Pick projects with strong visual outputs. Charts, scorecards, conversation logs, and failure analyses are easier to present than code.</li>
+    <li><strong>Connection:</strong> If two projects build on each other &mdash; say, your embeddings work informed your RAG pipeline &mdash; that connection makes a natural narrative thread.</li>
   </ul>
   <p>Your NLP projects, by module:</p>
   <table class="overview-table" style="margin-top:0.75rem;">
@@ -46,15 +47,16 @@
   <p>A portfolio presentation has three parts. Budget your time accordingly.</p>
   <ol>
     <li style="margin-bottom:0.75rem;"><strong>The arc (1 minute):</strong> Open with where you started and where you ended up. What could you do in Week 1? What can you do now? The arc gives the audience a frame for everything that follows. Don't list every module &mdash; describe the trajectory. Example: &ldquo;In Week 2, I didn't know what an embedding was. By Week 6, I built an agent that uses embeddings to decide when to call external tools.&rdquo;</li>
-    <li style="margin-bottom:0.75rem;"><strong>The projects (3&ndash;4 minutes):</strong> For each project, cover three things:
+    <li style="margin-bottom:0.75rem;"><strong>The projects (3&ndash;4 minutes):</strong> For each project, cover four things:
       <ul>
         <li><em>What you built:</em> One sentence. &ldquo;A RAG pipeline that answers questions about PDF documents.&rdquo;</li>
         <li><em>What you learned:</em> The technical insight, not the code. &ldquo;I learned that chunk size controls the tradeoff between precision and context, and that a well-written system prompt is the difference between a model that hallucinates and one that says 'I don't know.'&rdquo;</li>
         <li><em>What you'd change:</em> Show critical thinking. &ldquo;My chunking was fixed-size with overlap. If I rebuilt it, I'd use semantic chunking to keep paragraph boundaries intact.&rdquo;</li>
+        <li><em>Why it matters:</em> Connect the project to a broader idea. &ldquo;This showed me that retrieval quality matters more than model quality &mdash; a better retriever with a weaker model beat a worse retriever with a stronger one.&rdquo;</li>
       </ul>
       <p>Show a visual for each project: the bias scorecard, the hallucination test results, the agent conversation log. The visual is what the audience remembers.</p>
     </li>
-    <li style="margin-bottom:0.75rem;"><strong>The reflection (1 minute):</strong> Close with what you'd tell someone starting this course. What's the most important thing you learned that isn't a technical skill? This is where the best presentations distinguish themselves &mdash; the students who connect technical work to bigger ideas (about AI's limitations, about evaluation mattering more than performance, about the gap between demos and deployed systems) leave a lasting impression.</li>
+    <li style="margin-bottom:0.75rem;"><strong>The reflection (1 minute):</strong> Close with what you'd tell someone starting this course. What's the most important thing you learned that isn't a technical skill? This is where the best presentations distinguish themselves &mdash; the students who connect technical work to bigger ideas (about AI's limitations, about evaluation mattering more than performance, about the gap between demos and deployed systems) give the strongest closings.</li>
   </ol>
 </div>
 
@@ -62,12 +64,7 @@
 <h2>Step 3: Build Your Visual Aids</h2>
 
 <div class="section-card">
-  <p>You can present from slides, your notebooks, or a mix. Each format has tradeoffs:</p>
-  <ul>
-    <li><strong>Slides only:</strong> Clean and controlled. Good for narrative flow. Bad if you want to show live code or interactive outputs.</li>
-    <li><strong>Notebook only:</strong> Authentic and detailed. Good for showing real outputs. Bad for pacing &mdash; scrolling through a notebook is slow and easy to lose the audience.</li>
-    <li><strong>Mix (recommended):</strong> Use slides for your arc and reflection. Switch to the notebook for project screenshots or live cells. Practice the transitions so they're smooth.</li>
-  </ul>
+  <p>You can present from slides, your notebooks, or a mix. Slides give you clean narrative control but can't show live code or interactive outputs. Notebooks are authentic and detailed, but scrolling through cells is slow and it's easy to lose the audience. A mix of both tends to work best &mdash; use slides for your arc and reflection, then switch to the notebook for project screenshots or live cells. If you go that route, practice the transitions so they're smooth.</p>
   <p>If you use slides, keep them minimal: one key visual per slide, no walls of text, no bullet points you read aloud. The slides support your talk; they don't replace it.</p>
 </div>
 
@@ -75,16 +72,47 @@
 <h2>Step 4: Practice and Time Yourself</h2>
 
 <div class="section-card">
-  <p>The portfolio presentation window is <strong>five to seven minutes</strong> (rubric window: 4:30&ndash;7:30). Going under five minutes suggests you haven't prepared enough. Going over seven minutes suggests you haven't practiced enough. Both cost points.</p>
-  <ul>
-    <li>Practice at least twice before Tuesday. Time yourself with a stopwatch.</li>
-    <li>The first run-through is always too long. Cut material. The second run-through reveals the rough transitions. Smooth them.</li>
-    <li>Thursday lab (May 7) is a dedicated practice session. Use it. Getting feedback before the real presentation is the single most effective thing you can do.</li>
-  </ul>
+  <p>Standalone presentations are <strong>five to seven minutes</strong> (rubric window: 4:30&ndash;7:30). Combined presentations for dual-enrolled students are <strong>eight to ten minutes</strong> (rubric window: 7:30&ndash;10:30). Going under your minimum suggests you haven't prepared enough, and going over your maximum suggests you haven't practiced enough. Either one costs points.</p>
+  <p>Practice at least twice before Tuesday and time yourself with a stopwatch. The first run-through is always too long, so cut material until it fits. The second run-through reveals the rough transitions &mdash; smooth those out before presentation day.</p>
 </div>
 
 <div class="warning" style="margin-top:1rem;">
-  <strong>Common pitfalls:</strong> Don't try to cover every module. Don't read code aloud. Don't spend three minutes on setup and run out of time before your best project. Don't skip the reflection &mdash; it's where the presentation comes together. And don't wing it. Practice.
+  <strong>Common pitfalls:</strong> Don't try to cover every module. Don't read code aloud. Don't spend three minutes on setup and run out of time before your best project. Don't skip the reflection &mdash; it's where the presentation comes together. And don't wing it &mdash; the students who practice twice sound noticeably better than the ones who don't.
+</div>
+
+<!-- ========== DEPLOYMENT READINGS ========== -->
+<h2>Optional: Publishing Your Project as a Web App</h2>
+
+<div class="section-card">
+  <p>If you want to turn your notebook into something people can interact with in a browser, read through the <a href="07-deployment-guide.html">Deployment Guide</a> in this module. The two resources below will give you the background you need to follow that guide.</p>
+</div>
+
+<div class="resource-card optional">
+  <div class="resource-header">
+    <span class="resource-title">Gradio Quickstart</span>
+    <span class="tag tag-optional">Optional</span>
+    <span class="tag tag-read">Read</span>
+    <span class="tag tag-time">~15 min</span>
+  </div>
+  <p class="resource-meta">Gradio &bull; Official Documentation</p>
+  <p class="resource-desc">Walks through building your first Gradio app from a Python function. Covers <code>gr.Interface</code>, input/output component types, and launching locally. The "Sharing Your Demo" section at the end shows how a single <code>share=True</code> flag generates a temporary public URL, which is a quick way to test before deploying to Hugging Face Spaces.</p>
+  <p class="resource-link">
+    <a href="https://www.gradio.app/guides/quickstart" target="_blank">Read: Gradio Quickstart &rarr;</a>
+  </p>
+</div>
+
+<div class="resource-card optional">
+  <div class="resource-header">
+    <span class="resource-title">Hugging Face Spaces Overview</span>
+    <span class="tag tag-optional">Optional</span>
+    <span class="tag tag-read">Read</span>
+    <span class="tag tag-time">~10 min</span>
+  </div>
+  <p class="resource-meta">Hugging Face &bull; Official Documentation</p>
+  <p class="resource-desc">Explains how Spaces work: you push code to a repository, Hugging Face builds and hosts it automatically. Covers the file structure (<code>app.py</code>, <code>requirements.txt</code>), hardware tiers (free CPU through paid GPU), and how to store API keys using the Secrets panel so they never appear in your code. Skim the "Docker Spaces" section — you won't need it for this course.</p>
+  <p class="resource-link">
+    <a href="https://huggingface.co/docs/hub/spaces-overview" target="_blank">Read: Hugging Face Spaces Overview &rarr;</a>
+  </p>
 </div>
 
 </body>
