@@ -193,7 +193,7 @@ for name, results in [("Zero-shot", zero_shot), ("Few-shot", few_shot),
 
 <h2>What Makes This Option Interesting</h2>
 
-<p>Fact-checking exposes the model's weaknesses in ways classification doesn't. The fabricated claims are especially revealing: a zero-shot prompt will often accept a plausible-sounding fake citation at face value, while a context-engineered prompt with explicit instructions about fabricated citations catches it. You'll also see the model struggle with half-truths, where the correct answer requires nuance the output format might not support without the structured reasoning field.</p>
+<p>Fact-checking exposes model weaknesses that classification doesn't. The fabricated claims are especially revealing: given a zero-shot prompt, Gemini often returns "true" for a plausible-sounding fake citation, while a context-engineered prompt with explicit instructions about fabrication patterns flags it. Half-truths are another weak spot, where the correct answer requires nuance the output format can't capture without the structured reasoning field.</p>
 
 <div class="tip">
   <strong>For your reflection:</strong> Pay attention to the "red_flags" field in the context-engineered responses. Did the model identify suspicious patterns you didn't? Did it miss any you caught? The gap between those two tells you something about where human judgment still matters.

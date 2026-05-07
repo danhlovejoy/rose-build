@@ -14,7 +14,7 @@
 <div class="section-card">
   <h3>The Task</h3>
   <p>Real-world text is messy. Job postings, event listings, recipe blogs, product descriptions: they contain useful structured information buried in natural language. You'll feed unstructured text into Gemini and extract structured JSON fields, then measure how context engineering affects both the accuracy of extracted values and the consistency of the output format.</p>
-  <p>This is one of the most common production uses of LLMs. If you've ever wished you could turn a wall of text into a spreadsheet, that's what you're building here.</p>
+  <p>If you've ever wished you could turn a wall of text into a spreadsheet, that's what you're building here.</p>
 </div>
 
 <h2>Pick a Domain</h2>
@@ -27,6 +27,7 @@
     <li><strong>Job postings:</strong> Extract title, company, location, salary range (if mentioned), required skills, experience level, remote/hybrid/onsite. These are easy to find on LinkedIn or Indeed. The challenge: salary is often missing, location is inconsistent ("Remote" vs. "Anywhere in US" vs. "NYC with hybrid"), and skills are buried in paragraphs.</li>
     <li><strong>Event listings:</strong> Extract event name, date, time, location, price, organizer, description. Copy from Eventbrite, Meetup, or local event pages. The challenge: dates come in dozens of formats, prices might say "free" or "$10-25" or "donation-based," and some fields are just absent.</li>
     <li><strong>Recipe descriptions:</strong> Extract dish name, cuisine, prep time, cook time, servings, difficulty, dietary tags (vegan, gluten-free, etc.), key ingredients. Copy the intro paragraph from recipe blogs (before the actual recipe card). The challenge: recipe bloggers bury useful info in long personal stories, and dietary info is often implicit rather than stated.</li>
+    <li><strong>Your own domain:</strong> If none of the above interest you, pick a text type you encounter regularly and define your own schema. Clear it with me first so I can confirm the complexity is comparable.</li>
   </ul>
 </div>
 
@@ -225,7 +226,7 @@ if texts[0].get("expected"):
 
 <p>Extraction has a unique property: success and failure are unambiguous. The JSON either parses or it doesn't. The salary is either correct or it isn't. This makes evaluation straightforward in a way that classification (where you might argue about labels) isn't. You'll likely find that zero-shot extraction produces inconsistent field names and formats across different inputs, while the context-engineered prompt with an explicit schema produces clean, uniform output.</p>
 
-<p>The extraction rules section of the context-engineered prompt is where most of the value lives. Rules like "convert hourly to annual" and "if only one salary number, use it for both min and max" encode domain knowledge the model doesn't have on its own. When the LLM refines its own prompt, watch for whether it adds new rules you didn't think of or tightens existing ones.</p>
+<p>The extraction rules section of the context-engineered prompt is where most of the value concentrates. Rules like "convert hourly to annual" and "if only one salary number, use it for both min and max" encode domain knowledge absent from the training data. When the LLM refines its own prompt, watch for whether it adds new rules you didn't think of or tightens existing ones.</p>
 
 <div class="tip">
   <strong>For your reflection:</strong> Compare the parse success rate across all four approaches. How often did zero-shot produce valid JSON vs. the context-engineered version? Also look at the field-level accuracy table. Which fields were hardest to extract consistently? Salary and experience_years are typically the trickiest because they appear in so many formats.

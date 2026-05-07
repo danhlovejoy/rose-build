@@ -17,8 +17,8 @@
 
 <!-- ========== FRAMING ========== -->
 <div class="framing-box">
-  <p><strong>The big picture:</strong> If you've used ChatGPT, Claude, or Gemini, you've already done prompt engineering: you've written instructions trying to get the model to do what you want. This week, we'll cover the foundations (zero-shot, few-shot, chain-of-thought) but then focus on the core trend of 2025&ndash;2026: automated optimization and the shift toward context engineering.</p>
-  <p style="margin-top:0.5rem;">Prompts have shifted from hand-crafted artifacts to <strong>automatically optimized programs.</strong> Leading AI labs now frame the discipline as <strong>"context engineering"</strong>: designing the optimal configuration of system prompts, tool definitions, examples, retrieved documents, and conversation history within a finite attention budget. Understanding this shift is essential for anyone building with LLMs today.</p>
+  <p><strong>The big picture:</strong> If you've used ChatGPT, Claude, or Gemini, you've already done prompt engineering. You wrote instructions trying to get the model to do what you want. This week, we'll cover the foundations (zero-shot, few-shot, chain-of-thought) and then focus on the core trend of 2025&ndash;2026: automated optimization and the shift toward context engineering.</p>
+  <p style="margin-top:0.5rem;">Prompts have shifted from hand-crafted artifacts to automatically optimized programs. Leading AI labs now frame the discipline as "context engineering": designing the optimal configuration of system prompts, tool definitions, examples, retrieved documents, and conversation history within a finite attention budget.</p>
 </div>
 
 <!-- ========== NOTEBOOKLM REMINDER ========== -->
@@ -40,7 +40,7 @@
     <span class="tag tag-time">~60 min</span>
   </div>
   <p class="resource-meta">Andrej Karpathy (former OpenAI, Tesla AI) &bull; YouTube</p>
-  <p class="resource-desc">The single best overview of how LLMs work, from training data to inference. Karpathy explains what happens when massive amounts of internet text are compressed into a neural network, how the model generates text by predicting tokens, and why these systems behave the way they do. Essential context for everything we build this semester.</p>
+  <p class="resource-desc">Karpathy explains what happens when massive amounts of internet text are compressed into a neural network, how the model generates text by predicting tokens, and why these systems behave the way they do.</p>
   <p class="resource-link"><a href="https://www.youtube.com/watch?v=zjkBMFhNj_g" target="_blank">Watch: Intro to Large Language Models &rarr;</a></p>
 </div>
 
@@ -52,7 +52,7 @@
     <span class="tag tag-time">~27 min</span>
   </div>
   <p class="resource-meta">3Blue1Brown (Grant Sanderson) &bull; YouTube</p>
-  <p class="resource-desc">A visual introduction to transformer architecture. Shows how text is converted to numbers, how attention mechanisms work, and how the model builds internal representations of language. The animations make abstract concepts concrete. Pairs well with the Karpathy video: Karpathy gives you the big picture, 3Blue1Brown shows you what's happening inside.</p>
+  <p class="resource-desc">Shows how text is converted to numbers, how attention mechanisms work, and how the model builds internal representations of language. The animations make abstract concepts concrete. Karpathy gives you the big picture; 3Blue1Brown shows you what's happening inside.</p>
   <p class="resource-link"><a href="https://www.youtube.com/watch?v=wjZofJX0v4M" target="_blank">Watch: But What Is a GPT? &rarr;</a></p>
 </div>
 
@@ -102,7 +102,7 @@
      LAYER 2: THE PARADIGM SHIFT
      ================================================================ -->
 <h2>Layer 2: Context Engineering</h2>
-<p>The core shift: from optimizing words to optimizing information architecture.</p>
+<p>The question is no longer which words to use. It's which information enters the context window, in what order, at what time.</p>
 
 <div class="resource-card key-reading">
   <div class="resource-header">
@@ -112,7 +112,7 @@
     <span class="tag tag-time">~25 min</span>
   </div>
   <p class="resource-meta">anthropic.com/engineering &bull; September 2025</p>
-  <p class="resource-desc">The essay that defined the shift. Anthropic argues the challenge is designing the right <strong>configuration of context</strong>: system prompts, tool definitions, few-shot examples, retrieved documents, and conversation history as a finite "attention budget." Introduces concepts like "context rot" and just-in-time retrieval. This framing applies to all work later in the semester.</p>
+  <p class="resource-desc">Anthropic argues the challenge is designing the right configuration of context: system prompts, tool definitions, few-shot examples, retrieved documents, and conversation history as a finite "attention budget." Introduces "context rot" and just-in-time retrieval.</p>
   <p class="resource-link"><a href="https://www.anthropic.com/engineering/effective-context-engineering-for-ai-agents" target="_blank">Read: Context Engineering for AI Agents &rarr;</a></p>
   <div class="focus-box">
     <strong>This is the most important reading this week.</strong> If you read one thing carefully, make it this one. Everything we do in Weeks 4&ndash;7 (RAG, evaluation, agents) connects back to this framing.
@@ -176,7 +176,7 @@
     <span class="tag tag-time">~20 min</span>
   </div>
   <p class="resource-meta">Imran Khan &bull; October 2025</p>
-  <p class="resource-desc">Shows that sophisticated prompting strategies that help mid-tier models (GPT-4o) harm frontier models (GPT-5). Constraints that prevent errors in weaker models induce hyper-literalism in stronger ones. Accessible and challenges assumptions about universal best practices.</p>
+  <p class="resource-desc">Shows that sophisticated prompting strategies that help mid-tier models (GPT-4o) harm frontier models (GPT-5). Constraints that prevent errors in weaker models induce hyper-literalism in stronger ones. The paper is short and readable. It directly challenges assumptions about universal best practices.</p>
   <p class="resource-link"><a href="https://arxiv.org/abs/2510.22251" target="_blank">Read: Prompting Inversion &rarr;</a></p>
 </div>
 
@@ -245,11 +245,11 @@
 </div>
 
 <div class="theme-card">
-  <strong>4. Reasoning structures have become adaptive.</strong> Fixed chain/tree/graph topologies are giving way to dynamic frameworks that allocate reasoning depth based on problem complexity, mirroring how humans think harder about harder problems.
+  <strong>4. Reasoning structures have become adaptive.</strong> Fixed chain/tree/graph topologies are giving way to dynamic frameworks that allocate reasoning depth based on problem complexity. The analogy to human cognition is direct: harder problems get more compute.
 </div>
 
 <div class="theme-card">
-  <strong>5. Evaluation is now as important as writing prompts.</strong> Benchmarks like LangProBe and the ACL scaling study provide rigorous empirical foundations for choosing strategies. Learning to evaluate prompts systematically is now as important as learning to write them.
+  <strong>5. Evaluation is now as important as writing prompts.</strong> Benchmarks like LangProBe and the ACL scaling study provide rigorous empirical foundations for choosing strategies.
 </div>
 
 <hr>

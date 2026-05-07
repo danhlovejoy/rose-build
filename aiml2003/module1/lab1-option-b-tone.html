@@ -207,12 +207,12 @@ for name, results in [("Zero-shot", zero_shot), ("Few-shot", few_shot),
 
 <h2>What Makes This Option Interesting</h2>
 
-<p>Tone is subjective in ways that sentiment isn't. Your ground-truth labels reflect your interpretation. You and a classmate could label the same post differently and both be right. This means the lab becomes partly about how well you can teach the model your definition of each tone category through the context-engineered prompt.</p>
+<p>Tone is subjective in ways that sentiment isn't. Your ground-truth labels reflect your interpretation. You and a classmate could label the same post differently and both be right. This means the lab becomes partly about how well you can encode your definition of each tone category into the context-engineered prompt.</p>
 
-<p>The "signals" field in the structured output is especially useful. It forces the model to show its reasoning, and you can check whether it noticed the same rhetorical cues you did. When it misclassifies a post, the signals tell you why: maybe it treated a genuine product announcement as rage-bait because of strong language, or missed sarcasm because the literal meaning was positive.</p>
+<p>The "signals" field in the structured output is where you learn the most. It forces the model to expose its reasoning, so you can check whether it identified the same rhetorical cues you did. When the model misclassifies a post, the signals tell you why: maybe it labeled a genuine product announcement as rage-bait because of strong language, or missed sarcasm because the literal meaning was positive.</p>
 
 <div class="tip">
-  <strong>For your reflection:</strong> Focus on the ambiguous posts, the ones where confidence was "low." Did the context-engineered prompt handle ambiguity better than the baselines? What happened when you asked the model to improve its own prompt? Did it change the category definitions, the examples, or the decision rules?
+  <strong>For your reflection:</strong> Focus on the ambiguous posts, the ones where confidence was "low." Did the context-engineered prompt handle ambiguity better than the baselines? What happened when you asked the model to improve its own prompt? Did it change the category definitions, the calibration examples, the decision rules, or something else entirely?
 </div>
 
 </body>

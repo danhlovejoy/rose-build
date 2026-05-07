@@ -11,7 +11,7 @@
 <h1>Setting Up Your Gemini API Key</h1>
 <p class="subtitle">AIML 2003: Setup Guide. Free access to Google's LLM for the course</p>
 
-<p class="intro">In this course we'll use Google's Gemini API to interact with large language models programmatically. The Gemini API has a <strong>free tier</strong> that requires no credit card and is more than sufficient for every lab in this course. This guide walks you through getting your API key and using it safely in Google Colab.</p>
+<p class="intro">We'll use Google's Gemini API to interact with large language models programmatically. The Gemini API has a free tier that requires no credit card and covers every lab in this course.</p>
 
 <!-- ========== PART 1: API KEY ========== -->
 <h2>Part 1: Get Your Gemini API Key</h2>
@@ -86,20 +86,14 @@ print(response.text)</pre>
 </div>
 
 <div class="tip">
-  <strong>Here's what that did:</strong> You installed Google's <code>google-genai</code> Python library, loaded your API key securely from Colab's Secrets Manager so it never appears in your code, created a client connection, and sent a prompt to the Gemini 2.0 Flash model. You'll use this pattern in every lab.
+  <strong>What that code did:</strong> installed the <code>google-genai</code> library, loaded your API key from Colab's Secrets Manager so it never appears in your code, created a client connection, and sent a prompt to Gemini 2.0 Flash. You'll use this pattern in every lab.
 </div>
 
 <!-- ========== FREE TIER LIMITS ========== -->
 <h2>Free Tier Limits</h2>
 
 <div class="info-box">
-  <p>The Gemini API free tier is generous and more than enough for this course:</p>
-  <ul>
-    <li><strong>15 requests per minute</strong></li>
-    <li><strong>1,500 requests per day</strong></li>
-    <li><strong>No credit card required</strong></li>
-  </ul>
-  <p style="margin-top:0.5rem;">For context, even the most intensive lab in this course will use fewer than 100 API calls. You won't come close to hitting these limits unless you're running code in an infinite loop.</p>
+  <p>The Gemini API free tier allows 15 requests per minute and 1,500 per day, with no credit card required. Even the most intensive lab in this course will use fewer than 100 API calls. You won't hit these limits unless you're running code in an infinite loop.</p>
 </div>
 
 <!-- ========== MODEL WE'LL USE ========== -->
@@ -135,7 +129,7 @@ print(response.text)</pre>
 
 <div class="faq">
   <p class="faq-q">What's the difference between the Gemini app and the Gemini API?</p>
-  <p class="faq-a">The Gemini app (gemini.google.com) is the chat interface (like ChatGPT's website). The Gemini API is the programmatic interface that lets you send prompts from Python code. In this course, we use the API so we can automate, iterate, and build real applications.</p>
+  <p class="faq-a">The Gemini app (gemini.google.com) is the chat interface (like ChatGPT's website). The Gemini API is the programmatic interface that lets you send prompts from Python code. We use the API in this course because it lets us automate tasks, iterate on prompts programmatically, test at scale, and build applications that go beyond a chat window.</p>
 </div>
 
 </body>

@@ -61,15 +61,15 @@
   <h3>Choose Your Task</h3>
 
   <p style="margin-bottom: 1rem;"><strong>Option A: <a href="lab1-option-a-factcheck.html">Fact-Check the LLM</a></strong><br>
-  Assemble 10-15 claims (true, false, half-true, and fabricated) and ask Gemini to verdict each one. The fabricated claims are especially revealing: zero-shot prompts accept plausible fake citations at face value, while context-engineered prompts with explicit instructions about fabrication patterns catch them. Connects directly to Week 6 (hallucination testing).</p>
+  Assemble 10-15 claims (true, false, half-true, and fabricated) and ask Gemini to verdict each one. The fabricated claims are especially revealing: with a zero-shot prompt, Gemini often validates plausible fake citations, while context-engineered prompts with explicit fabrication-detection instructions flag them. Connects to Week 6 (hallucination testing).</p>
 
   <p style="margin-bottom: 1rem;"><strong>Option B: <a href="lab1-option-b-tone.html">Tone Detector for Social Media</a></strong><br>
-  Classify social media posts by tone: sarcastic, sincere, promotional, rage-bait, or informational. Tone is harder than sentiment because it's subjective and context-dependent. A sarcastic tweet and a sincere tweet can both be "negative" in sentiment, but the model needs to distinguish what the author is doing. The ambiguous cases produce the most interesting presentations.</p>
+  Classify social media posts by tone: sarcastic, sincere, promotional, rage-bait, or informational. Tone is harder than sentiment because it's subjective and context-dependent. A sarcastic tweet and a sincere tweet can both read as "negative" in sentiment, but the classification must distinguish what the author is doing. The ambiguous cases produce the most interesting presentations.</p>
 
   <p style="margin-bottom: 1rem;"><strong>Option C: <a href="lab1-option-c-extraction.html">Structured Data Extraction</a></strong><br>
-  Turn messy unstructured text (job postings, event listings, or recipe descriptions) into clean JSON. Extraction has binary success metrics: the JSON either parses or it doesn't, the salary is correct or it isn't. You'll see context engineering earn its keep through explicit schemas, type rules, and handling instructions for missing data.</p>
+  Turn messy unstructured text (job postings, event listings, or recipe descriptions) into clean JSON. Extraction has binary success metrics: the JSON either parses or it doesn't, the salary is correct or it isn't. Explicit schemas, type rules, and handling instructions for missing data make the difference here.</p>
 
-  <p>Each option page includes the full task description, dataset guidelines, and a complete code scaffold. Pick one and follow those instructions.</p>
+  <p>Each option page includes the full task description, dataset guidelines, a code scaffold, and reflection prompts. Pick one and follow those instructions.</p>
 </div>
 
 <div class="section-card">
@@ -120,7 +120,7 @@
 
 <div class="section-card">
   <h3>Overview</h3>
-  <p>Your GitHub repo is your running portfolio for the entire course. Each week you'll add to it. I grade everything through your GitHub repo, including the notebook itself (GitHub renders .ipynb files). What's in your repo is what counts. This week, I'm checking that your repo is set up correctly and that Lab 1 is organized and documented.</p>
+  <p>Your GitHub repo is your running portfolio for the entire course. Each week you'll add to it. I grade everything through the repo, including the notebook itself (GitHub renders .ipynb files). This week, I'm checking that your repo is set up correctly and that Lab 1 is organized and documented.</p>
 
   <h3>What I'm Looking For</h3>
   <ul>
@@ -167,9 +167,10 @@
   <h3>What to Cover</h3>
   <p>In three to five minutes, walk us through:</p>
   <ol>
-    <li><strong>The jump:</strong> Show one specific example where your context-engineered prompt outperformed the simple baselines. What did structured context give you that a bare prompt didn't?</li>
-    <li><strong>The LLM's self-diagnosis:</strong> When you asked Gemini to improve its own prompt, what did it change? Was it a change you would have thought of?</li>
-    <li><strong>Your takeaway:</strong> Based on your results and the readings, what does "context engineering" mean to you in practice? What would you do differently next time?</li>
+    <li>Show one specific example where your context-engineered prompt outperformed the baselines. What did structured context give you that a bare prompt didn't?</li>
+    <li>When you asked Gemini to improve its own prompt, what did it change? Was it a change you would have thought of?</li>
+    <li>Pick one thing from the readings that your lab results either confirmed or contradicted.</li>
+    <li>Based on all of that, what does "context engineering" mean to you in practice? What would you do differently next time?</li>
   </ol>
 
   <h3>Format</h3>
