@@ -21,3 +21,9 @@ readings/szeliski/
 .DS_Store
 .venv/
 __pycache__/
+
+# Office lock files (created when a doc is open)
+~$*
+
+# Claude Code agent worktrees and local config
+.claude/
