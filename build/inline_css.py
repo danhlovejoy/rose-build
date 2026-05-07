@@ -53,6 +53,11 @@ def parse_css(css_text):
             for sel in selector_raw.split(','):
                 sel = sel.strip()
                 if sel:
+                    # Skip pseudo-element selectors — they can't be inlined
+                    # and their properties (display:none, content:"...") would
+                    # be applied to the element itself, breaking rendering.
+                    if '::' in sel:
+                        continue
                     specificity = calc_specificity(sel)
                     rules.append((sel, props, specificity))
 

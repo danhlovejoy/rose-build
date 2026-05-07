@@ -8,7 +8,7 @@
       "short_name": "NLP",
       "glossary_filter": "nlp",
       "build_source": "aiml2003",
-      "build_output_dir": "build/output/aiml2003",
+      "build_output_dir": "build/aiml2003",
       "glossary_page_slug": "glossary",
       "glossary_canvas_url": "https://rose.instructure.com/courses/26943/pages/glossary",
       "pages": {
@@ -44,7 +44,36 @@
         "week-4-deliverables":                               "module3/03-assignments.html",
         "lab-3-nlp-sentence-embeddings":                     "module3/lab3-nlp-embeddings.html",
         "lab-3-combined-embeddings":                         "module3/lab3-combined-embeddings.html",
-        "ethics-discussion-whose-meanings-are-encoded":      "module3/04-ethics.html"
+        "ethics-discussion-whose-meanings-are-encoded":      "module3/04-ethics.html",
+
+        "module-4-overview-basic-rag":                                   "module4/01-overview.html",
+        "module-4-readings-basic-rag":                                   "module4/02-readings.html",
+        "week-5-deliverables":                                           "module4/03-assignments.html",
+        "lab-4-investigating-the-rag-pipeline":                          "module4/lab4-nlp-rag.html",
+        "lab-4-combined-investigating-the-universal-search-engine":      "module4/lab4-combined-universal-search.html",
+        "ethics-discussion-who-controls-the-context":                    "module4/04-ethics.html",
+
+        "module-5-overview-evaluating-llms":                                 "module5/01-overview.html",
+        "module-5-readings-evaluating-llms":                                 "module5/02-readings.html",
+        "module-5-deliverables-evaluating-llms":                             "module5/03-assignments.html",
+        "lab-5-evaluating-llms":                                             "module5/lab5-nlp-evaluation.html",
+        "lab-5-combined-the-human-cost-of-data":                             "module5/lab5-combined-human-cost.html",
+        "ethics-discussion-who-audits-the-auditors":                         "module5/04-ethics.html",
+        "midpoint-study-guide":                                              "module5/midpoint-study-guide.html",
+
+        "module-6-overview-simple-agents":                                       "module6/01-overview.html",
+        "module-6-readings-simple-agents":                                       "module6/02-readings.html",
+        "module-6-deliverables-simple-agents":                                   "module6/03-assignments.html",
+        "lab-6-nlp-simple-agents":                                               "module6/lab6-nlp-agents.html",
+
+        "module-7-overview-portfolio":                                               "module7/01-overview.html",
+        "module-7-portfolio-prep-guide":                                             "module7/02-portfolio-prep.html",
+        "module-7-deliverables-portfolio-and-reflection":                            "module7/03-assignments.html",
+        "module-7-combined-reflection":                                              "module7/04-reflection-combined.html",
+        "module-7-final-reflection":                                                "module7/05-reflection.html",
+        "final-portfolio-presentation":                                              "module7/06-assignments.html",
+        "deployment-guide":                                                          "module7/07-deployment-guide.html",
+        "combined-portfolio-multimodal":                                             "module7/portfolio-combined-multimodal.html"
       }
     },
     "aiml2013": {
@@ -53,7 +82,7 @@
       "short_name": "CV",
       "glossary_filter": "cv",
       "build_source": "aiml2013",
-      "build_output_dir": "build/output/aiml2013",
+      "build_output_dir": "build/aiml2013",
       "glossary_page_slug": "glossary",
       "glossary_canvas_url": "https://rose.instructure.com/courses/26944/pages/glossary",
       "pages": {
@@ -86,8 +115,38 @@
         "module-3-readings-embeddings":                               "module3/02-readings.html",
         "week-4-deliverables":                                        "module3/03-assignments.html",
         "lab-3-cv-image-embeddings":                                  "module3/lab3-cv-embeddings.html",
+        "lab-3-addendum-try-real-photos":                              "module3/lab3-addendum-flowers.html",
         "lab-3-combined-embeddings":                                   "module3/lab3-combined-embeddings.html",
-        "ethics-discussion-what-imagenet-thinks-the-world-looks-like": "module3/04-ethics.html"
+        "ethics-discussion-what-imagenet-thinks-the-world-looks-like": "module3/04-ethics.html",
+
+        "module-4-overview-visual-similarity":                             "module4/01-overview.html",
+        "module-4-readings-visual-similarity":                             "module4/02-readings.html",
+        "week-5-deliverables":                                             "module4/03-assignments.html",
+        "lab-4-investigating-the-image-retrieval-engine":                  "module4/lab4-cv-similarity.html",
+        "lab-4-combined-investigating-the-universal-search-engine":        "module4/lab4-combined-universal-search.html",
+        "ethics-discussion-when-machines-decide-what-looks-alike":         "module4/04-ethics.html",
+
+        "module-5-overview-cv-metrics-and-bias":                              "module5/01-overview.html",
+        "module-5-readings-cv-metrics-and-bias":                              "module5/02-readings.html",
+        "module-5-deliverables-cv-metrics-and-bias":                          "module5/03-assignments.html",
+        "lab-5-cv-demographic-bias-audit":                                    "module5/lab5-cv-bias-audit.html",
+        "lab-5-combined-the-human-cost-of-data":                              "module5/lab5-combined-human-cost.html",
+        "ethics-discussion-when-accuracy-gaps-map-to-real-people":            "module5/04-ethics.html",
+        "midpoint-study-guide":                                               "module5/midpoint-study-guide.html",
+
+        "module-6-overview-generative-vision":                                    "module6/01-overview.html",
+        "module-6-readings-generative-vision":                                    "module6/02-readings.html",
+        "module-6-deliverables-generative-vision":                                "module6/03-assignments.html",
+        "lab-6-cv-image-captioning":                                              "module6/lab6-cv-captioning.html",
+
+        "module-7-overview-portfolio":                                                "module7/01-overview.html",
+        "module-7-portfolio-prep-guide":                                              "module7/02-portfolio-prep.html",
+        "module-7-deliverables-portfolio-and-reflection":                             "module7/03-assignments.html",
+        "module-7-combined-reflection":                                               "module7/04-reflection-combined.html",
+        "module-7-final-reflection":                                                 "module7/05-reflection.html",
+        "final-portfolio-presentation":                                               "module7/06-assignments.html",
+        "deployment-guide":                                                          "module7/07-deployment-guide.html",
+        "combined-portfolio-multimodal":                                              "module7/portfolio-combined-multimodal.html"
       }
     }
   }

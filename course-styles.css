@@ -755,3 +755,50 @@ tr:nth-child(even) td { background: var(--light-bg); }
 
 .t-link { background: #e0f2f1; color: #00695c; }
 
+/* ============================================================
+   Study Guide — collapsible Q&A for midpoint self-checks
+   ============================================================ */
+
+details.study-question {
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    margin-bottom: 0.75rem;
+    background: var(--light-bg);
+  }
+
+details.study-question summary {
+    padding: 0.75rem 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    color: var(--primary);
+    list-style: none;
+  }
+
+details.study-question summary::-webkit-details-marker { display: none; }
+
+details.study-question summary::before {
+    content: "▸ ";
+    color: var(--muted);
+    margin-right: 0.25rem;
+  }
+
+details.study-question[open] summary::before {
+    content: "▾ ";
+  }
+
+details.study-question[open] summary {
+    border-bottom: 1px solid var(--border);
+  }
+
+.study-answer {
+    padding: 0.75rem 1rem;
+  }
+
+.study-answer p {
+    margin: 0 0 0.5rem 0;
+  }
+
+.study-answer p:last-child {
+    margin-bottom: 0;
+  }
+
