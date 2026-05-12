@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lab 3 Addendum: Try Real Photos | AIML 2013</title>
+<link rel="stylesheet" href="../../course-styles.css">
+</head>
+<body>
+
+<h1>Lab 3 Addendum: Try Real Photos</h1>
+<p class="subtitle">Run the same embedding pipeline on full-resolution images and see what changes.</p>
+
+<!-- ========== CONTEXT ========== -->
+<div class="section-card">
+  <h3>Why a second dataset?</h3>
+  <p>CIFAR-10 images are 32&times;32 pixels. When you fed them to MobileNetV2 in the main lab, the model upscaled each image 7&times; to reach its required 224&times;224 input. That upscaling blurs details and invents pixels that weren&rsquo;t in the original photo. The embeddings you computed are based partly on real content and partly on interpolation artifacts.</p>
+  <p>The TensorFlow Flowers dataset contains five classes of real photographs at natural resolution (typically 200&ndash;500 pixels per side). MobileNetV2 downscales these instead of upscaling, preserving genuine texture and shape. Running the same retrieval pipeline on flowers lets you see how much input quality affects embedding behavior.</p>
+  <p>This addendum is optional. It does not replace any part of the main lab. Add the cells below to the end of your notebook after you finish Cell 9<span data-concurrent="true"> (or Cell 10 in the combined lab)</span>.</p>
+</div>
+
+<!-- ========== WHAT YOU KEEP ========== -->
+<div class="warning">
+  <strong>Keep your CIFAR-10 pipeline intact.</strong>
+  <p style="margin: 0.75rem 0 0;">The HOG comparison requires the same images you used in Module 2. Do not replace your CIFAR-10 cells. These cells go at the end of your notebook and use new variable names so nothing collides.</p>
+</div>
+
+<!-- ========== CELL A ========== -->
+<h2>Cells to Add</h2>
+
+<pre># Cell A: Load the Flowers dataset</pre>
+<div class="section-card">
+  <p><strong>What it does:</strong> Downloads the TensorFlow Flowers dataset (five classes: daisy, dandelion, roses, sunflowers, tulips), loads 15 images per class, resizes them to 224&times;224, and displays a sample grid.</p>
+
+  <p><strong>Takes in:</strong> Nothing new. Uses <code>tf</code>, <code>np</code>, <code>plt</code>, <code>pathlib</code> already imported in Cell 1.</p>
+
+  <p><strong>Must produce:</strong></p>
+  <ul>
+    <li><strong><code>flower_classes</code>:</strong> Python list of the five class folder names, sorted alphabetically: <code>['daisy', 'dandelion', 'roses', 'sunflowers', 'tulips']</code>.</li>
+    <li><strong><code>F_PER_CLASS</code>:</strong> Integer, value <code>15</code>.</li>
+    <li><strong><code>flower_images</code>:</strong> Numpy array, shape <code>(75, 224, 224, 3)</code>, dtype <code>float32</code>, pixel values 0&ndash;255. For each class folder, sort the filenames, take the first 15, load each with <code>tf.io.read_file()</code> and <code>tf.image.decode_jpeg()</code>, resize to <code>(224, 224)</code> with <code>tf.image.resize()</code>, and append. Stack into a single array.</li>
+    <li><strong><code>flower_labels</code>:</strong> Python list of 75 integers. <code>flower_labels[i]</code> is the class index (0&ndash;4) for <code>flower_images[i]</code>.</li>
+    <li><strong><code>flower_names</code>:</strong> Python list of 75 strings. <code>flower_names[i]</code> is the class name for <code>flower_images[i]</code>.</li>
+    <li><strong>Dataset download:</strong> Use <code>tf.keras.utils.get_file()</code> with the URL <code>https://storage.googleapis.com/download.tensorflow.org/example_images/flower_photos.tgz</code> and <code>untar=True</code>. The result is a directory containing one subfolder per class. Use <code>pathlib.Path</code> to navigate it. There is also a <code>LICENSE.txt</code> file in the directory; skip anything that isn&rsquo;t a folder.</li>
+    <li><strong>Sample grid:</strong> Display a 1&times;5 grid showing one image per class at 224&times;224. Title each subplot with the class name. These images should look visibly sharper than the CIFAR-10 samples.</li>
+  </ul>
+
+  <p><strong>Notes:</strong> The download is about 218 MB and takes 10&ndash;20 seconds on Colab. It caches after the first run, so re-execution is instant. Some JPEG files in the dataset may fail to decode; wrap the load in a try/except and skip failures. If you end up with fewer than 15 images for a class, print a warning but continue. The flowers are already larger than 224&times;224, so <code>tf.image.resize()</code> downscales rather than upscales&mdash;the opposite of what happened with CIFAR-10.</p>
+</div>
+
+<!-- ========== CELL B ========== -->
+<pre># Cell B: Extract flower embeddings</pre>
+<div class="section-card">
+  <p><strong>What it does:</strong> Preprocesses the flower images for MobileNetV2 and extracts 1,280-dimensional embeddings. Prints shape, sample values, and sparsity. Compares sparsity to the CIFAR-10 embeddings from the main lab.</p>
+
+  <p><strong>Takes in:</strong> <code>image_model</code> (from Cell 1), <code>flower_images</code> (from Cell A), <code>preprocess_input</code> (from Cell 1).</p>
+
+  <p><strong>Must produce:</strong></p>
+  <ul>
+    <li><strong><code>flower_embeddings</code>:</strong> Numpy array, shape <code>(75, 1280)</code>. Apply <code>preprocess_input()</code> to a copy of <code>flower_images</code>, then call <code>image_model.predict()</code> on the preprocessed batch.</li>
+    <li><strong>Printed output:</strong> Shape, first 10 values of <code>flower_embeddings[0]</code>, sparsity percentage, and a line comparing sparsity to the CIFAR-10 sparsity you computed in the main lab (reference <code>image_embeddings</code> if it&rsquo;s still in memory).</li>
+  </ul>
+
+  <p><strong>Notes:</strong> Since the flowers are already 224&times;224, no resizing is needed here (you handled it in Cell A). The sparsity comparison is the first signal: if flowers produce fewer zeros, the network is activating more features on real-resolution input than it did on upscaled CIFAR thumbnails.</p>
+</div>
+
+<!-- ========== CELL C ========== -->
+<pre># Cell C: Flower retrieval</pre>
+<div class="section-card">
+  <p><strong>What it does:</strong> Runs the same retrieval logic on the flower embeddings. Picks one query per class, displays the query and top 5 matches as an image grid with class labels and cosine scores.</p>
+
+  <p><strong>Takes in:</strong> <code>flower_embeddings</code>, <code>flower_images</code>, <code>flower_names</code>, <code>flower_labels</code>, <code>F_PER_CLASS</code> (from Cells A&ndash;B).</p>
+
+  <p><strong>Must produce:</strong></p>
+  <ul>
+    <li><strong><code>find_similar_flower(query_idx, n=5)</code>:</strong> Same structure as <code>find_similar_image()</code> from the main lab. Extract the query row from <code>flower_embeddings</code>, compute cosine similarity against all 75 embeddings, exclude self, return top <code>n</code> indices and scores.</li>
+    <li><strong>Five query figures:</strong> One per class (indices <code>0</code>, <code>F_PER_CLASS</code>, <code>F_PER_CLASS*2</code>, <code>F_PER_CLASS*3</code>, <code>F_PER_CLASS*4</code>). Each figure: query on the left, 5 matches on the right, with class name and cosine score. Mark same-class matches with &check; and cross-class with &cross;.</li>
+  </ul>
+
+  <p><strong>Notes:</strong> Five flower classes are visually closer to each other than CIFAR-10&rsquo;s ten classes (all five are flowers). Expect more cross-class retrievals here. That&rsquo;s the point: embeddings that separated airplanes from frogs with ease now face a harder discrimination task. Pay attention to which flower classes the model confuses and whether the confusion makes visual sense (color? petal shape? background?).</p>
+</div>
+
+<!-- ========== CELL D ========== -->
+<pre># Cell D: Flower t-SNE</pre>
+<div class="section-card">
+  <p><strong>What it does:</strong> Reduces the flower embeddings to 2D with t-SNE and plots them as a scatter chart colored by class. Place this next to your CIFAR-10 t-SNE from the main lab for comparison.</p>
+
+  <p><strong>Takes in:</strong> <code>flower_embeddings</code>, <code>flower_labels</code>, <code>flower_classes</code>, <code>TSNE</code> (from Cell 1).</p>
+
+  <p><strong>Must produce:</strong></p>
+  <ul>
+    <li><strong><code>flower_2d</code>:</strong> Numpy array, shape <code>(75, 2)</code>. Use <code>TSNE(n_components=2, random_state=42, perplexity=10)</code> and call <code>.fit_transform(flower_embeddings)</code>.</li>
+    <li><strong>Scatter plot:</strong> Color by class. Legend with the five flower names. Title: &ldquo;Flower Embedding Space (MobileNetV2).&rdquo;</li>
+  </ul>
+
+  <p><strong>Notes:</strong> Use <code>perplexity=10</code> for 75 points. Compare the cluster quality to your CIFAR-10 t-SNE. CIFAR-10 classes are semantically distant (airplane vs. frog). Flower classes share the same basic structure (petals, stem, center). If the clusters overlap more than CIFAR-10, that tells you something about the limits of general-purpose embeddings on fine-grained categories.</p>
+</div>
+
+<div class="tip">
+  <strong>Markdown cell:</strong> Compare the flower t-SNE to your CIFAR-10 t-SNE. Which has tighter clusters? The CIFAR-10 classes are very different from each other (vehicles, animals, machines). The flower classes are all, well, flowers. What does this tell you about when pre-trained embeddings work well and when they struggle? If you needed to build a flower identification system, what would you do differently from just using MobileNetV2 out of the box?
+</div>
+
+</body>
+</html>

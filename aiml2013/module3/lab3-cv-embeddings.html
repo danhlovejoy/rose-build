@@ -232,7 +232,7 @@
 </div>
 
 <div class="tip">
-  <strong>Markdown cell:</strong> For each displayed case, explain what the network sees that HOG cannot. Think about: color, texture, object parts, spatial arrangement, semantic category. Which of these does HOG explicitly throw away (by design), and which does it keep but fail to use effectively?
+  <strong>Markdown cell:</strong> For each displayed case, explain what the embedding captures that HOG cannot. Think about: color, texture, object parts, spatial arrangement, semantic category. Which of these does HOG explicitly throw away (by design), and which does it keep but fail to use effectively?
 </div>
 
 <!-- CELL 8 -->
@@ -292,11 +292,17 @@
   <p>In three to five minutes, walk the class through:</p>
   <p data-concurrent="true" style="font-size:0.9em; color:#5e35b1;"><strong>Dual-enrolled students:</strong> Your presentation covers both the CV and NLP labs in one 5&ndash;7 minute presentation. See the combined lab for guidance.</p>
   <ol>
-    <li><strong>The side-by-side retrieval:</strong> Show one query from Cell 5 where HOG and embeddings returned different results. Explain what the network sees that gradient histograms miss.</li>
+    <li><strong>The side-by-side retrieval:</strong> Show one query from Cell 5 where HOG and embeddings returned different results. Explain what the embeddings capture that gradient histograms miss.</li>
     <li><strong>The accuracy table:</strong> Show the per-class comparison from Cell 6. Point to the biggest improvement and explain why that class benefited most from learned features.</li>
-    <li><strong>The remaining failures:</strong> Show one embedding failure from Cell 8. What fooled the network? What would it need to get this right?</li>
+    <li><strong>The remaining failures:</strong> Show one embedding failure from Cell 8. What caused the mismatch? What information would the model need to get this right?</li>
+    <li><strong>Your takeaway:</strong> Based on your results, what does the shift from HOG to learned embeddings buy you, and what does it cost?</li>
   </ol>
   <p>See the assignment sheet for submission details and the rubric.</p>
+</div>
+
+<!-- ========== ADDENDUM CALLOUT ========== -->
+<div class="tip">
+  <strong>Want to try real photos?</strong> CIFAR-10 images are 32&times;32 pixels&mdash;MobileNetV2 upscales them 7&times; before extracting features. The optional <a href="/courses/26944/pages/lab-3-addendum-try-real-photos">Lab 3 Addendum</a> walks you through running the same pipeline on the TensorFlow Flowers dataset, where images start at natural resolution. Add the cells to the end of your notebook after Cell 9 and compare what changes when the model works with genuine detail instead of interpolated thumbnails.
 </div>
 
 <!-- ========== BRIDGE BOX ========== -->

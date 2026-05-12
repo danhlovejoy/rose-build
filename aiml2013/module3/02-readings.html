@@ -18,7 +18,7 @@
 <!-- ========== FRAMING ========== -->
 <div class="framing-box">
   <p><strong>The big picture:</strong> HOG computed a fixed recipe: divide the image into a grid, measure gradient orientations in each cell, concatenate the histograms. Any two engineers given the same image and the same parameters will get the same vector. That determinism is also its limitation: HOG can only encode what the formula was designed to find.</p>
-  <p style="margin-top:0.5rem;">A convolutional neural network trained on 1.2 million labeled images learned its own recipe. Nobody told it to look for edges, then textures, then object parts: it discovered that hierarchy on its own, because that hierarchy is what predicts the correct label. The result is a feature extractor that captures information no hand-designed formula can reach: the difference between a dog and a wolf even when the background is similar, or the similarity between two chairs that share no color, texture, or orientation.</p>
+  <p style="margin-top:0.5rem;">A convolutional neural network trained on 1.2 million labeled images learned its own recipe. Nobody programmed it to look for edges, then textures, then object parts: that hierarchy emerged on its own, because it is what predicts the correct label. The result is a feature extractor that captures information no hand-designed formula can reach: the difference between a dog and a wolf even when the background is similar, or the similarity between two chairs that share no color, texture, or orientation.</p>
   <p style="margin-top:0.5rem;">This week you strip the classification head off MobileNetV2, run your Module 2 images through what remains, and compare the resulting embeddings directly against HOG. The retrieval accuracy tables and the dual t-SNE plot in Cells 6 and 9 will show you exactly where learned features win (and where they still fail).</p>
 </div>
 
@@ -43,7 +43,7 @@
     <span class="tag tag-time">~19 min</span>
   </div>
   <p class="resource-meta">3Blue1Brown &bull; Grant Sanderson &bull; YouTube</p>
-  <p class="resource-desc">Before diving into convolutional networks, you need a clear mental model of what a neural network is at all. This video (chapter 1 of 3Blue1Brown&rsquo;s Neural Networks series) builds that model from scratch. It covers neurons, layers, weights, biases, and activation functions, using handwritten digit recognition as the running example. The visualizations are exceptional. By the end you will understand what it means for a network to &ldquo;learn&rdquo; and what the numbers inside it actually represent.</p>
+  <p class="resource-desc">Before diving into convolutional networks, you need a clear mental model of what a neural network is at all. This video (chapter 1 of 3Blue1Brown&rsquo;s Neural Networks series) builds that model from scratch. It covers neurons, layers, weights, biases, and activation functions, using handwritten digit recognition as the running example. The visualizations carry most of the weight. You will see what it means for a network to adjust its weights during training and what the numbers inside it represent.</p>
   <p class="resource-desc" style="margin-top:0.5rem;"><em>Watch this first. The Computerphile video and the Szeliski reading both assume you already know what a layer and a neuron are. This video is where you get that foundation.</em></p>
   <p class="resource-link">
     <a href="https://www.youtube.com/watch?v=aircAruvnKk" target="_blank">Watch: But what is a neural network? &rarr;</a>
@@ -102,13 +102,13 @@
     <span class="tag tag-time">~20 min</span>
   </div>
   <p class="resource-meta">Olah, Mordvintsev, Schubert &bull; Distill &bull; 2017</p>
-  <p class="resource-desc">Distill is a peer-reviewed machine learning journal known for exceptionally clear interactive articles. This one answers the question you should have after watching the Computerphile video: what exactly do those early, middle, and deep layers respond to? The article generates images that maximally activate individual neurons, revealing that early neurons respond to edges and colors, middle neurons respond to textures and patterns, and deep neurons respond to object parts (eyes, fur, wheels). The interactive diagrams let you explore individual neurons at each layer depth.</p>
+  <p class="resource-desc">Distill is a peer-reviewed machine learning journal built around interactive articles. This one answers the question you should have after watching the Computerphile video: what exactly do those early, middle, and deep layers respond to? The article generates images that maximally activate individual neurons, revealing that early neurons respond to edges and colors, middle neurons respond to textures and patterns, and deep neurons respond to object parts (eyes, fur, wheels). The interactive diagrams let you explore individual neurons at each layer depth.</p>
   <p class="resource-desc" style="margin-top:0.5rem;">Scroll slowly and interact with the diagrams. This article is the closest thing to actually opening up a neural network and looking inside.</p>
   <p class="resource-link">
     <a href="https://distill.pub/2017/feature-visualization/" target="_blank">Explore: Feature Visualization &rarr;</a>
   </p>
   <div class="focus-box">
-    <strong>What to notice:</strong> The features that emerge in the deepest layers look like recognizable object parts even though nobody told the network to learn them. This is the hierarchy that makes transfer learning work: those learned features are genuinely useful for describing visual content, not just for classifying ImageNet categories.
+    <strong>What to notice:</strong> The features that emerge in the deepest layers look like recognizable object parts even though nobody programmed them. This is the hierarchy that makes transfer learning work: those learned features are genuinely useful for describing visual content, not just for classifying ImageNet categories.
   </div>
 </div>
 
@@ -167,7 +167,8 @@
   <ol>
     <li>In Module 2 you built HOG descriptors: a formula any engineer could re-derive from first principles. MobileNetV2&rsquo;s weights were learned from 1.2 million images. What do you gain and what do you lose when you replace an interpretable formula with learned weights? Which would you trust more, and in what situation?</li>
     <li>Transfer learning assumes that features useful for classifying ImageNet images are also useful for classifying your images. Your dataset is either CIFAR-10 (everyday objects) or your own images. How similar is your dataset to ImageNet? Where would you expect the transfer to work well, and where might it break down?</li>
-    <li>The Distill article shows that deep CNN neurons respond to recognizable object parts (eyes, fur, wheel spokes) even though the network was never told to look for those things. What does this tell you about the relationship between the training objective (classify 1,000 categories) and the internal representations the network develops to achieve it?</li>
+    <li>The Distill article shows that deep CNN neurons respond to recognizable object parts (eyes, fur, wheel spokes) even though nobody programmed those patterns. What does this tell you about the relationship between the training objective (classify 1,000 categories) and the internal representations that emerge to achieve it?</li>
+    <li>MobileNetV2 was trained on ImageNet, a dataset assembled largely from web scraping with labels verified by Amazon Mechanical Turk workers. You did not choose the training data, the categories, or the labeling process. What assumptions about &ldquo;what matters in an image&rdquo; are baked into the embedding space before you write a single line of code?</li>
   </ol>
 </div>
 
