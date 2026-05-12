@@ -16,31 +16,33 @@ Input format:
 
     {
       "course": "aiml2003",          // course directory name
-      "module": 2,                   // module number
+      "module": 2,                   // module number (or "final" for exams)
       "title": "Module 2 ...",       // quiz title shown in Canvas
       "description": "...",          // HTML description
       "allowed_attempts": 2,         // number of attempts
       "scoring_policy": "keep_highest",
       "shuffle_answers": true,
       "show_correct_answers_last_attempt": true,
-      "points_per_question": 2,
+      "points_per_question": 2,      // default points for MC questions
       "questions": [
         {
           "id": "unique_ident",      // unique identifier (alphanumeric + underscore)
+          "type": "multiple_choice", // "multiple_choice" (default) or "essay"
           "title": "Display Title",  // shown in Canvas question bank
           "stem": "Question text?",  // the question (plain text or HTML)
-          "choices": ["A", "B", "C", "D"],  // 4 answer choices
-          "correct": 0,             // 0-indexed position of correct answer
-          "correct_feedback": "...", // shown when correct
-          "incorrect_feedback": "..."// shown when incorrect
+          "choices": ["A", "B", "C", "D"],  // MC only: 4 answer choices
+          "correct": 0,             // MC only: 0-indexed correct answer
+          "correct_feedback": "...", // MC only (optional): shown when correct
+          "incorrect_feedback": "..."// MC only (optional): shown when incorrect
+          // Essay questions use "points": 15 for per-question point value
         }
       ]
     }
 
 Output:
-    <course>-module<N>-reading-quiz.imscc  (written to --output-dir, or to
-    the current working directory by default; use quizzes/ as output-dir
-    to keep JSON and IMSCC together)
+    <course>-module<N>-reading-quiz.imscc or <course>-final-exam.imscc
+    (written to --output-dir, or to the current working directory by
+    default; use quizzes/ as output-dir to keep JSON and IMSCC together)
 
 Deterministic. No LLM. No external dependencies. Python 3.8+ stdlib only.
 """
@@ -207,17 +209,58 @@ def build_item_xml(q, points_per_question):
     lines.append('          </respcondition>')
     lines.append('        </resprocessing>')
 
-    # Feedback
-    lines.append(f'        <itemfeedback ident="{qid}_correct_fb">')
-    lines.append(f'          <flow_mat><material><mattext texttype="text/html">'
-                 f'<![CDATA[<p>{q["correct_feedback"]}</p>]]>'
-                 f'</mattext></material></flow_mat>')
-    lines.append('        </itemfeedback>')
-    lines.append(f'        <itemfeedback ident="{qid}_incorrect_fb">')
-    lines.append(f'          <flow_mat><material><mattext texttype="text/html">'
-                 f'<![CDATA[<p>{q["incorrect_feedback"]}</p>]]>'
-                 f'</mattext></material></flow_mat>')
-    lines.append('        </itemfeedback>')
+    # Feedback (only if present in the source JSON)
+    if "correct_feedback" in q:
+        lines.append(f'        <itemfeedback ident="{qid}_correct_fb">')
+        lines.append(f'          <flow_mat><material><mattext texttype="text/html">'
+                     f'<![CDATA[<p>{q["correct_feedback"]}</p>]]>'
+                     f'</mattext></material></flow_mat>')
+        lines.append('        </itemfeedback>')
+    if "incorrect_feedback" in q:
+        lines.append(f'        <itemfeedback ident="{qid}_incorrect_fb">')
+        lines.append(f'          <flow_mat><material><mattext texttype="text/html">'
+                     f'<![CDATA[<p>{q["incorrect_feedback"]}</p>]]>'
+                     f'</mattext></material></flow_mat>')
+        lines.append('        </itemfeedback>')
+
+    lines.append('      </item>')
+    return "\n".join(lines)
+
+
+def build_essay_item_xml(q):
+    """Build QTI XML for a single essay question."""
+    qid = q["id"]
+    points = q["points"]
+
+    lines = []
+    lines.append(f'      <item ident="{xml_escape(qid)}" title="{xml_escape(q["title"])}">')
+    lines.append('        <itemmetadata>')
+    lines.append('          <qtimetadata>')
+    lines.append('            <qtimetadatafield>')
+    lines.append('              <fieldlabel>question_type</fieldlabel>')
+    lines.append('              <fieldentry>essay_question</fieldentry>')
+    lines.append('            </qtimetadatafield>')
+    lines.append('            <qtimetadatafield>')
+    lines.append('              <fieldlabel>points_possible</fieldlabel>')
+    lines.append(f'              <fieldentry>{points}</fieldentry>')
+    lines.append('            </qtimetadatafield>')
+    lines.append('          </qtimetadata>')
+    lines.append('        </itemmetadata>')
+
+    # Presentation: stem + text response area
+    lines.append('        <presentation>')
+    lines.append(f'          <material><mattext texttype="text/html"><![CDATA[<p>{q["stem"]}</p>]]></mattext></material>')
+    lines.append('          <response_str ident="response1" rcardinality="Single">')
+    lines.append('            <render_fib>')
+    lines.append('              <response_label ident="answer1" rshuffle="No"/>')
+    lines.append('            </render_fib>')
+    lines.append('          </response_str>')
+    lines.append('        </presentation>')
+
+    # Response processing (no auto-grading for essays)
+    lines.append('        <resprocessing>')
+    lines.append('          <outcomes><decvar maxvalue="100" minvalue="0" varname="SCORE" vartype="Decimal"/></outcomes>')
+    lines.append('        </resprocessing>')
 
     lines.append('      </item>')
     return "\n".join(lines)
@@ -230,7 +273,7 @@ def build_item_xml(q, points_per_question):
 def build_quiz_package(quiz_data, output_dir):
     """Generate an IMSCC zip from a quiz definition dict."""
     course = quiz_data["course"]
-    module_num = quiz_data["module"]
+    module_num = quiz_data["module"]  # int for reading quizzes, "final" for exams
     title = quiz_data["title"]
     description = quiz_data["description"]
     questions = quiz_data["questions"]
@@ -239,16 +282,32 @@ def build_quiz_package(quiz_data, output_dir):
     scoring_policy = quiz_data.get("scoring_policy", "keep_highest")
     shuffle = "true" if quiz_data.get("shuffle_answers", True) else "false"
     show_last = "true" if quiz_data.get("show_correct_answers_last_attempt", True) else "false"
-    total_points = points_per_q * len(questions)
 
-    # Derive identifiers
+    # Compute total points: MC uses points_per_question, essays use per-question points field
+    total_points = 0
+    for q in questions:
+        q_type = q.get("type", "multiple_choice")
+        if q_type == "essay":
+            total_points += q["points"]
+        else:
+            total_points += points_per_q
+
+    # Derive identifiers — handle module="final" vs module=2
     course_prefix = "nlp" if "2003" in course else "cv"
-    quiz_id = f"{course_prefix}_module{module_num}_reading_quiz"
-    manifest_id = f"{course}_module{module_num}_reading_quiz"
-    quiz_filename = f"module{module_num}_reading_quiz.xml"
-    meta_filename = f"module{module_num}_reading_quiz_meta.xml"
+    is_final = str(module_num) == "final"
+    if is_final:
+        quiz_id = f"{course_prefix}_final_exam"
+        manifest_id = f"{course}_final_exam"
+        quiz_filename = "final_exam.xml"
+        meta_filename = "final_exam_meta.xml"
+        output_filename = f"{course}-final-exam.imscc"
+    else:
+        quiz_id = f"{course_prefix}_module{module_num}_reading_quiz"
+        manifest_id = f"{course}_module{module_num}_reading_quiz"
+        quiz_filename = f"module{module_num}_reading_quiz.xml"
+        meta_filename = f"module{module_num}_reading_quiz_meta.xml"
+        output_filename = f"{course}-module{module_num}-reading-quiz.imscc"
     lom_title = f"{course.upper()} - {title}"
-    output_filename = f"{course}-module{module_num}-reading-quiz.imscc"
 
     # Build QTI assessment XML
     qti_xml = QTI_HEADER.format(
@@ -257,7 +316,11 @@ def build_quiz_package(quiz_data, output_dir):
         allowed_attempts=allowed_attempts,
     )
     for q in questions:
-        qti_xml += "\n" + build_item_xml(q, points_per_q) + "\n"
+        q_type = q.get("type", "multiple_choice")
+        if q_type == "essay":
+            qti_xml += "\n" + build_essay_item_xml(q) + "\n"
+        else:
+            qti_xml += "\n" + build_item_xml(q, points_per_q) + "\n"
     qti_xml += QTI_FOOTER
 
     # Build metadata XML
@@ -311,19 +374,31 @@ def validate_quiz(data, filepath):
             errors.append("Quiz has no questions")
         for i, q in enumerate(data["questions"]):
             prefix = f"Question {i + 1}"
-            for field in ["id", "title", "stem", "choices", "correct",
-                          "correct_feedback", "incorrect_feedback"]:
+            q_type = q.get("type", "multiple_choice")
+
+            # Fields required for all question types
+            for field in ["id", "title", "stem"]:
                 if field not in q:
                     errors.append(f"{prefix}: missing field '{field}'")
-            if "choices" in q:
-                if len(q["choices"]) < 2:
-                    errors.append(f"{prefix}: needs at least 2 choices")
-                if len(q["choices"]) > 8:
-                    errors.append(f"{prefix}: max 8 choices supported")
-            if "correct" in q and "choices" in q:
-                if q["correct"] < 0 or q["correct"] >= len(q["choices"]):
-                    errors.append(f"{prefix}: correct index {q['correct']} "
-                                  f"out of range (0–{len(q['choices']) - 1})")
+
+            if q_type == "essay":
+                # Essay questions need a points field
+                if "points" not in q:
+                    errors.append(f"{prefix} (essay): missing field 'points'")
+            else:
+                # MC questions need choices and correct index
+                for field in ["choices", "correct"]:
+                    if field not in q:
+                        errors.append(f"{prefix}: missing field '{field}'")
+                if "choices" in q:
+                    if len(q["choices"]) < 2:
+                        errors.append(f"{prefix}: needs at least 2 choices")
+                    if len(q["choices"]) > 8:
+                        errors.append(f"{prefix}: max 8 choices supported")
+                if "correct" in q and "choices" in q:
+                    if q["correct"] < 0 or q["correct"] >= len(q["choices"]):
+                        errors.append(f"{prefix}: correct index {q['correct']} "
+                                      f"out of range (0–{len(q['choices']) - 1})")
 
     if errors:
         print(f"\nValidation failed for {filepath}:", file=sys.stderr)
@@ -397,7 +472,14 @@ def main():
                 f"imsmanifest.xml not first entry in {output_path}"
 
         n_questions = len(data["questions"])
-        total_pts = n_questions * data.get("points_per_question", 2)
+        points_per_q = data.get("points_per_question", 2)
+        total_pts = 0
+        for q in data["questions"]:
+            q_type = q.get("type", "multiple_choice")
+            if q_type == "essay":
+                total_pts += q["points"]
+            else:
+                total_pts += points_per_q
         print(f"  {output_path}  ({n_questions} questions, {total_pts} pts)")
 
     if had_errors:

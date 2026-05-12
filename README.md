@@ -94,3 +94,9 @@ When a new module is ready to go live:
 2. In the same two files, update "This Week" to point to the new module's overview page.
 3. Run `bash build/build.sh`.
 4. Upload the rebuilt welcome pages to Canvas.
+
+---
+
+## Reading Quizzes and Final Exams
+
+The reading quiz and final exam source files (JSON + IMSCC packages) are gitignored because they contain answers in plaintext. If you're an instructor who'd like copies, email firstnamelastname@gmail.com (no middle initial).
