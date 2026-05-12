@@ -6,6 +6,9 @@ build/output/
 build/aiml2003/
 build/aiml2013/
 
+# Packaged Canvas cartridges (generated)
+dist/
+
 # Standalone build temp files (should be cleaned up, but just in case)
 *.standalone.tmp
 
