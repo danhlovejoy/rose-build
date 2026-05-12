@@ -14,29 +14,36 @@ Instructor: Dan Lovejoy (dlovejoy@rose.edu). Both courses share the same instruc
 ```
 rose/
 ├── CLAUDE.md                  ← you are here
-├── MODULE-STANDARDS.md        ← how to build any module
-├── WRITING-STANDARDS.md       ← lexical bans, formatting rules, tone
-├── DEMO-STANDARDS.md          ← how to build interactive demos (slides/)
+├── README.md                  ← short orientation for human readers
 ├── build.conf                 ← delivery mode config (concurrent vs standalone)
 ├── course-styles.css          ← single source of truth for all CSS
 ├── glossary.json              ← single glossary source: terms tagged nlp, cv, or both
 ├── docs/
+│   ├── MODULE-STANDARDS.md         ← how to build any module
+│   ├── WRITING-STANDARDS.md        ← lexical bans, formatting rules, tone
+│   ├── DEMO-STANDARDS.md           ← how to build interactive demos (slides/)
 │   ├── CANVAS-PUSH-CHECKLIST.md
-│   └── CANVAS-SETUP-GUIDE.html ← instructor reference for Canvas configuration
+│   ├── CANVAS-SETUP-GUIDE.html     ← instructor reference for Canvas configuration
+│   └── split-szeliski-instructions.md
 ├── scripts/
-│   ├── upload_to_canvas.py     ← API uploader: pages/wiki content
+│   ├── upload_to_canvas.py         ← API uploader: pages/wiki content
 │   ├── create_module_assignments.py ← API script: assignments, discussions, module structure
-│   ├── create_module2_assignments.py
-│   └── fix_module2_structure.py
+│   └── split_szeliski.py           ← splits the Szeliski textbook PDF into per-section PDFs
+├── quizzes/                   ← reading quiz JSON sources + IMSCC packages (gitignored)
 ├── build/
-│   ├── build.sh               ← orchestrator: ./build.sh [target]
+│   ├── build.sh               ← orchestrator: ./build.sh [--standalone|--concurrent] [target]
+│   ├── inline_css.py          ← CSS inliner (Python, stdlib only)
 │   ├── build_glossary.py      ← generates glossary.html per course from glossary.json
 │   ├── build_glossary_links.py← auto-links glossary terms in built output
-│   ├── inline_css.py          ← CSS inliner (Python, stdlib only)
+│   ├── build_quiz.py          ← quiz IMSCC generator: JSON → Common Cartridge
 │   ├── strip_concurrent.py    ← removes data-concurrent elements in standalone mode
 │   ├── audit_concurrent.py    ← reports all concurrent content across the project
+│   ├── check_links.py         ← dead-link checker for relative paths in source HTML
+│   ├── lint_demos.py          ← lints interactive demos against DEMO-STANDARDS conventions
 │   ├── course-config.json     ← Canvas page slug → source file mappings
-│   └── output/                ← Canvas-ready HTML (generated, do not edit)
+│   ├── course-config.template.json ← template for adding new pages to the config
+│   ├── aiml2003/              ← Canvas-ready HTML output (gitignored, do not edit)
+│   └── aiml2013/              ← Canvas-ready HTML output (gitignored, do not edit)
 ├── templates/                 ← reusable HTML templates with {{PLACEHOLDER}} syntax
 │   ├── README.md
 │   ├── week-overview.html
@@ -44,70 +51,45 @@ rose/
 │   ├── week-assignments-presentation.html
 │   ├── week-assignments-demo.html
 │   └── week-ethics.html
-├── slides/                    ← shared slide assets (not built by build.sh)
-├── aiml2003/
-│   ├── welcome.html           ← Canvas landing page: "This Week" + past modules
-│   ├── glossary.html          ← generated from glossary.json (do not edit)
+├── slides/                    ← shared interactive demos + lecture decks (not built by build.sh)
+├── readings/                  ← shared readings; readings/szeliski/ holds the textbook PDF (gitignored)
+├── aiml2003/                  ← NLP course source
+│   ├── welcome.html               ← Canvas landing page: "This Week" + past modules
+│   ├── glossary.html              ← generated from glossary.json (do not edit)
 │   ├── makeup-participation.html  ← standalone, not inside any module
-│   ├── aiml2003-module1.imscc ← Canvas Common Cartridge for Module 1 import
-│   ├── slides/                ← NLP lecture slides by week
-│   ├── module1/               ← Week 1–2: From Prompt to Context Engineering
-│   │   ├── 00-welcome.html
-│   │   ├── 02-week2-readings.html
-│   │   ├── 03-google-colab-setup.html
-│   │   ├── 03a-gemini-api-setup.html
-│   │   ├── 03b-notebooklm-setup.html
-│   │   ├── 04-github-account-setup.html
-│   │   ├── 05-colab-github-integration.html
-│   │   ├── 06-week2-assignments.html
-│   │   ├── 07-discussion-ethics-week1.html
-│   │   ├── lab1-option-a-factcheck.html
-│   │   ├── lab1-option-b-tone.html
-│   │   └── lab1-option-c-extraction.html
-│   └── module2/               ← Week 3: Hand-Crafted Features (TF-IDF)
-│       ├── 01-overview.html
-│       ├── 02-readings.html
-│       ├── 06-assignments.html
-│       ├── 07-ethics.html
-│       ├── lab2-nlp-sentiment.html
-│       ├── lab2-nlp-sentiment-challenge.html
-│       ├── lab2-combined-how-machines-read.html  ← concurrent-only
-│       └── lab2-combined-challenge.html          ← concurrent-only
-└── aiml2013/
-    ├── welcome.html           ← Canvas landing page: "This Week" + past modules
-    ├── glossary.html          ← generated from glossary.json (do not edit)
+│   ├── aiml2003-module1.imscc     ← Canvas Common Cartridge for Module 1 import
+│   ├── slides/                    ← NLP lecture slides by week
+│   ├── module1/  ← Weeks 1–2: From Prompt to Context Engineering (Setup → Presentation)
+│   ├── module2/  ← Week 3: Hand-Crafted Features — TF-IDF (Presentation)
+│   ├── module3/  ← Week 4: Learned Embeddings (Demo)
+│   ├── module4/  ← Week 5: Basic RAG (Demo)
+│   ├── module5/  ← Week 6: Evaluating LLMs (Presentation)
+│   ├── module6/  ← Week 7: Simple Agents (Demo) — no ethics post
+│   └── module7/  ← Week 8: Portfolio & Future (Final Portfolio Presentation)
+└── aiml2013/                  ← CV course source
+    ├── welcome.html               ← Canvas landing page: "This Week" + past modules
+    ├── glossary.html              ← generated from glossary.json (do not edit)
     ├── makeup-participation.html  ← standalone, not inside any module
-    ├── aiml2013-module1.imscc ← Canvas Common Cartridge for Module 1 import
-    ├── slides/                ← CV lecture slides and visual assets by week
-    ├── module1/               ← Week 1–2: Vision & Images
-    │   ├── 01-welcome.html
-    │   ├── 03-setup-google-colab.html
-    │   ├── 04-setup-gemini-api.html
-    │   ├── 05-setup-notebooklm.html
-    │   ├── 06-setup-github.html
-    │   ├── 07-setup-colab-github.html
-    │   ├── 08-readings-week1.html
-    │   ├── 09-assignments-week2.html
-    │   ├── 10-lab1-edge-detection.html
-    │   └── 11-ethics-week1.html
-    └── module2/               ← Week 3: Hand-Crafted Features (HOG)
-        ├── 01-overview.html
-        ├── 02-readings.html
-        ├── 06-assignments.html
-        ├── 07-ethics.html
-        ├── lab2-cv-hog.html
-        ├── lab2-cv-hog-challenge.html
-        ├── lab2-combined-how-machines-read.html  ← concurrent-only
-        └── lab2-combined-challenge.html          ← concurrent-only
+    ├── aiml2013-module1.imscc     ← Canvas Common Cartridge for Module 1 import
+    ├── slides/                    ← CV lecture slides and visual assets by week
+    ├── module1/  ← Weeks 1–2: Vision & Images (Setup → Presentation)
+    ├── module2/  ← Week 3: Hand-Crafted Features — HOG (Presentation)
+    ├── module3/  ← Week 4: Learned Embeddings (Demo)
+    ├── module4/  ← Week 5: Visual Similarity (Demo)
+    ├── module5/  ← Week 6: CV Metrics & Bias (Demo)
+    ├── module6/  ← Week 7: Generative Vision (Presentation) — no ethics post
+    └── module7/  ← Week 8: Portfolio & Future (Final Portfolio Presentation)
 ```
+
+Inside each `moduleN/` directory: a numbered overview, readings, and assignments page, plus the week's lab HTML pages. Combined dual-enrollment labs (`lab*-combined-*.html`) and the reflection page in `module7/` carry a `concurrent-only` marker; the build excludes them in standalone mode.
 
 ## Standards Documents
 
 Read these before making any content changes:
 
-- **MODULE-STANDARDS.md** — Module structure, file numbering (sequential, not fixed slots), page types, dates/deadlines, rubric display format with Canvas links, participation 80/20 model, lab sheet structure, readings page structure, ethics discussion format, CSS design system.
-- **WRITING-STANDARDS.md** — Banned frames, banned AI tells, banned buffer phrases, encouraged precision vocabulary, formatting constraints (list counts, paragraph rhythm, no bold in prose), banned tone patterns.
-- **DEMO-STANDARDS.md** — Standalone interactive demo structure, CSS variables, Plotly/Canvas conventions, pedagogical rules, known pitfalls from past bugs.
+- **`docs/MODULE-STANDARDS.md`** — Module structure, file numbering (sequential, not fixed slots), page types, dates/deadlines, rubric display format with Canvas links, participation 80/20 model, lab sheet structure, readings page structure, ethics discussion format, CSS design system.
+- **`docs/WRITING-STANDARDS.md`** — Banned frames, banned AI tells, banned buffer phrases, encouraged precision vocabulary, formatting constraints (list counts, paragraph rhythm, no bold in prose), banned tone patterns.
+- **`docs/DEMO-STANDARDS.md`** — Standalone interactive demo structure, CSS variables, Plotly/Canvas conventions, pedagogical rules, known pitfalls from past bugs.
 
 ## Key Conventions
 
@@ -117,7 +99,7 @@ Read these before making any content changes:
 
 **Class times:** AIML 2003 meets Tuesdays 5:30–6:50 PM. AIML 2013 meets Tuesdays 7:00–8:20 PM. Both share Thursday lab 6:00–8:00 PM (Zoom).
 
-**Participation:** 80% attendance/engagement + 20% ethics post. Makeup post (48 hours, 500+ words) covers the 80% only. Ethics post always required separately.
+**Participation:** 80% attendance/engagement + 20% ethics post. Makeup post (48 hours, 500+ words) covers the 80% only. Ethics post always required separately, **except Module 6** — both courses dropped the Module 6 ethics post, so Module 6's Participation is 100% attendance/engagement (no ethics item).
 
 **Lab code scaffolds:** Include "training wheels" warning. Later labs won't have scaffolds. Bonus section worth 10 extra credit points. Final section is presentation prep, not a written reflection.
 
@@ -192,9 +174,9 @@ When building a new module, follow this sequence:
    - Preference the Szeliski textbook (Computer Vision: Algorithms and Applications, 2nd Ed.) for CV readings. Reference specific sections and page numbers.
    - Use free, accessible resources. Prefer official documentation (sklearn, scikit-image), established video channels (3Blue1Brown, Computerphile, StatQuest), and open-access papers.
    - Keep optional/bonus readings to the bare minimum — one per course per week.
-   - Structure per MODULE-STANDARDS.md readings page format: framing box, NotebookLM reminder, resource cards with tags, preview section if needed, discussion prep questions, bridge box.
+   - Structure per `docs/MODULE-STANDARDS.md` readings page format: framing box, NotebookLM reminder, resource cards with tags, preview section if needed, discussion prep questions, bridge box.
 
-4. **Build the remaining module pages** — overview, assignment sheet, ethics discussion — per MODULE-STANDARDS.md.
+4. **Build the remaining module pages** — overview, assignment sheet, ethics discussion — per `docs/MODULE-STANDARDS.md`. Module 6 has no ethics page in either course; skip that step.
 
 ## Canvas Details
 
@@ -229,7 +211,9 @@ Canvas must be configured to weight grades by Assignment Group. Go to Assignment
 - **"Week X Participation"** — Assignment, submission type "No Submission," 80 points. Graded manually from the gradebook based on attendance and in-class engagement.
 - **"Week X Ethics Discussion"** — Discussion Topic, 20 points.
 
-Each week totals 100 Participation points. Canvas computes the group grade as points earned / points possible, so the 80/20 ratio is preserved across all weeks.
+Each week totals 100 Participation points. Canvas computes the group grade as points earned / points possible, so the 80/20 ratio is preserved across weeks.
+
+**Module 6 exception:** Module 6 has no Ethics Discussion in either course. The Module 6 Participation assignment is worth 100 points (attendance/engagement only); skip the Ethics Discussion item. The other weeks still use the 80/20 split.
 
 ## Week-by-Week Deliverable Types
 
@@ -258,7 +242,7 @@ Canvas strips `<style>` and `<link>` tags from wiki pages. The build pipeline in
 1. Edit source HTML files (which reference `course-styles.css` via `<link>`)
 2. Edit `course-styles.css` for any style changes (single source of truth)
 3. Run the build: `cd rose && bash build/build.sh`
-4. Canvas-ready output appears in `build/output/`
+4. Canvas-ready output appears in `build/aiml2003/` and `build/aiml2013/` (both gitignored)
 5. Upload to Canvas via API or manual paste into the HTML editor
 
 **Build commands:**
@@ -271,6 +255,8 @@ Canvas strips `<style>` and `<link>` tags from wiki pages. The build pipeline in
 - `python3 scripts/upload_to_canvas.py` — upload all built pages to Canvas wiki
 - `python3 scripts/upload_to_canvas.py aiml2003` — upload one course
 - `python3 scripts/create_module_assignments.py <course> <module_num> <due_date>` — create Canvas artifacts for a module (see below)
+- `python3 build/build_quiz.py quizzes/ --output-dir quizzes/` — rebuild all reading quiz IMSCC packages
+- `python3 build/build_quiz.py quizzes/aiml2003-module2-reading-quiz.json --output-dir quizzes/` — rebuild one quiz
 
 **`scripts/create_module_assignments.py` — Canvas artifact automation:**
 
@@ -288,7 +274,7 @@ python3 scripts/create_module_assignments.py aiml2013 3 2026-04-14T19:00:00-05:0
 Deliverable type is resolved automatically from the course/module combination (see Week-by-Week Deliverable Types table). Rubric IDs are hard-coded per course. Assignment group IDs are looked up via the Canvas API at runtime. The Canvas module must already exist with a name containing "Module N" before running the script.
 
 **Key rules:**
-- Never edit files in `build/output/` — they are generated and will be overwritten
+- Never edit files in `build/aiml2003/` or `build/aiml2013/` — they are generated and will be overwritten
 - Never put `<style>` blocks in source HTML files — use `course-styles.css`
 - The build script is deterministic (no LLM, no external deps, stdlib Python only)
 - CSS custom properties (`var(--name)`) are resolved at build time
@@ -305,6 +291,26 @@ A single `glossary.json` at the project root holds all terms for both courses. E
 - Definitions are brief and non-technical. Each term links to an external longer explanation.
 - Add new terms as modules are built. The `module_introduced` field tracks provenance.
 - Course tags in the HTML reuse existing CSS classes: `tag-required` (Both), `tag-read` (NLP), `tag-video` (CV).
+
+## Reading Quizzes
+
+Each module (except Module 8 / Final Portfolio) has a 5-question multiple-choice reading quiz. Quizzes are surface-level comprehension checks ("did you do the reading"), not deep assessment.
+
+**Quiz parameters:** 5 questions, 2 points each (10 total), 2 attempts allowed, highest score kept, answers shuffled, correct answers shown after last attempt only.
+
+**Source format:** JSON files in `quizzes/`, one per quiz. Filename pattern: `<course>-module<N>-reading-quiz.json`. Each file contains course, module, title, description, quiz settings, and an array of questions with id, title, stem, four choices, 0-indexed correct answer, and per-question correct/incorrect feedback. See any existing file for the complete schema.
+
+**Build:** `python3 build/build_quiz.py quizzes/ --output-dir quizzes/` reads all JSON files and produces Canvas-compatible IMSCC packages (Common Cartridge 1.1.0 with QTI 1.2) alongside them. The script validates input, builds the QTI assessment XML and Canvas metadata XML, packages them into a zip with `imsmanifest.xml` at the root, and verifies the zip structure after creation. Stdlib-only Python, deterministic, no external dependencies.
+
+**Import:** Course Settings → Import Course Content → Common Cartridge 1.x Package. Canvas imports quizzes as unpublished. These packages are for future course imports, not the current live semester.
+
+**Gitignored:** The entire `quizzes/` directory and all `*.imscc` files are in `.gitignore`. Quiz answers are in plaintext in the JSON files.
+
+**Quiz writing rules:**
+- Questions test reading comprehension, not deep analysis. A student who did the reading should get them right; a student who didn't should not.
+- All four answer choices must be similar in length. The correct answer must never be consistently the longest (or shortest) choice — test-savvy students exploit length as a signal. After drafting, audit every question for this pattern.
+- Each question cites a specific reading or resource from the module's readings page.
+- Correct feedback explains why the answer is right. Incorrect feedback points the student to the specific reading that covers the concept.
 
 ## IMSCC Packaging
 
@@ -326,19 +332,21 @@ When the instructor reports an error, a failed import, or any technical correcti
 2. Fix the immediate issue in the affected files.
 3. Add the lesson to this CLAUDE.md so the error never recurs — include what went wrong, why, and the correct approach.
 4. Check whether the same error pattern exists in other files (e.g., if one IMSCC was wrong, check the other).
-5. If the fix changes a standard or convention, update MODULE-STANDARDS.md and/or WRITING-STANDARDS.md too.
+5. If the fix changes a standard or convention, update `docs/MODULE-STANDARDS.md` and/or `docs/WRITING-STANDARDS.md` too.
 
 ## Canvas Artifacts per Module
 
 Each weekly module requires these Canvas artifacts beyond the wiki pages:
 
 **Per module:**
-- **Week X Participation** — Assignment, submission type "No Submission," **80 points**, Assignment Group: Participation. Graded manually from the gradebook.
-- **Week X Ethics Discussion** — Discussion Topic, **20 points**, Assignment Group: Participation. Content from the ethics HTML page.
+- **Week X Participation** — Assignment, submission type "No Submission," **80 points** (or **100 points** for Module 6), Assignment Group: Participation. Graded manually from the gradebook.
+- **Week X Ethics Discussion** — Discussion Topic, **20 points**, Assignment Group: Participation. Content from the ethics HTML page. **Skip for Module 6** in both courses.
 - **Week X Presentation** or **Week X Demo** — Assignment, submission type "On Paper," **100 points**, Assignment Group: Presentations or Demos. Attach the appropriate rubric (see Canvas Details table for rubric IDs).
 - **Week X GitHub Repo** — Assignment, submission type "Online URL," **100 points**, Assignment Group: GitHub Repos. Attach the Repo rubric.
 
 **Note on Week 1:** Week 1 has no lab submission or presentation. Still create the Participation assignment (attendance + ethics) for Week 1, but skip the Repo and Presentation/Demo assignments.
+
+**Note on Module 6:** No ethics post in either course. Make the Module 6 Participation worth 100 points (attendance/engagement only) and skip the Ethics Discussion item.
 
 **Created once per course (not per module):**
 - Missed Class Participation Makeup — single Canvas Discussion Topic, lives outside any module. One standing thread for the whole semester.
