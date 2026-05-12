@@ -28,6 +28,7 @@ rose/
 ├── scripts/
 │   ├── upload_to_canvas.py         ← API uploader: pages/wiki content
 │   ├── create_module_assignments.py ← API script: assignments, discussions, module structure
+│   ├── clean_sandbox.py            ← wipes the Canvas sandbox (hardcoded to course 20338)
 │   └── split_szeliski.py           ← splits the Szeliski textbook PDF into per-section PDFs
 ├── quizzes/                   ← reading quiz JSON sources + IMSCC packages (gitignored)
 ├── build/
@@ -255,6 +256,7 @@ Canvas strips `<style>` and `<link>` tags from wiki pages. The build pipeline in
 - `python3 scripts/upload_to_canvas.py` — upload all built pages to Canvas wiki
 - `python3 scripts/upload_to_canvas.py aiml2003` — upload one course
 - `python3 scripts/create_module_assignments.py <course> <module_num> <due_date>` — create Canvas artifacts for a module (see below)
+- `python3 scripts/clean_sandbox.py --dry-run` — inventory the sandbox (course 20338) without deleting; `--yes` to wipe it (see below)
 - `python3 build/build_quiz.py quizzes/ --output-dir quizzes/` — rebuild all reading quiz IMSCC packages
 - `python3 build/build_quiz.py quizzes/aiml2003-module2-reading-quiz.json --output-dir quizzes/` — rebuild one quiz
 
@@ -272,6 +274,17 @@ python3 scripts/create_module_assignments.py aiml2013 3 2026-04-14T19:00:00-05:0
 - `due_date` — ISO 8601 with UTC offset. AIML 2003 class time = `T17:30:00-05:00`. AIML 2013 class time = `T19:00:00-05:00`.
 
 Deliverable type is resolved automatically from the course/module combination (see Week-by-Week Deliverable Types table). Rubric IDs are hard-coded per course. Assignment group IDs are looked up via the Canvas API at runtime. The Canvas module must already exist with a name containing "Module N" before running the script.
+
+**`scripts/clean_sandbox.py` — Sandbox wipe for upload testing:**
+
+Hardcoded to Canvas course **20338** (the Blank Canvas Personal Sandbox). Before deleting anything, it fetches the course and aborts unless the course name contains `sandbox` (case-insensitive). There is no CLI flag to target a different course — by design.
+
+```
+python3 scripts/clean_sandbox.py --dry-run   # inventory only
+python3 scripts/clean_sandbox.py --yes       # actually delete
+```
+
+Deletes, in order: module items + modules, assignments, classic quizzes, discussion topics, wiki pages, files, non-root folders. Any page flagged as the course front page is automatically unset before the delete loop runs (Canvas refuses to delete the front page directly).
 
 **Key rules:**
 - Never edit files in `build/aiml2003/` or `build/aiml2013/` — they are generated and will be overwritten
