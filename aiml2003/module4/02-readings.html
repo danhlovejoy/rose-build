@@ -12,7 +12,7 @@
 <p class="subtitle">Readings &amp; Prep: Complete before Tuesday, April 21</p>
 
 <div class="time-box">
-  <strong>Estimated prep time:</strong> ~2 hours (required materials). One optional deep dive for those who want the full transformer architecture walkthrough. All materials are free.
+  <strong>Estimated prep time:</strong> ~2 hours 10 min (required materials). One optional deep dive for those who want the full transformer architecture walkthrough. All materials are free.
 </div>
 
 <!-- ========== FRAMING ========== -->
@@ -31,9 +31,24 @@
      REQUIRED READINGS & VIDEOS
      ================================================================ -->
 <h2>Required Readings &amp; Videos</h2>
-<p>Work through these in order. The 3Blue1Brown video builds intuition for how transformers process language; the RAG guide explains the retrieval-generation pattern; the ChromaDB quickstart connects directly to the lab.</p>
+<p>Work through these in order. The GPU video is 90 seconds and explains why this week&rsquo;s lab needs one. The 3Blue1Brown video introduces the attention mechanism; the interactive demo lets you click through it yourself. Then the RAG guide and ChromaDB quickstart connect directly to the lab.</p>
 
-<!-- RESOURCE 1: 3Blue1Brown Attention -->
+<!-- RESOURCE 1: CPU vs GPU -->
+<div class="resource-card">
+  <div class="resource-header">
+    <span class="resource-title">CPU vs GPU Explained Simply for AI Training and Inference</span>
+    <span class="tag tag-required">Required</span>
+    <span class="tag tag-video">Video</span>
+    <span class="tag tag-time">~2 min</span>
+  </div>
+  <p class="resource-meta">Nijat Behbudov &bull; YouTube</p>
+  <p class="resource-desc">This week&rsquo;s lab requires a T4 GPU in Google Colab. This 90-second video explains why. A CPU is like a single master chef &mdash; highly capable but handling one or two recipes at a time (serial processing). A GPU is like thousands of less-specialized kitchen assistants who can all chop an onion at the same time (parallel processing). AI training and inference involve billions of repetitive, simple math operations rather than a few complex ones, so a GPU distributes those calculations across thousands of cores and completes them simultaneously.</p>
+  <p class="resource-link">
+    <a href="https://www.youtube.com/watch?v=HesIZq4gTuA" target="_blank">Watch: CPU vs GPU Explained Simply &rarr;</a>
+  </p>
+</div>
+
+<!-- RESOURCE 2: 3Blue1Brown Attention -->
 <div class="resource-card">
   <div class="resource-header">
     <span class="resource-title">Attention in Transformers, Visually Explained</span>
@@ -42,7 +57,7 @@
     <span class="tag tag-time">~25 min</span>
   </div>
   <p class="resource-meta">3Blue1Brown &bull; YouTube</p>
-  <p class="resource-desc">You've been using transformer-based models since Module 3 (the sentence transformer) and since Module 1 (Gemini itself). This video explains what's happening inside: the attention mechanism that lets a transformer decide which parts of the input to focus on when producing each part of the output. 3Blue1Brown's visual style makes the matrix operations intuitive without requiring linear algebra. Watch this first &mdash; the vocabulary it introduces (query, key, value, attention head) will appear in readings and class discussions for the rest of the semester.</p>
+  <p class="resource-desc">You've been using transformer-based models since Module 3 (the sentence transformer) and since Module 1 (Gemini itself). This video explains what's happening inside: the attention mechanism that weights different parts of the input when producing each part of the output. 3Blue1Brown's visual style makes the matrix operations intuitive without requiring linear algebra. Watch this first &mdash; the vocabulary it introduces (query, key, value, attention head) will appear in readings and class discussions for the rest of the semester.</p>
   <p class="resource-link">
     <a href="https://www.youtube.com/watch?v=eMlx5fFNoYc" target="_blank">Watch: Attention in Transformers &rarr;</a>
   </p>
@@ -51,7 +66,25 @@
   </div>
 </div>
 
-<!-- RESOURCE 2: RAG Guide -->
+<!-- RESOURCE 3: Attention Demo (interactive) -->
+<div class="resource-card">
+  <div class="resource-header">
+    <span class="resource-title">Attention: How Every Word Reaches Across the Sentence (Interactive Demo)</span>
+    <span class="tag tag-required">Required</span>
+    <span class="tag tag-read">Interactive</span>
+    <span class="tag tag-time">~10 min</span>
+  </div>
+  <p class="resource-meta">Course demo &bull; available on Canvas</p>
+  <p class="resource-desc">After watching the 3Blue1Brown video, work through this interactive demo. It uses the sentence &ldquo;The trophy didn&rsquo;t fit in the suitcase because it was too big&rdquo; to let you click individual words and see their attention weights. You&rsquo;ll see how &ldquo;it&rdquo; resolves to &ldquo;trophy&rdquo; when the adjective is &ldquo;big&rdquo; and to &ldquo;suitcase&rdquo; when you swap in &ldquo;small.&rdquo; The demo covers Query/Key/Value, softmax score computation, and multi-head attention &mdash; all concepts from the video, now under your control.</p>
+  <p class="resource-link">
+    <a href="https://danhlovejoy.github.io/rose-build/slides/attention-demo.html" target="_blank">Open: Attention Demo &rarr;</a>
+  </p>
+  <div class="focus-box">
+    <strong>Key concept to lock in:</strong> Different attention heads track different relationships in the same sentence. The coreference head resolves pronouns; the syntax head binds verbs to their modifiers; the descriptor head connects adjectives to the nouns they describe. No single head captures the full picture &mdash; the concatenation of all heads does.
+  </div>
+</div>
+
+<!-- RESOURCE 4: RAG Guide -->
 <div class="resource-card">
   <div class="resource-header">
     <span class="resource-title">Retrieval-Augmented Generation (RAG)</span>
@@ -60,12 +93,12 @@
     <span class="tag tag-time">~20 min</span>
   </div>
   <p class="resource-meta">Pinecone &bull; pinecone.io/learn</p>
-  <p class="resource-desc">Pinecone is a vector database company, so take the product mentions with a grain of salt &mdash; but their RAG explainer is one of the clearest available. It covers the full pipeline: why LLMs need external knowledge, how retrieval provides it, how the context window limits what you can feed in, and why chunk size and overlap matter. The diagram on page 2 maps directly to the architecture you'll build in the lab.</p>
+  <p class="resource-desc">Pinecone is a vector database company that competes with ChromaDB, which we use in this week's lab. Their RAG explainer covers the full pipeline in plain language. It covers the full pipeline: why LLMs need external knowledge, how retrieval provides it, how the context window limits what you can feed in, and why chunk size and overlap matter. The labeled "Traditional RAG" maps directly to the architecture you'll build in the lab.</p>
   <p class="resource-link">
     <a href="https://www.pinecone.io/learn/retrieval-augmented-generation/" target="_blank">Read: Retrieval-Augmented Generation &rarr;</a>
   </p>
   <div class="focus-box">
-    <strong>Key concept to lock in:</strong> RAG is not fine-tuning. Fine-tuning changes the model's weights permanently. RAG leaves the model untouched and changes the prompt dynamically based on what's retrieved. This means RAG can answer questions about documents that didn't exist when the model was trained &mdash; which is the entire point.
+    <strong>Key concept to lock in:</strong> RAG is not fine-tuning. Fine-tuning changes the model's weights permanently. RAG leaves the model untouched and changes the prompt dynamically based on what's retrieved. This means RAG can answer questions about documents that didn't exist when the model was trained, which is the entire point.
   </div>
 </div>
 
@@ -112,7 +145,7 @@
     <span class="tag tag-time">~45 min</span>
   </div>
   <p class="resource-meta">Jay Alammar &bull; jalammar.github.io</p>
-  <p class="resource-desc">The definitive visual walkthrough of the full transformer architecture &mdash; encoder, decoder, multi-head attention, positional encoding, the lot. This goes deeper than the 3Blue1Brown video and is worth the time if you want to understand the complete picture. Not required for the lab, but strongly recommended if you plan to discuss transformer architecture in your portfolio presentation.</p>
+  <p class="resource-desc">A full visual walkthrough of the transformer architecture &mdash; encoder, decoder, multi-head attention, positional encoding, the lot. This goes deeper than the 3Blue1Brown video and the interactive demo. Not required for the lab, but if the demo left you wanting the full mathematical picture, start here.</p>
   <p class="resource-link">
     <a href="https://jalammar.github.io/illustrated-transformer/" target="_blank">Read: The Illustrated Transformer &rarr;</a>
   </p>
@@ -126,10 +159,10 @@
 
 <div class="section-card">
   <ol>
-    <li style="margin-bottom:0.75rem;">RAG retrieves chunks and passes them to an LLM as context. The LLM generates an answer from that context. What happens when the retriever returns the wrong chunks? Is the LLM likely to notice, or will it confidently generate an answer from irrelevant context?</li>
-    <li style="margin-bottom:0.75rem;">Chunk size creates a tradeoff: small chunks are precise but lack context; large chunks carry context but dilute the relevant passage. For a 200-page legal contract, would you chunk by paragraph, by section, or by fixed character count? Why?</li>
-    <li style="margin-bottom:0.75rem;">The 3Blue1Brown video shows how attention lets a transformer connect distant words. How does this relate to why sentence transformers produce better embeddings than TF-IDF for the retrieval step of RAG?</li>
+    <li style="margin-bottom:0.75rem;">RAG retrieves chunks and passes them to an LLM as context. The LLM generates an answer from that context. What happens when the retriever returns the wrong chunks? Will the LLM flag the mismatch, or will it confidently generate an answer from irrelevant context?</li>
+    <li style="margin-bottom:0.75rem;">Chunk size creates a tradeoff: small chunks are precise but lack context; large chunks carry context but dilute the relevant passage. What are the different chunking styles? What are the advantages and disadvantages of each?</li>
     <li style="margin-bottom:0.75rem;">A company builds a customer support bot using RAG over their product documentation. The bot answers questions accurately 90% of the time and hallucinates 10% of the time. Is 90% good enough to deploy? What factors would change your answer?</li>
+    <li style="margin-bottom:0.75rem;">The system prompt in a RAG pipeline tells the LLM to answer only from the provided context. But the LLM still has its pre-trained knowledge. How would you test whether the system prompt actually constrains generation, and what would you do if it doesn&rsquo;t?</li>
   </ol>
 </div>
 

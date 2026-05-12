@@ -12,7 +12,7 @@
 <p class="subtitle">Readings &amp; Prep: Complete before Tuesday, April 21</p>
 
 <div class="time-box">
-  <strong>Estimated prep time:</strong> ~2 hours (required materials). One optional deep dive on the full transformer architecture. All materials are free.
+  <strong>Estimated prep time:</strong> ~2 hours 10 min (required materials). One optional deep dive on the full transformer architecture. All materials are free.
 </div>
 
 <!-- ========== FRAMING ========== -->
@@ -31,9 +31,24 @@
      REQUIRED READINGS & VIDEOS
      ================================================================ -->
 <h2>Required Readings &amp; Videos</h2>
-<p>Work through these in order. The 3Blue1Brown video explains the attention mechanism conceptually; the PyImageSearch article connects it to feature extraction; the Szeliski section grounds similarity metrics; the ChromaDB quickstart prepares you for the lab.</p>
+<p>Work through these in order. The GPU video is 90 seconds and explains why this week&rsquo;s lab needs one. The 3Blue1Brown video explains the attention mechanism conceptually; the PyImageSearch article connects it to feature extraction; the Szeliski section grounds similarity metrics; the ChromaDB quickstart prepares you for the lab.</p>
 
-<!-- RESOURCE 1: 3Blue1Brown Attention -->
+<!-- RESOURCE 1: CPU vs GPU -->
+<div class="resource-card">
+  <div class="resource-header">
+    <span class="resource-title">CPU vs GPU Explained Simply for AI Training and Inference</span>
+    <span class="tag tag-required">Required</span>
+    <span class="tag tag-video">Video</span>
+    <span class="tag tag-time">~2 min</span>
+  </div>
+  <p class="resource-meta">Nijat Behbudov &bull; YouTube</p>
+  <p class="resource-desc">This week&rsquo;s lab requires a T4 GPU in Google Colab. This 90-second video explains why. A CPU is like a single master chef &mdash; highly capable but handling one or two recipes at a time (serial processing). A GPU is like thousands of less-specialized kitchen assistants who can all chop an onion at the same time (parallel processing). AI training and inference involve billions of repetitive, simple math operations rather than a few complex ones, so a GPU distributes those calculations across thousands of cores and completes them simultaneously.</p>
+  <p class="resource-link">
+    <a href="https://www.youtube.com/watch?v=HesIZq4gTuA" target="_blank">Watch: CPU vs GPU Explained Simply &rarr;</a>
+  </p>
+</div>
+
+<!-- RESOURCE 2: 3Blue1Brown Attention -->
 <div class="resource-card">
   <div class="resource-header">
     <span class="resource-title">Attention in Transformers, Visually Explained</span>
@@ -47,11 +62,29 @@
     <a href="https://www.youtube.com/watch?v=eMlx5fFNoYc" target="_blank">Watch: Attention in Transformers &rarr;</a>
   </p>
   <div class="focus-box">
-    <strong>Key concept to lock in:</strong> Attention lets a model decide what to focus on rather than processing everything equally. In a vision transformer, an image patch of a dog's ear can "attend" to the patch containing the dog's nose even if they're on opposite sides of the image. CNNs like MobileNetV2 build this receptive field gradually through stacked layers; transformers get it in a single attention step.
+    <strong>Key concept to lock in:</strong> Attention computes a weighted combination of the input rather than processing everything equally. In a vision transformer, an image patch of a dog's ear can "attend" to the patch containing the dog's nose even if they're on opposite sides of the image. CNNs like MobileNetV2 build this receptive field gradually through stacked layers; transformers get it in a single attention step.
   </div>
 </div>
 
-<!-- RESOURCE 2: Transfer Learning / Feature Extraction -->
+<!-- RESOURCE 2b: Attention Demo (interactive) -->
+<div class="resource-card">
+  <div class="resource-header">
+    <span class="resource-title">Attention: How Every Word Reaches Across the Sentence (Interactive Demo)</span>
+    <span class="tag tag-required">Required</span>
+    <span class="tag tag-read">Interactive</span>
+    <span class="tag tag-time">~10 min</span>
+  </div>
+  <p class="resource-meta">Course demo &bull; available on Canvas</p>
+  <p class="resource-desc">After watching the 3Blue1Brown video, work through this interactive demo. It uses the sentence &ldquo;The trophy didn&rsquo;t fit in the suitcase because it was too big&rdquo; to let you click individual words and see their attention weights. You&rsquo;ll see how &ldquo;it&rdquo; resolves to &ldquo;trophy&rdquo; when the adjective is &ldquo;big&rdquo; and to &ldquo;suitcase&rdquo; when you swap in &ldquo;small.&rdquo; The demo covers Query/Key/Value, softmax score computation, and multi-head attention &mdash; all concepts from the video, now under your control. The example uses text, but the mechanism is identical for image patches in a vision transformer.</p>
+  <p class="resource-link">
+    <a href="https://danhlovejoy.github.io/rose-build/slides/attention-demo.html" target="_blank">Open: Attention Demo &rarr;</a>
+  </p>
+  <div class="focus-box">
+    <strong>Key concept to lock in:</strong> Different attention heads track different relationships in the same input. The coreference head resolves pronouns; the syntax head binds verbs to their modifiers; the descriptor head connects adjectives to the nouns they describe. In a vision transformer, analogous heads track spatial relationships, texture boundaries, and object-part connections. No single head captures the full picture &mdash; the concatenation of all heads does.
+  </div>
+</div>
+
+<!-- RESOURCE 3: Transfer Learning / Feature Extraction -->
 <div class="resource-card">
   <div class="resource-header">
     <span class="resource-title">Transfer Learning with Keras and Deep Learning</span>
@@ -112,7 +145,7 @@
     <span class="tag tag-time">~45 min</span>
   </div>
   <p class="resource-meta">Jay Alammar &bull; jalammar.github.io</p>
-  <p class="resource-desc">The definitive visual walkthrough of the full transformer architecture. Goes deeper than the 3Blue1Brown video. Not required for the lab, but strongly recommended if you plan to discuss vision transformers or attention in your portfolio presentation.</p>
+  <p class="resource-desc">A full visual walkthrough of the transformer architecture. Goes deeper than the 3Blue1Brown video. Not required for the lab, but strongly recommended if you plan to discuss vision transformers or attention in your portfolio presentation.</p>
   <p class="resource-link">
     <a href="https://jalammar.github.io/illustrated-transformer/" target="_blank">Read: The Illustrated Transformer &rarr;</a>
   </p>
@@ -126,7 +159,7 @@
 
 <div class="section-card">
   <ol>
-    <li style="margin-bottom:0.75rem;">Your retrieval system returns the 5 most similar images for any query. How would you explain to a non-technical user why a particular image was returned? Can you point to specific visual features, or is the model's reasoning opaque?</li>
+    <li style="margin-bottom:0.75rem;">Your retrieval system returns the 5 most similar images for any query. How would you explain to a non-technical user why a particular image was returned? Can you point to specific visual features, or is the similarity computation opaque?</li>
     <li style="margin-bottom:0.75rem;">MobileNetV2 was trained on ImageNet (1.2 million images, 1,000 classes). If you query with an image from a class that wasn't in ImageNet &mdash; say, a medical X-ray or a satellite photo &mdash; what would you expect the retrieval quality to look like? Why?</li>
     <li style="margin-bottom:0.75rem;">The 3Blue1Brown video shows how attention lets a model relate distant parts of an input. How does this compare to how a CNN like MobileNetV2 builds its receptive field through stacked convolution layers? What can attention do that convolution cannot?</li>
     <li style="margin-bottom:0.75rem;">Google Image Search, Pinterest visual search, and Amazon's product matching all use systems similar to what you're building. What properties would a production system need that your lab prototype does not have?</li>

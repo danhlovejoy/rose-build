@@ -26,7 +26,7 @@
     </thead>
     <tbody>
       <tr>
-        <td>Module 4 Lab: Image Similarity Search with ChromaDB</td>
+        <td>Module 4 Lab: Investigating the Image Retrieval Engine</td>
         <td>Colab notebook via GitHub</td>
         <td>Repos (25%)</td>
         <td>GitHub + link in Canvas</td>
@@ -50,25 +50,25 @@
 <!-- =====================================================================
      DELIVERABLE 1: LAB
      ===================================================================== -->
-<h2>Deliverable 1: Module 4 Lab <span class="tag tag-lab">Lab</span></h2>
+<h2>Deliverable 1: <a href="https://rose.instructure.com/courses/26944/pages/lab-4-investigating-the-image-retrieval-engine">Module 4 Lab</a> <span class="tag tag-lab">Lab</span></h2>
 
 <div class="section-card">
   <h3>Overview</h3>
-  <p>In the readings and in class, you learned how pre-trained CNNs serve as feature extractors: remove the classification head, feed in an image, and the remaining layers produce a dense embedding that encodes visual content. In Module 3 you computed similarity by brute-force cosine distance against a numpy array. This lab replaces that with a real retrieval system backed by ChromaDB, adds quantitative evaluation (precision@k), and runs the HOG comparison one more time to measure the gap.</p>
-  <p>The failure case analysis in Cell 8 is where the interesting findings live. Every retrieval system has blind spots. Identifying them &mdash; and explaining why the feature extractor fails on those specific images &mdash; is more valuable than reporting a high precision score.</p>
+  <p>In the readings and in class, you learned how pre-trained CNNs serve as feature extractors: remove the classification head, feed in an image, and the remaining layers produce a dense embedding that encodes visual content. This lab gives you a working image retrieval system &mdash; MobileNetV2 embedding extraction, ChromaDB storage, and similarity search with visualization &mdash; and asks you to investigate how it works. You run the system in Part 1, then probe the visual vector space through four experiments: the similarity game, embedding surgery, the caption bridge, and a retrieval quality deep dive.</p>
+  <p>The markdown cells you write after each experiment are the core of this lab. They&rsquo;re where you explain what you observed, what surprised you, and what it means. Those reflections are also the substance of your demo.</p>
 
   <h3>What to Submit</h3>
   <ul>
-    <li>A completed Colab notebook (<code>.ipynb</code>) saved to your GitHub repo at <code>week5/lab4_similarity.ipynb</code>.</li>
-    <li>All cells executed with visible outputs (don't clear outputs).</li>
-    <li>Each code cell preceded by a markdown cell with your LLM prompt and fix note.</li>
+    <li>A completed Colab notebook (<code>.ipynb</code>) saved to your GitHub repo at <code>module4/lab4-cv-investigation.ipynb</code>.</li>
+    <li>All cells executed with visible outputs (don&rsquo;t clear outputs).</li>
+    <li>Markdown reflection cells completed for every experiment.</li>
     <li>No API keys or secrets anywhere in the notebook.</li>
-    <li>Submit the GitHub link in Canvas. If it's not in the repo, it doesn't exist for grading.</li>
+    <li>Submit the GitHub link in Canvas. If it&rsquo;s not in the repo, it doesn&rsquo;t exist for grading.</li>
   </ul>
 </div>
 
 <div class="tip">
-  <strong>Start this in Thursday lab.</strong> We'll work through the pipeline together: extracting embeddings, building the ChromaDB collection, and running the first retrieval query. Bring your dataset from Module 3 &mdash; you'll use the same images.
+  <strong>Start this in Thursday lab.</strong> We&rsquo;ll run through Part 1 together and start the experiments. Come with the readings done so you know what vector databases and feature extraction are before we investigate one.
 </div>
 
 <div class="rubric-section">
@@ -83,13 +83,13 @@
       <tr><td>Notebook Runs</td><td>/25</td><td>STANDARD</td><td>Notebook is in the correct week folder. Cells execute top-to-bottom without errors. All outputs visible.</td></tr>
       <tr style="background:#fff3e0;"><td>Task Requirements</td><td>/40</td><td>WEEKLY</td><td><strong>This week:</strong>
         <ul style="margin: 0.4rem 0 0 1rem; padding: 0;">
-          <li>MobileNetV2 embeddings extracted and stored in a ChromaDB collection.</li>
-          <li>Query-by-image retrieval function returns ranked results with visual display.</li>
-          <li>Cross-class confusion analysis with heatmap visualization.</li>
-          <li>Precision@k computed at k=1, 3, 5 across the full dataset.</li>
-          <li>HOG baseline comparison: precision@5 and dual t-SNE visualization.</li>
+          <li>Part 1 pipeline runs end-to-end: images loaded, embeddings extracted, ChromaDB populated, retrieval returns results.</li>
+          <li>Experiment 1 (Similarity Game): at least five query images tested with predictions recorded before retrieval.</li>
+          <li>Experiment 2 (Embedding Surgery): midpoint and difference-vector retrievals run with results explained.</li>
+          <li>Experiment 3 (Caption Bridge): text-to-image search tested with success and failure cases identified.</li>
+          <li>Experiment 4 (Retrieval Quality Deep Dive): precision@k computed across all images, per-class breakdown analyzed, failure case explained.</li>
         </ul></td></tr>
-      <tr><td>Reflection</td><td>/20</td><td>STANDARD</td><td>200&ndash;400 words. Connects results to the readings. Addresses what worked, what didn't, and what you'd change.</td></tr>
+      <tr><td>Reflection</td><td>/20</td><td>STANDARD</td><td>Markdown cells after each experiment explaining what you observed and what it means. These cells are the reflection &mdash; no separate written reflection required.</td></tr>
       <tr><td>Repo Hygiene</td><td>/15</td><td>STANDARD</td><td>No active (unrevoked) secrets. README updated. Descriptive commit message. Files in the right folder.</td></tr>
     </tbody>
   </table>
@@ -104,14 +104,14 @@
 
 <div class="section-card">
   <h3>Overview</h3>
-  <p>A <strong>three- to five-minute</strong> live demo during Tuesday's class (April 21, 7:00 PM). Your notebook is your demo &mdash; no separate slides required. Walk the class through your retrieval system, show the evaluation results, and make a live modification.</p>
+  <p>A <strong>three- to five-minute</strong> live demo during Tuesday&rsquo;s class (April 21, 7:00 PM). Your notebook is your demo &mdash; no separate slides required. Walk the class through one experiment in depth, show a retrieval failure, demonstrate the caption bridge, and share what you learned.</p>
 
   <h3>What to Cover</h3>
   <ol>
-    <li><strong>The retrieval system:</strong> Query with a new image (one you haven't shown before). Display the query and the top 5 results. Walk the class through whether the results make visual sense.</li>
-    <li><strong>The confusion heatmap:</strong> Show Cell 6. Which two classes does the model confuse most? Pull up example images from both classes and explain the visual similarity that causes confusion.</li>
-    <li><strong>The HOG comparison:</strong> Show precision@5 for MobileNetV2 vs. HOG and the dual t-SNE plot. Explain the gap in one sentence.</li>
-    <li><strong>Live modification:</strong> Change something &mdash; the number of retrieved results, swap a query image, or try a different class. Re-run and explain what changed. This is worth 25 points on the demo rubric.</li>
+    <li><strong>One experiment in depth:</strong> Pick the experiment that surprised you most. Show the code, show the output, and explain what you learned. This is the centerpiece.</li>
+    <li><strong>A failure:</strong> Show an image where the retrieval system returned the wrong class. Explain what visual feature fooled the model.</li>
+    <li><strong>The caption bridge:</strong> Show one text query that found the right image and one that didn&rsquo;t. What does this tell you about the gap between visual similarity and language?</li>
+    <li><strong>One sentence you couldn&rsquo;t have said before this lab:</strong> What do you now understand about embeddings or vector search that you didn&rsquo;t before?</li>
   </ol>
 
   <h3>Format</h3>
@@ -126,11 +126,11 @@
       <tr><th style="width:35%">Criterion</th><th style="width:12%">Points</th><th>What I'm Looking For</th></tr>
     </thead>
     <tbody>
-      <tr><td>Execution &amp; Requirements</td><td>20</td><td>Pipeline runs cleanly. Images load, embeddings extract, ChromaDB returns results, visualizations render.</td></tr>
+      <tr><td>Execution &amp; Requirements</td><td>20</td><td>Pipeline runs cleanly. Part 1 loads without errors, experiments produce visible outputs.</td></tr>
       <tr><td>Variable &amp; Data Flow</td><td>20</td><td>You can explain what each stage produces. Image &rarr; preprocess &rarr; MobileNetV2 &rarr; embedding &rarr; ChromaDB &rarr; retrieval &rarr; display.</td></tr>
-      <tr><td>Dependency Justification</td><td>15</td><td>You can explain why MobileNetV2, why this dataset, why this number of results.</td></tr>
-      <tr><td>Prompt Strategy</td><td>20</td><td>Your evaluation metrics are meaningful. You can explain what precision@k measures and what it misses.</td></tr>
-      <tr><td>Live Modification</td><td>25</td><td>You change a parameter live, re-run, and explain the effect.</td></tr>
+      <tr><td>Dependency Justification</td><td>15</td><td>You can explain why the experiment produced the results it did. Connects observations to how the visual vector space works.</td></tr>
+      <tr><td>Prompt Strategy</td><td>20</td><td>Your experiment reflections show depth. You can explain what you observed, what surprised you, and what it reveals about embeddings or retrieval.</td></tr>
+      <tr><td>Live Modification</td><td>25</td><td>You run a cell live and explain the result. Not scripted &mdash; a genuine demonstration of understanding.</td></tr>
     </tbody>
   </table>
 </div>
@@ -140,7 +140,7 @@
 <!-- ========== COMBINED ASSIGNMENT NOTE ========== -->
 <div class="bridge-box" data-concurrent="true">
   <strong>Taking AIML 2003 (Natural Language Processing) too?</strong>
-  <p>A combined lab is available: <a href="lab4-combined-universal-search.html">The Universal Search Engine</a>. It builds a single ChromaDB instance that indexes both image embeddings (CV) and text chunks (NLP), queryable in both modalities. You submit the same GitHub URL to both courses. If you do the combined lab, it replaces the individual CV lab. Do not submit both. Your demo this week is also combined: plan for 5&ndash;7 minutes instead of 3&ndash;5 to cover both domains.</p>
+  <p>A combined lab is available: <a href="https://rose.instructure.com/courses/26944/pages/lab-4-combined-investigating-the-universal-search-engine">Investigating the Universal Search Engine</a>. It gives you a pre-built search engine backed by ChromaDB &mdash; image retrieval and text RAG in one system &mdash; and walks you through five experiments investigating how the vector spaces work: similarity scoring, embedding arithmetic, cross-modal bridging, and chunking strategies. You submit the same GitHub URL to both courses. If you do the combined lab, it replaces the individual NLP and CV labs. Do not submit both. Your demo this week is also combined: plan for 5&ndash;7 minutes instead of 3&ndash;5.</p>
 </div>
 
 <hr>
@@ -152,13 +152,14 @@
 
 <div class="section-card">
   <h3>Overview</h3>
-  <p>Complete the ethics discussion thread for this module. The full prompt and context are on the <a href="04-ethics.html">Ethics Thread page</a> in this module.</p>
+  <p>Complete the ethics discussion thread for this module. The full prompt and context are on the <a href="https://rose.instructure.com/courses/26944/pages/ethics-discussion-when-machines-decide-what-looks-alike">Ethics Thread page</a> in this module.</p>
 
   <h3>Requirements</h3>
   <ul>
     <li>Initial post: 150&ndash;250 words. Take a position: don't just summarize the question.</li>
     <li>Reply to a classmate: at least one substantive reply (not just &ldquo;I agree&rdquo;).</li>
-    <li>Initial post due by Tuesday class (April 21). Reply due by the following Tuesday class (April 28).</li>
+    <li>Initial post deadline: Tuesday, April 21 (before class).</li>
+    <li>Reply deadline: by the following Tuesday class (April 28).</li>
   </ul>
   <p style="margin-top:0.75rem; font-size:0.9rem; color:var(--muted);">The ethics discussion is worth 20% of your weekly Participation grade. Whether you attend in person or via Zoom, this post is required every week.</p>
 </div>
@@ -168,9 +169,9 @@
   <strong>Submission Checklist</strong>
   <ul>
     <li>Module 4 Lab notebook runs cleanly top-to-bottom with all outputs visible</li>
-    <li>Each code cell has a preceding markdown cell with your LLM prompt and fix note</li>
+    <li>Markdown reflection cells completed for every experiment</li>
     <li>No API keys exposed in any committed file</li>
-    <li>Notebook saved to GitHub at <code>week5/lab4_similarity.ipynb</code></li>
+    <li>Notebook saved to GitHub at <code>module4/lab4-cv-investigation.ipynb</code></li>
     <li>README updated to reflect Module 4 contents</li>
     <li>GitHub repo link submitted in Canvas</li>
     <li>Demo prepared and notebook ready to run for Tuesday class (April 21)</li>

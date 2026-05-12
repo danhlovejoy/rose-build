@@ -26,7 +26,7 @@
     </thead>
     <tbody>
       <tr>
-        <td>Module 4 Lab: Chat with a PDF</td>
+        <td>Module 4 Lab: Investigating the RAG Pipeline</td>
         <td>Colab notebook via GitHub</td>
         <td>Repos (25%)</td>
         <td>GitHub + link in Canvas</td>
@@ -50,25 +50,25 @@
 <!-- =====================================================================
      DELIVERABLE 1: LAB
      ===================================================================== -->
-<h2>Deliverable 1: Module 4 Lab <span class="tag tag-lab">Lab</span></h2>
+<h2>Deliverable 1: <a href="https://rose.instructure.com/courses/26943/pages/lab-4-investigating-the-rag-pipeline">Module 4 Lab</a> <span class="tag tag-lab">Lab</span></h2>
 
 <div class="section-card">
   <h3>Overview</h3>
-  <p>In the readings and in class, you learned how RAG combines retrieval with generation: relevant passages are pulled from a document, injected into a prompt, and used by the LLM to produce an answer grounded in evidence. This lab puts that into practice. You'll extract text from a PDF, chunk it, embed the chunks with <code>all-MiniLM-L6-v2</code>, store them in ChromaDB, and wire retrieval to Gemini so the model answers questions using only the document's content.</p>
-  <p>The hallucination test in Cell 10 is where the system earns its keep. A well-built RAG pipeline should refuse to answer questions outside its context. A poorly built one will fabricate answers with the same confidence it uses for correct ones. The difference is your system prompt.</p>
+  <p>In the readings and in class, you learned how RAG combines retrieval with generation: relevant passages are pulled from a document, injected into a prompt, and used by the LLM to produce an answer grounded in evidence. This lab gives you a working RAG pipeline &mdash; PDF text extraction, chunking, embedding with Nomic Embed, ChromaDB storage, and Gemini-powered answer generation &mdash; and asks you to investigate how it works. You run the system in Part 1, then probe the text vector space through four experiments: the similarity game, embedding surgery, the caption bridge, and a chunking strategy showdown.</p>
+  <p>The markdown cells you write after each experiment are the core of this lab. They&rsquo;re where you explain what you observed, what surprised you, and what it means. Those reflections are also the substance of your demo.</p>
 
   <h3>What to Submit</h3>
   <ul>
-    <li>A completed Colab notebook (<code>.ipynb</code>) saved to your GitHub repo at <code>week5/lab4_rag.ipynb</code>.</li>
-    <li>All cells executed with visible outputs (don't clear outputs).</li>
-    <li>Each code cell preceded by a markdown cell with your LLM prompt and fix note.</li>
+    <li>A completed Colab notebook (<code>.ipynb</code>) saved to your GitHub repo at <code>module4/lab4-nlp-investigation.ipynb</code>.</li>
+    <li>All cells executed with visible outputs (don&rsquo;t clear outputs).</li>
+    <li>Markdown reflection cells completed for every experiment.</li>
     <li>No API keys or secrets anywhere in the notebook.</li>
-    <li>Submit the GitHub link in Canvas. If it's not in the repo, it doesn't exist for grading.</li>
+    <li>Submit the GitHub link in Canvas. If it&rsquo;s not in the repo, it doesn&rsquo;t exist for grading.</li>
   </ul>
 </div>
 
 <div class="tip">
-  <strong>Start this in Thursday lab.</strong> We'll work through the full pipeline together: PDF extraction, chunking, ChromaDB setup, and the first Gemini call. Bring a PDF you want to use, or we'll work with the default document. Come with the readings done so you know what RAG is before we build one.
+  <strong>Start this in Thursday lab.</strong> We&rsquo;ll run through Part 1 together and start the experiments. Bring a PDF you want to use &mdash; at least 10 pages of selectable text. If you don&rsquo;t have one, grab a book from <a href="https://www.gutenberg.org/" target="_blank">Project Gutenberg</a>. Come with the readings done so you know what RAG is before we investigate one.
 </div>
 
 <div class="rubric-section">
@@ -83,13 +83,13 @@
       <tr><td>Notebook Runs</td><td>/25</td><td>STANDARD</td><td>Notebook is in the correct week folder. Cells execute top-to-bottom without errors. All outputs visible.</td></tr>
       <tr style="background:#fff3e0;"><td>Task Requirements</td><td>/40</td><td>WEEKLY</td><td><strong>This week:</strong>
         <ul style="margin: 0.4rem 0 0 1rem; padding: 0;">
-          <li>PDF text extracted and chunked with visible overlap between consecutive chunks.</li>
-          <li>Chunks embedded with <code>all-MiniLM-L6-v2</code> and stored in a ChromaDB collection.</li>
-          <li>Retrieval function queries ChromaDB and returns ranked chunks for a given question.</li>
-          <li>RAG pipeline generates answers using Gemini with a system prompt that constrains hallucination.</li>
-          <li>Hallucination test: at least 3 unanswerable questions tested, with results compared against direct Gemini calls.</li>
+          <li>Part 1 pipeline runs end-to-end: PDF loaded, chunks embedded, ChromaDB populated, RAG answers generated.</li>
+          <li>Experiment 1 (Similarity Game): at least five queries attempted with scores logged and strategies compared.</li>
+          <li>Experiment 2 (Embedding Surgery): midpoint and difference-vector retrievals run with results explained.</li>
+          <li>Experiment 3 (Caption Bridge): five images captioned and used to search text, with quality assessment.</li>
+          <li>Experiment 4 (Chunking Strategy Showdown): fixed, overlap, and sentence-boundary strategies compared on the same questions.</li>
         </ul></td></tr>
-      <tr><td>Reflection</td><td>/20</td><td>STANDARD</td><td>200&ndash;400 words. Connects results to the readings. Addresses what worked, what didn't, and what you'd change.</td></tr>
+      <tr><td>Reflection</td><td>/20</td><td>STANDARD</td><td>Markdown cells after each experiment explaining what you observed and what it means. These cells are the reflection &mdash; no separate written reflection required.</td></tr>
       <tr><td>Repo Hygiene</td><td>/15</td><td>STANDARD</td><td>No active (unrevoked) secrets. README updated. Descriptive commit message. Files in the right folder.</td></tr>
     </tbody>
   </table>
@@ -104,14 +104,14 @@
 
 <div class="section-card">
   <h3>Overview</h3>
-  <p>A <strong>three- to five-minute</strong> live demo during Tuesday's class (April 21, 5:30 PM). Your notebook is your demo &mdash; no separate slides required. Walk the class through your RAG pipeline, ask a live question, and show the hallucination test results.</p>
+  <p>A <strong>three- to five-minute</strong> live demo during Tuesday&rsquo;s class (April 21, 5:30 PM). Your notebook is your demo &mdash; no separate slides required. Walk the class through one experiment in depth, show a failure, demonstrate the RAG pipeline live, and share what you learned.</p>
 
   <h3>What to Cover</h3>
   <ol>
-    <li><strong>The pipeline (30 seconds):</strong> Show your document, chunk count, and ChromaDB collection size. Orient the audience on what the system knows.</li>
-    <li><strong>A live question:</strong> Type a new question into <code>ask()</code> and run it. Walk through the retrieved chunks and the generated answer. Did the model ground its answer in the context?</li>
-    <li><strong>The hallucination test:</strong> Show Cell 10 results. If the system hallucinated, explain why. If it refused correctly, show the system prompt that prevented fabrication.</li>
-    <li><strong>Live modification:</strong> Change something &mdash; chunk size, number of retrieved chunks, or the system instruction. Re-run and explain what changed. This is worth 25 points on the demo rubric.</li>
+    <li><strong>One experiment in depth:</strong> Pick the experiment that surprised you most. Show the code, show the output, and explain what you learned. This is the centerpiece.</li>
+    <li><strong>A failure:</strong> Show something that didn&rsquo;t work the way you expected &mdash; a bad query, a hallucination, a chunking result that hurt instead of helped. Explain why you think it failed.</li>
+    <li><strong>The RAG pipeline in action:</strong> Ask your document one question live. Show the retrieved passages and explain why the system found them.</li>
+    <li><strong>One sentence you couldn&rsquo;t have said before this lab:</strong> What do you now understand about embeddings, vector search, or chunking that you didn&rsquo;t before?</li>
   </ol>
 
   <h3>Format</h3>
@@ -126,11 +126,11 @@
       <tr><th style="width:35%">Criterion</th><th style="width:12%">Points</th><th>What I'm Looking For</th></tr>
     </thead>
     <tbody>
-      <tr><td>Execution &amp; Requirements</td><td>20</td><td>Pipeline runs cleanly. PDF loads, chunks embed, retrieval returns results, Gemini generates answers.</td></tr>
+      <tr><td>Execution &amp; Requirements</td><td>20</td><td>Pipeline runs cleanly. Part 1 loads without errors, experiments produce visible outputs.</td></tr>
       <tr><td>Variable &amp; Data Flow</td><td>20</td><td>You can explain what each stage produces and how it feeds the next. Chunk &rarr; embedding &rarr; ChromaDB &rarr; retrieval &rarr; prompt &rarr; generation.</td></tr>
-      <tr><td>Dependency Justification</td><td>15</td><td>You can explain why you chose this chunk size, this model, this number of retrieved chunks.</td></tr>
-      <tr><td>Prompt Strategy</td><td>20</td><td>Your system prompt constrains hallucination. You can explain what it does and why it works (or doesn't).</td></tr>
-      <tr><td>Live Modification</td><td>25</td><td>You change a parameter live, re-run, and explain the effect. Not scripted &mdash; a genuine experiment.</td></tr>
+      <tr><td>Dependency Justification</td><td>15</td><td>You can explain why the experiment produced the results it did. Connects observations to how the vector space works.</td></tr>
+      <tr><td>Prompt Strategy</td><td>20</td><td>Your experiment reflections show depth. You can explain what you observed, what surprised you, and what it reveals about embeddings or retrieval.</td></tr>
+      <tr><td>Live Modification</td><td>25</td><td>You run a cell live and explain the result. Not scripted &mdash; a genuine demonstration of understanding.</td></tr>
     </tbody>
   </table>
 </div>
@@ -140,7 +140,7 @@
 <!-- ========== COMBINED ASSIGNMENT NOTE ========== -->
 <div class="bridge-box" data-concurrent="true">
   <strong>Taking AIML 2013 (Computer Vision) too?</strong>
-  <p>A combined lab is available: <a href="lab4-combined-universal-search.html">The Universal Search Engine</a>. It builds a single ChromaDB instance that indexes both text chunks (NLP) and image embeddings (CV), queryable in both modalities. You submit the same GitHub URL to both courses. If you do the combined lab, it replaces the individual NLP lab. Do not submit both. Your demo this week is also combined: plan for 5&ndash;7 minutes instead of 3&ndash;5 to cover both domains.</p>
+  <p>A combined lab is available: <a href="https://rose.instructure.com/courses/26943/pages/lab-4-combined-investigating-the-universal-search-engine">Investigating the Universal Search Engine</a>. It gives you a pre-built search engine backed by ChromaDB &mdash; text RAG and image retrieval in one system &mdash; and walks you through five experiments investigating how the vector spaces work: similarity scoring, embedding arithmetic, cross-modal bridging, and chunking strategies. You submit the same GitHub URL to both courses. If you do the combined lab, it replaces the individual NLP and CV labs. Do not submit both. Your demo this week is also combined: plan for 5&ndash;7 minutes instead of 3&ndash;5.</p>
 </div>
 
 <hr>
@@ -152,13 +152,14 @@
 
 <div class="section-card">
   <h3>Overview</h3>
-  <p>Complete the ethics discussion thread for this module. The full prompt and context are on the <a href="04-ethics.html">Ethics Thread page</a> in this module.</p>
+  <p>Complete the ethics discussion thread for this module. The full prompt and context are on the <a href="https://rose.instructure.com/courses/26943/pages/ethics-discussion-who-controls-the-context">Ethics Thread page</a> in this module.</p>
 
   <h3>Requirements</h3>
   <ul>
     <li>Initial post: 150&ndash;250 words. Take a position: don't just summarize the question.</li>
     <li>Reply to a classmate: at least one substantive reply (not just &ldquo;I agree&rdquo;).</li>
-    <li>Initial post due by Tuesday class (April 21). Reply due by the following Tuesday class (April 28).</li>
+    <li>Initial post deadline: Tuesday, April 21 (before class).</li>
+    <li>Reply deadline: by the following Tuesday class (April 28).</li>
   </ul>
   <p style="margin-top:0.75rem; font-size:0.9rem; color:var(--muted);">The ethics discussion is worth 20% of your weekly Participation grade. Whether you attend in person or via Zoom, this post is required every week.</p>
 </div>
@@ -168,9 +169,9 @@
   <strong>Submission Checklist</strong>
   <ul>
     <li>Module 4 Lab notebook runs cleanly top-to-bottom with all outputs visible</li>
-    <li>Each code cell has a preceding markdown cell with your LLM prompt and fix note</li>
+    <li>Markdown reflection cells completed for every experiment</li>
     <li>No API keys exposed in any committed file</li>
-    <li>Notebook saved to GitHub at <code>week5/lab4_rag.ipynb</code></li>
+    <li>Notebook saved to GitHub at <code>module4/lab4-nlp-investigation.ipynb</code></li>
     <li>README updated to reflect Module 4 contents</li>
     <li>GitHub repo link submitted in Canvas</li>
     <li>Demo prepared and notebook ready to run for Tuesday class (April 21)</li>
