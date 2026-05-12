@@ -168,7 +168,7 @@
      ================================================================ -->
 <div class="stage">
   <div class="stage-line"><span class="stage-num">1</span><h2>Words as Vectors: The Attribute Matrix</h2></div>
-  <p>Imagine you could describe any word with a handful of measurable attributes. Each attribute gets a number from 0 to 1. The result is a vector &mdash; a list of numbers that encodes what the word <em>means</em>.</p>
+  <p>Imagine you could describe any word with a handful of measurable attributes. Each attribute gets a number from 0 to 1. The result is a vector: a list of numbers that encodes what the word <em>means</em>.</p>
   <p>Click any word below to highlight its row. Notice how <strong>King</strong> and <strong>Queen</strong> differ on exactly one attribute.</p>
 
   <table class="vec-table" id="s1Table">
@@ -198,7 +198,7 @@
      ================================================================ -->
 <div class="stage">
   <div class="stage-line"><span class="stage-num">2</span><h2>Zero Values: Not Every Attribute Applies</h2></div>
-  <p>Royalty, gender, and age are meaningful for people &mdash; but not for everything. What happens when a word has no connection to an attribute? That dimension goes to zero. The vector is still the same length, but some slots are empty.</p>
+  <p>Royalty, gender, and age are meaningful for people, but not for everything. What happens when a word has no connection to an attribute? That dimension goes to zero. The vector is still the same length, but some slots are empty.</p>
   <p>Look at how many dimensions "light up" for each word versus how many stay dark.</p>
 
   <div id="s2Chart" style="width:100%; height:360px;"></div>
@@ -214,7 +214,7 @@
   </div>
 
   <div class="tip">
-    <strong>This is what "sparse" means.</strong> When most values in a vector are zero, we call it sparse. TF-IDF vectors are extremely sparse: thousands of dimensions, almost all zero. Embedding vectors are dense: hundreds of dimensions, almost none zero. The zeros here are the conceptual bridge &mdash; they show why sparse representations have limits.
+    <strong>This is what "sparse" means.</strong> When most values in a vector are zero, we call it sparse. TF-IDF vectors are extremely sparse: thousands of dimensions, almost all zero. Embedding vectors are dense: hundreds of dimensions, almost none zero. The zeros here are the conceptual bridge. They show why sparse representations have limits.
   </div>
 </div>
 
@@ -259,7 +259,7 @@
   </div>
 
   <div class="tip">
-    <strong>Negative values are normal.</strong> Our toy vectors use 0 to 1 because each dimension has a human-readable label &mdash; &ldquo;Royalty&rdquo; is either present or it isn&rsquo;t. The real vectors above range from about &minus;0.17 to 0.25. No dimension has a name, so there is no intuitive meaning for &ldquo;negative Royalty.&rdquo; Instead, positive and negative values together define a direction in high-dimensional space, and it is the direction that encodes meaning.
+    <strong>Negative values are normal.</strong> Our toy vectors use 0 to 1 because each dimension has a human-readable label (&ldquo;Royalty&rdquo; is either present or it isn&rsquo;t). The real vectors above range from about &minus;0.17 to 0.25. No dimension has a name, so there is no intuitive meaning for &ldquo;negative Royalty.&rdquo; Instead, positive and negative values together define a direction in high-dimensional space, and it is the direction that encodes meaning.
   </div>
 
   <div class="card">
@@ -275,9 +275,9 @@
      ================================================================ -->
 <div class="stage">
   <div class="stage-line"><span class="stage-num">4</span><h2>How Do Words Get Their Vectors?</h2></div>
-  <p>Nobody sat down and decided that dimension 47 of &ldquo;king&rdquo; should be 0.0476. The numbers are <em>learned</em> by a neural network that reads enormous amounts of text.</p>
+  <p>Nobody sat down and decided that dimension 47 of &ldquo;king&rdquo; should be 0.0476. The numbers are <em>learned</em> by a neural network trained on enormous amounts of text.</p>
 
-  <p>The core idea is simple: words that appear in similar contexts should get similar vectors. A network that reads billions of sentences notices that &ldquo;king&rdquo; and &ldquo;queen&rdquo; show up near the same surrounding words (&ldquo;throne,&rdquo; &ldquo;crown,&rdquo; &ldquo;ruled&rdquo;), so it gradually pulls their vectors closer together. &ldquo;Water&rdquo; appears in completely different contexts (&ldquo;drink,&rdquo; &ldquo;river,&rdquo; &ldquo;flow&rdquo;), so its vector drifts to a different region of the space.</p>
+  <p>The core idea is simple: words that appear in similar contexts should get similar vectors. During training on billions of sentences, &ldquo;king&rdquo; and &ldquo;queen&rdquo; appear near the same surrounding words (&ldquo;throne,&rdquo; &ldquo;crown,&rdquo; &ldquo;ruled&rdquo;), so the optimization gradually pulls their vectors closer together. &ldquo;Water&rdquo; appears in completely different contexts (&ldquo;drink,&rdquo; &ldquo;river,&rdquo; &ldquo;flow&rdquo;), so its vector drifts to a different region of the space.</p>
 
   <p>The <code>all-MiniLM-L6-v2</code> model you will use in the lab was trained on over one billion sentence pairs. The model card on Hugging Face (one of this week&rsquo;s readings) lists the exact training datasets. After training, the 384 numbers for each word are fixed: you load the model, hand it a word or sentence, and it returns the vector. That is what you will do in Cell 1 of the lab.</p>
 

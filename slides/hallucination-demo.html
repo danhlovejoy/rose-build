@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Hallucination: Why Models Lie Fluently &mdash; AIML 2003</title>
+<title>Hallucination: Why Models Produce Fluent Falsehoods &mdash; AIML 2003</title>
 <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
 <style>
   :root {
@@ -161,9 +161,9 @@
 <body>
 
 <div class="hero">
-  <h1>Hallucination: Why Models Lie Fluently</h1>
+  <h1>Hallucination: Why Models Produce Fluent Falsehoods</h1>
   <p>AIML 2003 &mdash; Interactive Walkthrough</p>
-  <p class="hl">A language model doesn't know facts. It predicts the next token. Sometimes the most likely token is wrong.</p>
+  <p class="hl">A language model has no fact store. It predicts the next token. Sometimes the most likely token is wrong.</p>
 </div>
 
 <div class="container">
@@ -173,7 +173,7 @@
      ================================================================ -->
 <div class="stage">
   <div class="stage-line"><span class="stage-num">1</span><h2>One Token at a Time</h2></div>
-  <p>A language model generates text by predicting one token at a time. At each step, it computes a probability for every token in its vocabulary and picks one. The chosen token becomes part of the context, and the process repeats. The model never "looks up" a fact &mdash; it asks "what word is most likely to come next, given everything so far?"</p>
+  <p>A language model generates text by predicting one token at a time. At each step, it computes a probability for every token in its vocabulary and picks one. The chosen token becomes part of the context, and the process repeats. The model never "looks up" a fact. The computation at each step is: what word is most likely next, given everything so far?</p>
 
   <div class="scenario-pills" id="scenarioPills"></div>
 
@@ -201,7 +201,7 @@
   </div>
 
   <div class="tip">
-    <strong>Try both paths.</strong> Pick the top-probability token first (greedy), then reset and pick the second-most-likely token. Both continuations read fluently. The model is equally confident in each &mdash; the only difference is that one is true and the other isn't.
+    <strong>Try both paths.</strong> Pick the top-probability token first (greedy), then reset and pick the second-most-likely token. Both continuations read fluently. The probability distributions are equally peaked for each; the only difference is that one is true and the other isn't.
   </div>
 </div>
 
@@ -212,7 +212,7 @@
      ================================================================ -->
 <div class="stage">
   <div class="stage-line"><span class="stage-num">2</span><h2>The Branch Point</h2></div>
-  <p>Hallucination often starts at a single token. The model assigns higher probability to a wrong token than the correct one &mdash; because the wrong answer appears more frequently in training text. Once that wrong token is chosen, the rest of the sentence follows logically from the error. The continuation is fluent, specific, and confident. The only mistake was one word.</p>
+  <p>Hallucination often starts at a single token. The model assigns higher probability to a wrong token than the correct one, because the wrong answer appears more frequently in training text. Once that wrong token is chosen, the rest of the sentence follows logically from the error. The continuation is fluent, specific, and confident. The only mistake was one word.</p>
 
   <div id="branchDisplay"></div>
 
@@ -225,7 +225,7 @@
   <div id="branchViz"></div>
 
   <div class="warn-tip">
-    <strong>The wrong path isn't random.</strong> The model didn't produce gibberish. It produced a coherent, detailed, wrong sentence &mdash; because once "Sydney" is chosen, the most likely next tokens are facts about Sydney, and those facts are individually correct. The hallucination is in the framing, not the details.
+    <strong>The wrong path isn't random.</strong> The model didn't produce gibberish. It produced a coherent, detailed, wrong sentence, because once "Sydney" is chosen, the most likely next tokens are facts about Sydney, and those facts are individually correct. The hallucination is in the framing, not the details.
   </div>
 </div>
 
@@ -236,7 +236,7 @@
      ================================================================ -->
 <div class="stage">
   <div class="stage-line"><span class="stage-num">3</span><h2>Temperature Changes the Odds</h2></div>
-  <p>Before picking a token, the model divides its raw scores (logits) by a number called temperature. Low temperature makes the top token dominate; high temperature flattens the distribution so any token has a chance. Temperature doesn't make the model smarter or more accurate. It controls how adventurous the sampling is.</p>
+  <p>Before picking a token, the model divides its raw scores (logits) by a number called temperature. Low temperature makes the top token dominate; high temperature flattens the distribution so any token has a chance. Temperature doesn't improve accuracy. It controls how adventurous the sampling is.</p>
 
   <div class="row">
     <div class="col-main">
@@ -268,7 +268,7 @@
   </div>
 
   <div class="tip">
-    <strong>Temperature doesn't fix hallucination.</strong> At T=0.1, the model always picks the top token &mdash; but if the top token is wrong (as in Stage 1), low temperature guarantees the hallucination. At T=2.0, the correct token gets a better chance, but so does every other wrong token. Temperature redistributes probability; it doesn't add knowledge.
+    <strong>Temperature doesn't fix hallucination.</strong> At T=0.1, the model always picks the top token, but if the top token is wrong (as in Stage 1), low temperature guarantees the hallucination. At T=2.0, the correct token gets a better chance, but so does every other wrong token. Temperature redistributes probability; it doesn't add factual grounding.
   </div>
 </div>
 
@@ -279,7 +279,7 @@
      ================================================================ -->
 <div class="stage">
   <div class="stage-line"><span class="stage-num">4</span><h2>Fluent &ne; Factual</h2></div>
-  <p>Here are two completions for the same prompt. One is correct. One is a hallucination. Each word is shaded by its predicted probability &mdash; darker means the model assigned higher probability to that token. Look at the shading. The hallucinated passage is just as dark as the correct one.</p>
+  <p>Here are two completions for the same prompt. One is correct. One is a hallucination. Each word is shaded by its predicted probability (darker means the model assigned higher probability to that token). Look at the shading. The hallucinated passage is just as dark as the correct one.</p>
 
   <div class="scenario-pills" id="passagePills"></div>
 
@@ -599,7 +599,7 @@ function finishSentence() {
   // Update card
   document.getElementById('stepCard').innerHTML = `
     <strong>${isCorrect ? '&#x2713; Correct path' : '&#x2717; Hallucinated path'}</strong>
-    <p style="font-size:0.85rem;">The model chose "${firstToken}" (probability ${(chosenProbs[0]*100).toFixed(1)}%) and continued fluently from there. ${isCorrect ? 'This time it got lucky — the correct token won.' : 'The wrong token had higher probability, so greedy decoding produced a hallucination.'}</p>
+    <p style="font-size:0.85rem;">Greedy decoding selected "${firstToken}" (probability ${(chosenProbs[0]*100).toFixed(1)}%) and continued fluently from there. ${isCorrect ? 'This time the correct token had the highest probability.' : 'The wrong token had higher probability, so greedy decoding produced a hallucination.'}</p>
   `;
 
   // Clear buttons and chart

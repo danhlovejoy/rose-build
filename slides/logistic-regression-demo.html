@@ -148,7 +148,7 @@
   <div class="stage-line"><span class="stage-num">1</span><h2>The Setup</h2></div>
   <p>You have a pile of movie reviews. Each one is labeled positive or negative. You want a model that can classify new, unlabeled reviews. That's binary classification &mdash; two categories, one decision.</p>
   <p>The TF-IDF pipeline already turned each review into a vector of numbers. Now we need a rule that takes those numbers and outputs a class. Logistic regression is that rule.</p>
-  <p>To see how it works, we'll start with just two features &mdash; the TF-IDF scores for two words. That way we can draw the data on a 2D chart and watch the classifier learn.</p>
+  <p>To see how it works, we'll start with just two features: the TF-IDF scores for two words. That way we can draw the data on a 2D chart and watch the classifier learn.</p>
 </div>
 
 <div class="arrow-box">&darr;</div>
@@ -158,7 +158,7 @@
      ================================================================ -->
 <div class="stage">
   <div class="stage-line"><span class="stage-num">2</span><h2>Two Words, One Boundary</h2></div>
-  <p>Each dot is a review. The x-axis is how much "brilliant" appears (TF-IDF); the y-axis is how much "awful" appears. Green dots are positive reviews; red dots are negative. The dashed line is the decision boundary &mdash; everything on one side is predicted positive, the other side negative.</p>
+  <p>Each dot is a review. The x-axis is how much "brilliant" appears (TF-IDF); the y-axis is how much "awful" appears. Green dots are positive reviews; red dots are negative. The dashed line is the decision boundary. Everything on one side is predicted positive, the other side negative.</p>
 
   <div class="row">
     <div class="col-main">
@@ -203,8 +203,8 @@
 
   <div class="card">
     <strong>What does "best fit" mean here?</strong>
-    <p style="margin-bottom:0.5rem;">There are infinitely many lines you could draw through this chart. Most of them are bad &mdash; they put green dots on the red side or vice versa. The "best fit" is the line that makes the model's predicted probabilities match the actual labels as closely as possible across all the training data.</p>
-    <p style="margin-bottom:0.5rem;">More precisely: for every review, the model outputs a probability (via the sigmoid). If a review is actually positive, the model wants that probability close to 1. If it's actually negative, the model wants it close to 0. The best-fit weights are the ones that, on average, get those probabilities closest to the truth. That's what training optimizes.</p>
+    <p style="margin-bottom:0.5rem;">There are infinitely many lines you could draw through this chart. Most of them are bad (they put green dots on the red side, or vice versa). The "best fit" is the line that makes the model's predicted probabilities match the actual labels as closely as possible across all the training data.</p>
+    <p style="margin-bottom:0.5rem;">More precisely: for every review, the model outputs a probability (via the sigmoid). If a review is actually positive, the training signal pushes that probability toward 1. If it's actually negative, the signal pushes it toward 0. The best-fit weights are the ones that, on average, get those probabilities closest to the truth. That's what training optimizes.</p>
     <p style="margin-bottom:0;">This isn't the same as "highest accuracy." A model could get 90% accuracy but be wildly overconfident on the ones it gets wrong. The best fit balances getting the right answer <em>and</em> knowing how sure it should be.</p>
   </div>
 
@@ -220,7 +220,7 @@
      ================================================================ -->
 <div class="stage">
   <div class="stage-line"><span class="stage-num">3</span><h2>From Score to Probability</h2></div>
-  <p>The raw score can be any number &mdash; positive, negative, huge, tiny. The sigmoid function squishes it into a value between 0 and 1. That's the model's confidence that the review is positive.</p>
+  <p>The raw score can be any number (positive, negative, huge, tiny). The sigmoid function squishes it into a value between 0 and 1. That's the model's confidence that the review is positive.</p>
 
   <div class="row">
     <div class="col-main">
@@ -248,7 +248,7 @@
   </div>
 
   <div class="tip">
-    <strong>Distance from the boundary = confidence.</strong> A dot far from the line has a raw score far from zero, which sigmoid pushes close to 0 or 1. A dot near the line has a raw score near zero &mdash; sigmoid output near 0.5 &mdash; and the model is unsure.
+    <strong>Distance from the boundary = confidence.</strong> A dot far from the line has a raw score far from zero, which sigmoid pushes close to 0 or 1. A dot near the line has a raw score near zero (sigmoid output near 0.5), and the prediction is uncertain.
   </div>
 </div>
 
@@ -258,12 +258,12 @@
      STAGE 4: TRAINING
      ================================================================ -->
 <div class="stage">
-  <div class="stage-line"><span class="stage-num">4</span><h2>How the Model Learns</h2></div>
-  <p>The model starts with random weights. It looks at the training data, sees how many reviews it gets wrong, and nudges the weights to reduce errors. Each nudge is small. After many rounds (called iterations), the boundary settles into the position that classifies the most reviews correctly.</p>
+  <div class="stage-line"><span class="stage-num">4</span><h2>How the Model Trains</h2></div>
+  <p>The model starts with random weights. On each pass through the training data, a loss function measures how many reviews are misclassified, and gradient descent nudges the weights to reduce errors. Each nudge is small. After many rounds (called iterations), the boundary settles into the position that classifies the most reviews correctly.</p>
 
   <div id="trainingPlot" style="width:100%; height:450px;"></div>
   <div class="btn-group">
-    <button class="btn btn-accent" id="trainBtn" onclick="startTraining()">Train (Watch It Learn)</button>
+    <button class="btn btn-accent" id="trainBtn" onclick="startTraining()">Train (Watch It Converge)</button>
     <button class="btn btn-outline" onclick="resetTraining()">Reset</button>
     <span style="font-size:0.85rem; color:var(--muted); line-height:2;" id="trainStatus">Not started</span>
   </div>
@@ -294,7 +294,7 @@
     raw score = w<sub>1</sub>&times;x<sub>1</sub> + w<sub>2</sub>&times;x<sub>2</sub> + &hellip; + w<sub>5000</sub>&times;x<sub>5000</sub> + b
   </div>
 
-  <p>With two features, the decision boundary is a line. With three features, it's a flat plane. With 5,000 features, it's a hyperplane &mdash; a flat surface in 5,000-dimensional space. You can't visualize 5,000 dimensions, but the model doesn't need to. It's just doing multiplication and addition, same as the two-word version.</p>
+  <p>With two features, the decision boundary is a line. With three features, it's a flat plane. With 5,000 features, it's a hyperplane, a flat surface in 5,000-dimensional space. You can't visualize 5,000 dimensions, but the model doesn't need to. It's just doing multiplication and addition, same as the two-word version.</p>
 
   <div class="card">
     <strong>What changes with more features?</strong>
@@ -304,7 +304,7 @@
         <tr><td>Number of weights to learn</td><td>2 + bias = 3</td><td>5,000 + bias = 5,001</td></tr>
         <tr><td>Decision boundary shape</td><td>Line (1D)</td><td>Hyperplane (4,999D)</td></tr>
         <tr><td>Math per prediction</td><td>2 multiplications + 1 addition</td><td>5,000 multiplications + 1 addition</td></tr>
-        <tr><td>Can capture word interactions?</td><td>No</td><td>No &mdash; still linear</td></tr>
+        <tr><td>Can capture word interactions?</td><td>No</td><td>No, still linear</td></tr>
         <tr><td>Training time (movie reviews)</td><td>&lt; 1 second</td><td>&lt; 1 second</td></tr>
       </tbody>
     </table>
@@ -322,14 +322,14 @@
      ================================================================ -->
 <div class="stage">
   <div class="stage-line"><span class="stage-num">6</span><h2>Confidence and Failures</h2></div>
-  <p>The model doesn't just say "positive" or "negative." It says how sure it is. Reviews far from the boundary get high-confidence predictions. Reviews near the boundary are coin flips. The interesting cases are high-confidence mistakes &mdash; reviews the model was sure about and still got wrong.</p>
+  <p>The model doesn't just say "positive" or "negative." It says how sure it is. Reviews far from the boundary get high-confidence predictions. Reviews near the boundary are coin flips. The interesting cases are high-confidence mistakes, reviews the model assigned high probability to and still got wrong.</p>
 
   <div id="confPlot" style="width:100%; height:380px;"></div>
 
   <div id="confTable"></div>
 
   <div class="tip">
-    <strong>High-confidence failures are the most informative errors.</strong> In your lab, Cell 6 finds these cases. They reveal what the model can't see: sarcasm ("a brilliant waste of talent"), negation ("not awful, just boring"), and context that a bag-of-words model misses entirely.
+    <strong>High-confidence failures are the most informative errors.</strong> In your lab, Cell 6 finds these cases. They reveal what the feature representation misses: sarcasm ("a brilliant waste of talent"), negation ("not awful, just boring"), and context that a bag-of-words model misses entirely.
   </div>
 </div>
 
@@ -630,7 +630,7 @@ function startTraining() {
     if (trainState.iter >= 80) {
       clearInterval(trainInterval);
       trainInterval = null;
-      document.getElementById('trainBtn').textContent = 'Train (Watch It Learn)';
+      document.getElementById('trainBtn').textContent = 'Train (Watch It Converge)';
       document.getElementById('trainStatus').textContent = `Converged at iteration ${trainState.iter}`;
     }
   }, 80);
@@ -639,7 +639,7 @@ function startTraining() {
 function resetTraining() {
   if (trainInterval) { clearInterval(trainInterval); trainInterval = null; }
   trainState = { w1: 0, w2: 0, b: 0, iter: 0 };
-  document.getElementById('trainBtn').textContent = 'Train (Watch It Learn)';
+  document.getElementById('trainBtn').textContent = 'Train (Watch It Converge)';
   document.getElementById('trainStatus').textContent = 'Not started';
   document.getElementById('trainIter').textContent = '0';
   document.getElementById('trainAcc').textContent = '?';

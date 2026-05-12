@@ -211,7 +211,7 @@
      ================================================================ -->
 <div class="stage">
   <div class="stage-line"><span class="stage-num">2</span><h2>Tokenization &amp; Stopword Removal</h2></div>
-  <p>First, split the text into individual words (tokens). Then remove stopwords &mdash; common words like "the," "is," and "a" that appear in every review regardless of sentiment. They carry no signal, so we drop them.</p>
+  <p>First, split the text into individual words (tokens). Then remove stopwords (common words like "the," "is," and "a") that appear in every review regardless of sentiment. They carry no signal, so we drop them.</p>
 
   <div id="tokenDisplay" class="token-display"></div>
 
@@ -226,7 +226,7 @@
     <strong>This is what scikit-learn's <code>stop_words='english'</code> does.</strong> The exact list has 318 words. Removing them shrinks the vector and focuses the model on words that actually differ between positive and negative reviews.
   </div>
   <div class="tip" style="background:#fff3e0; border-color:#e65100;">
-    <strong style="color:#e65100;">Orange tokens</strong> are words the model has never seen in training. They survive tokenization and stopword removal, but the model has no TF-IDF entry or coefficient for them &mdash; they're invisible to the classifier. A larger vocabulary catches more words, but this demo uses 65 to keep things readable.
+    <strong style="color:#e65100;">Orange tokens</strong> are words the model has never seen in training. They survive tokenization and stopword removal, but the model has no TF-IDF entry or coefficient for them, so they're invisible to the classifier. A larger vocabulary catches more words, but this demo uses 65 to keep things readable.
   </div>
 </div>
 
@@ -259,7 +259,7 @@
      ================================================================ -->
 <div class="stage">
   <div class="stage-line"><span class="stage-num">4</span><h2>The Learned Coefficients</h2></div>
-  <p>During training, the model read 1,600 labeled reviews and learned which words tend to appear in positive reviews (green) and which tend to appear in negative reviews (red). These coefficients are fixed after training &mdash; they don't change when a new review comes in.</p>
+  <p>During training, the model was trained on 1,600 labeled reviews, fitting coefficients that reflect which words tend to appear in positive reviews (green) and which tend to appear in negative reviews (red). These coefficients are fixed after training; they don't change when a new review comes in.</p>
 
   <div id="coefChart" style="width:100%; height:500px;"></div>
 
@@ -269,7 +269,7 @@
   </div>
 
   <div class="tip">
-    <strong>Surprise words:</strong> "horror" has a slightly negative coefficient &mdash; not because horror is bad, but because horror reviews in the training data skewed negative. The model learned <em>statistical associations</em>, not meaning.
+    <strong>Surprise words:</strong> "horror" has a slightly negative coefficient, not because horror is bad, but because horror reviews in the training data skewed negative. The coefficients reflect <em>statistical associations</em>, not meaning.
   </div>
 </div>
 
@@ -317,7 +317,7 @@
      ================================================================ -->
 <div class="stage">
   <div class="stage-line"><span class="stage-num">6</span><h2>Sigmoid &rarr; Probability &rarr; Classification</h2></div>
-  <p>The raw score can be any number. The sigmoid function squishes it into a value between 0 and 1 &mdash; a probability. Above 0.5 means positive. Below 0.5 means negative.</p>
+  <p>The raw score can be any number. The sigmoid function squishes it into a value between 0 and 1, a probability. Above 0.5 means positive. Below 0.5 means negative.</p>
 
   <div id="sigmoidChart" style="width:100%; height:350px;"></div>
 
@@ -790,12 +790,12 @@ function updateResultDisplay(raw, prob) {
   let confLabel;
   if (conf > 0.8) confLabel = 'High confidence';
   else if (conf > 0.4) confLabel = 'Moderate confidence';
-  else confLabel = 'Low confidence — the model is unsure';
+  else confLabel = 'Low confidence, near the boundary';
   document.getElementById('finalConf').textContent = confLabel;
 
   const tip = document.getElementById('finalTip');
   if (prob > 0.45 && prob < 0.55) {
-    tip.innerHTML = '<strong>Close call.</strong> This review lands near the decision boundary. The model is uncertain because the positive and negative word contributions nearly cancel out. A human would recognize the mixed sentiment, but the model just sees a sum near zero.';
+    tip.innerHTML = '<strong>Close call.</strong> This review lands near the decision boundary. The output is uncertain because the positive and negative word contributions nearly cancel out. A human would recognize the mixed sentiment, but the classifier operates on a sum near zero.';
   } else if (prob >= 0.55) {
     tip.innerHTML = `<strong>Classified as positive (${(prob*100).toFixed(1)}%).</strong> The positive-coefficient words in this review outweighed the negative ones. The further from 50%, the more confident the model is.`;
   } else {

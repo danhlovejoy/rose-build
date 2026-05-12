@@ -310,7 +310,7 @@
   </div>
 
   <div class="tip">
-    <strong>Same idea, different domain.</strong> TF-IDF produces one number per word. HOG produces one number per orientation bin per cell. Both are vectors. Cosine similarity treats them identically. It doesn't know whether the numbers represent words or edges.
+    <strong>Same idea, different domain.</strong> TF-IDF produces one number per word. HOG produces one number per orientation bin per cell. Both are vectors. Cosine similarity treats them identically. It operates identically regardless of whether the numbers represent words or edges.
   </div>
 </div>
 
@@ -332,7 +332,7 @@
 
   <div id="matrixExplain" class="card" style="display:none;"></div>
 
-  <div class="bridge-box">
+  <div class="bridge-box" data-concurrent="true">
     <strong>Bridge: NLP &harr; CV.</strong> The matrix looks the same whether you're comparing movie reviews or photographs. In your NLP lab, the similarity matrix finds reviews with overlapping vocabulary. In your CV lab, it finds images with overlapping edge structure. The retrieval logic is identical: sort the row by similarity, return the top matches.
   </div>
 </div>
@@ -352,12 +352,12 @@
 
   <div class="card">
     <strong>Same shape, different context (CV)</strong>
-    <p style="margin:0;">A bicycle wheel and a clock face produce similar HOG descriptors: both are circular with radial gradient patterns. High cosine similarity, but the images are semantically unrelated. HOG sees edges, not objects.</p>
+    <p style="margin:0;">A bicycle wheel and a clock face produce similar HOG descriptors: both are circular with radial gradient patterns. High cosine similarity, but the images are semantically unrelated. HOG encodes edges, not objects.</p>
   </div>
 
   <div class="card">
     <strong>The fix for both: learned representations</strong>
-    <p style="margin:0;">Word embeddings (NLP) and CNN features (CV) solve this by learning that "excellent" and "outstanding" are similar, or that wheels and clocks are different despite similar edges. That's Week 4. Cosine similarity stays the same. The vectors get smarter.</p>
+    <p style="margin:0;">Word embeddings (NLP) and CNN features (CV) solve this because their training places "excellent" and "outstanding" near each other in vector space, and separates wheels from clocks despite similar edges. That's Week 4. Cosine similarity stays the same. The vectors encode richer distinctions.</p>
   </div>
 
   <div class="warn-tip">

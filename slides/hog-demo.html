@@ -102,7 +102,7 @@
      ================================================================ -->
 <div class="stage">
   <div class="stage-line"><span class="stage-num">1</span><h2>Start with an Image</h2></div>
-  <p>HOG starts with a photograph and ends with a vector of numbers. Pick an example or upload your own. The image will be resized to 128&times;128 pixels &mdash; small enough to see every step, large enough to have interesting structure.</p>
+  <p>HOG starts with a photograph and ends with a vector of numbers. Pick an example or upload your own. The image will be resized to 128&times;128 pixels, small enough to see every step, large enough to have interesting structure.</p>
 
   <div class="example-grid" id="exampleGrid"></div>
 
@@ -165,9 +165,9 @@
 <div class="stage">
   <div class="stage-line"><span class="stage-num">4</span><h2>Divide into Cells, Build Histograms</h2></div>
 
-  <p>This is the core of HOG. The image is divided into a grid of small cells &mdash; each cell is 8&times;8 pixels. Inside each cell, every pixel has a gradient direction (from Stage 3) and a gradient magnitude. The question is: what directions do the edges in this cell point, and how strong are they?</p>
+  <p>This is the core of HOG. The image is divided into a grid of small cells, each 8&times;8 pixels. Inside each cell, every pixel has a gradient direction (from Stage 3) and a gradient magnitude. The question is: what directions do the edges in this cell point, and how strong are they?</p>
 
-  <p>To answer that, HOG sorts all 64 gradient directions within each cell into 9 orientation bins, spaced 20&deg; apart from 0&deg; to 180&deg;. Each pixel "votes" for a bin based on its gradient direction, and its vote is weighted by its gradient magnitude &mdash; strong edges count more than weak ones. The result is a 9-number histogram: a compact summary of the cell's edge pattern.</p>
+  <p>To answer that, HOG sorts all 64 gradient directions within each cell into 9 orientation bins, spaced 20&deg; apart from 0&deg; to 180&deg;. Each pixel "votes" for a bin based on its gradient direction, and its vote is weighted by its gradient magnitude; strong edges count more than weak ones. The result is a 9-number histogram: a compact summary of the cell's edge pattern.</p>
 
   <p>Click any cell in the grid below to see its histogram. The zoomed view shows the actual gradient arrows inside the cell, and the histogram shows how those arrows get sorted into bins.</p>
 
@@ -178,7 +178,7 @@
     </div>
     <div class="vis-item">
       <canvas id="cvCellZoom" width="192" height="192" style="border:1px solid var(--border); border-radius:4px;"></canvas>
-      <div class="vis-label" id="cellLabel">Zoomed cell &mdash; click one to inspect</div>
+      <div class="vis-label" id="cellLabel">Zoomed cell. Click one to inspect.</div>
     </div>
     <div class="vis-item" style="flex:1; min-width:300px;">
       <div id="cellHistChart" style="width:100%; height:280px;"></div>
@@ -217,7 +217,7 @@
      ================================================================ -->
 <div class="stage">
   <div class="stage-line"><span class="stage-num">5</span><h2>The HOG Descriptor</h2></div>
-  <p>Stack all 256 cell histograms into one long vector. That's the HOG descriptor &mdash; a numerical fingerprint of the image's edge structure. The classic visualization draws oriented lines in each cell, with length proportional to the bin magnitude.</p>
+  <p>Stack all 256 cell histograms into one long vector. That's the HOG descriptor: a numerical fingerprint of the image's edge structure. The classic visualization draws oriented lines in each cell, with length proportional to the bin magnitude.</p>
 
   <div class="vis-grid">
     <div class="vis-item"><canvas id="cvHogVis" width="384" height="384"></canvas><div class="vis-label">HOG visualization overlay</div></div>

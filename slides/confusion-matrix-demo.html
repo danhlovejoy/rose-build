@@ -214,7 +214,7 @@
 <div class="stage">
   <div class="stage-line"><span class="stage-num">1</span><h2>A Classifier's Scorecard</h2></div>
   <p>You built an image classifier. It looks at photos of cats, dogs, and birds, and predicts a label for each one. Some predictions are right. Some are wrong. The confusion matrix records every outcome in one table.</p>
-  <p>Rows are the true labels &mdash; what the image actually shows. Columns are the model's predictions. Each cell counts how many images with that true label received that predicted label. Diagonal cells are correct predictions. Everything off the diagonal is an error.</p>
+  <p>Rows are the true labels (what the image actually shows). Columns are the model's predictions. Each cell counts how many images with that true label received that predicted label. Diagonal cells are correct predictions. Everything off the diagonal is an error.</p>
 
   <div class="row">
     <div class="col-main">
@@ -241,7 +241,7 @@
   </div>
 
   <div class="tip">
-    <strong>The diagonal is your friend.</strong> A classifier that gets everything right has all its counts on the diagonal and zeros everywhere else. The off-diagonal cells tell you exactly which classes are being confused for which &mdash; that's where the name comes from.
+    <strong>The diagonal is your friend.</strong> A classifier that gets everything right has all its counts on the diagonal and zeros everywhere else. The off-diagonal cells tell you exactly which classes are being confused for which. That's where the name comes from.
   </div>
 </div>
 
@@ -291,7 +291,7 @@
      ================================================================ -->
 <div class="stage">
   <div class="stage-line"><span class="stage-num">3</span><h2>Four Metrics from Four Numbers</h2></div>
-  <p>The four cells from Stage 2 &mdash; TP, FP, FN, TN &mdash; are the raw ingredients. Four metrics extract different information from them. Each answers a different question about the classifier's performance on the selected class.</p>
+  <p>The four cells from Stage 2 (TP, FP, FN, TN) are the raw ingredients. Four metrics extract different information from them. Each answers a different question about the classifier's performance on the selected class.</p>
 
   <div class="class-pills" id="metricPills"></div>
 
@@ -303,7 +303,7 @@
   </div>
 
   <div class="tip">
-    <strong>Accuracy uses all four cells. Precision and recall each ignore two. F1 combines the two it can't ignore.</strong> A model can have 95% accuracy and still have terrible precision or recall for a rare class. Accuracy counts total correct predictions across all classes; precision and recall zoom in on one class at a time. F1 collapses precision and recall into one number, but it punishes imbalance between them &mdash; if either is low, F1 drops.
+    <strong>Accuracy uses all four cells. Precision and recall each ignore two. F1 combines the two it can't ignore.</strong> A model can have 95% accuracy and still have terrible precision or recall for a rare class. Accuracy counts total correct predictions across all classes; precision and recall zoom in on one class at a time. F1 collapses precision and recall into one number, but it punishes imbalance between them. If either is low, F1 drops.
   </div>
 </div>
 
@@ -348,14 +348,14 @@
      ================================================================ -->
 <div class="stage">
   <div class="stage-line"><span class="stage-num">5</span><h2>Scaling to 10 Classes</h2></div>
-  <p>With three classes you can read every cell. With ten, you need a heatmap. The matrix below shows a HOG-based classifier's results on CIFAR-10 &mdash; the same pipeline you built in the lab. Dark cells mean high counts. The diagonal should be the darkest stripe; any bright off-diagonal cell means two classes are systematically confused.</p>
+  <p>With three classes you can read every cell. With ten, you need a heatmap. The matrix below shows a HOG-based classifier's results on CIFAR-10, the same pipeline you built in the lab. Dark cells mean high counts. The diagonal should be the darkest stripe; any bright off-diagonal cell means two classes are systematically confused.</p>
 
   <div id="heatmapPlot" style="width:100%; height:520px;"></div>
 
   <div id="tenClassTable"></div>
 
   <div class="tip">
-    <strong>The off-diagonal hot spots are the most informative cells.</strong> They tell you which classes the feature extractor cannot distinguish. In a HOG-based classifier, automobile and truck share similar edge profiles &mdash; both are boxy, horizontal shapes. Cat and dog share similar fur textures and body proportions. Those pairs light up off the diagonal.
+    <strong>The off-diagonal hot spots are the most informative cells.</strong> They tell you which classes the feature extractor cannot distinguish. In a HOG-based classifier, automobile and truck share similar edge profiles (both are boxy, horizontal shapes). Cat and dog share similar fur textures and body proportions. Those pairs light up off the diagonal.
   </div>
 
   <div class="card">
@@ -366,12 +366,12 @@
   <div class="card">
     <strong>Macro Average vs. Weighted Average</strong>
     <p style="font-size:0.85rem; margin-top:0.5rem; margin-bottom:0.5rem;">The per-class table above ends with two summary rows. Both compress ten per-class scores into one number, but they weight the classes differently.</p>
-    <p style="font-size:0.85rem; margin-bottom:0.5rem;"><span style="color:#1a3a5c; font-weight:600;">Macro average</span> treats every class equally: add up the ten precision scores and divide by ten. A class with 5 images counts the same as a class with 500. This makes macro average sensitive to performance on rare classes &mdash; if the model ignores a small class, the macro average drops noticeably.</p>
-    <p style="font-size:0.85rem;"><span style="color:#1a3a5c; font-weight:600;">Weighted average</span> weights each class by its support &mdash; how many images actually belong to that class. A class with 500 images has 100&times; the influence of a class with 5. This gives a number closer to what the model does on a "typical" image. In a balanced dataset (equal class sizes), macro and weighted averages are identical.</p>
+    <p style="font-size:0.85rem; margin-bottom:0.5rem;"><span style="color:#1a3a5c; font-weight:600;">Macro average</span> treats every class equally: add up the ten precision scores and divide by ten. A class with 5 images counts the same as a class with 500. This makes macro average sensitive to performance on rare classes. If a small class gets zero correct predictions, the macro average drops noticeably.</p>
+    <p style="font-size:0.85rem;"><span style="color:#1a3a5c; font-weight:600;">Weighted average</span> weights each class by its support (how many images actually belong to that class). A class with 500 images has 100&times; the influence of a class with 5. This gives a number closer to what the model does on a "typical" image. In a balanced dataset (equal class sizes), macro and weighted averages are identical.</p>
   </div>
 
   <div class="warn-tip">
-    <strong>When to use which.</strong> Report macro average when every class matters equally regardless of frequency &mdash; a medical classifier should detect rare diseases as well as common ones. Report weighted average when overall throughput matters and rare-class failures are acceptable. Most classification reports (including scikit-learn's) print both, plus support, so the reader can decide.
+    <strong>When to use which.</strong> Report macro average when every class matters equally regardless of frequency; a medical classifier should detect rare diseases as well as common ones. Report weighted average when overall throughput matters and rare-class failures are acceptable. Most classification reports (including scikit-learn's) print both, plus support, so the reader can decide.
   </div>
 </div>
 
@@ -621,8 +621,8 @@ function updateHighlight() {
   document.getElementById('errorCardBody').innerHTML = `
     <div style="font-size:0.85rem; margin-top:0.5rem;">
       <p style="margin-bottom:0.4rem;"><span style="color:#2e7d32; font-weight:600;">TP = ${tp}</span> &mdash; truly ${name.toLowerCase()}, predicted ${name.toLowerCase()}</p>
-      <p style="margin-bottom:0.4rem;"><span style="color:#e65100; font-weight:600;">FP = ${fp}</span> &mdash; not ${name.toLowerCase()}, but predicted ${name.toLowerCase()} <em>(Type I)</em></p>
-      <p style="margin-bottom:0.4rem;"><span style="color:#c62828; font-weight:600;">FN = ${fn}</span> &mdash; truly ${name.toLowerCase()}, but predicted something else <em>(Type II)</em></p>
+      <p style="margin-bottom:0.4rem;"><span style="color:#e65100; font-weight:600;">FP = ${fp}</span> : not ${name.toLowerCase()}, but predicted ${name.toLowerCase()} <em>(Type I)</em></p>
+      <p style="margin-bottom:0.4rem;"><span style="color:#c62828; font-weight:600;">FN = ${fn}</span> : truly ${name.toLowerCase()}, but predicted something else <em>(Type II)</em></p>
       <p><span style="color:#1a3a5c; font-weight:600;">TN = ${tn}</span> &mdash; not ${name.toLowerCase()}, not predicted ${name.toLowerCase()}</p>
     </div>
   `;
@@ -669,10 +669,10 @@ function updateMetrics() {
       <strong style="color:#1a3a5c; display:inline;">Accuracy</strong> asks: of all ${total} predictions, how many were correct? It treats every class equally in the count, which makes it blind to per-class failures.
     </p>
     <p style="font-size:0.85rem; margin-bottom:0.5rem;">
-      <strong style="color:#1a3a5c; display:inline;">Precision</strong> asks: of everything the model labeled "${name}," how much was actually ${name.toLowerCase()}? High precision means few false alarms. When precision is low, the model is crying wolf.
+      <strong style="color:#1a3a5c; display:inline;">Precision</strong> asks: of everything the model labeled "${name}," how much was actually ${name.toLowerCase()}? High precision means few false alarms. Low precision means too many false alarms.
     </p>
     <p style="font-size:0.85rem; margin-bottom:0.5rem;">
-      <strong style="color:#1a3a5c; display:inline;">Recall</strong> asks: of all the real ${name.toLowerCase()} images, how many did the model find? High recall means few misses. When recall is low, the model is letting real cases slip through.
+      <strong style="color:#1a3a5c; display:inline;">Recall</strong> asks: of all the real ${name.toLowerCase()} images, how many did the classifier catch? High recall means few misses. Low recall means real cases slip through.
     </p>
     <p style="font-size:0.85rem;">
       <strong style="color:#1a3a5c; display:inline;">F1 Score</strong> is the harmonic mean of precision and recall. An arithmetic mean would let a high precision mask a low recall (or vice versa). The harmonic mean penalizes that imbalance: if either metric is near zero, F1 drops to near zero regardless of the other. A classifier with 100% precision and 0% recall scores 0% F1, not 50%.

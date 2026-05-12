@@ -267,7 +267,7 @@
 <div class="hero">
   <h1>Attention: How Every Word Reaches Across the Sentence</h1>
   <p>AIML 2003 / 2013 &bull; Interactive Demo</p>
-  <p class="hl">Click a word. See which other words it pays attention to &mdash; and how swapping one adjective rewires the whole sentence.</p>
+  <p class="hl">Click a word. See which other words it pays attention to, and how swapping one adjective rewires the whole sentence.</p>
 </div>
 
 <div class="container">
@@ -278,7 +278,7 @@
 <div class="stage">
   <div class="stage-line"><span class="stage-num">1</span><h2>The Problem: Long-Distance Relationships</h2></div>
   <p>Read this sentence: &ldquo;The trophy didn&rsquo;t fit in the suitcase because <em>it</em> was too big.&rdquo;</p>
-  <p>What does &ldquo;it&rdquo; refer to &mdash; the trophy or the suitcase? You resolve this by scanning backward through the sentence. Toggle the last word and the referent flips.</p>
+  <p>What does &ldquo;it&rdquo; refer to, the trophy or the suitcase? You resolve this by scanning backward through the sentence. Toggle the last word and the referent flips.</p>
 
   <div class="btn-group">
     <button class="btn btn-primary" id="s1BtnBig" onclick="toggleSentence('big')">too big (trophy)</button>
@@ -343,7 +343,7 @@
   </div>
 
   <div class="qkv-detail q-detail" id="qkvDetailQ">
-    <p>The word&rsquo;s question. For &ldquo;it,&rdquo; the query encodes something like &ldquo;I&rsquo;m a pronoun &mdash; which noun do I refer to?&rdquo; It gets compared against every key to produce scores.</p>
+    <p>The word&rsquo;s question. For &ldquo;it,&rdquo; the query encodes something like &ldquo;I&rsquo;m a pronoun; which noun do I refer to?&rdquo; It gets compared against every key to produce scores.</p>
   </div>
   <div class="qkv-detail k-detail" id="qkvDetailK">
     <p>The word&rsquo;s label. &ldquo;Trophy&rdquo; broadcasts a key encoding &ldquo;singular noun, physical object, potential referent.&rdquo; A high dot product between a query and this key produces a high attention score.</p>
@@ -381,7 +381,7 @@
   <div class="score-list" id="s4ScoreList"></div>
 
   <div class="tip" style="margin-top:1.5rem;">
-    <strong>The weighted sum is the output.</strong> Each Value gets multiplied by its weight and summed. &ldquo;It&rdquo; ends up with a representation that&rsquo;s ~52% trophy and ~15% suitcase &mdash; the pronoun resolved in one step.
+    <strong>The weighted sum is the output.</strong> Each Value gets multiplied by its weight and summed. &ldquo;It&rdquo; ends up with a representation that&rsquo;s ~52% trophy and ~15% suitcase. The pronoun resolved in one step.
   </div>
 </div>
 
@@ -397,7 +397,7 @@
   <div class="pipeline-steps">
     <div class="pipeline-step">
       <div><span class="step-num">1</span></div>
-      <div class="step-text"><h4>Project into Q, K, V</h4><p>Each word&rsquo;s embedding (a single vector) gets multiplied by three separate weight matrices &mdash; W<sub>Q</sub>, W<sub>K</sub>, W<sub>V</sub> &mdash; producing three specialized vectors. The model learns these matrices during training. A word like &ldquo;it&rdquo; ends up with a Query that encodes &ldquo;I need a noun referent,&rdquo; while &ldquo;trophy&rdquo; gets a Key that says &ldquo;I am a referent.&rdquo;</p></div>
+      <div class="step-text"><h4>Project into Q, K, V</h4><p>Each word&rsquo;s embedding (a single vector) gets multiplied by three separate weight matrices (W<sub>Q</sub>, W<sub>K</sub>, W<sub>V</sub>), producing three specialized vectors. Training optimizes these matrices. A word like &ldquo;it&rdquo; ends up with a Query that encodes &ldquo;I need a noun referent,&rdquo; while &ldquo;trophy&rdquo; gets a Key that says &ldquo;I am a referent.&rdquo;</p></div>
     </div>
     <div class="pipeline-step">
       <div><span class="step-num">2</span></div>
@@ -418,7 +418,7 @@
   </div>
 
   <div class="tip">
-    <strong>Parallelism is why this scales.</strong> Sequential models processed one word at a time; attention processes every pair at once. That tradeoff &mdash; more compute per step, but far fewer steps &mdash; is what made training on the entire internet feasible.
+    <strong>Parallelism is why this scales.</strong> Sequential models processed one word at a time; attention processes every pair at once. That tradeoff (more compute per step, but far fewer steps) is what made training on the entire internet feasible.
   </div>
 </div>
 
@@ -512,9 +512,9 @@ const explanations = {
   2:  '<strong>DIDN&rsquo;T &rarr;</strong> A negation binding to its verb: &ldquo;fit.&rdquo;',
   3:  '<strong>FIT &rarr;</strong> The verb needs a subject and an object. It attends to &ldquo;trophy&rdquo; (what&rsquo;s fitting) and &ldquo;suitcase&rdquo; (where it fits).',
   4:  '<strong>IN &rarr;</strong> A preposition that needs an object. Strongest connection: &ldquo;suitcase.&rdquo;',
-  5:  '<strong>THE &rarr;</strong> Second determiner, reaching to its noun &mdash; &ldquo;suitcase.&rdquo;',
+  5:  '<strong>THE &rarr;</strong> Second determiner, reaching to its noun: &ldquo;suitcase.&rdquo;',
   6:  '<strong>SUITCASE &rarr;</strong> Attends to itself, to &ldquo;trophy&rdquo; (the thing not fitting), and to &ldquo;fit&rdquo; (the action).',
-  7:  '<strong>BECAUSE &rarr;</strong> A causal connector reaching forward to the reason &mdash; the adjective at the end.',
+  7:  '<strong>BECAUSE &rarr;</strong> A causal connector reaching forward to the reason: the adjective at the end.',
   8:  '<strong>IT &rarr;</strong> The pronoun resolves its reference. With &ldquo;big,&rdquo; it attends most to &ldquo;trophy&rdquo; (a big trophy wouldn&rsquo;t fit). With &ldquo;small,&rdquo; attention shifts to &ldquo;suitcase&rdquo; (a small suitcase can&rsquo;t hold it).',
   9:  '<strong>WAS &rarr;</strong> A linking verb distributing attention across the subject (&ldquo;it&rdquo;) and description (&ldquo;big&rdquo;).',
   10: '<strong>TOO &rarr;</strong> An intensifier attaching to the adjective it modifies.',

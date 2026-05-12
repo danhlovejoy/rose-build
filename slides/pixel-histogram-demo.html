@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Pixel Histograms: How Machines See Light | AIML 2013</title>
+<title>Pixel Histograms: How Machines Represent Light | AIML 2013</title>
 <style>
   :root {
     --primary: #1a3a5c;
@@ -177,7 +177,7 @@
 <body>
 
 <div class="hero">
-  <h1>Pixel Histograms: How Machines See Light</h1>
+  <h1>Pixel Histograms: How Machines Represent Light</h1>
   <p class="sub">An interactive lesson in image representation</p>
   <p class="hl">Every image is a grid of numbers. A histogram tells you the story of those numbers.</p>
   <p class="courses">AIML 2013 &bull; Module 2</p>
@@ -193,7 +193,7 @@
     </div>
     <p>A grayscale image is a 2D grid of numbers, each between 0 (black) and 255 (white). A histogram counts how many pixels fall at each value. A photo taken in bright sunlight piles up near 255. A photo taken in a dim room piles up near 0. Before any neural network touches an image, a histogram tells you whether the data is usable.</p>
     <div class="tip">
-      <strong>Why this matters for HOG.</strong> HOG features are computed from <em>gradients</em> — differences between neighboring pixel values. If the histogram is flat (all pixels near the same value), gradients are tiny and HOG produces garbage. Understanding the histogram is step one in diagnosing a bad feature extractor.
+      <strong>Why this matters for HOG.</strong> HOG features are computed from <em>gradients</em>, differences between neighboring pixel values. If the histogram is flat (all pixels near the same value), gradients are tiny and HOG produces garbage. Understanding the histogram is step one in diagnosing a bad feature extractor.
     </div>
   </div>
 
@@ -297,7 +297,7 @@
       <h2>Think about it</h2>
     </div>
     <div class="info-box">
-      <p><strong>Try this with your own photo:</strong> Take a picture in a very dark room and one in bright daylight. Load each one here. The histogram will tell you immediately which image has more usable information. The dark image's histogram is crushed toward 0 — there are almost no gradients for HOG to work with.</p>
+      <p><strong>Try this with your own photo:</strong> Take a picture in a very dark room and one in bright daylight. Load each one here. The histogram will tell you immediately which image has more usable information. The dark image's histogram is crushed toward 0, so there are almost no gradients for HOG to work with.</p>
     </div>
     <div class="warn-tip">
       <strong>Histogram equalization sounds like magic. It is not.</strong> Equalization stretches the histogram so pixel values are more evenly distributed. It recovers detail in dark images — but it also amplifies noise. A histogram with a long flat tail of very dark pixels doesn't contain hidden detail; it contains sensor noise. Equalization will make that noise more visible, not more informative.

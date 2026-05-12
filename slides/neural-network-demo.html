@@ -161,7 +161,7 @@
 <div class="hero">
   <h1>Neural Networks: Why Layers Matter</h1>
   <p>AIML 2013 &bull; Module 3: Learned Embeddings</p>
-  <p class="hl">A single neuron can only draw a straight line. Stack a few neurons in a hidden layer and the network learns to untangle data no line could separate.</p>
+  <p class="hl">A single neuron can only draw a straight line. Stack a few neurons in a hidden layer and the network can untangle data no line could separate.</p>
 </div>
 
 <div class="container">
@@ -222,7 +222,7 @@
   <!-- ========== STAGE 3 ========== -->
   <div class="stage">
     <div class="stage-line"><span class="stage-num">3</span><h2>A Hidden Layer Untangles the Data</h2></div>
-    <p>Adding a layer of neurons between input and output lets the network learn its own coordinate system. Each hidden neuron draws a line in the original space; the output neuron combines them to carve out a curved region. The left plot shows the decision boundary in the original space. The right plot shows the same data after the hidden layer has transformed it &mdash; each point's position is determined by two of the hidden neurons' outputs.</p>
+    <p>Adding a layer of neurons between input and output lets the network develop its own coordinate system. Each hidden neuron draws a line in the original space; the output neuron combines them to carve out a curved region. The left plot shows the decision boundary in the original space. The right plot shows the same data after the hidden layer has transformed it &mdash; each point's position is determined by two of the hidden neurons' outputs.</p>
     <div class="row">
       <div class="col-half">
         <div style="text-align:center;font-size:0.8rem;color:#656d76;font-weight:600;margin-bottom:0.25rem;">ORIGINAL SPACE</div>
@@ -243,7 +243,7 @@
       <div class="stat-card"><div class="val" id="s3-arch">2 → 4 → 1</div><div class="lbl">Architecture</div></div>
     </div>
     <div class="tip">
-      <strong>Watch the right plot.</strong> The hidden layer learns a new coordinate system where the two classes pull apart. In the original space the crescents interleave, but in the hidden layer's space they separate into distinct clusters. Once they're separated, the output neuron can draw a straight line between them. Each layer in a deep network does the same thing: it transforms the data so the next layer's job becomes easier.
+      <strong>Watch the right plot.</strong> The hidden layer produces a new coordinate system where the two classes pull apart. In the original space the crescents interleave, but in the hidden layer's space they separate into distinct clusters. Once they're separated, the output neuron can draw a straight line between them. Each layer in a deep network does the same thing: it transforms the data so the next layer's job becomes easier.
     </div>
   </div>
 
@@ -252,7 +252,7 @@
   <!-- ========== STAGE 4 ========== -->
   <div class="stage">
     <div class="stage-line"><span class="stage-num">4</span><h2>The Representation Is the Embedding</h2></div>
-    <p>After training, each input passes through the hidden layer and comes out as a 4-dimensional vector &mdash; one value per hidden neuron. That vector is the <strong>embedding</strong>: a learned representation that captures class-relevant structure. Strip the output neuron away and you're left with a coordinate system where similar inputs land near each other.</p>
+    <p>After training, each input passes through the hidden layer and comes out as a 4-dimensional vector (one value per hidden neuron). That vector is the <strong>embedding</strong>: a learned representation that captures class-relevant structure. Strip the output neuron away and you're left with a coordinate system where similar inputs land near each other.</p>
 
     <div class="net-diagram">
       <div class="net-layer">
@@ -281,7 +281,7 @@
       <div class="card" style="text-align:center;color:#656d76;">Click a point above to see its nearest neighbors.</div>
     </div>
     <div class="tip">
-      <strong>From 4 dimensions to 1,280.</strong> This toy network learned a 4-dimensional embedding from 200 points. MobileNetV2, which you'll use in Thursday's lab, learns a 1,280-dimensional embedding from 1.2 million ImageNet images. The principle is identical: strip the classification head, keep the representation, and use cosine similarity to find what's nearby. The only differences are scale and what the network was trained to see.
+      <strong>From 4 dimensions to 1,280.</strong> This toy network was trained to produce a 4-dimensional embedding from 200 points. MobileNetV2, which you'll use in Thursday's lab, produces a 1,280-dimensional embedding trained on 1.2 million ImageNet images. The principle is identical: strip the classification head, keep the representation, and use cosine similarity to find what's nearby. The only differences are scale and what the training data contained.
     </div>
   </div>
 

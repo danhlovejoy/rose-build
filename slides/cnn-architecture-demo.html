@@ -272,7 +272,7 @@
     </div>
 
     <div class="tip">
-      <strong>One image, four interpretations.</strong> The horizontal edge filter sees the top and bottom of the L. The vertical edge filter sees the left side. The diagonal filter picks up corners. The blur filter smooths everything. A trained CNN learns which filters produce useful distinctions for its classification task. Nobody hand-picks them.
+      <strong>One image, four interpretations.</strong> The horizontal edge filter sees the top and bottom of the L. The vertical edge filter sees the left side. The diagonal filter picks up corners. The blur filter smooths everything. Training determines which filters produce useful distinctions for its classification task. Nobody hand-picks them.
     </div>
   </div>
 
@@ -323,7 +323,7 @@
   <!-- ========== STAGE 4 ========== -->
   <div class="stage">
     <div class="stage-line"><span class="stage-num">4</span><h2>Stack the Layers</h2></div>
-    <p>A CNN repeats the conv &rarr; ReLU &rarr; pool sequence multiple times. Each repetition shrinks the spatial dimensions and grows the channel count. Early layers detect edges. Later layers combine those edges into textures, shapes, and object parts. The table below shows what happens when you stack two convolutional layers on the 8&times;8 L image.</p>
+    <p>A CNN repeats the conv &rarr; ReLU &rarr; pool sequence multiple times. Each repetition shrinks the spatial dimensions and grows the channel count. Early layers detect edges. Later layers combine those edges into textures, shapes, object parts, and compositional patterns. The table below shows what happens when you stack two convolutional layers on the 8&times;8 L image.</p>
 
     <div id="s4-viz" style="min-height:140px;display:flex;align-items:center;justify-content:center;gap:0.5rem;flex-wrap:wrap;margin:1rem 0;"></div>
     <p id="s4-caption" style="text-align:center;font-size:0.85rem;color:#656d76;min-height:1.2em;margin-bottom:0.75rem;"></p>
@@ -447,7 +447,7 @@
       model = MobileNetV2(weights='imagenet', <span style="color:var(--accent);font-weight:700;">include_top=False</span>, pooling='avg')
     </div>
 
-    <p>That one argument &mdash; <code>include_top=False</code> &mdash; removes the 1,000-class FC layer and returns the 1,280-dimensional feature vector. This is the line of code you ran in Module 3, Cell 1. Every retrieval query, every similarity score, every t-SNE plot you built this semester started from this vector.</p>
+    <p>That one argument (<code>include_top=False</code>) removes the 1,000-class FC layer and returns the 1,280-dimensional feature vector. This is the line of code you ran in Module 3, Cell 1. Every retrieval query, every similarity score, every t-SNE plot you built this semester started from this vector.</p>
 
     <div class="card">
       <strong>Where embeddings appear in this course</strong>
@@ -480,7 +480,7 @@
     </div>
 
     <div class="tip">
-      <strong>The CNN is the feature extractor.</strong> Classification, retrieval, bias auditing, and captioning are different tasks built on the same foundation: a convolutional network that converts pixels into a compact vector encoding what is in the image. The architecture you stepped through in Stages 1&ndash;4 — conv, ReLU, pool, repeat — is the engine behind every lab notebook you have written this semester.
+      <strong>The CNN is the feature extractor.</strong> Classification, retrieval, bias auditing, and captioning are different tasks built on the same foundation: a convolutional network that converts pixels into a compact vector encoding what is in the image. The architecture you stepped through in Stages 1&ndash;4 (conv, ReLU, pool, repeat) is the engine behind every lab notebook you have written this semester.
     </div>
   </div>
 
