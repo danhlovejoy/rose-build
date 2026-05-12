@@ -474,6 +474,95 @@ SETUP_NOTES_PAGE = """<!DOCTYPE html>
 
 
 # ──────────────────────────────────────────────────────────────────────
+# Wiki page envelope (with Canvas-specific meta tags)
+# ──────────────────────────────────────────────────────────────────────
+
+def wrap_wiki_page(title: str, body_html: str, resource_id: str, is_front_page: bool = False) -> str:
+    """Wrap a page body in a head/body skeleton with Canvas's per-page meta tags.
+
+    The meta tags are what tells Canvas to import the file as a wiki page (not a
+    course file). `identifier` must match the manifest resource id so module_meta.xml
+    can reference it. `front_page=true` makes Canvas set the page as the course's
+    landing page (combined with default_view=wiki in course_settings.xml).
+    """
+    front_page_meta = '<meta name="front_page" content="true"/>\n' if is_front_page else ""
+    return (
+        "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n"
+        "<meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\"/>\n"
+        f"<title>{xml_escape(title)}</title>\n"
+        f'<meta name="identifier" content="{resource_id}"/>\n'
+        '<meta name="editing_roles" content="teachers"/>\n'
+        '<meta name="workflow_state" content="active"/>\n'
+        f"{front_page_meta}"
+        "</head>\n<body>\n"
+        + body_html +
+        "\n</body>\n</html>\n"
+    )
+
+
+# ──────────────────────────────────────────────────────────────────────
+# Canvas-specific course settings files
+# ──────────────────────────────────────────────────────────────────────
+
+CANVAS_EXPORT_MARKER = (
+    "Q: What did the panda say when forced out of his natural habitat?\n"
+    "A: This is BAMBOOzling\n"
+)
+
+COURSE_SETTINGS_XML = """\
+<?xml version="1.0" encoding="UTF-8"?>
+<course identifier="rose_course"
+        xmlns="http://canvas.instructure.com/xsd/cccv1p0"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://canvas.instructure.com/xsd/cccv1p0 https://canvas.instructure.com/xsd/cccv1p0.xsd">
+  <title>{title}</title>
+  <course_code>{course_code}</course_code>
+  <default_view>wiki</default_view>
+  <is_public>false</is_public>
+  <indexed>false</indexed>
+</course>
+"""
+
+MODULE_META_HEADER = """\
+<?xml version="1.0" encoding="UTF-8"?>
+<modules xmlns="http://canvas.instructure.com/xsd/cccv1p0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://canvas.instructure.com/xsd/cccv1p0 https://canvas.instructure.com/xsd/cccv1p0.xsd">
+"""
+
+MODULE_META_FOOTER = "</modules>\n"
+
+
+def build_module_meta_xml(modules):
+    """Build Canvas's course_settings/module_meta.xml from a list of (title, items) pairs.
+
+    Each item is a dict with keys: identifier, identifierref, content_type, title, position.
+    """
+    out = [MODULE_META_HEADER]
+    for mod_idx, (mod_title, items) in enumerate(modules, start=1):
+        out.append(f'  <module identifier="module_meta_{mod_idx}">')
+        out.append(f"    <title>{xml_escape(mod_title)}</title>")
+        out.append("    <workflow_state>active</workflow_state>")
+        out.append(f"    <position>{mod_idx}</position>")
+        out.append("    <require_sequential_progress>false</require_sequential_progress>")
+        out.append("    <items>")
+        for item in items:
+            out.append(f'      <item identifier="{item["identifier"]}">')
+            out.append(f"        <content_type>{item['content_type']}</content_type>")
+            out.append(f"        <workflow_state>active</workflow_state>")
+            out.append(f"        <title>{xml_escape(item['title'])}</title>")
+            out.append(f"        <identifierref>{item['identifierref']}</identifierref>")
+            out.append(f"        <position>{item['position']}</position>")
+            out.append("        <new_tab>false</new_tab>")
+            out.append("        <indent>0</indent>")
+            out.append("      </item>")
+        out.append("    </items>")
+        out.append("  </module>")
+    out.append(MODULE_META_FOOTER)
+    return "\n".join(out)
+
+
+# ──────────────────────────────────────────────────────────────────────
 # Manifest assembly
 # ──────────────────────────────────────────────────────────────────────
 
@@ -542,9 +631,9 @@ def build_cartridge(course: str):
     resources = []
     # Files to write into the zip: zip_path → content
     zip_contents = {}
-    # Module organization: { module_num: [(item_id, item_title, resource_id)] }
+    # Module organization: { module_num: [(title, res_id, content_type)] }
     module_items = {}
-    # Course-level (non-module) items
+    # Course-level (non-module) items: [(title, res_id, content_type)]
     course_resource_items = []
 
     # ── Pages ────────────────────────────────────────────────────────
@@ -581,24 +670,20 @@ def build_cartridge(course: str):
             zip_contents[disc_path] = build_discussion_xml(title, body)
             resources.append((res_id, "imsdt_xmlv1p1", disc_path, None))
             if mod_num is not None:
-                module_items.setdefault(mod_num, []).append((title, res_id))
+                module_items.setdefault(mod_num, []).append((title, res_id, "DiscussionTopic"))
         else:
             # Wiki page
             res_id = f"page_{slug.replace('-', '_')}"
             wiki_path = f"wiki_content/{slug}.html"
-            # Wrap body back in a minimal HTML shell so Canvas's importer is happy
-            zip_contents[wiki_path] = (
-                "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n"
-                f"<meta charset=\"UTF-8\">\n<title>{xml_escape(title)}</title>\n"
-                "</head>\n<body>\n" + body + "\n</body>\n</html>\n"
-            )
+            is_front_page = (slug == "welcome")
+            zip_contents[wiki_path] = wrap_wiki_page(title, body, res_id, is_front_page)
             resources.append((res_id, "webcontent", wiki_path, None))
             mod_num = module_number(rel_path)
             if mod_num is not None:
-                module_items.setdefault(mod_num, []).append((title, res_id))
+                module_items.setdefault(mod_num, []).append((title, res_id, "WikiPage"))
             else:
                 # Course-level page (welcome, glossary, makeup-participation)
-                course_resource_items.append((title, res_id))
+                course_resource_items.append((title, res_id, "WikiPage"))
 
     # ── Reading quizzes ──────────────────────────────────────────────
     for mod_num in range(1, 8):
@@ -621,7 +706,7 @@ def build_cartridge(course: str):
         resources.append((f"{quiz_id}_meta", "associatedcontent/imscc_xmlv1p1/learning-application-resource",
                           f"assessment_meta/{meta_filename}", None))
 
-        module_items.setdefault(mod_num, []).append((quiz_data["title"], quiz_id))
+        module_items.setdefault(mod_num, []).append((quiz_data["title"], quiz_id, "Quizzes::Quiz"))
 
     # ── Final exam ───────────────────────────────────────────────────
     final_exam_json = final_exam_dir / f"{course}-final-exam.json"
@@ -642,7 +727,7 @@ def build_cartridge(course: str):
         resources.append((f"{quiz_id}_meta", "associatedcontent/imscc_xmlv1p1/learning-application-resource",
                           f"assessment_meta/{meta_filename}", None))
         # Final exam goes in Module 7 (portfolio module)
-        module_items.setdefault(7, []).append((exam_data["title"], quiz_id))
+        module_items.setdefault(7, []).append((exam_data["title"], quiz_id, "Quizzes::Quiz"))
 
     # ── Setup notes page ─────────────────────────────────────────────
     setup_md_path = PROJECT_ROOT / "docs" / "COURSE-SETUP-NOTES.md"
@@ -655,33 +740,23 @@ def build_cartridge(course: str):
             "CARTRIDGE_FILENAME": output_filename,
         }
         html_body = render_setup_notes(md_text, substitutions)
-        setup_html = SETUP_NOTES_PAGE.format(content=html_body)
-        zip_contents["wiki_content/course-setup-notes.html"] = setup_html
-        resources.append(("page_course_setup_notes", "webcontent",
+        setup_res_id = "page_course_setup_notes"
+        zip_contents["wiki_content/course-setup-notes.html"] = wrap_wiki_page(
+            "Course Setup Notes", html_body, setup_res_id, is_front_page=False,
+        )
+        resources.append((setup_res_id, "webcontent",
                           "wiki_content/course-setup-notes.html", None))
         # Place it first in Course Resources
-        course_resource_items.insert(0, ("Course Setup Notes", "page_course_setup_notes"))
+        course_resource_items.insert(0, ("Course Setup Notes", setup_res_id, "WikiPage"))
 
-    # ── Build the manifest ───────────────────────────────────────────
-    resource_xml_lines = []
-    for res in resources:
-        res_id, res_type, href, dep_id = res
-        resource_xml_lines.append(
-            f'    <resource identifier="{res_id}" type="{res_type}" href="{href}">'
-        )
-        resource_xml_lines.append(f'      <file href="{href}"/>')
-        if dep_id:
-            resource_xml_lines.append(f'      <dependency identifierref="{dep_id}"/>')
-        resource_xml_lines.append("    </resource>")
-    resource_xml = "\n".join(resource_xml_lines)
-
-    # Organization tree: Course Resources section, then Modules 1-7
+    # Organization tree: Course Resources section, then Modules 1-7.
+    # This is the IMS standard structure; Canvas also reads course_settings/module_meta.xml below.
     org_lines = []
 
     if course_resource_items:
         org_lines.append('      <item identifier="course_resources">')
         org_lines.append("        <title>Course Resources</title>")
-        for idx, (title, res_id) in enumerate(course_resource_items):
+        for idx, (title, res_id, _ct) in enumerate(course_resource_items):
             org_lines.append(
                 f'        <item identifier="cr_item_{idx + 1}" identifierref="{res_id}">'
             )
@@ -691,10 +766,9 @@ def build_cartridge(course: str):
 
     for mod_num in sorted(module_items.keys()):
         mod_title = MODULE_TITLES[course][mod_num]
-        # Sort items by their original insertion order (already module-natural)
         org_lines.append(f'      <item identifier="module_{mod_num}">')
         org_lines.append(f"        <title>{xml_escape(mod_title)}</title>")
-        for idx, (title, res_id) in enumerate(module_items[mod_num]):
+        for idx, (title, res_id, _ct) in enumerate(module_items[mod_num]):
             org_lines.append(
                 f'        <item identifier="m{mod_num}_item_{idx + 1}" identifierref="{res_id}">'
             )
@@ -703,6 +777,83 @@ def build_cartridge(course: str):
         org_lines.append("      </item>")
 
     organization_xml = "\n".join(org_lines)
+
+    # ── Canvas-specific course_settings files ────────────────────────
+    # These are what makes Canvas import the cartridge as wiki pages + real modules
+    # rather than as a flat pile of HTML files.
+    zip_contents["course_settings/canvas_export.txt"] = CANVAS_EXPORT_MARKER
+    zip_contents["course_settings/course_settings.xml"] = COURSE_SETTINGS_XML.format(
+        title=xml_escape(full_name),
+        course_code=xml_escape(short_name),
+    )
+
+    # Build module_meta.xml from the same module_items dict the organization tree used.
+    canvas_modules = []
+    if course_resource_items:
+        canvas_modules.append((
+            "Course Resources",
+            [
+                {
+                    "identifier": f"meta_cr_item_{idx + 1}",
+                    "identifierref": res_id,
+                    "content_type": ct,
+                    "title": title,
+                    "position": idx + 1,
+                }
+                for idx, (title, res_id, ct) in enumerate(course_resource_items)
+            ],
+        ))
+    for mod_num in sorted(module_items.keys()):
+        canvas_modules.append((
+            MODULE_TITLES[course][mod_num],
+            [
+                {
+                    "identifier": f"meta_m{mod_num}_item_{idx + 1}",
+                    "identifierref": res_id,
+                    "content_type": ct,
+                    "title": title,
+                    "position": idx + 1,
+                }
+                for idx, (title, res_id, ct) in enumerate(module_items[mod_num])
+            ],
+        ))
+    zip_contents["course_settings/module_meta.xml"] = build_module_meta_xml(canvas_modules)
+
+    # Register course_settings as a single bundled resource in the manifest so Canvas
+    # picks it up during import. This resource needs to reference all three settings
+    # files via additional <file> entries, which the manifest emitter handles below.
+    resources.append((
+        "course_settings",
+        "associatedcontent/imscc_xmlv1p1/learning-application-resource",
+        "course_settings/canvas_export.txt",
+        None,
+    ))
+    # Track files belonging to multi-file resources so the manifest emitter knows to
+    # add extra <file> entries.
+    extra_files_for_resource = {
+        "course_settings": [
+            "course_settings/course_settings.xml",
+            "course_settings/module_meta.xml",
+        ],
+    }
+
+    # ── Build the manifest <resources> section ───────────────────────
+    def build_resource_xml(res_id, res_type, href, dep_id, extras):
+        lines = [f'    <resource identifier="{res_id}" type="{res_type}" href="{href}">']
+        lines.append(f'      <file href="{href}"/>')
+        for extra in extras:
+            lines.append(f'      <file href="{extra}"/>')
+        if dep_id:
+            lines.append(f'      <dependency identifierref="{dep_id}"/>')
+        lines.append("    </resource>")
+        return lines
+
+    resource_xml_lines = []
+    for res in resources:
+        res_id, res_type, href, dep_id = res
+        extras = extra_files_for_resource.get(res_id, [])
+        resource_xml_lines.extend(build_resource_xml(res_id, res_type, href, dep_id, extras))
+    resource_xml = "\n".join(resource_xml_lines)
 
     manifest_xml = (
         MANIFEST_HEADER.format(manifest_id=f"{course}_canvas_import",
