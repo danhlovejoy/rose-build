@@ -1,26 +1,32 @@
-# AIML 2003 — Weekly Module Templates
+# templates/ — Weekly Module Templates
 
-These templates define the repeating page structure for each weekly module in Canvas. Every placeholder uses `{{PLACEHOLDER_NAME}}` syntax for easy find-and-replace.
+Reusable HTML page structure for every weekly module in Canvas. Templates are course-agnostic — use them for both AIML 2003 and AIML 2013. Every placeholder uses `{{PLACEHOLDER_NAME}}` syntax for easy find-and-replace.
 
 ## Template Files
 
 | File | Purpose | Use When |
 |------|---------|----------|
-| `week-overview.html` | Module landing page | Every week |
-| `week-readings.html` | Readings & prep page | Every week |
-| `week-assignments-presentation.html` | Assignment sheet with presentation deliverable | Weeks 2, 4, 6 |
-| `week-assignments-demo.html` | Assignment sheet with live demo deliverable | Weeks 3, 5, 7 |
-| `week-ethics.html` | Weekly ethics discussion prompt | Every week |
+| `week-overview.html` | Module landing page | Every module |
+| `week-readings.html` | Readings & prep page | Every module |
+| `week-assignments-presentation.html` | Assignment sheet with presentation deliverable | When the week's deliverable is a presentation |
+| `week-assignments-demo.html` | Assignment sheet with live-demo deliverable | When the week's deliverable is a demo |
+| `week-ethics.html` | Weekly ethics discussion prompt | Most modules — see exceptions below |
+
+See `aiml2003/README.md` and `aiml2013/README.md` for the deliverable type per module (Presentation vs. Demo) in each course. The two courses don't always match — Module 5 NLP is a Presentation while Module 5 CV is a Demo, and Module 6 is the reverse.
 
 ## Weekly Module Checklist
 
-Each week's Canvas module should contain (in order):
+Each weekly Canvas module should contain (in order):
 
 1. **Week Overview** — `week-overview.html`
 2. **Readings & Prep** — `week-readings.html`
 3. **Assignment Sheet** — `week-assignments-presentation.html` OR `week-assignments-demo.html`
 4. **Lab Option Pages** (if applicable) — custom per week
-5. **Ethics Discussion** — `week-ethics.html`
+5. **Ethics Discussion** — `week-ethics.html` (skip for Module 6)
+
+## Module 6 has no ethics discussion
+
+Both courses dropped the Module 6 ethics discussion. The module's Participation grade comes from attendance/engagement only that week — no separate ethics post. Don't apply `week-ethics.html` for Module 6 in either course.
 
 ## Placeholder Reference
 
@@ -90,28 +96,18 @@ Copy the resource-card block for each reading/video. Use the `.optional` class f
 | `{{ETHICS_CONTEXT}}` | `The Karpathy video mentions that LLMs are trained on...` |
 | `{{ETHICS_Q1–Q3}}` | Discussion questions (add/remove as needed) |
 
-## Syllabus Schedule Reference
-
-| Week | Topic | Due Date | Deliverable Type |
-|------|-------|----------|-----------------|
-| 1 | The LLM Landscape | March 24 | Info Sheet (setup week) |
-| 2 | The Art of the Prompt | March 31 | Presentation |
-| 3 | Text as Data | April 7 | Presentation |
-| 4 | The Vector Space | April 14 | Demo |
-| 5 | Basic RAG | April 21 | Demo |
-| 6 | Evaluating LLMs | April 28 | Presentation |
-| 7 | Simple Agents | May 5 | Demo |
-| 8 | Portfolio & Future | May 12 | Final Portfolio Presentation |
-
 ## Standing Assignments (not templated per week)
 
 These live as standalone pages, not inside weekly modules:
 
-- **Missed Class Participation Makeup** — `makeup-participation.html`
-- **Welcome / Module 1 Overview** — `00-welcome.html`
+- **Missed Class Participation Makeup** — `<course>/makeup-participation.html`
+- **Welcome / Course landing page** — `<course>/welcome.html`
 
 ## Participation Model (80/20)
 
-Every week:
+Every module (except Module 6 — see above):
+
 - **80%** — Attendance & engagement (or makeup post within 48 hours)
-- **20%** — Ethics discussion post (always required)
+- **20%** — Ethics discussion post
+
+Module 6's Participation grade is 100% attendance/engagement (no ethics post).

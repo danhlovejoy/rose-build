@@ -19,13 +19,15 @@ rose/
 ├── CLAUDE.md                  ← full project context for AI assistants
 ├── MODULE-STANDARDS.md        ← how to build any module
 ├── WRITING-STANDARDS.md       ← banned phrases, formatting rules, tone
-├── CANVAS-SETUP-GUIDE.html    ← instructor reference for Canvas configuration
-├── upload_to_canvas.py        ← API uploader script
+├── DEMO-STANDARDS.md          ← how to build interactive slide demos
 ├── build/                     ← build pipeline scripts and generated output
+├── docs/                      ← instructor references (Canvas setup guide, push checklist)
+├── scripts/                   ← Canvas API helpers (upload_to_canvas.py, create_module_assignments.py, split_szeliski.py)
 ├── templates/                 ← reusable HTML page templates
 ├── aiml2003/                  ← NLP course source files
 ├── aiml2013/                  ← CV course source files
-└── slides/                    ← shared slide assets
+├── readings/                  ← shared reading materials (gitignored where copyrighted)
+└── slides/                    ← shared interactive demos and lecture decks
 ```
 
 ---
@@ -57,7 +59,7 @@ bash build/build.sh --concurrent        # include all dual-enrollment content
 python3 build/audit_concurrent.py
 ```
 
-Output goes to `build/output/`. Upload to Canvas via `upload_to_canvas.py` or paste into the Canvas HTML editor.
+Output goes to `build/aiml2003/` and `build/aiml2013/` (both gitignored). Upload to Canvas via `python3 scripts/upload_to_canvas.py` or paste into the Canvas HTML editor.
 
 ### Delivery Mode
 
@@ -77,6 +79,7 @@ Edit source HTML files directly. They render correctly in a browser for local pr
 **Read before making changes:**
 - `MODULE-STANDARDS.md` — module structure, file numbering, page types, rubrics, participation model
 - `WRITING-STANDARDS.md` — banned phrases, formatting rules, tone
+- `DEMO-STANDARDS.md` — conventions for interactive slide demos in `slides/`
 - `CLAUDE.md` — full project conventions, build system, Canvas details, correction protocol
 
 **Never put `<style>` blocks in source HTML files** — all CSS goes in `course-styles.css`.

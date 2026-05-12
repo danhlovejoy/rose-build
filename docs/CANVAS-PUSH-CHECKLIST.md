@@ -27,7 +27,7 @@ Create these four items in Canvas for the week. All are unpublished until Step 5
 
 ### 3. Canvas Pages
 
-- [ ] Upload each built HTML file from `build/output/[course]/[moduleN]/` to Canvas as a wiki page
+- [ ] Upload each built HTML file from `build/[course]/[moduleN]/` to Canvas as a wiki page (or run `python3 scripts/upload_to_canvas.py [course]`)
 - [ ] Spot-check the overview and assignments pages in Canvas: no garbled characters, layout intact, links resolve
 
 ### 4. Canvas Module Structure

@@ -2,31 +2,38 @@
 
 Source files for Canvas course 26943. Spring 2026, 2nd 8 Weeks.
 
-**Do not edit files in this directory directly unless they are source HTML files.** Generated files (`glossary.html`) are overwritten by the build.
-
-## Files
+## Course-Level Files
 
 | File | Purpose |
 |------|---------|
 | `welcome.html` | Course landing page on Canvas — updated each week to point to the current module |
 | `makeup-participation.html` | Standing makeup assignment page (lives outside any module) |
-| `glossary.html` | **Generated — do not edit.** Rebuilt from `glossary.json` by the build pipeline. |
-| `aiml2003-module1.imscc` | Canvas Common Cartridge package for Module 1 (for Canvas import) |
+| `glossary.html` | Generated from `glossary.json` by the build pipeline. Edit `glossary.json`, not this file. |
+| `aiml2003-module1.imscc` | Canvas Common Cartridge package for Module 1 (initial import) |
+
+Reading-quiz IMSCC packages (`aiml2003-module*-reading-quiz.imscc`) are gitignored — answers are in plaintext.
+
+## Modules
+
+| Directory | Week(s) | Topic | Deliverable |
+|-----------|---------|-------|-------------|
+| `module1/` | 1–2 | From Prompt to Context Engineering | Setup → Presentation |
+| `module2/` | 3 | Hand-Crafted Features (TF-IDF) | Presentation |
+| `module3/` | 4 | Learned Embeddings | Demo |
+| `module4/` | 5 | Basic RAG | Demo |
+| `module5/` | 6 | Evaluating LLMs | Presentation |
+| `module6/` | 7 | Simple Agents | Demo |
+| `module7/` | 8 | Portfolio & Future | Final Portfolio Presentation |
+
+`slides/` holds NLP-specific lecture decks by week. Shared interactive demos and combined decks live in the project-root `slides/` directory.
 
 ## Updating the Welcome Page
 
 When a new module goes live, update `welcome.html`:
+
 1. Copy the current "This Week" link into the Past Modules list (newest at top)
 2. Update "This Week" to the new module's Canvas overview page URL
-3. Build and upload: `bash build/build.sh aiml2003` then run `upload_to_canvas.py`
-
-## Subdirectories
-
-| Directory | Contents |
-|-----------|---------|
-| `module1/` | Week 1–2: From Prompt to Context Engineering |
-| `module2/` | Week 3: Hand-Crafted Features (TF-IDF) |
-| `slides/` | Lecture slides by week |
+3. Build and upload: `bash build/build.sh aiml2003` then `python3 scripts/upload_to_canvas.py aiml2003`
 
 ## Building
 
@@ -35,7 +42,7 @@ When a new module goes live, update `welcome.html`:
 bash build/build.sh aiml2003
 
 # Build one module
-bash build/build.sh aiml2003/module2
+bash build/build.sh aiml2003/module4
 ```
 
-Output goes to `build/output/aiml2003/`.
+Output goes to `build/aiml2003/` (gitignored).
