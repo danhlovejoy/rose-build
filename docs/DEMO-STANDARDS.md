@@ -156,7 +156,7 @@ function init() {
 
 ### State
 
-All state lives in module-level variables. No classes, no frameworks.
+All state lives in module-level variables. Do not introduce classes or framework state containers.
 
 ```js
 let currentWord = null;

@@ -276,7 +276,7 @@ Deliverable type is resolved automatically from the course/module combination (s
 **Key rules:**
 - Never edit files in `build/aiml2003/` or `build/aiml2013/` — they are generated and will be overwritten
 - Never put `<style>` blocks in source HTML files — use `course-styles.css`
-- The build script is deterministic (no LLM, no external deps, stdlib Python only)
+- The build script is deterministic and uses only the Python standard library; nothing in the pipeline calls an LLM
 - CSS custom properties (`var(--name)`) are resolved at build time
 - Descendant selectors (e.g., `.hero h2`) are resolved using DOM-aware ancestor tracking
 - Always create content with the CANVAS API if possible
