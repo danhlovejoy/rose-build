@@ -23,7 +23,7 @@ Built files go to `build/aiml2003/` and `build/aiml2013/` (both gitignored). The
 
 ## Key Rules
 
-- Never edit files in `build/output/` — they are generated and will be overwritten on the next build
+- Never edit files in `build/aiml2003/` or `build/aiml2013/` — they are generated and will be overwritten on the next build
 - The build is deterministic: no LLM or dependencies
 - CSS custom properties (`var(--name)`) are resolved at build time
 - Descendant CSS selectors (e.g., `.hero h2`) are resolved using DOM-aware ancestor tracking

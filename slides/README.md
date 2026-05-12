@@ -32,6 +32,6 @@ Single-file HTML demos and PPTX decks shared across both courses. See `docs/DEMO
 
 ## Notes
 
-Slides are **not part of the build pipeline** — `build.sh` does not process this directory. Link demos and decks directly from Canvas pages or share them as files.
+`build.sh` does not process this directory; slides are not part of the build pipeline. Link demos and decks directly from Canvas pages or share them as files.
 
 Course-specific lecture decks live in `aiml2003/slides/` and `aiml2013/slides/`. Use this directory for assets that span both courses.

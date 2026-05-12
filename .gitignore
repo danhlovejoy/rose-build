@@ -16,6 +16,9 @@ prep-scratch/
 quizzes/
 *.imscc
 
+# Final exam content (answers in plaintext)
+final-exam/
+
 # Copyright sources can't be uploaded
 readings/szeliski/
 

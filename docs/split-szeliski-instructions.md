@@ -5,8 +5,9 @@ This script takes the full Szeliski PDF (*Computer Vision: Algorithms and Applic
 ## What you need
 
 - The Szeliski PDF file (`Szeliski_CVAABook_2ndEd.pdf`)
-- Python installed on your computer
+- Python 3 installed on your computer
 - A terminal (Terminal on Mac, PowerShell on Windows)
+- About 15 minutes and roughly 200 MB of free disk space for the output PDFs
 
 ## Get the script
 
@@ -96,7 +97,7 @@ If you see a version number (3.10 or higher), skip to step 2. If you get an erro
 
 1. Go to [python.org/downloads](https://www.python.org/downloads/)
 2. Download the latest Python 3 installer for Windows
-3. Run the installer. **Check the box that says "Add Python to PATH"** before clicking Install. This is the most common mistake. If you skip this, nothing below will work without extra configuration.
+3. Run the installer. On the first screen there is a checkbox labeled "Add Python to PATH" — check it before clicking Install. This is the most common mistake; if you skip the checkbox, nothing below will work without extra configuration.
 4. Close and reopen PowerShell, then run `python --version` again to confirm.
 
 ### 2. Open PowerShell and navigate to the folder with the script and PDF

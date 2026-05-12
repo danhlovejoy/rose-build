@@ -8,22 +8,23 @@ Two separate workflows: **Module Upload** (can happen any time) and **Welcome Pa
 
 ### 1. Build
 
-- [ ] Run `bash build/build.sh [course/moduleN]`
-- [ ] Confirm: no dead links, no encoding errors in output
 - [ ] Confirm `build.conf` delivery mode is correct (concurrent vs. standalone)
+- [ ] Run `bash build/build.sh [course/moduleN]`
+- [ ] Spot-check the output for encoding errors and garbled characters
+- [ ] Run `python3 build/check_links.py [course/moduleN]` to catch dead relative links
 
 ### 2. Canvas Assignments
 
-Create these four items in Canvas for the week. All are unpublished until Step 5.
+Create the items below in Canvas for the week. Module 6 skips the Ethics Discussion in both courses, and its Participation assignment is worth 100 points instead of 80. All items are unpublished until Step 5.
 
-- [ ] **Week X Participation** — Assignment / No Submission / 80 pts / Participation group
-- [ ] **Week X Ethics Discussion** — Discussion Topic / 20 pts / Participation group
+- [ ] **Week X Participation** — Assignment / No Submission / 80 pts (100 pts for Module 6) / Participation group
+- [ ] **Week X Ethics Discussion** — Discussion Topic / 20 pts / Participation group. Skip for Module 6.
   - Paste the ethics prompt from the module's ethics HTML page into the Canvas discussion body
 - [ ] **Week X [Presentation or Demo]** — Assignment / On Paper / 100 pts / correct group
   - Attach the correct rubric (rubric IDs differ by course — see CLAUDE.md)
 - [ ] **Week X GitHub Repo** — Assignment / Online URL / 100 pts / GitHub Repos group
   - Attach the Repo rubric
-- [ ] Set due dates on all four assignments
+- [ ] Set due dates on every assignment created above
 
 ### 3. Canvas Pages
 
@@ -34,13 +35,14 @@ Create these four items in Canvas for the week. All are unpublished until Step 5
 
 - [ ] Create the Module in Canvas (if not already created)
 - [ ] Add pages to the module in order (matching file numbering)
-- [ ] Add all four assignments to the module
+- [ ] Add the week's assignments to the module (four for most weeks; three for Module 6)
 - [ ] Verify item order
 
 ### 5. Publish
 
-- [ ] Publish all pages
-- [ ] Publish all assignments and the ethics discussion
+- [ ] Publish every page
+- [ ] Publish every assignment
+- [ ] Publish the ethics discussion (skip for Module 6)
 - [ ] Publish the module itself
 
 ---

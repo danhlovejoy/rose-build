@@ -105,7 +105,7 @@ Read these before making any content changes:
 
 **Rubrics:** Show abbreviated summaries in assignment pages. Link to full Canvas rubrics. Each rubric exists in both courses — use the correct course ID in links (26943 for NLP, 26944 for CV).
 
-**Welcome page (weekly update):** `aiml2003/welcome.html` and `aiml2013/welcome.html` serve as Canvas course landing pages. Each week when a new module goes live: (1) copy the current "This Week" link into the Past Modules list, newest at top; (2) update "This Week" to the new module's Canvas overview page URL; (3) build and upload the welcome page. These files build normally via `build.sh` and are uploaded to Canvas like any other page.
+**Welcome page (weekly update):** `aiml2003/welcome.html` and `aiml2013/welcome.html` serve as Canvas course landing pages. When a new module goes live: (1) copy the current "This Week" link into the Past Modules list, newest at top; (2) update "This Week" to the new module's Canvas overview page URL; (3) rebuild via `bash build/build.sh`; (4) upload the rebuilt welcome page to Canvas like any other page.
 
 **Readings:** Never due before the first class of a module. Due before the following Tuesday.
 

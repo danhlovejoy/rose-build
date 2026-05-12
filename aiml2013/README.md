@@ -31,9 +31,10 @@ Reading-quiz IMSCC packages (`aiml2013-module*-reading-quiz.imscc`) are gitignor
 
 When a new module goes live, update `welcome.html`:
 
-1. Copy the current "This Week" link into the Past Modules list (newest at top)
-2. Update "This Week" to the new module's Canvas overview page URL
-3. Build and upload: `bash build/build.sh aiml2013` then `python3 scripts/upload_to_canvas.py aiml2013`
+1. Copy the current "This Week" link into the Past Modules list (newest at top).
+2. Update "This Week" to the new module's Canvas overview page URL.
+3. Run `bash build/build.sh aiml2013` to rebuild.
+4. Run `python3 scripts/upload_to_canvas.py aiml2013` to push the rebuilt page.
 
 ## Building
 

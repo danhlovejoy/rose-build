@@ -36,7 +36,7 @@ rose/
 
 Canvas strips `<style>` and `<link>` tags from wiki pages. The build pipeline inlines CSS into each element's `style=""` attribute and outputs body-only HTML for Canvas upload.
 
-**Prerequisites:** Python 3.8+ (stdlib only — no external packages required).
+**Prerequisites:** Python 3.8 or newer. The build uses the standard library only.
 
 ### Commands
 
@@ -68,7 +68,7 @@ Set `delivery_mode` in `build.conf` before building for distribution:
 - `concurrent` (default) — both courses taught together; bridge boxes and combined labs included
 - `standalone` — single-course delivery; all `data-concurrent="true"` content stripped
 
-**Never change `build.conf` to `standalone` while students are actively enrolled in both courses.**
+**Never change `build.conf` to `standalone` while students are enrolled in both courses.**
 
 ---
 
@@ -90,8 +90,7 @@ Edit source HTML files directly. They render correctly in a browser for local pr
 
 When a new module is ready to go live:
 
-1. Update `aiml2003/welcome.html` and `aiml2013/welcome.html`:
-   - Move the current "This Week" link into the Past Modules list
-   - Update "This Week" to point to the new module's overview page
-2. Build: `bash build/build.sh`
-3. Upload the updated welcome pages to Canvas
+1. In `aiml2003/welcome.html` and `aiml2013/welcome.html`, move the current "This Week" link into the Past Modules list.
+2. In the same two files, update "This Week" to point to the new module's overview page.
+3. Run `bash build/build.sh`.
+4. Upload the rebuilt welcome pages to Canvas.
