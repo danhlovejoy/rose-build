@@ -1,29 +1,37 @@
 #!/usr/bin/env python3
 """
-import_cartridge_to_canvas.py — Import a .imscc cartridge into a Canvas course via API.
+import_cartridge_to_canvas.py — Import the Canvas cartridge bundle into a course.
 
-Mirrors the Canvas UI flow (Course Settings → Import Course Content →
-Common Cartridge 1.x Package) using the content_migrations API.
+Modes:
+    Single-cartridge:
+        python3 scripts/import_cartridge_to_canvas.py <cartridge.imscc> <course_id>
 
-Usage:
-    python3 scripts/import_cartridge_to_canvas.py <cartridge.imscc> <course_id>
+    Full course bundle (master cartridge + per-module reading quizzes + final exam):
+        python3 scripts/import_cartridge_to_canvas.py --bundle <course> <course_id>
 
-Example:
-    python3 scripts/import_cartridge_to_canvas.py dist/aiml2003-canvas-import.imscc 20338
+The bundle mode imports the master cartridge first (pages, modules, graded
+discussions), then imports each per-quiz IMSCC from quizzes/, then the final
+exam from final-exam/. After every cartridge lands, it walks the Canvas module
+structure and inserts each quiz as a Module Item under the right module via
+the Canvas API.
 
-Reads CANVAS_TOKEN from .env. Polls until the migration completes or fails.
-Stdlib only.
+The split exists because Canvas's CC importer fails on cartridges that contain
+more than one standalone QTI quiz resource. Per-quiz cartridges work, hence the
+sequential import.
+
+Reads CANVAS_TOKEN from .env. Stdlib only.
 """
 
 import json
 import mimetypes
 import os
+import re
 import secrets
 import sys
 import time
 from urllib.parse import urlencode
 from urllib.request import Request, urlopen
-from urllib.error import HTTPError, URLError
+from urllib.error import HTTPError
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 CANVAS_BASE = "https://rose.instructure.com"
@@ -40,7 +48,6 @@ def load_token():
 
 
 def api_request(url, method="GET", token=None, data=None, headers=None):
-    """Send a JSON request to the Canvas API and return the parsed JSON response."""
     body = None
     req_headers = {"Authorization": f"Bearer {token}"}
     if headers:
@@ -58,8 +65,23 @@ def api_request(url, method="GET", token=None, data=None, headers=None):
         raise SystemExit(f"Canvas API error {e.code} on {method} {url}\n{body}")
 
 
+def api_fetch_all(url, token):
+    """Follow Link: rel=\"next\" pagination and return a flat list."""
+    out = []
+    while url:
+        req = Request(url, headers={"Authorization": f"Bearer {token}"})
+        with urlopen(req) as resp:
+            out.extend(json.loads(resp.read()))
+            link = resp.headers.get("Link", "")
+            next_url = None
+            for part in link.split(","):
+                if 'rel="next"' in part:
+                    next_url = part.split(";")[0].strip().strip("<>")
+            url = next_url
+    return out
+
+
 def multipart_upload(url, fields, filepath):
-    """POST a file to a Canvas file-upload endpoint using multipart/form-data."""
     boundary = "----rose-cartridge-" + secrets.token_hex(16)
     body_chunks = []
 
@@ -96,85 +118,209 @@ def multipart_upload(url, fields, filepath):
         return e.code, e.read().decode("utf-8", errors="replace")
 
 
-def import_cartridge(cartridge_path, course_id, token):
+def import_cartridge(cartridge_path, course_id, token, verbose=True):
+    """Import a single IMSCC cartridge. Returns migration_id."""
     if not os.path.exists(cartridge_path):
         raise SystemExit(f"Cartridge not found: {cartridge_path}")
     size = os.path.getsize(cartridge_path)
-    print(f"  Cartridge: {cartridge_path} ({size:,} bytes)")
-    print(f"  Target:    {CANVAS_BASE}/courses/{course_id}")
+    if verbose:
+        print(f"  ▸ {os.path.basename(cartridge_path)} ({size:,} bytes)")
 
-    # Step 1 — create the content_migration with a pre_attachment placeholder.
-    print("  [1/4] Creating content migration...")
     url = f"{CANVAS_BASE}/api/v1/courses/{course_id}/content_migrations"
-    data = {
+    migration = api_request(url, method="POST", token=token, data={
         "migration_type": "common_cartridge_importer",
         "pre_attachment[name]": os.path.basename(cartridge_path),
         "pre_attachment[size]": size,
-    }
-    migration = api_request(url, method="POST", token=token, data=data)
+    })
     migration_id = migration["id"]
-    pre_attachment = migration.get("pre_attachment")
-    if not pre_attachment or "upload_url" not in pre_attachment:
-        raise SystemExit(
-            f"No pre_attachment.upload_url in migration response:\n{json.dumps(migration, indent=2)}"
-        )
-    upload_url = pre_attachment["upload_url"]
-    upload_params = pre_attachment.get("upload_params", {})
-    print(f"    migration_id={migration_id}")
+    pre = migration.get("pre_attachment") or {}
+    upload_url = pre.get("upload_url")
+    upload_params = pre.get("upload_params", {})
+    if not upload_url:
+        raise SystemExit(f"No upload_url in migration response:\n{json.dumps(migration, indent=2)}")
 
-    # Step 2 — POST the file to the pre-signed upload URL.
-    print("  [2/4] Uploading cartridge...")
     status, body = multipart_upload(upload_url, upload_params, cartridge_path)
     if status not in (200, 201, 301, 302, 303):
         raise SystemExit(f"Upload failed (HTTP {status}):\n{body[:1000]}")
-    print(f"    upload returned HTTP {status}")
 
-    # Step 3 — poll the migration progress URL until completion.
-    print("  [3/4] Polling migration progress...")
-    progress_url = migration.get("progress_url")
-    if not progress_url:
-        # Fall back to the migration resource itself for status.
-        progress_url = f"{CANVAS_BASE}/api/v1/courses/{course_id}/content_migrations/{migration_id}"
-    deadline = time.time() + 300  # 5-minute ceiling for the import
+    progress_url = migration.get("progress_url") or (
+        f"{CANVAS_BASE}/api/v1/courses/{course_id}/content_migrations/{migration_id}"
+    )
+    deadline = time.time() + 300
     last_state = None
     while time.time() < deadline:
         progress = api_request(progress_url, token=token)
         state = progress.get("workflow_state") or progress.get("workflow_status")
         if state != last_state:
-            print(f"    state: {state}")
+            if verbose:
+                print(f"    state: {state}")
             last_state = state
         if state in {"completed", "imported"}:
             break
         if state in {"failed", "failed_with_messages"}:
-            raise SystemExit(
-                f"Migration failed:\n{json.dumps(progress, indent=2)[:2000]}"
-            )
+            raise SystemExit(f"Migration failed:\n{json.dumps(progress, indent=2)[:2000]}")
         time.sleep(3)
     else:
         raise SystemExit("Migration timed out after 5 minutes")
 
-    # Step 4 — fetch the final migration record to surface any per-item issues.
-    print("  [4/4] Checking final migration record...")
-    final_url = f"{CANVAS_BASE}/api/v1/courses/{course_id}/content_migrations/{migration_id}"
-    final = api_request(final_url, token=token)
-    issues = final.get("migration_issues_count")
-    print(f"    workflow_state: {final.get('workflow_state')}")
-    if issues:
-        print(f"    migration issues: {issues}")
-        issues_url = f"{final_url}/migration_issues"
-        issue_list = api_request(issues_url, token=token)
-        for issue in (issue_list if isinstance(issue_list, list) else [])[:10]:
-            print(f"      - {issue.get('description')}")
-    print(f"  View in Canvas: {CANVAS_BASE}/courses/{course_id}")
+    final = api_request(
+        f"{CANVAS_BASE}/api/v1/courses/{course_id}/content_migrations/{migration_id}",
+        token=token,
+    )
+    issues = final.get("migration_issues_count") or 0
+    if verbose and issues:
+        print(f"    {issues} warning(s)")
+    return migration_id
 
+
+# ──────────────────────────────────────────────────────────────────────
+# Bundle (master + quizzes) import
+# ──────────────────────────────────────────────────────────────────────
+
+QUIZ_FILENAME_RE = re.compile(r"(?:^|/)([\w-]+)-module(\d+)-reading-quiz\.imscc$")
+FINAL_EXAM_RE = re.compile(r"(?:^|/)([\w-]+)-final-exam\.imscc$")
+
+
+def quiz_to_module_assignment(course_short, course_id, token):
+    """After all imports land, place each quiz under its target module via Canvas API.
+
+    Maps reading quizzes module1-6 to Modules 1-6 and the final exam to Module 7.
+    No-ops if a target module isn't found. Each per-quiz cartridge that Canvas
+    couldn't merge into an existing module ends up in a leftover "Misc Module";
+    we delete those after placement.
+    """
+    modules = api_fetch_all(
+        f"{CANVAS_BASE}/api/v1/courses/{course_id}/modules?per_page=100", token,
+    )
+    name_to_module = {}
+    misc_modules = []
+    for m in modules:
+        if m["name"].strip().lower() == "misc module":
+            misc_modules.append(m)
+            continue
+        match = re.search(r"Module\s+(\d+)", m["name"])
+        if match:
+            name_to_module[int(match.group(1))] = m
+
+    quizzes = api_fetch_all(
+        f"{CANVAS_BASE}/api/v1/courses/{course_id}/quizzes?per_page=100", token,
+    )
+
+    # Find which quizzes are already in a non-Misc module (Canvas merged them
+    # there automatically because the quiz cartridge's container module matched
+    # by title prefix). We only need to API-add the rest.
+    existing_module_quiz_ids = set()
+    for m in modules:
+        if m["name"].strip().lower() == "misc module":
+            continue
+        items = api_fetch_all(
+            f"{CANVAS_BASE}/api/v1/courses/{course_id}/modules/{m['id']}/items?per_page=100",
+            token,
+        )
+        for it in items:
+            if it.get("type") == "Quiz" and it.get("content_id"):
+                existing_module_quiz_ids.add(it["content_id"])
+
+    placed = 0
+    for q in quizzes:
+        title = q.get("title", "")
+        m_quiz = re.match(r"Module\s+(\d+)\s+Reading Quiz", title, re.IGNORECASE)
+        is_final = "final exam" in title.lower()
+
+        target_num = None
+        if m_quiz:
+            target_num = int(m_quiz.group(1))
+        elif is_final:
+            target_num = 7
+        if target_num is None:
+            continue
+        if q["id"] in existing_module_quiz_ids:
+            continue  # Canvas already placed it in the right module
+        module = name_to_module.get(target_num)
+        if not module:
+            print(f"    skip: no Module {target_num} to place '{title}'")
+            continue
+
+        api_request(
+            f"{CANVAS_BASE}/api/v1/courses/{course_id}/modules/{module['id']}/items",
+            method="POST", token=token,
+            data={
+                "module_item[title]": title,
+                "module_item[type]": "Quiz",
+                "module_item[content_id]": q["id"],
+                "module_item[indent]": 0,
+            },
+        )
+        placed += 1
+    print(f"  Placed {placed} quiz item(s) into modules.")
+
+    # Drop any leftover "Misc Module" — its quiz items have been duplicated into
+    # their proper modules above.
+    for m in misc_modules:
+        api_request(
+            f"{CANVAS_BASE}/api/v1/courses/{course_id}/modules/{m['id']}",
+            method="DELETE", token=token,
+        )
+        print(f"  Removed leftover module: {m['name']}")
+
+
+def import_full_bundle(course, course_id, token):
+    """Master cartridge + per-quiz cartridges + final exam, then arrange in modules."""
+    master = os.path.join(ROOT, "dist", f"{course}-canvas-import.imscc")
+    quizzes_dir = os.path.join(ROOT, "quizzes")
+    final_exam_dir = os.path.join(ROOT, "final-exam")
+
+    print(f"Target: {CANVAS_BASE}/courses/{course_id}")
+
+    print(f"\n[1] Master cartridge:")
+    import_cartridge(master, course_id, token)
+
+    print(f"\n[2] Per-module reading quizzes:")
+    quiz_paths = sorted(
+        os.path.join(quizzes_dir, f)
+        for f in os.listdir(quizzes_dir)
+        if f.startswith(f"{course}-module") and f.endswith("-reading-quiz.imscc")
+    )
+    for path in quiz_paths:
+        import_cartridge(path, course_id, token)
+
+    print(f"\n[3] Final exam:")
+    final_path = os.path.join(final_exam_dir, f"{course}-final-exam.imscc")
+    if os.path.exists(final_path):
+        import_cartridge(final_path, course_id, token)
+    else:
+        print("  (no final-exam IMSCC found, skipping)")
+
+    print(f"\n[4] Placing quizzes into modules via Canvas API:")
+    quiz_to_module_assignment(course, course_id, token)
+
+    print(f"\nDone. View at {CANVAS_BASE}/courses/{course_id}")
+
+
+# ──────────────────────────────────────────────────────────────────────
+# CLI
+# ──────────────────────────────────────────────────────────────────────
 
 def main():
-    if len(sys.argv) != 3:
-        print(__doc__.strip())
-        sys.exit(1)
-    cartridge_path, course_id = sys.argv[1], sys.argv[2]
+    args = sys.argv[1:]
     token = load_token()
-    import_cartridge(cartridge_path, course_id, token)
+
+    if args[:1] == ["--bundle"] and len(args) == 3:
+        _, course, course_id = args
+        if course not in {"aiml2003", "aiml2013"}:
+            raise SystemExit("Course must be aiml2003 or aiml2013")
+        import_full_bundle(course, course_id, token)
+        return
+
+    if len(args) == 2:
+        cartridge_path, course_id = args
+        print(f"Target: {CANVAS_BASE}/courses/{course_id}")
+        import_cartridge(cartridge_path, course_id, token)
+        print(f"View at {CANVAS_BASE}/courses/{course_id}")
+        return
+
+    print(__doc__.strip())
+    sys.exit(1)
 
 
 if __name__ == "__main__":

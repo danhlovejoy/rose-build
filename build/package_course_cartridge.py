@@ -220,6 +220,92 @@ def build_discussion_xml(title: str, body_html: str) -> str:
     return DISCUSSION_TEMPLATE.format(title=xml_escape(title), body=body_html)
 
 
+DISCUSSION_META_TEMPLATE = """\
+<?xml version="1.0" encoding="UTF-8"?>
+<topicMeta identifier="{meta_id}"
+           xmlns="http://canvas.instructure.com/xsd/cccv1p0"
+           xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+           xsi:schemaLocation="http://canvas.instructure.com/xsd/cccv1p0 https://canvas.instructure.com/xsd/cccv1p0.xsd">
+  <topic_id>{topic_id}</topic_id>
+  <title>{title}</title>
+  <type>topic</type>
+  <discussion_type>threaded</discussion_type>
+  <workflow_state>active</workflow_state>
+  <require_initial_post>true</require_initial_post>
+  <points_possible>{points}</points_possible>
+  <assignment identifier="{assignment_id}">
+    <title>{title}</title>
+    <workflow_state>published</workflow_state>
+    <points_possible>{points}</points_possible>
+    <grading_type>points</grading_type>
+    <submission_types>discussion_topic</submission_types>
+    <assignment_group_identifierref>{group_ref}</assignment_group_identifierref>
+    <position>1</position>
+  </assignment>
+</topicMeta>
+"""
+
+
+def build_discussion_meta_xml(meta_id, topic_id, assignment_id, title, points, group_ref):
+    """Canvas-extension metadata that marks a discussion topic as graded.
+
+    Sits alongside the standard IMS topic XML; on import Canvas creates both the
+    discussion and a linked Assignment row in the gradebook tied to the chosen
+    assignment group.
+    """
+    return DISCUSSION_META_TEMPLATE.format(
+        meta_id=meta_id,
+        topic_id=topic_id,
+        assignment_id=assignment_id,
+        title=xml_escape(title),
+        points=points,
+        group_ref=group_ref,
+    )
+
+
+# ──────────────────────────────────────────────────────────────────────
+# Assignment groups
+# ──────────────────────────────────────────────────────────────────────
+
+ASSIGNMENT_GROUPS_XML = """\
+<?xml version="1.0" encoding="UTF-8"?>
+<assignmentGroups xmlns="http://canvas.instructure.com/xsd/cccv1p0"
+                  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                  xsi:schemaLocation="http://canvas.instructure.com/xsd/cccv1p0 https://canvas.instructure.com/xsd/cccv1p0.xsd">
+  <assignmentGroup identifier="participation">
+    <title>Participation</title>
+    <position>1</position>
+    <group_weight>20.0</group_weight>
+  </assignmentGroup>
+  <assignmentGroup identifier="github_repos">
+    <title>GitHub Repos</title>
+    <position>2</position>
+    <group_weight>25.0</group_weight>
+  </assignmentGroup>
+  <assignmentGroup identifier="presentations">
+    <title>Presentations</title>
+    <position>3</position>
+    <group_weight>15.0</group_weight>
+  </assignmentGroup>
+  <assignmentGroup identifier="demos">
+    <title>Demos</title>
+    <position>4</position>
+    <group_weight>25.0</group_weight>
+  </assignmentGroup>
+  <assignmentGroup identifier="final_reflection">
+    <title>Final Reflection</title>
+    <position>5</position>
+    <group_weight>5.0</group_weight>
+  </assignmentGroup>
+  <assignmentGroup identifier="final_portfolio">
+    <title>Final Portfolio</title>
+    <position>6</position>
+    <group_weight>10.0</group_weight>
+  </assignmentGroup>
+</assignmentGroups>
+"""
+
+
 # ──────────────────────────────────────────────────────────────────────
 # Quiz handling — reuses build_quiz.py
 # ──────────────────────────────────────────────────────────────────────
@@ -663,12 +749,31 @@ def build_cartridge(course: str):
             )
 
         if is_ethics_path(rel_path):
-            # Discussion topic
+            # Graded discussion: ship the IMS topic XML alongside a Canvas-extension
+            # topicMeta sidecar that turns it into a 20-pt graded discussion in the
+            # Participation assignment group.
             mod_num = module_number(rel_path)
             res_id = f"disc_{slug.replace('-', '_')}"
+            meta_id = f"{res_id}_meta"
+            assignment_id = f"{res_id}_assignment"
             disc_path = f"discussions/{slug}.xml"
+            meta_path = f"course_settings/{slug}-topic-meta.xml"
             zip_contents[disc_path] = build_discussion_xml(title, body)
-            resources.append((res_id, "imsdt_xmlv1p1", disc_path, None))
+            zip_contents[meta_path] = build_discussion_meta_xml(
+                meta_id=meta_id,
+                topic_id=res_id,
+                assignment_id=assignment_id,
+                title=title,
+                points=20,
+                group_ref="participation",
+            )
+            resources.append((res_id, "imsdt_xmlv1p1", disc_path, meta_id))
+            resources.append((
+                meta_id,
+                "associatedcontent/imscc_xmlv1p1/learning-application-resource",
+                meta_path,
+                None,
+            ))
             if mod_num is not None:
                 module_items.setdefault(mod_num, []).append((title, res_id, "DiscussionTopic"))
         else:
@@ -685,49 +790,14 @@ def build_cartridge(course: str):
                 # Course-level page (welcome, glossary, makeup-participation)
                 course_resource_items.append((title, res_id, "WikiPage"))
 
-    # ── Reading quizzes ──────────────────────────────────────────────
-    for mod_num in range(1, 8):
-        quiz_json_path = quizzes_dir / f"{course}-module{mod_num}-reading-quiz.json"
-        if not quiz_json_path.exists():
-            continue
-        with open(quiz_json_path, "r", encoding="utf-8") as f:
-            quiz_data = json.load(f)
-        course_prefix = "nlp" if "2003" in course else "cv"
-        quiz_id = f"{course_prefix}_module{mod_num}_reading_quiz"
-        quiz_filename = f"module{mod_num}_reading_quiz.xml"
-        meta_filename = f"module{mod_num}_reading_quiz_meta.xml"
-
-        qti_xml, meta_xml, _ = build_quiz_artifacts(quiz_data, quiz_id)
-        zip_contents[f"quizzes/{quiz_filename}"] = qti_xml
-        zip_contents[f"assessment_meta/{meta_filename}"] = meta_xml
-
-        resources.append((quiz_id, "imsqti_xmlv1p2/imscc_xmlv1p1/assessment",
-                          f"quizzes/{quiz_filename}", f"{quiz_id}_meta"))
-        resources.append((f"{quiz_id}_meta", "associatedcontent/imscc_xmlv1p1/learning-application-resource",
-                          f"assessment_meta/{meta_filename}", None))
-
-        module_items.setdefault(mod_num, []).append((quiz_data["title"], quiz_id, "Quizzes::Quiz"))
-
-    # ── Final exam ───────────────────────────────────────────────────
-    final_exam_json = final_exam_dir / f"{course}-final-exam.json"
-    if final_exam_json.exists():
-        with open(final_exam_json, "r", encoding="utf-8") as f:
-            exam_data = json.load(f)
-        course_prefix = "nlp" if "2003" in course else "cv"
-        quiz_id = f"{course_prefix}_final_exam"
-        quiz_filename = "final_exam.xml"
-        meta_filename = "final_exam_meta.xml"
-
-        qti_xml, meta_xml, _ = build_quiz_artifacts(exam_data, quiz_id)
-        zip_contents[f"quizzes/{quiz_filename}"] = qti_xml
-        zip_contents[f"assessment_meta/{meta_filename}"] = meta_xml
-
-        resources.append((quiz_id, "imsqti_xmlv1p2/imscc_xmlv1p1/assessment",
-                          f"quizzes/{quiz_filename}", f"{quiz_id}_meta"))
-        resources.append((f"{quiz_id}_meta", "associatedcontent/imscc_xmlv1p1/learning-application-resource",
-                          f"assessment_meta/{meta_filename}", None))
-        # Final exam goes in Module 7 (portfolio module)
-        module_items.setdefault(7, []).append((exam_data["title"], quiz_id, "Quizzes::Quiz"))
+    # Quizzes (reading + final) are NOT bundled into the master cartridge.
+    #
+    # Canvas's CC importer fails with a generic error when a single cartridge holds
+    # more than one standalone QTI quiz resource (`imsqti_xmlv1p2/imscc_xmlv1p1/assessment`).
+    # Each per-module quiz JSON in quizzes/ is built into its own single-quiz IMSCC by
+    # build_quiz.py, and import_cartridge_to_canvas.py imports them sequentially after
+    # the master cartridge. Same goes for the final exam.
+    # Tracked as a documented limitation in Setup Notes.
 
     # ── Setup notes page ─────────────────────────────────────────────
     setup_md_path = PROJECT_ROOT / "docs" / "COURSE-SETUP-NOTES.md"
@@ -749,14 +819,22 @@ def build_cartridge(course: str):
         # Place it first in Course Resources
         course_resource_items.insert(0, ("Course Setup Notes", setup_res_id, "WikiPage"))
 
-    # Organization tree: Course Resources section, then Modules 1-7.
-    # This is the IMS standard structure; Canvas also reads course_settings/module_meta.xml below.
+    # Organization tree: Course Resources + Modules 1-7. WikiPages + quizzes.
+    #
+    # Canvas processes both the IMS organizations tree and course_settings/module_meta.xml.
+    # Discussions placed in both ended up duplicated into an auto-created "Misc Module"
+    # in earlier testing — so discussions are now only listed in module_meta.xml. Quizzes,
+    # by contrast, are only placed correctly when they appear in the IMS organizations
+    # tree, so we keep them here.
+    IMS_TREE_TYPES = {"WikiPage", "Quizzes::Quiz"}
     org_lines = []
 
     if course_resource_items:
         org_lines.append('      <item identifier="course_resources">')
         org_lines.append("        <title>Course Resources</title>")
-        for idx, (title, res_id, _ct) in enumerate(course_resource_items):
+        for idx, (title, res_id, ct) in enumerate(course_resource_items):
+            if ct not in IMS_TREE_TYPES:
+                continue
             org_lines.append(
                 f'        <item identifier="cr_item_{idx + 1}" identifierref="{res_id}">'
             )
@@ -768,7 +846,9 @@ def build_cartridge(course: str):
         mod_title = MODULE_TITLES[course][mod_num]
         org_lines.append(f'      <item identifier="module_{mod_num}">')
         org_lines.append(f"        <title>{xml_escape(mod_title)}</title>")
-        for idx, (title, res_id, _ct) in enumerate(module_items[mod_num]):
+        for idx, (title, res_id, ct) in enumerate(module_items[mod_num]):
+            if ct not in IMS_TREE_TYPES:
+                continue
             org_lines.append(
                 f'        <item identifier="m{mod_num}_item_{idx + 1}" identifierref="{res_id}">'
             )
@@ -781,11 +861,16 @@ def build_cartridge(course: str):
     # ── Canvas-specific course_settings files ────────────────────────
     # These are what makes Canvas import the cartridge as wiki pages + real modules
     # rather than as a flat pile of HTML files.
-    zip_contents["course_settings/canvas_export.txt"] = CANVAS_EXPORT_MARKER
+    # Deliberately omit course_settings/canvas_export.txt: when Canvas sees that
+    # marker, it switches the importer into "Canvas-flavored CC" mode and expects
+    # quizzes at non_cc_assessments/*.qti rather than standard QTI at quizzes/*.xml.
+    # The IMS-standard QTI path works fine, and wiki pages still import correctly
+    # because each page has Canvas's `<meta name="identifier"/>` etc. in its head.
     zip_contents["course_settings/course_settings.xml"] = COURSE_SETTINGS_XML.format(
         title=xml_escape(full_name),
         course_code=xml_escape(short_name),
     )
+    zip_contents["course_settings/assignment_groups.xml"] = ASSIGNMENT_GROUPS_XML
 
     # Build module_meta.xml from the same module_items dict the organization tree used.
     canvas_modules = []
@@ -834,6 +919,7 @@ def build_cartridge(course: str):
         "course_settings": [
             "course_settings/course_settings.xml",
             "course_settings/module_meta.xml",
+            "course_settings/assignment_groups.xml",
         ],
     }
 

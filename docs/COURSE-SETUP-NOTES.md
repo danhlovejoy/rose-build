@@ -7,7 +7,7 @@ Welcome. This page is included in the {{COURSE_CODE}} Canvas import cartridge ({
 - Every wiki page for Modules 1 through 7 — overview, readings, assignment sheets, lab pages, the welcome landing page, the standing makeup-participation page, and the glossary.
 - The Canvas module structure: Modules 1–7 with their pages in the order students should see them.
 - Ethics discussion topics for every module that has one (Modules 1–5 and Module 7; Module 6 has no ethics post).
-- Reading quizzes for Modules 1 through 6 and a final exam. **The live course did not use these.** They are shipped in the cartridge as optional assessments in case you want to add a formal comprehension check; if not, leave them unpublished or delete them.
+- Reading quizzes for Modules 1 through 6 and a final exam. **The live course did not use these.** They ship as optional assessments in case you want to add a formal comprehension check; if not, leave them unpublished or delete them. The quizzes import from separate `.imscc` files in the source repo's `quizzes/` and `final-exam/` directories — Canvas's CC importer fails when one cartridge holds more than one standalone QTI quiz, so the import script imports them one at a time and then arranges them into the right modules via the Canvas API.
 - This setup-notes page.
 
 Internal links between pages use Canvas's `$WIKI_REFERENCE$` syntax, so they resolve to whatever course ID Canvas assigns after import. You don't need to find-and-replace course IDs.
@@ -80,7 +80,11 @@ bash build/build.sh --standalone {{COURSE_CODE_LOWER}}
 python3 build/package_course_cartridge.py {{COURSE_CODE_LOWER}}
 ```
 
-The new cartridge will land in `dist/{{CARTRIDGE_FILENAME}}`.
+The new cartridge will land in `dist/{{CARTRIDGE_FILENAME}}`. To push the full bundle (master cartridge + reading quizzes + final exam) into a fresh Canvas course in one step:
+
+```
+python3 scripts/import_cartridge_to_canvas.py --bundle {{COURSE_CODE_LOWER}} <course_id>
+```
 
 Editing conventions worth reading before you make changes:
 
