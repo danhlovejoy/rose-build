@@ -13,7 +13,7 @@ This directory contains the scripts that transform source HTML into Canvas-ready
 | `strip_concurrent.py` | Removes `data-concurrent="true"` elements in standalone mode; detects file-level concurrent markers |
 | `audit_concurrent.py` | Reports all concurrent-only content across the project; flags untagged bridge boxes |
 | `check_links.py` | Dead-link checker — scans source HTML for `href`/`src` and reports targets that don't exist on disk |
-| `lint_demos.py` | Lints interactive slide demos against DEMO-STANDARDS.md (Plotly.react, assert: comments, CSS-var rules) |
+| `lint_demos.py` | Lints interactive slide demos against `docs/DEMO-STANDARDS.md` (Plotly.react, assert: comments, CSS-var rules) |
 | `course-config.json` | Canvas page slug → source file mappings used by `scripts/upload_to_canvas.py` |
 | `course-config.template.json` | Template for adding new pages to the config |
 

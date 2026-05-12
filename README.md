@@ -17,11 +17,11 @@ rose/
 ├── course-styles.css          ← single CSS source of truth for all pages
 ├── glossary.json              ← all glossary terms for both courses
 ├── CLAUDE.md                  ← full project context for AI assistants
-├── MODULE-STANDARDS.md        ← how to build any module
-├── WRITING-STANDARDS.md       ← banned phrases, formatting rules, tone
-├── DEMO-STANDARDS.md          ← how to build interactive slide demos
 ├── build/                     ← build pipeline scripts and generated output
-├── docs/                      ← instructor references (Canvas setup guide, push checklist)
+├── docs/                      ← standards docs, Canvas setup guide, push checklist
+│   ├── MODULE-STANDARDS.md    ← how to build any module
+│   ├── WRITING-STANDARDS.md   ← banned phrases, formatting rules, tone
+│   └── DEMO-STANDARDS.md      ← how to build interactive slide demos
 ├── scripts/                   ← Canvas API helpers (upload_to_canvas.py, create_module_assignments.py, split_szeliski.py)
 ├── templates/                 ← reusable HTML page templates
 ├── aiml2003/                  ← NLP course source files
@@ -77,9 +77,9 @@ Set `delivery_mode` in `build.conf` before building for distribution:
 Edit source HTML files directly. They render correctly in a browser for local preview. Run the build before uploading to Canvas.
 
 **Read before making changes:**
-- `MODULE-STANDARDS.md` — module structure, file numbering, page types, rubrics, participation model
-- `WRITING-STANDARDS.md` — banned phrases, formatting rules, tone
-- `DEMO-STANDARDS.md` — conventions for interactive slide demos in `slides/`
+- `docs/MODULE-STANDARDS.md` — module structure, file numbering, page types, rubrics, participation model
+- `docs/WRITING-STANDARDS.md` — banned phrases, formatting rules, tone
+- `docs/DEMO-STANDARDS.md` — conventions for interactive slide demos in `slides/`
 - `CLAUDE.md` — full project conventions, build system, Canvas details, correction protocol
 
 **Never put `<style>` blocks in source HTML files** — all CSS goes in `course-styles.css`.

@@ -4,7 +4,7 @@ Lint interactive demos in slides/.
 
 Checks:
   1. assert: comments — verifies math claims (dot products, cosine comparisons)
-  2. Anti-patterns from DEMO-STANDARDS.md:
+  2. Anti-patterns from docs/DEMO-STANDARDS.md:
      - Plotly.newPlot (should be Plotly.react)
      - SVG via innerHTML
      - CSS vars in JS-generated inline styles
@@ -22,7 +22,7 @@ import os
 import re
 import sys
 
-# ── Required CSS variables (from DEMO-STANDARDS.md) ──
+# ── Required CSS variables (from docs/DEMO-STANDARDS.md) ──
 
 REQUIRED_CSS_VARS = {
     '--primary', '--primary-light', '--accent', '--light-bg', '--border',

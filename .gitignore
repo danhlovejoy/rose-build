@@ -17,8 +17,6 @@ quizzes/
 *.imscc
 
 # Copyright sources can't be uploaded
-Szeliski_CVAABook_2ndEd.pdf
-szeliski-index.xlsx
 readings/szeliski/
 
 # OS files

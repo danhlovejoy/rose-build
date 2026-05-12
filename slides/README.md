@@ -1,6 +1,6 @@
 # slides/ — Shared Interactive Demos and Lecture Decks
 
-Single-file HTML demos and PPTX decks shared across both courses. See `DEMO-STANDARDS.md` (project root) for the conventions every interactive demo follows.
+Single-file HTML demos and PPTX decks shared across both courses. See `docs/DEMO-STANDARDS.md` for the conventions every interactive demo follows.
 
 `build/lint_demos.py` checks new demos against those conventions before they go to students.
 
