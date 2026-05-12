@@ -49,13 +49,13 @@ Canvas grade weighting by Assignment Group is course-level configuration that do
 
 Three course-specific rubrics need to exist before `create_module_assignments.py` can attach them: a Presentation rubric, a Demo rubric, and a GitHub Repo rubric. The existing rubric IDs for the current Rose State courses are in CLAUDE.md. For a new Canvas course, recreate these three rubrics under Course → Rubrics, then update the rubric IDs in `scripts/create_module_assignments.py` (the IDs are at the top of the file).
 
-### Welcome page
+### Advancing the welcome page each week
 
-The cartridge ships `welcome.html` pointing to Module 7 as "This Week" (because that's where the current semester ended). On the first day of class, edit `welcome.html`:
+The cartridge ships `welcome.html` pointing at Module 1 as "This Week" with an empty Past Modules list. The Canvas course landing page uses this file. Each week as you advance through the semester, update it:
 
-1. Move the current "This Week" link into the Past Modules list.
-2. Update "This Week" to point to Module 1.
-3. Rebuild and re-upload the welcome page.
+1. Copy the current "This Week" link into the Past Modules list (newest at top).
+2. Update "This Week" to point at the new module's overview page.
+3. Edit the page in Canvas directly, or rebuild from source and re-upload via `scripts/upload_to_canvas.py`.
 
 The course README has the same instructions under "Advancing to a New Week."
 

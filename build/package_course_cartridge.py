@@ -73,6 +73,12 @@ COURSE_DISPLAY = {
     "aiml2013": ("AIML 2013", "AIML 2013 — Introduction to Computer Vision"),
 }
 
+# Module 1 slugs — what the welcome page's "This Week" link points to in a fresh-import cartridge.
+MODULE_1_SLUGS = {
+    "aiml2003": "welcome-to-aiml-2003",
+    "aiml2013": "welcome-to-aiml-2013",
+}
+
 
 def is_ethics_path(rel_path: str) -> bool:
     """Pages whose source file is the ethics prompt — these become discussion topics, not wiki pages."""
@@ -130,6 +136,37 @@ def rewrite_links(html_body: str, known_slugs: set) -> str:
             return f'{prefix}$WIKI_REFERENCE$/pages/{slug}{fragment}{suffix}'
         return m.group(0)
     return CANVAS_PAGE_LINK_RE.sub(replace, html_body)
+
+
+WELCOME_THIS_WEEK_RE = re.compile(
+    r'(<p[^>]*>This Week</p>\s*<p[^>]*><a href=")[^"]*("[^>]*>)[^<]*(</a>)',
+    re.DOTALL,
+)
+WELCOME_PAST_MODULES_RE = re.compile(
+    r'(<h3[^>]*>Previous Modules</h3>\s*<ul[^>]*>).*?(</ul>)',
+    re.DOTALL,
+)
+
+
+def reset_welcome_to_module_1(body_html: str, module_1_slug: str, module_1_title: str) -> str:
+    """Reset the course welcome page to its semester-start state for the cartridge.
+
+    The live welcome page tracks "This Week" as the instructor advances each week. A
+    fresh-import cartridge should start at Module 1 with no past modules listed; the
+    future instructor advances week-by-week from there using the same workflow.
+    """
+    body_html = WELCOME_THIS_WEEK_RE.sub(
+        lambda m: (
+            m.group(1)
+            + f"$WIKI_REFERENCE$/pages/{module_1_slug}"
+            + m.group(2)
+            + f"{module_1_title} &rarr;"
+            + m.group(3)
+        ),
+        body_html,
+    )
+    body_html = WELCOME_PAST_MODULES_RE.sub(r"\1\2", body_html)
+    return body_html
 
 
 def extract_body(html_text: str) -> str:
@@ -526,6 +563,15 @@ def build_cartridge(course: str):
         title = page_title_from_source(source_dir / rel_path,
                                        fallback=slug_to_friendly_fallback(slug))
         body = rewrite_links(extract_body(html_text), known_slugs)
+
+        # The course-level "welcome" page tracks the current live week. For a fresh
+        # cartridge import we reset it to point at Module 1 with an empty Past Modules list.
+        if slug == "welcome":
+            body = reset_welcome_to_module_1(
+                body,
+                module_1_slug=MODULE_1_SLUGS[course],
+                module_1_title=MODULE_TITLES[course][1],
+            )
 
         if is_ethics_path(rel_path):
             # Discussion topic
