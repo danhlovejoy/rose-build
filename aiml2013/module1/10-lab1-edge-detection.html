@@ -13,7 +13,7 @@
 
 <div class="section-card">
   <h3>The Task</h3>
-  <p>In the readings and in class, you learned that images are multidimensional arrays of numbers. Now you'll learn how to <strong>transform</strong> those arrays using small matrices called <strong>kernels</strong>. A blurring kernel smooths out noise. An edge-detection kernel finds boundaries between objects. These are the building blocks of every vision pipeline &mdash; from Instagram filters to self-driving cars to medical imaging.</p>
+  <p>In the readings and in class, you learned that images are multidimensional arrays of numbers. Now you'll learn how to transform those arrays using small matrices called kernels. A blurring kernel smooths out noise. An edge-detection kernel finds boundaries between objects. These operations appear in every vision pipeline: photo editing apps, autonomous vehicles, medical scanners, industrial inspection systems.</p>
   <p>You'll apply blurring filters, edge detectors, and experiment with kernel sizes, then reflect on what the filters reveal about how machines "see."</p>
 </div>
 
@@ -224,6 +224,7 @@ show_images(edge_results, edge_labels, cols=4, figsize=(18, 5))</pre>
     <li><strong>Custom kernel:</strong> Define your own 3&times;3 kernel and apply it with <code>cv2.filter2D()</code>. Try a sharpening kernel: <code>np.array([[0,-1,0],[-1,5,-1],[0,-1,0]])</code>. What does it do?</li>
     <li><strong>Noise then denoise:</strong> Add random noise to your image with <code>np.random.normal()</code>, then try to remove it with each of the three blur types. Which filter handles noise best?</li>
     <li><strong>Compare images:</strong> Run the same filters on two contrasting images (e.g., a building vs. a face). Do the filters behave the same way?</li>
+    <li><strong>Threshold after edges:</strong> Apply Canny edge detection, then binarize the result at different thresholds. How does thresholding change which features survive?</li>
   </ul>
 </div>
 
@@ -245,7 +246,7 @@ show_images(edge_results, edge_labels, cols=4, figsize=(18, 5))</pre>
 
 <h2>What Makes This Lab Interesting</h2>
 
-<p>Spatial filtering is one of the oldest ideas in computer vision, and it's still everywhere. The Sobel operator was published in 1968. Canny edge detection is from 1986. But the concept of sliding a small kernel over an array and computing a weighted sum at each position &mdash; that's <strong>convolution</strong>, and it's the same fundamental operation that powers modern convolutional neural networks (CNNs). When you apply a 3&times;3 Sobel kernel to your image, you're doing exactly what the first layer of a deep learning model does, except the model learns its own kernels from data instead of using hand-designed ones.</p>
+<p>Spatial filtering is one of the oldest ideas in computer vision, and it's still everywhere. The Sobel operator was published in 1968. Canny edge detection is from 1986. But the concept of sliding a small kernel over an array and computing a weighted sum at each position &mdash; that's convolution, and it's the same fundamental operation that powers modern convolutional neural networks (CNNs). When you apply a 3&times;3 Sobel kernel to your image, you're doing exactly what the first layer of a deep learning model does, except the model learns its own kernels from data instead of using hand-designed ones.</p>
 
 <p>That's where this course is heading: from hand-designed filters to learned filters. But you have to understand what a kernel does before you can appreciate what it means for a network to <em>learn</em> one.</p>
 

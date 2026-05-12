@@ -73,7 +73,7 @@
   <p class="resource-meta">StatQuest with Josh Starmer &bull; YouTube</p>
   <p class="resource-desc">Logistic regression is the classifier your lab trains to predict positive or negative sentiment. This video explains what it does without requiring any calculus. The key ideas: it learns a score for each word (positive score means that word predicts a positive review, negative score means the opposite), it converts that score into a probability between 0 and 1, and the boundary between "positive prediction" and "negative prediction" sits at 0.5. Lab Cell 5 visualizes those word scores directly as a bar chart.</p>
   <div class="focus-box">
-    <strong>The one concept that matters most:</strong> Each word in your vocabulary gets a coefficient. A large positive coefficient for "brilliant" means the model learned that reviews containing "brilliant" tend to be positive. A large negative coefficient for "waste" means the opposite. That is the entire logic behind the bar chart in Cell 5.
+    <strong>What to notice:</strong> Each word in your vocabulary gets a coefficient. A large positive coefficient for "brilliant" means reviews containing "brilliant" tend to be positive. A large negative coefficient for "waste" means the opposite. That is the entire logic behind the bar chart in Cell 5.
   </div>
   <p class="resource-link">
     <a href="https://www.youtube.com/watch?v=yIYKR4sgzI8" target="_blank">Watch: Logistic Regression &mdash; StatQuest &rarr;</a>
@@ -159,7 +159,7 @@
     <li>A movie review says "not bad at all." After preprocessing and TF-IDF weighting, what does that review look like to the classifier? What information gets lost, and does it matter?</li>
     <li>The logistic regression model assigns a score to every word in the vocabulary. If "waste" has a large negative score, what did the model learn from the training data? What kind of reviews would have pushed that score negative?</li>
     <li>The model is trained on 1,600 labeled reviews and tested on 400 it has never seen. Why is it important that the vocabulary is built only from the training reviews, not from the test reviews?</li>
-    <li>You are comparing TF-IDF + logistic regression to Gemini on the same 50 reviews. What does each approach "know" going in? Where would you expect the classical model to outperform Gemini, and where would you expect Gemini to win?</li>
+    <li>You are comparing TF-IDF + logistic regression to Gemini on the same 50 reviews. What information does each approach have going in? Where would you expect the classical model to outperform Gemini, and where would you expect Gemini to win?</li>
   </ol>
 </div>
 

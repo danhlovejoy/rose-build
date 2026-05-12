@@ -22,7 +22,7 @@
 <div class="warning">
   <strong>No training wheels here: 10 bonus points if you earn them.</strong>
   <p style="margin: 0.75rem 0 0;">This version of the lab gives you the specification for each cell, not the code. Each section below tells you exactly what a cell must do, what variables it must receive, and what variables it must produce. Your job is to write the code yourself, using an LLM (Gemini, Claude, ChatGPT, or any tool you like) to help you generate it.</p>
-  <p style="margin: 0.75rem 0 0;"><strong>To earn the 10 bonus points:</strong> include a markdown cell directly above each code cell containing the prompt you gave the LLM and a one-sentence note on whether the generated code worked as-is or what you had to fix. Eight cells &times; one prompt note each. That&rsquo;s it.</p>
+  <p style="margin: 0.75rem 0 0;"><strong>To earn the 10 bonus points:</strong> include a markdown cell directly above each code cell containing the prompt you gave the LLM and a one-sentence note on whether the generated code worked as-is or what you had to fix. Eight cells &times; one prompt note each.</p>
   <p style="margin: 0.75rem 0 0;">If you would rather use the training wheels version, it&rsquo;s on the other lab page. Both versions are graded the same way on the standard rubric. Only this version is eligible for the bonus.</p>
 </div>
 
@@ -31,7 +31,7 @@
   <h3>The Task</h3>
   <p>In AIML 2003, you have been working with text. In AIML 2013, you have been working with images. This week you will build the same pipeline twice: once for each modality, and compare what you find.</p>
   <p>The pipeline: take raw input (a sentence, or a photograph), reduce it to a fixed-length feature vector, then use that vector to retrieve the most similar items from a corpus. You will run each pipeline, find where it succeeds, and, more importantly, find where it fails. The failures are the insight.</p>
-  <p>In the readings and in class, you learned that both language and vision pipelines face the same fundamental problem: how do you turn something a human understands into numbers a machine can compute on? TF-IDF and HOG are two answers, both hand-crafted, both transparent, and both limited in exactly the same direction. By the end of this lab, you will know what that shared limitation is.</p>
+  <p>In the readings and in class, you learned that both language and vision pipelines face the same fundamental problem: how do you turn something a human understands into numbers a machine can compute on? TF-IDF and HOG are two answers, both hand-crafted, both transparent, and both limited in exactly the same direction. This lab makes that shared limitation visible.</p>
 </div>
 
 <!-- ========== DATASETS ========== -->
@@ -457,6 +457,7 @@
     <li><strong>One retrieval result that worked</strong>: from either the NLP or CV side. Show the query, the top results, and explain briefly why TF-IDF or HOG got it right.</li>
     <li><strong>One failure from each side</strong>: your NLP failure and your CV failure. Explain in plain language what each extractor missed and why.</li>
     <li><strong>The comparison:</strong> What do TF-IDF and HOG have in common? What is the shared limitation of human-designed features? What does that imply about what you&rsquo;ll need next?</li>
+    <li><strong>Your takeaway:</strong> You ran both pipelines firsthand. What surprised you about how the two modalities broke down in similar ways?</li>
   </ol>
   <p>You are the only student in either class who ran both pipelines. Your comparison is firsthand, not borrowed from a textbook. That is what makes the presentation worth hearing.</p>
   <p>See the assignment sheet for submission details and the rubric.</p>

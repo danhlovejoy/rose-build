@@ -15,7 +15,7 @@
 <div class="section-card">
   <h3>The Task</h3>
   <p>In the readings and in class, you learned that text must become numbers before any machine learning model can process it. This week you will see what that looks like in practice. You will build a sentiment classifier that decides whether a movie review is positive or negative twice: once using TF-IDF feature vectors and logistic regression, and once using the Gemini API with progressively stronger prompts.</p>
-  <p>The comparison is the point. TF-IDF turns text into a sparse vector by counting word frequencies. Gemini encodes meaning in a completely different way. Both can get to around the same accuracy on this task, but they fail on different kinds of examples. Finding those differences tells you something important about what each approach actually understands.</p>
+  <p>The comparison is the point. TF-IDF turns text into a sparse vector by counting word frequencies. Gemini encodes meaning in a completely different way. Both can get to around the same accuracy on this task, but they fail on different kinds of examples. Finding those differences tells you something important about what each approach captures and what it misses.</p>
 </div>
 
 <!-- ========== DATASET ========== -->
@@ -23,7 +23,7 @@
 
 <div class="section-card">
   <h3>NLTK Movie Reviews</h3>
-  <p>2,000 movie reviews (1,000 positive, 1,000 negative), compiled by Bo Pang and Lillian Lee and published in 2004. It is one of the most widely used benchmarks in NLP and is built into NLTK. No download or account required.</p>
+  <p>2,000 movie reviews (1,000 positive, 1,000 negative), compiled by Bo Pang and Lillian Lee and published in 2004. The corpus is built into NLTK. No download or account required.</p>
   <p>You will split it 80/20 into training and test sets. The TF-IDF vectorizer is fitted only on the training set. The Gemini classifier sees reviews one at a time and is never fitted on anything. Both are evaluated on the same held-out test set.</p>
 </div>
 
@@ -386,9 +386,10 @@ for i in range(50):
   <p>In three to five minutes, walk the class through:</p>
   <p data-concurrent="true" style="font-size:0.9em; color:#5e35b1;"><strong>Dual-enrolled students:</strong> Your presentation covers both the NLP and CV labs in one 5&ndash;7 minute presentation. See the combined lab for guidance.</p>
   <ol>
-    <li><strong>What TF-IDF learned:</strong> Show the most positive and most negative terms from Cell 5. Pick one that surprises you and explain why the model learned it.</li>
+    <li><strong>What TF-IDF learned:</strong> Show the most positive and most negative terms from Cell 5. Pick one that surprises you and explain why the model assigned it that weight.</li>
     <li><strong>The best failure:</strong> Show one high-confidence TF-IDF mistake from Cell 6. Explain in plain language what fooled it.</li>
-    <li><strong>The comparison:</strong> Show the accuracy table from Cell 9. Find one example where Gemini did better and one where TF-IDF did better. What does each win tell you about what each approach is actually doing?</li>
+    <li><strong>The comparison:</strong> Show the accuracy table from Cell 9. Find one example where Gemini did better and one where TF-IDF did better. What does each result tell you about how each approach processes the text?</li>
+    <li><strong>Your takeaway:</strong> What did this lab change about how you think about turning text into numbers? What would you do differently next time?</li>
   </ol>
   <p>See the assignment sheet for submission details and the rubric.</p>
 </div>

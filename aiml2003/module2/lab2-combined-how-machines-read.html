@@ -23,7 +23,7 @@
   <h3>The Task</h3>
   <p>In AIML 2003, you have been working with text. In AIML 2013, you have been working with images. This week you will build the same pipeline twice: once for each modality, and compare what you find.</p>
   <p>The pipeline: take raw input (a sentence, or a photograph), reduce it to a fixed-length feature vector, then use that vector to retrieve the most similar items from a corpus. You will run each pipeline, look at where it works, and, more importantly, find where it fails. The failures are the insight.</p>
-  <p>In the readings and in class, you learned that both language and vision pipelines face the same fundamental problem: how do you turn something a human understands into numbers a machine can compute on? TF-IDF and HOG are two answers, both hand-crafted, both transparent, and both limited in exactly the same direction. By the end of this lab, you will know what that shared limitation is, and you will have a clear idea of what comes next.</p>
+  <p>In the readings and in class, you learned that both language and vision pipelines face the same fundamental problem: how do you turn something a human understands into numbers a machine can compute on? TF-IDF and HOG are two answers, both hand-crafted, both transparent, and both limited in exactly the same direction. This lab makes that shared limitation visible and points toward what comes next.</p>
 </div>
 
 <!-- ========== DATASETS ========== -->
@@ -556,6 +556,7 @@ for query, note in failure_queries:
     <li><strong>One retrieval result that worked</strong>: from either the NLP or CV side. Show the query, the top results, and explain briefly why TF-IDF or HOG got it right.</li>
     <li><strong>One failure from each side</strong>: your NLP failure and your CV failure. Explain in plain language what each extractor missed and why.</li>
     <li><strong>The comparison:</strong> What do TF-IDF and HOG have in common? What is the shared limitation of human-designed features? What does that imply about what you&rsquo;ll need next?</li>
+    <li><strong>Your takeaway:</strong> You ran both pipelines firsthand. What surprised you about how the two modalities broke down in similar ways?</li>
   </ol>
   <p>You are the only student in either class who ran both pipelines. Your comparison is firsthand, not borrowed from a textbook. That is what makes the presentation worth hearing.</p>
   <p>See the assignment sheet for submission details and the rubric.</p>
