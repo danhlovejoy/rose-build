@@ -17,6 +17,11 @@
 #   ./build.sh                    # Build all courses
 #   ./build.sh aiml2003/module1   # Build one module
 #   ./build.sh aiml2003           # Build one course
+#   ./build.sh --standalone       # Build all, stripping concurrent content
+#   ./build.sh --concurrent       # Build all, keeping concurrent (default)
+#
+# Delivery mode (--standalone / --concurrent) can also be set in build.conf.
+# CLI flags override build.conf for a single run.
 #
 # Output goes to: build/ (relative to course or workspace root)
 # Source files are never modified.
@@ -42,6 +47,29 @@ fi
 
 BUILD_DIR="$ROOT_DIR/build"
 INLINER="$SCRIPT_DIR/inline_css.py"
+STRIPPER="$SCRIPT_DIR/strip_concurrent.py"
+
+# ── Delivery mode ──────────────────────────────────────────────────────────
+# Default from build.conf, overridden by --standalone or --concurrent flags.
+DELIVERY_MODE="concurrent"
+CONF_FILE="$ROOT_DIR/build.conf"
+if [ -f "$CONF_FILE" ]; then
+    conf_mode=$(grep -E '^delivery_mode\s*=' "$CONF_FILE" | sed 's/.*=\s*//' | tr -d '[:space:]')
+    if [ -n "$conf_mode" ]; then
+        DELIVERY_MODE="$conf_mode"
+    fi
+fi
+
+# Parse CLI flags (consume --standalone / --concurrent before positional args)
+POSITIONAL_ARGS=()
+for arg in "$@"; do
+    case "$arg" in
+        --standalone) DELIVERY_MODE="standalone" ;;
+        --concurrent) DELIVERY_MODE="concurrent" ;;
+        *)            POSITIONAL_ARGS+=("$arg") ;;
+    esac
+done
+set -- "${POSITIONAL_ARGS[@]+"${POSITIONAL_ARGS[@]}"}"
 
 # Per-course color overrides (optional)
 OVERRIDE_CSS=""
@@ -61,6 +89,7 @@ echo "CSS:  $CSS_PATH"
 if [ -n "$OVERRIDE_CSS" ]; then
     echo "Colors: $OVERRIDE_CSS"
 fi
+echo "Mode: $DELIVERY_MODE"
 echo "Output: $BUILD_DIR"
 echo ""
 
@@ -81,6 +110,40 @@ build_dir() {
         return
     fi
 
+    # In standalone mode, pre-process: exclude file-level concurrent files
+    # and strip element-level concurrent content from the rest.
+    local effective_src="$src_dir"
+    local tmp_stripped=""
+    if [ "$DELIVERY_MODE" = "standalone" ]; then
+        tmp_stripped=$(mktemp -d)
+        local included=0
+        local excluded=0
+        for html_file in "$src_dir"/*.html; do
+            [ -f "$html_file" ] || continue
+            local basename
+            basename=$(basename "$html_file")
+            if python3 "$STRIPPER" --check "$html_file"; then
+                # File included — strip element-level concurrent content
+                python3 "$STRIPPER" "$html_file" "$tmp_stripped/$basename"
+                included=$((included + 1))
+            else
+                # File-level concurrent — exclude entirely
+                excluded=$((excluded + 1))
+                echo "  [skip] $basename (file-level concurrent)"
+                # Remove stale build output if it exists
+                if [ -f "$out_dir/$basename" ]; then
+                    rm "$out_dir/$basename"
+                fi
+            fi
+        done
+        effective_src="$tmp_stripped"
+        count=$included
+        if [ "$count" -eq 0 ]; then
+            rm -rf "$tmp_stripped"
+            return
+        fi
+    fi
+
     local -a extra_flags=()
     if [ "$no_recurse" = "--no-recurse" ]; then
         extra_flags+=(--no-recurse)
@@ -90,8 +153,13 @@ build_dir() {
     fi
 
     echo -e "${YELLOW}Building: $rel_path ($count files)${NC}"
-    python3 "$INLINER" --css "$CSS_PATH" ${extra_flags[@]+"${extra_flags[@]}"} "$src_dir" "$out_dir"
+    python3 "$INLINER" --css "$CSS_PATH" ${extra_flags[@]+"${extra_flags[@]}"} "$effective_src" "$out_dir"
     echo ""
+
+    # Clean up temp directory
+    if [ -n "$tmp_stripped" ]; then
+        rm -rf "$tmp_stripped"
+    fi
 }
 
 if [ "$MODE" = "course" ]; then
