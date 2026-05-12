@@ -2,8 +2,8 @@
 
 Curriculum for two concurrent 8-week courses, Spring 2026 (2nd 8 Weeks):
 
-- **AIML 2003** — Introduction to Natural Language Processing (Canvas course 26943)
-- **AIML 2013** — Introduction to Computer Vision (Canvas course 26944)
+- **AIML 2003** — Introduction to Natural Language Processing 
+- **AIML 2013** — Introduction to Computer Vision 
 
 Instructor: Dan Lovejoy (dlovejoy@rose.edu)
 
