@@ -12,14 +12,14 @@
 <p class="subtitle">Readings &amp; Prep: Complete before Tuesday, May 5</p>
 
 <div class="time-box">
-  <strong>Estimated prep time:</strong> ~1.5 hours (required materials). One optional deep dive on VLM architectures. All materials are free.
+  <strong>Estimated prep time:</strong> ~2 hours (required materials). One optional deep dive on VLM architectures. All materials are free.
 </div>
 
 <!-- ========== FRAMING ========== -->
 <div class="framing-box">
   <p><strong>The big picture:</strong> Every CV model you've used this semester has produced structured outputs: a class label, an embedding vector, a similarity score, an accuracy metric. This week you cross into generative territory. A vision-language model takes an image as input and produces open-ended text as output. The text might be a caption, an answer to a question, or a detailed scene description. And unlike a class label, there is no single correct answer &mdash; which makes evaluation much harder.</p>
   <p style="margin-top:0.5rem;">VLMs hallucinate. They describe objects that aren't in the image, invent spatial relationships, and add details that "make sense" for the scene type but are factually wrong. The CHAIR metric (Caption Hallucination Assessment with Image Relevance) was designed specifically to measure this. Your lab builds a simplified version: you generate captions, compare them to reference descriptions, and catalog what the model invents.</p>
-  <p style="margin-top:0.5rem;">This week's readings cover three things: how vision-language models combine image encoders with language decoders, how researchers measure captioning hallucination, and how VLM accuracy matters for real applications like accessibility and medical imaging.</p>
+  <p style="margin-top:0.5rem;">This week's readings cover four things: the internal structure of the CNN image encoder you have been using all semester, how vision-language models combine that encoder with a language decoder, how researchers measure captioning hallucination, and how VLM accuracy matters for real applications like accessibility and medical imaging.</p>
 </div>
 
 <!-- ========== NOTEBOOKLM ========== -->
@@ -42,7 +42,7 @@
     <span class="tag tag-time">~20 min</span>
   </div>
   <p class="resource-meta">Computerphile &bull; YouTube</p>
-  <p class="resource-desc">A clear overview of how VLMs work: an image encoder (like the MobileNetV2 you used in Module 4) extracts visual features, which are projected into the same embedding space as text tokens, then fed to a language model decoder that generates text. This is the architecture behind Gemini Vision, GPT-4V, and Claude's vision capabilities. Watch for the explanation of why the model can describe objects it has never seen &mdash; the language decoder generalizes from the visual features, the same way it generalizes from text context.</p>
+  <p class="resource-desc">A clear overview of how VLMs work: an image encoder (like the MobileNetV2 you first used in Module 3) extracts visual features, which are projected into the same embedding space as text tokens, then fed to a language model decoder that generates text. This is the architecture behind Gemini Vision, GPT-4V, and Claude's vision capabilities. Watch for the explanation of why the model can describe objects it has never seen &mdash; the language decoder generalizes from the visual features, the same way it generalizes from text context.</p>
   <p class="resource-link">
     <a href="https://www.youtube.com/watch?v=WkoytlA3MoQ" target="_blank">Watch: Vision-Language Models Explained &rarr;</a>
   </p>
@@ -82,6 +82,77 @@
   <p class="resource-link">
     <a href="https://blog.google/technology/ai/alt-text-image-descriptions/" target="_blank">Read: AI-Generated Alt Text &rarr;</a>
   </p>
+</div>
+
+<!-- ================================================================
+     CNN ARCHITECTURE
+     ================================================================ -->
+<h2>Inside the Image Encoder: How CNNs Work</h2>
+<p>The VLM you are using this week has a CNN image encoder stitched to a language decoder. You have been using MobileNetV2 as a black box since Module 3: images go in, 1,280-dimensional vectors come out. These four resources open the box. They cover the layer types that compose every CNN &mdash; convolutional filters, activation functions, pooling, and fully-connected layers &mdash; and show you what each layer computes on a real image.</p>
+
+<div class="resource-card">
+  <div class="resource-header">
+    <span class="resource-title">CNN Explainer (Georgia Tech / Polo Club)</span>
+    <span class="tag tag-required">Required</span>
+    <span class="tag tag-interactive">Interactive</span>
+    <span class="tag tag-time">~15 min</span>
+  </div>
+  <p class="resource-meta">Wang et al. &bull; IEEE VIS 2020 &bull; poloclub.github.io</p>
+  <p class="resource-desc">An interactive visualization of a working CNN (Tiny VGG) running in your browser. Click any neuron to see its convolutional filter, its input, and its output. Watch data flow from input pixels through conv &rarr; ReLU &rarr; pooling &rarr; fully-connected &rarr; softmax, one layer at a time. This is the single best tool for understanding what a convolutional layer actually computes. Spend time clicking neurons at different depths: notice how early filters respond to edges (like the Sobel filters you built in Module 1) while deeper filters respond to composite patterns.</p>
+  <p class="resource-link">
+    <a href="https://poloclub.github.io/cnn-explainer/" target="_blank">Explore: CNN Explainer &rarr;</a>
+  </p>
+  <div class="focus-box">
+    <strong>What to notice:</strong> The architecture has the same pattern repeated: convolution, then ReLU, then pooling. Each repetition shrinks the spatial dimensions (the image gets smaller) while increasing the number of feature channels (the network tracks more abstract patterns). MobileNetV2 does the same thing 53 layers deep. The 1,280-dimensional vector you extract in your labs is what remains after all the spatial information has been pooled away and only the pattern information survives.
+  </div>
+</div>
+
+<div class="resource-card">
+  <div class="resource-header">
+    <span class="resource-title">But what is a convolution? (3Blue1Brown)</span>
+    <span class="tag tag-required">Required</span>
+    <span class="tag tag-video">Video</span>
+    <span class="tag tag-time">~23 min</span>
+  </div>
+  <p class="resource-meta">3Blue1Brown &bull; Grant Sanderson &bull; YouTube</p>
+  <p class="resource-desc">You watched 3Blue1Brown&rsquo;s &ldquo;But what is a neural network?&rdquo; in Module 3. This companion video answers the next question: what is the convolutional part? Sanderson builds geometric intuition for the convolution operation, starting from probability distributions and arriving at the image-processing version: sliding a small kernel across a 2D grid and computing weighted sums at each position. You did exactly this in Module 1 when you applied Sobel and Gaussian blur kernels. A CNN learns which kernels to use instead of having an engineer specify them.</p>
+  <p class="resource-link">
+    <a href="https://www.youtube.com/watch?v=KuXjwB4LzSA" target="_blank">Watch: But what is a convolution? &rarr;</a>
+  </p>
+  <div class="focus-box">
+    <strong>Key connection:</strong> In Module 1, you applied a fixed 3&times;3 Sobel kernel to detect edges. A convolutional layer does the same sliding-window operation, but with dozens of kernels whose values were learned during training. The first layer of MobileNetV2 has 32 learned 3&times;3 kernels. Some of them look like Sobel filters. Others detect color gradients, textures, or patterns no engineer would think to design.
+  </div>
+</div>
+
+<div class="resource-card">
+  <div class="resource-header">
+    <span class="resource-title">3D CNN Visualization (Adam Harley)</span>
+    <span class="tag tag-required">Required</span>
+    <span class="tag tag-interactive">Interactive</span>
+    <span class="tag tag-time">~5 min</span>
+  </div>
+  <p class="resource-meta">Adam Harley &bull; adamharley.com</p>
+  <p class="resource-desc">Draw a digit on the pad and watch activations propagate through a CNN in 3D. Each layer &mdash; convolution, downsampling (pooling), fully-connected, output &mdash; is rendered as a spatial block you can rotate and inspect. Click any node to see its weighted input, calculation, and output value. The network is small enough to see every connection. This takes five minutes and makes the layer-by-layer structure concrete in a way that diagrams cannot.</p>
+  <p class="resource-link">
+    <a href="https://adamharley.com/nn_vis/cnn/3d.html" target="_blank">Explore: 3D CNN Visualization &rarr;</a>
+  </p>
+</div>
+
+<div class="resource-card">
+  <div class="resource-header">
+    <span class="resource-title">Inside a CNN: From Pixels to Features (Course Demo)</span>
+    <span class="tag tag-required">Required</span>
+    <span class="tag tag-interactive">Interactive</span>
+    <span class="tag tag-time">~10 min</span>
+  </div>
+  <p class="resource-meta">AIML 2013 &bull; Module 6 Demo</p>
+  <p class="resource-desc">This demo puts the pieces together. You start with the same 8&times;8 L-shaped image and walk through the full CNN pipeline step by step: apply a 3&times;3 kernel (Stage 1), run four filters simultaneously (Stage 2), apply ReLU and max pooling (Stage 3), then click through the stacked pipeline to watch the data shrink from 8&times;8 down to an 8-dimensional feature vector (Stage 4). Stage 5 shows how a fully-connected layer turns that vector into class scores via dot products. Stage 6 strips the classifier and explains why <code>include_top=False</code> gives you the embedding vector you have been using since Module 3.</p>
+  <p class="resource-link">
+    <a href="https://danhlovejoy.github.io/rose-build/slides/cnn-architecture-demo.html" target="_blank">Explore: Inside a CNN &rarr;</a>
+  </p>
+  <div class="focus-box">
+    <strong>What to notice:</strong> Click through the Stage 4 pipeline blocks and watch the grid dimensions shrink at each step. By the time data reaches the end, all spatial structure is gone and only the pattern information survives as a compact vector. That vector is the 1,280-dimensional embedding you extract with <code>MobileNetV2(weights='imagenet', include_top=False, pooling='avg')</code>.
+  </div>
 </div>
 
 <!-- ================================================================

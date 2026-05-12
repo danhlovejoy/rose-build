@@ -30,7 +30,7 @@
     <li><strong>Date/Time:</strong> Returns the current date and time.</li>
     <li><strong>Knowledge Base:</strong> Looks up information from a small fact dictionary you define.</li>
   </ul>
-  <p>The chatbot maintains conversation history across turns, decides when to call a tool vs. answer directly, and handles tool results gracefully. By the end, you will have a working agent loop &mdash; the same pattern used by ChatGPT plugins, Claude tools, and production AI assistants.</p>
+  <p>The chatbot maintains conversation history across turns, decides when to call a tool vs. answer directly, and handles tool results gracefully. The result is a working agent loop &mdash; the same pattern used by ChatGPT plugins, Claude tools, and production AI assistants.</p>
 </div>
 
 <!-- ========== HOW TO READ ========== -->
@@ -159,7 +159,7 @@
   <ul>
     <li>The agent loop must handle the case where the model makes a tool call AND the case where it answers directly. Check <code>part.function_call</code> on each part of the response.</li>
     <li>The <code>google-genai</code> SDK's chat history format expects alternating <code>user</code> and <code>model</code> roles. After a tool call, the tool result goes in as a <code>user</code> role message (or a <code>function</code> role, depending on SDK version). Check the <a href="https://ai.google.dev/gemini-api/docs/function-calling" target="_blank">function calling docs</a> for the exact format your SDK version expects.</li>
-    <li>The model may return multiple parts in one response (e.g., text + function call, or multiple function calls). For this lab, handle one tool call per turn. If you want to handle multiple, that's bonus territory.</li>
+    <li>The model may return multiple parts in one response (e.g., text + function call, or multiple function calls). For this lab, handle one tool call per turn.</li>
     <li>Print a log line each time a tool is called: <code>"[TOOL CALL] calculator('247 * 19') -> 4693"</code>. This makes debugging much easier and is great for the demo.</li>
   </ul>
 </div>
@@ -256,34 +256,7 @@
   <p><strong>Notes:</strong> "Handled gracefully" means the model acknowledged the error and gave a useful response. "Confusing" means the model ignored the error, hallucinated an answer, or produced gibberish. If your agent loop crashes on an error instead of returning it to the model, go back to Cell 4 and add a try/except around the tool execution.</p>
 </div>
 <div class="tip">
-  <strong>Markdown cell:</strong> How did the model handle tool errors? Did it acknowledge the failure, or did it try to cover it up? What does this tell you about the model's relationship to its tools &mdash; does it trust them unconditionally?
-</div>
-
-<hr>
-
-<!-- ==================== BONUS ==================== -->
-<h2>Bonus: Interactive Chat Mode (10 Extra Credit Points)</h2>
-
-<pre># Bonus Cell: Interactive Agent</pre>
-<div class="section-card">
-  <p><strong>What it does:</strong> Turns your agent into an interactive chatbot that accepts user input from a text box in Colab and responds in real time, with tool-call logging visible as it works.</p>
-
-  <p><strong>Takes in:</strong> <code>agent_turn</code>.</p>
-
-  <p><strong>Must produce:</strong></p>
-  <ul>
-    <li>An input loop using <code>input()</code> or Colab's <code>widgets</code> that:
-      <ul>
-        <li>Accepts user messages.</li>
-        <li>Calls <code>agent_turn()</code>.</li>
-        <li>Displays the response with tool-call logs.</li>
-        <li>Continues until the user types <code>"quit"</code> or <code>"exit"</code>.</li>
-      </ul>
-    </li>
-    <li>Display conversation in a formatted way: user messages in one color, agent responses in another, tool calls highlighted.</li>
-  </ul>
-
-  <p><strong>Notes:</strong> This is the ideal demo mode. Instead of running scripted questions, you can take live questions from the audience during your demo. If you implement this, use it as your demo format &mdash; it's much more engaging than running pre-written cells.</p>
+  <strong>Markdown cell:</strong> How did the model handle tool errors? Did it acknowledge the failure, or did it try to cover it up? What does this tell you about the model's relationship to its tools &mdash; does it use them unconditionally?
 </div>
 
 <hr>
@@ -300,7 +273,7 @@
     <li>A multi-turn exchange where the model uses a previous answer in a new tool call (the "take that number and multiply it" pattern).</li>
     <li>A live modification: change a tool description, add a new fact to the knowledge base, or ask a question designed to break the routing. Re-run and explain what happened.</li>
   </ol>
-  <p>The demo rubric awards 25 points for the live modification. The interactive chat mode (bonus cell) makes the demo much easier &mdash; consider implementing it even if you skip the extra credit reflection.</p>
+  <p>The demo rubric awards 25 points for the live modification.</p>
 </div>
 
 </body>
