@@ -17,7 +17,7 @@
 
 <!-- ========== FRAMING ========== -->
 <div class="framing-box">
-  <p><strong>The big picture:</strong> In Module 4 you built a retrieval system and evaluated it with precision@k. That metric told you how often the system returned the right class of image, but it treated every query equally. A retrieval system that works well for cats and badly for dogs gets the same average score as one that works equally for both &mdash; the average hides the gap.</p>
+  <p><strong>The big picture:</strong> In Module 4 you investigated a pre-built image retrieval system and evaluated it with precision@k. That metric told you how often the system returned the right class of image, but it treated every query equally. A retrieval system that works well for cats and badly for dogs gets the same average score as one that works equally for both &mdash; the average hides the gap.</p>
   <p style="margin-top:0.5rem;">The same problem applies to classifiers. A face-attribute classifier with 94% accuracy sounds reliable until you discover it's 99% accurate on one demographic group and 65% accurate on another. The overall number is technically correct and practically misleading. This week's readings cover the landmark study that exposed this problem, the metrics you need to audit it, and the structural reasons why it happens.</p>
   <p style="margin-top:0.5rem;">This is not abstract. In 2018, Joy Buolamwini and Timnit Gebru published Gender Shades, which showed that commercial facial analysis systems from Microsoft, IBM, and Face++ had error rates up to 34% on darker-skinned women while performing nearly perfectly on lighter-skinned men. That paper changed industry practice. You are building a simplified version of their audit this week.</p>
 </div>
@@ -71,6 +71,28 @@
 
 
 <!-- ================================================================
+     INTERACTIVE
+     ================================================================ -->
+<h2>Interactive Experiment</h2>
+
+<div class="resource-card">
+  <div class="resource-header">
+    <span class="resource-title">Confusion Matrix: Measuring What a Classifier Gets Wrong</span>
+    <span class="tag tag-required">Required</span>
+    <span class="tag tag-interactive">Interactive</span>
+    <span class="tag tag-time">~10 min</span>
+  </div>
+  <p class="resource-meta">Course demo &bull; AIML 2013</p>
+  <p class="resource-desc">Build intuition for the metrics you'll compute in the lab. Start with an editable 3-class confusion matrix &mdash; click any cell to change the count and watch accuracy, precision, recall, and F1 update live. Select a class to see Type I errors (false positives) and Type II errors (false negatives) highlighted in the matrix. Load the "lazy classifier" preset to see how a model that ignores a rare class scores 92% accuracy but 0% recall. The final stage shows a 10-class heatmap with per-class precision, recall, F1, macro average, and weighted average &mdash; the same table format that <code>sklearn.metrics.classification_report</code> produces in your lab.</p>
+  <p class="resource-link">
+    <a href="https://danhlovejoy.github.io/rose-build/slides/confusion-matrix-demo.html" target="_blank">Open: Confusion Matrix Demo &rarr;</a>
+  </p>
+  <div class="focus-box">
+    <strong>Key concept to lock in:</strong> Accuracy counts total correct predictions. Precision and recall zoom in on one class at a time, answering different questions: precision asks "of everything the model flagged as this class, how much actually was?" and recall asks "of all the real instances, how many did the model find?" F1 is the harmonic mean of the two &mdash; if either is near zero, F1 drops to near zero regardless of the other.
+  </div>
+</div>
+
+<!-- ================================================================
      OPTIONAL
      ================================================================ -->
 <h2>Optional Deeper Dive</h2>
@@ -86,6 +108,25 @@
   <p class="resource-desc">Timnit Gebru (co-author of Gender Shades) proposes that every dataset should come with a "datasheet" documenting who collected it, why, what it contains, how it was labeled, and known limitations. CelebA, the dataset you use in the lab, has known issues: binary gender labels, celebrity-only faces, limited ethnic diversity. This paper gives you the vocabulary to articulate those limitations in your reflection and ethics discussion.</p>
   <p class="resource-link">
     <a href="https://arxiv.org/abs/1803.09010" target="_blank">Read: Datasheets for Datasets &rarr;</a>
+  </p>
+</div>
+
+<!-- ================================================================
+     MIDPOINT STUDY GUIDE
+     ================================================================ -->
+<h2>Midpoint Self-Check</h2>
+
+<div class="resource-card">
+  <div class="resource-header">
+    <span class="resource-title">Midpoint Study Guide: Modules 1&ndash;4</span>
+    <span class="tag tag-optional">Optional</span>
+    <span class="tag tag-interactive">Interactive</span>
+    <span class="tag tag-time">~20 min</span>
+  </div>
+  <p class="resource-meta">Self-check &bull; not graded</p>
+  <p class="resource-desc">Twelve questions covering the core concepts from the first four modules: image fundamentals and kernels, HOG descriptors, CNN embeddings and transfer learning, and attention/ChromaDB retrieval. Click each question to reveal the answer and compare it to your own understanding. If fewer than 7 come easily, revisit the relevant readings or discuss in class.</p>
+  <p class="resource-link">
+    <a href="https://rose.instructure.com/courses/26944/pages/midpoint-study-guide-cv">Open: Midpoint Study Guide &rarr;</a>
   </p>
 </div>
 

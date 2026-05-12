@@ -12,12 +12,12 @@
 <p class="subtitle">Readings &amp; Prep: Complete before Tuesday, April 28</p>
 
 <div class="time-box">
-  <strong>Estimated prep time:</strong> ~1.5 hours (required materials). One optional deep dive on red-teaming. All materials are free.
+  <strong>Estimated prep time:</strong> ~1 hour 20 min (required materials). One optional deep dive on red-teaming. All materials are free.
 </div>
 
 <!-- ========== FRAMING ========== -->
 <div class="framing-box">
-  <p><strong>The big picture:</strong> In Module 4 you built a RAG pipeline that relied on Gemini to generate answers grounded in retrieved context. You tested whether it hallucinated on unanswerable questions. That was one test, on one failure mode, designed by you. This week you formalize that instinct into a structured evaluation.</p>
+  <p><strong>The big picture:</strong> In Module 4 you investigated a pre-built RAG pipeline that relied on Gemini to generate answers grounded in retrieved context. You probed how the vector space works, tested different chunking strategies, and saw how retrieval quality affects generation. Along the way you likely noticed the system making confident claims you couldn't verify. This week you formalize that instinct into a structured evaluation.</p>
   <p style="margin-top:0.5rem;">Evaluating an LLM is not like evaluating a classifier. A classifier's outputs are discrete labels &mdash; you compare predicted labels to ground truth and compute precision, recall, F1. An LLM's outputs are open-ended text. There is no single correct answer to "Summarize this article" or "Explain photosynthesis." So evaluation requires judgement: you decide what to test, how to score the response, and what counts as a passing grade. That makes the evaluator's design choices as important as the model's performance.</p>
   <p style="margin-top:0.5rem;">This week's readings cover three things: how LLMs hallucinate (and why it's structural, not accidental), how researchers measure bias in text generation, and the "LLM-as-judge" technique you'll use in the lab to automate scoring.</p>
 </div>
@@ -36,15 +36,15 @@
 <!-- RESOURCE 1: Hallucination Patterns -->
 <div class="resource-card">
   <div class="resource-header">
-    <span class="resource-title">A Survey on Hallucination in Large Language Models</span>
+    <span class="resource-title">Why Large Language Models Hallucinate</span>
     <span class="tag tag-required">Required</span>
     <span class="tag tag-video">Video</span>
-    <span class="tag tag-time">~20 min</span>
+    <span class="tag tag-time">~10 min</span>
   </div>
-  <p class="resource-meta">Yannic Kilcher &bull; YouTube</p>
-  <p class="resource-desc">Yannic Kilcher walks through the hallucination taxonomy from the Huang et al. survey paper. The key distinction is between intrinsic hallucinations (the model contradicts its own source material) and extrinsic hallucinations (the model adds information that cannot be verified from the source). Your RAG hallucination test in Module 4 caught extrinsic hallucinations &mdash; the model fabricated answers when no source was available. This video explains the full taxonomy and why hallucination is a structural property of how LLMs generate text, not a bug that can be patched.</p>
+  <p class="resource-meta">Martin Keen &bull; YouTube</p>
+  <p class="resource-desc">Large language models can generate authoritative-sounding prose on many topics, but they are also prone to fabricating plausible-sounding nonsense. Martin Keen explains the different types of LLM hallucinations, why they happen, and recommends steps you can take as a user to minimize their occurrence. If you asked your Module 4 RAG system a question the document couldn't answer, you may have seen one category of these errors firsthand &mdash; the model fabricating an answer when no source was available. This video fills in the broader picture of why hallucination is a structural property of how LLMs generate text, not a bug that can be patched.</p>
   <p class="resource-link">
-    <a href="https://www.youtube.com/watch?v=r4jDWxPJFho" target="_blank">Watch: Survey on Hallucination in LLMs &rarr;</a>
+    <a href="https://www.youtube.com/watch?v=cfqtFvWOfg0" target="_blank">Watch: Why Large Language Models Hallucinate &rarr;</a>
   </p>
   <div class="focus-box">
     <strong>Key concept to lock in:</strong> LLMs generate text by predicting the next token based on probability. They have no mechanism to verify whether a statement is true &mdash; they only know whether it is likely given the preceding tokens. Hallucination is not the model making a mistake; it is the model doing exactly what it was trained to do in a context where probability and truth diverge.
@@ -88,6 +88,28 @@
 </div>
 
 <!-- ================================================================
+     INTERACTIVE
+     ================================================================ -->
+<h2>Interactive Experiment</h2>
+
+<div class="resource-card">
+  <div class="resource-header">
+    <span class="resource-title">Hallucination: Why Models Lie Fluently</span>
+    <span class="tag tag-required">Required</span>
+    <span class="tag tag-interactive">Interactive</span>
+    <span class="tag tag-time">~10 min</span>
+  </div>
+  <p class="resource-meta">Course demo &bull; AIML 2003</p>
+  <p class="resource-desc">This demo walks through the mechanics of hallucination in four stages. You start by building a sentence one token at a time, picking from a probability distribution at each step. You see the branch point where the correct answer and the hallucination diverge &mdash; one wrong token, then a fluent, confident continuation built on top of it. A temperature slider shows how sampling parameters redistribute probability without adding knowledge. The final stage puts a correct and hallucinated passage side by side with per-token probability shading: both are equally confident, and you cannot tell them apart from the numbers alone.</p>
+  <p class="resource-link">
+    <a href="https://danhlovejoy.github.io/rose-build/slides/hallucination-demo.html" target="_blank">Open: Hallucination Demo &rarr;</a>
+  </p>
+  <div class="focus-box">
+    <strong>Key concept to lock in:</strong> A language model assigns probability based on pattern frequency in training data, not based on truth. A widely repeated myth gets higher probability than a correction that appears on fewer pages. The model has no mechanism to distinguish the two &mdash; confidence is a property of the generation process, not of the facts.
+  </div>
+</div>
+
+<!-- ================================================================
      OPTIONAL
      ================================================================ -->
 <h2>Optional Deeper Dive</h2>
@@ -103,6 +125,25 @@
   <p class="resource-desc">Anthropic's red-teaming paper describes how human testers systematically probe a language model to find harmful outputs. The adversarial prompts they design are more creative than the structured evaluations in your lab, but the underlying logic is the same: you are trying to find the failure modes the model's developers didn't anticipate. Worth reading if the bonus cell (prompt injection testing) interests you.</p>
   <p class="resource-link">
     <a href="https://arxiv.org/abs/2209.07858" target="_blank">Read: Red Teaming Language Models &rarr;</a>
+  </p>
+</div>
+
+<!-- ================================================================
+     MIDPOINT STUDY GUIDE
+     ================================================================ -->
+<h2>Midpoint Self-Check</h2>
+
+<div class="resource-card">
+  <div class="resource-header">
+    <span class="resource-title">Midpoint Study Guide: Modules 1&ndash;4</span>
+    <span class="tag tag-optional">Optional</span>
+    <span class="tag tag-interactive">Interactive</span>
+    <span class="tag tag-time">~20 min</span>
+  </div>
+  <p class="resource-meta">Self-check &bull; not graded</p>
+  <p class="resource-desc">Twelve questions covering the core concepts from the first four modules: prompt engineering, TF-IDF, sentence embeddings, and attention/RAG. Click each question to reveal the answer and compare it to your own understanding. If fewer than 7 come easily, revisit the relevant readings or discuss in class.</p>
+  <p class="resource-link">
+    <a href="https://rose.instructure.com/courses/26943/pages/midpoint-study-guide">Open: Midpoint Study Guide &rarr;</a>
   </p>
 </div>
 

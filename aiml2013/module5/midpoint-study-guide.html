@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Midpoint Study Guide: Modules 1–4 | AIML 2013</title>
+<link rel="stylesheet" href="../../course-styles.css">
+</head>
+<body>
+
+<h1>Midpoint Study Guide</h1>
+<p class="subtitle">AIML 2013 &bull; Modules 1&ndash;4 Self-Check</p>
+
+<div class="framing-box">
+  <p><strong>What this is:</strong> Twelve questions covering the core concepts from the first four modules. This is not graded. Use it to identify gaps before the second half of the course. Click any question to reveal the answer, then check it against your own understanding.</p>
+  <p style="margin-top:0.5rem;">If you can answer 9 or more from memory, you&rsquo;re in good shape. If fewer than 7 come easily, revisit the relevant readings or discuss in class.</p>
+</div>
+
+<h2>Module 1: Vision &amp; Images</h2>
+
+<details class="study-question">
+  <summary>1. An image is 640&times;480 pixels with 3 color channels (RGB), each stored as an 8-bit unsigned integer. How many total values does the NumPy array contain, and what is the range of each value?</summary>
+  <div class="study-answer">
+    <p>640 &times; 480 &times; 3 = 921,600 values. Each value is an integer from 0 to 255 (2<sup>8</sup> = 256 levels). The array shape in NumPy is <code>(480, 640, 3)</code> &mdash; rows first, then columns, then channels.</p>
+  </div>
+</details>
+
+<details class="study-question">
+  <summary>2. A convolution kernel slides across an image to produce a new image. What determines whether the output shows edges, a blur, or a sharpened version of the original?</summary>
+  <div class="study-answer">
+    <p>The values inside the kernel. A blur kernel has all positive values that sum to 1, averaging neighboring pixels. An edge-detection kernel (like Sobel) has positive values on one side and negative values on the other, so it produces a strong response only where intensity changes rapidly. A sharpening kernel amplifies the center pixel relative to its neighbors. The operation is the same &mdash; element-wise multiply and sum &mdash; but the kernel's numbers determine the effect.</p>
+  </div>
+</details>
+
+<h2>Module 2: Hand-Crafted Features (HOG)</h2>
+
+<details class="study-question">
+  <summary>3. What does a HOG descriptor encode, and what information from the original image does it discard?</summary>
+  <div class="study-answer">
+    <p>HOG encodes the distribution of gradient orientations across a grid of cells. It preserves shape and local texture &mdash; the directions and strengths of edges in each cell region. It discards color, absolute pixel intensity, and exact spatial position within each cell. Two images of the same object under different lighting produce similar HOG vectors because the gradient directions stay roughly the same even when the raw pixel values shift.</p>
+  </div>
+</details>
+
+<details class="study-question">
+  <summary>4. Why does HOG normalize at the block level (groups of cells) rather than normalizing each cell independently?</summary>
+  <div class="study-answer">
+    <p>Normalizing each cell independently would remove information about relative gradient strength between neighboring cells. Block normalization preserves local contrast: a cell's histogram values are scaled relative to its neighbors, so a strong edge next to a weak texture region keeps its relative dominance. This makes the descriptor more robust to illumination gradients that affect neighboring cells differently.</p>
+  </div>
+</details>
+
+<details class="study-question">
+  <summary>5. You compute HOG descriptors for a bicycle wheel and a wall clock. Cosine similarity returns 0.91. Why is this a problem, and what does it reveal about HOG&rsquo;s limitations?</summary>
+  <div class="study-answer">
+    <p>Both objects have radial spoke patterns that produce similar gradient orientation distributions. HOG measures structural similarity (edge patterns), not semantic similarity (what the object is). A bicycle wheel and a clock are semantically unrelated but structurally similar. This is the core limitation of hand-crafted features: they encode geometry, not meaning. A learned embedding from a CNN would separate them because the network learned to distinguish object categories, not just edge distributions.</p>
+  </div>
+</details>
+
+<h2>Module 3: Image Embeddings</h2>
+
+<details class="study-question">
+  <summary>6. You call MobileNetV2 with <code>include_top=False</code> and <code>pooling='avg'</code>. What does this produce, and why is it useful for image retrieval?</summary>
+  <div class="study-answer">
+    <p>It produces a 1,280-dimensional dense vector per image. <code>include_top=False</code> strips the final classification layer (which outputs 1,000 ImageNet class probabilities), keeping only the feature extraction layers. <code>pooling='avg'</code> applies global average pooling to collapse the spatial dimensions of the last feature map into a single vector. The result is a compact representation that encodes visual content learned from 1.2 million training images. Two semantically similar images (two dogs, two chairs) produce vectors that are close in cosine similarity even if they differ in color, pose, or background.</p>
+  </div>
+</details>
+
+<details class="study-question">
+  <summary>7. What is transfer learning, and why do features trained on ImageNet work for images that have nothing to do with the 1,000 ImageNet classes?</summary>
+  <div class="study-answer">
+    <p>Transfer learning reuses a model trained on one task for a different task. It works because the early and middle layers of a CNN learn general visual features &mdash; edges, textures, shapes, object parts &mdash; that are useful for recognizing almost any image, not just the 1,000 classes the network was trained on. Only the final classification layer is task-specific. By removing that layer, you get a general-purpose feature extractor that captures visual structure applicable to medical images, satellite photos, or any other domain.</p>
+  </div>
+</details>
+
+<details class="study-question">
+  <summary>8. Your t-SNE plot shows CNN embeddings for 500 images. Two clusters overlap heavily. Does this mean those two categories are genuinely similar in embedding space?</summary>
+  <div class="study-answer">
+    <p>Not necessarily. t-SNE preserves local neighborhood structure but distorts global distances and cluster sizes. Two clusters that overlap in the 2D plot might be well-separated in the original 1,280-dimensional space. Conversely, clusters that appear distant in the plot might be close in the real space. t-SNE is a qualitative exploration tool, not a quantitative measurement. To confirm whether categories are genuinely close, compute cosine similarities between their embeddings directly.</p>
+  </div>
+</details>
+
+<h2>Module 4: Visual Similarity &amp; Attention</h2>
+
+<details class="study-question">
+  <summary>9. Why does brute-force cosine similarity not scale for image retrieval, and what problem does ChromaDB solve?</summary>
+  <div class="study-answer">
+    <p>Brute-force comparison computes a dot product between the query vector and every vector in the dataset. For 10,000 images, that's 10,000 dot products per query. For a million, it's a million. ChromaDB is a vector database that builds an index over the embeddings so that queries return approximate nearest neighbors without scanning every vector. The tradeoff: results are approximate rather than exact, but the speedup from linear to sublinear search time makes large-scale retrieval practical.</p>
+  </div>
+</details>
+
+<details class="study-question">
+  <summary>10. Explain Query, Key, and Value in the attention mechanism in one sentence each.</summary>
+  <div class="study-answer">
+    <p><strong>Query:</strong> the vector an element uses to ask &ldquo;what should I attend to?&rdquo;</p>
+    <p><strong>Key:</strong> the vector an element uses to advertise &ldquo;here&rsquo;s what I contain.&rdquo;</p>
+    <p><strong>Value:</strong> the vector that actually gets passed forward once an element wins attention.</p>
+    <p>The dot product of Query and Key determines the attention score; the Value is what flows through once that score is high. In a vision transformer, each image patch generates its own Q, K, and V vectors.</p>
+  </div>
+</details>
+
+<details class="study-question">
+  <summary>11. How does a vision transformer&rsquo;s attention mechanism differ from a CNN&rsquo;s approach to relating distant parts of an image?</summary>
+  <div class="study-answer">
+    <p>A CNN builds its receptive field gradually: each convolutional layer sees only a small local window, and it takes many stacked layers before a neuron can respond to information from distant parts of the image. A vision transformer's attention mechanism relates every image patch to every other patch in a single step &mdash; a patch of a dog's ear can directly attend to the patch containing the dog's tail regardless of spatial distance. Attention has no distance penalty; convolution's receptive field grows only with depth.</p>
+  </div>
+</details>
+
+<details class="study-question">
+  <summary>12. Your retrieval system returns 5 results for a query image. Three are correct (same category) and two are wrong. What is precision@5, and why is this metric more informative than overall accuracy for retrieval tasks?</summary>
+  <div class="study-answer">
+    <p>Precision@5 = 3/5 = 0.60. It measures the fraction of returned results that are relevant. Overall accuracy measures performance across the entire dataset, but a retrieval system only shows the user a handful of results per query. A system that is 95% accurate overall might still return irrelevant results for specific queries. Precision@k evaluates the user's actual experience: of the results I was shown, how many were useful?</p>
+  </div>
+</details>
+
+</body>
+</html>

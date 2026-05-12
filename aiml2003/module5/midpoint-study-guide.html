@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Midpoint Study Guide: Modules 1–4 | AIML 2003</title>
+<link rel="stylesheet" href="../../course-styles.css">
+</head>
+<body>
+
+<h1>Midpoint Study Guide</h1>
+<p class="subtitle">AIML 2003 &bull; Modules 1&ndash;4 Self-Check</p>
+
+<div class="framing-box">
+  <p><strong>What this is:</strong> Twelve questions covering the core concepts from the first four modules. This is not graded. Use it to identify gaps before the second half of the course. Click any question to reveal the answer, then check it against your own understanding.</p>
+  <p style="margin-top:0.5rem;">If you can answer 9 or more from memory, you&rsquo;re in good shape. If fewer than 7 come easily, revisit the relevant readings or discuss in class.</p>
+</div>
+
+<h2>Module 1: Prompt Engineering</h2>
+
+<details class="study-question">
+  <summary>1. What is the difference between a prompt and a context window?</summary>
+  <div class="study-answer">
+    <p>A prompt is the text you send to the model. The context window is the maximum number of tokens the model can process in a single call &mdash; your prompt plus the model&rsquo;s response must fit inside it. Gemini 1.5 Pro has a context window of roughly 1 million tokens; GPT-4 Turbo has 128k. If your prompt exceeds the window, the model either truncates or errors out.</p>
+  </div>
+</details>
+
+<details class="study-question">
+  <summary>2. Why does few-shot prompting often outperform zero-shot on structured tasks?</summary>
+  <div class="study-answer">
+    <p>Few-shot examples demonstrate the expected output format, tone, and reasoning pattern. Without them, the model infers format from its training distribution, which may not match what you want. The examples act as implicit constraints &mdash; they narrow the space of plausible outputs without modifying the model&rsquo;s weights.</p>
+  </div>
+</details>
+
+<h2>Module 2: TF-IDF &amp; Text Classification</h2>
+
+<details class="study-question">
+  <summary>3. What does TF-IDF measure, and why is the IDF term necessary?</summary>
+  <div class="study-answer">
+    <p>TF (term frequency) counts how often a word appears in a document. IDF (inverse document frequency) penalizes words that appear in many documents. Without IDF, common words like &ldquo;the&rdquo; or &ldquo;is&rdquo; would dominate the vector because they&rsquo;re frequent everywhere. IDF ensures that words distinctive to a document receive higher weight.</p>
+  </div>
+</details>
+
+<details class="study-question">
+  <summary>4. A TF-IDF vector for a document has 50,000 dimensions. Most values are zero. Why?</summary>
+  <div class="study-answer">
+    <p>Each dimension corresponds to one word in the vocabulary. A single document uses only a small fraction of the full vocabulary, so most dimensions get a TF of zero. This is called a sparse vector &mdash; high-dimensional but mostly empty. Sparse representations are memory-efficient but cannot capture synonymy (different words, same meaning get orthogonal vectors).</p>
+  </div>
+</details>
+
+<details class="study-question">
+  <summary>5. You trained a logistic regression classifier on TF-IDF features and it gets 92% accuracy on positive reviews but 61% on negative reviews. What likely went wrong?</summary>
+  <div class="study-answer">
+    <p>Class imbalance. The training set probably contained far more positive reviews than negative ones, so the model learned to default toward &ldquo;positive.&rdquo; Fixes include resampling (over-sample negatives or under-sample positives), adjusting class weights in the model, or collecting more negative examples.</p>
+  </div>
+</details>
+
+<h2>Module 3: Learned Embeddings</h2>
+
+<details class="study-question">
+  <summary>6. What does cosine similarity measure, and why is it preferred over Euclidean distance for comparing embeddings?</summary>
+  <div class="study-answer">
+    <p>Cosine similarity measures the angle between two vectors, ignoring their magnitude. Two sentences with the same meaning but different lengths get similar embeddings that point in the same direction but may differ in magnitude. Euclidean distance penalizes magnitude differences, which makes it sensitive to sentence length rather than meaning. Cosine strips that out.</p>
+  </div>
+</details>
+
+<details class="study-question">
+  <summary>7. How is a sentence embedding fundamentally different from a TF-IDF vector?</summary>
+  <div class="study-answer">
+    <p>A TF-IDF vector is sparse, high-dimensional, and based on exact word counts. It cannot represent synonymy (&ldquo;happy&rdquo; and &ldquo;joyful&rdquo; get orthogonal vectors) or word order (&ldquo;dog bites man&rdquo; equals &ldquo;man bites dog&rdquo;). A sentence embedding is dense (384 or 768 dimensions, all non-zero), produced by a neural network that was trained on millions of sentence pairs, and encodes meaning, word order, and context into the vector geometry.</p>
+  </div>
+</details>
+
+<details class="study-question">
+  <summary>8. What is t-SNE, and why can&rsquo;t you use it to measure precise distances between points?</summary>
+  <div class="study-answer">
+    <p>t-SNE is a dimensionality reduction algorithm that maps high-dimensional vectors into 2D or 3D for visualization. It preserves local neighborhood structure (nearby points stay nearby) but distorts global distances and cluster sizes. Two clusters that appear far apart in a t-SNE plot may actually be close in the original space. Use it for qualitative exploration, not quantitative measurement.</p>
+  </div>
+</details>
+
+<h2>Module 4: Attention &amp; RAG</h2>
+
+<details class="study-question">
+  <summary>9. Explain Query, Key, and Value in one sentence each.</summary>
+  <div class="study-answer">
+    <p><strong>Query:</strong> the vector a word uses to ask &ldquo;what should I attend to?&rdquo;</p>
+    <p><strong>Key:</strong> the vector a word uses to advertise &ldquo;here&rsquo;s what I contain.&rdquo;</p>
+    <p><strong>Value:</strong> the vector that actually gets passed to the output once a word wins attention.</p>
+    <p>The dot product of Query and Key determines the attention score; the Value is what flows through once that score is high.</p>
+  </div>
+</details>
+
+<details class="study-question">
+  <summary>10. Why do transformers use multiple attention heads instead of one?</summary>
+  <div class="study-answer">
+    <p>A single head can only track one type of relationship at a time. Multiple heads run in parallel, each learning a different pattern: one might track coreference (pronouns &rarr; nouns), another syntax (verbs &rarr; modifiers), another local context (neighboring words). Their outputs are concatenated to produce a representation that encodes many relationship types simultaneously.</p>
+  </div>
+</details>
+
+<details class="study-question">
+  <summary>11. What is the difference between RAG and fine-tuning?</summary>
+  <div class="study-answer">
+    <p>Fine-tuning changes the model&rsquo;s weights permanently by training on new data. The knowledge becomes part of the model but is frozen at training time. RAG leaves the model untouched and injects relevant documents into the prompt at query time. RAG can answer questions about documents that didn&rsquo;t exist when the model was trained, and updating the knowledge base requires no retraining &mdash; just adding new documents to the vector store.</p>
+  </div>
+</details>
+
+<details class="study-question">
+  <summary>12. Your RAG pipeline retrieves 3 chunks from a document and passes them to Gemini. Gemini produces a confident but wrong answer. Name two possible failure points.</summary>
+  <div class="study-answer">
+    <p><strong>Retrieval failure:</strong> the 3 chunks may not contain the answer. The retriever matched on surface similarity rather than semantic relevance, or the correct information was split across chunk boundaries.</p>
+    <p><strong>Generation failure:</strong> the chunks contain the answer but the model hallucinated anyway &mdash; it generated a response from its parametric knowledge rather than grounding in the provided context. This is an extrinsic hallucination.</p>
+    <p>Other valid answers: chunk size too large (relevant passage diluted by noise), embedding model encoded the query differently than the document text, or the question requires reasoning across chunks that the model fails to perform.</p>
+  </div>
+</details>
+
+</body>
+</html>
