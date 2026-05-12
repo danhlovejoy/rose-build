@@ -78,7 +78,7 @@
 
   <p><strong>Must produce:</strong></p>
   <ul>
-    <li><code>calculator(expression: str) -> str</code>: Takes a mathematical expression as a string (e.g., <code>"2 + 3 * 4"</code>), evaluates it safely, and returns the result as a string. Use Python's <code>eval()</code> with a restricted namespace that only allows math operations (no builtins, no imports). Return an error message string if the expression is invalid.</li>
+    <li><code>calculator(expression: str) -> str</code>: Takes a mathematical expression as a string (e.g., <code>"2 + 3 * 4"</code>), evaluates it safely, and returns the result as a string. Use Python's <code>eval()</code> with a restricted namespace that allows only math operations and excludes builtins and imports. Return an error message string if the expression is invalid.</li>
     <li><code>get_datetime() -> str</code>: Returns the current date, time, and day of the week as a formatted string (e.g., <code>"Tuesday, April 29, 2026, 3:45 PM CDT"</code>).</li>
     <li><code>knowledge_lookup(topic: str) -> str</code>: Looks up a topic in a predefined dictionary of 10&ndash;15 facts. Topics should be things Gemini might get wrong or not know (e.g., current course information, made-up facts for testing, or very recent events). Return the fact if found, or <code>"No information available for: {topic}"</code> if not found. Use case-insensitive matching.</li>
     <li><code>TOOL_FUNCTIONS</code>: a dictionary mapping tool names to their Python functions: <code>{"calculator": calculator, "get_datetime": get_datetime, "knowledge_lookup": knowledge_lookup}</code>.</li>
