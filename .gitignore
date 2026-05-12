@@ -12,6 +12,10 @@ build/aiml2013/
 # Scratch/prep work
 prep-scratch/
 
+# Quiz content (answers in plaintext)
+quizzes/
+*.imscc
+
 # Copyright sources can't be uploaded
 Szeliski_CVAABook_2ndEd.pdf
 szeliski-index.xlsx
