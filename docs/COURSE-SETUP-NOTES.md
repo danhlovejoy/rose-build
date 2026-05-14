@@ -4,9 +4,11 @@ Welcome. This page is included in the {{COURSE_CODE}} Canvas import cartridge ({
 
 ## What this cartridge contains
 
+If you imported via `scripts/import_cartridge_to_canvas.py --bundle`, the script also created per-module assignment shells and cloned the three deliverable rubrics into this course via API. Without `--bundle`, you'll have pages + modules + discussions + quizzes only, and the assignment shells described below will be missing.
+
 - Every wiki page for Modules 1 through 7 — overview, readings, assignment sheets, lab pages, the welcome landing page, the standing makeup-participation page, and the glossary.
 - The Canvas module structure: Modules 1–7 with their pages in the order students should see them.
-- Ethics discussion topics for every module that has one (Modules 1–5 and Module 7; Module 6 has no ethics post).
+- Ethics discussion topics for Modules 1 through 5 (Module 6 has no ethics post; Module 7 doesn't either).
 - Reading quizzes for Modules 1 through 6 and a final exam. **The live course did not use these.** They ship as optional assessments in case you want to add a formal comprehension check; if not, leave them unpublished or delete them. The quizzes import from separate `.imscc` files in the source repo's `quizzes/` and `final-exam/` directories — Canvas's CC importer fails when one cartridge holds more than one standalone QTI quiz, so the import script imports them one at a time and then arranges them into the right modules via the Canvas API.
 - This setup-notes page.
 
@@ -16,20 +18,24 @@ Internal links between pages use Canvas's `$WIKI_REFERENCE$` syntax, so they res
 
 The cartridge intentionally does not include the items below, because Canvas's Common Cartridge format doesn't carry them cleanly. Each one needs a separate manual or scripted step.
 
-### Per-week assignments and rubrics
+### Per-week assignments and rubrics — created automatically by `--bundle`
 
-Canvas assignments with attached rubrics don't round-trip through Common Cartridge. The repository ships a script that creates them via the Canvas API. From a working copy of the source repo:
+If you ran the import via `scripts/import_cartridge_to_canvas.py --bundle ...`, all four per-module Canvas artifacts have already been created and the three deliverable rubrics have been cloned into your course:
+
+- Participation (80 pts; 100 for Module 6)
+- Ethics Discussion (20 pts, graded discussion; skipped for Module 6)
+- Presentation, Demo, or Final Portfolio (100 pts, with rubric attached)
+- GitHub Repo (100 pts, with Repo rubric attached)
+
+Due dates are set to the source semester (Module 1 = March 31, 2026, walking forward by week). To put them on your semester schedule, either use Canvas's bulk edit due dates feature (Assignments → ⋮ → Edit Assignment Dates) or re-run the bundle with `--start-date YYYY-MM-DD` against a fresh course.
+
+If you want to re-create assignments for a single module (e.g., after wiping it), use:
 
 ```
 python3 scripts/create_module_assignments.py {{COURSE_CODE_LOWER}} <module_num> <due_date>
 ```
 
-Example:
-```
-python3 scripts/create_module_assignments.py {{COURSE_CODE_LOWER}} 2 2026-04-07T17:30:00-05:00
-```
-
-The script creates the four Canvas artifacts per module (Participation assignment, Ethics Discussion, Presentation/Demo assignment, GitHub Repo assignment), wires them into the module, and attaches the right rubrics. Module 6 only needs three artifacts — see CLAUDE.md in the repo for the full rules.
+That script targets the live source course (Canvas course 26943 / 26944). It expects the Presentation, Demo, and Repo rubrics to already exist in the target course by their original IDs, so it only works against the source course or one that already has rubrics installed.
 
 ### Grade-weight settings
 
@@ -44,9 +50,9 @@ Canvas grade weighting by Assignment Group is course-level configuration that do
 | Final Reflection | 5% |
 | Final Portfolio | 10% |
 
-### Rubrics
+### Rubrics — cloned automatically by `--bundle`
 
-Three course-specific rubrics need to exist before `create_module_assignments.py` can attach them: a Presentation rubric, a Demo rubric, and a GitHub Repo rubric. The existing rubric IDs for the current Rose State courses are in CLAUDE.md. For a new Canvas course, recreate these three rubrics under Course → Rubrics, then update the rubric IDs in `scripts/create_module_assignments.py` (the IDs are at the top of the file).
+If you used `--bundle`, the three rubrics (Presentation, Demo, GitHub Repo) have been cloned into your course from the source course. No manual setup required. The new rubric IDs are different from the originals; this only matters if you intend to run `create_module_assignments.py` against your new course (that script uses hardcoded source IDs and would need editing).
 
 ### Advancing the welcome page each week
 

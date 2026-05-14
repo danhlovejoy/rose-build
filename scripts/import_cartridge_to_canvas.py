@@ -6,18 +6,27 @@ Modes:
     Single-cartridge:
         python3 scripts/import_cartridge_to_canvas.py <cartridge.imscc> <course_id>
 
-    Full course bundle (master cartridge + per-module reading quizzes + final exam):
-        python3 scripts/import_cartridge_to_canvas.py --bundle <course> <course_id>
+    Full course bundle (cartridges + quizzes + assignment shells + rubrics):
+        python3 scripts/import_cartridge_to_canvas.py --bundle <course> <course_id> \\
+            [--start-date YYYY-MM-DD] [--source-course <id>]
 
-The bundle mode imports the master cartridge first (pages, modules, graded
-discussions), then imports each per-quiz IMSCC from quizzes/, then the final
-exam from final-exam/. After every cartridge lands, it walks the Canvas module
-structure and inserts each quiz as a Module Item under the right module via
-the Canvas API.
+In --bundle mode, the script:
+    1. Imports the master cartridge (pages, modules, graded ethics discussions).
+    2. Imports each per-module reading quiz IMSCC.
+    3. Imports the final exam IMSCC.
+    4. Places quizzes into their target modules via the Canvas API and removes
+       the leftover "Misc Module" Canvas auto-creates.
+    5. Clones the three deliverable rubrics (Presentation, Demo, Repo) from the
+       source course (26943 for aiml2003, 26944 for aiml2013, or --source-course)
+       into the target course.
+    6. Creates per-module assignment shells: Participation (80 pts; 100 for
+       Module 6), Presentation or Demo (100 pts, rubric attached), GitHub Repo
+       (100 pts, rubric attached). Sets due dates from --start-date (default
+       2026-03-31, the source semester's first Tuesday) walking forward by week.
+    7. Backfills due dates on the Phase-2 graded ethics discussions.
 
-The split exists because Canvas's CC importer fails on cartridges that contain
-more than one standalone QTI quiz resource. Per-quiz cartridges work, hence the
-sequential import.
+The script splits cartridge imports because Canvas's CC importer fails on
+cartridges that contain more than one standalone QTI quiz resource.
 
 Reads CANVAS_TOKEN from .env. Stdlib only.
 """
@@ -264,13 +273,305 @@ def quiz_to_module_assignment(course_short, course_id, token):
         print(f"  Removed leftover module: {m['name']}")
 
 
-def import_full_bundle(course, course_id, token):
-    """Master cartridge + per-quiz cartridges + final exam, then arrange in modules."""
+# ──────────────────────────────────────────────────────────────────────
+# Phase 3: rubric cloning + assignment shells
+# ──────────────────────────────────────────────────────────────────────
+
+# Rubric IDs that live in the live courses. Future instructors can override
+# --source-course to point at their own backup course.
+RUBRIC_SOURCE = {
+    "aiml2003": {
+        "course_id": 26943,
+        "rubrics": {"Presentation": 65800, "Demo": 65794, "Repo": 66034},
+    },
+    "aiml2013": {
+        "course_id": 26944,
+        "rubrics": {"Presentation": 66062, "Demo": 66063, "Repo": 66064},
+    },
+}
+
+# Deliverable type by course / module
+DELIVERABLE_BY_MODULE = {
+    "aiml2003": {1: "Presentation", 2: "Presentation", 3: "Demo", 4: "Demo",
+                  5: "Presentation", 6: "Demo", 7: "Final Portfolio"},
+    "aiml2013": {1: "Presentation", 2: "Presentation", 3: "Demo", 4: "Demo",
+                  5: "Demo", 6: "Presentation", 7: "Final Portfolio"},
+}
+
+# Source semester class times (ISO 8601 with CDT offset)
+CLASS_TIME = {"aiml2003": "17:30:00-05:00", "aiml2013": "19:00:00-05:00"}
+DEFAULT_START_DATE = "2026-03-31"  # Module 1 Tuesday, Spring 2026 2nd 8 weeks
+
+
+def module_due_at(course, module_num, start_date_str):
+    """Return ISO 8601 due_at string for a module, walking forward by 1 week from Module 1."""
+    from datetime import datetime, timedelta
+    base = datetime.strptime(start_date_str, "%Y-%m-%d")
+    due_day = base + timedelta(days=(module_num - 1) * 7)
+    return f"{due_day.strftime('%Y-%m-%d')}T{CLASS_TIME[course]}"
+
+
+def fetch_rubric_data(course_id, rubric_id, token):
+    """Get a rubric (with criteria + ratings) from a source course."""
+    return api_request(
+        f"{CANVAS_BASE}/api/v1/courses/{course_id}/rubrics/{rubric_id}",
+        token=token,
+    )
+
+
+def post_rubric_to_course(target_course_id, rubric, token):
+    """Create a rubric in target course based on a source rubric dict.
+
+    Returns the new rubric id. Canvas requires form-encoded nested params and
+    a rubric_association payload for the rubric to attach to the course.
+    """
+    fields = {
+        "rubric[title]": rubric["title"],
+        "rubric[free_form_criterion_comments]":
+            "1" if rubric.get("free_form_criterion_comments") else "0",
+        "rubric_association[association_id]": str(target_course_id),
+        "rubric_association[association_type]": "Course",
+        "rubric_association[use_for_grading]": "0",
+        "rubric_association[purpose]": "bookmark",
+    }
+    for i, crit in enumerate(rubric.get("data", [])):
+        fields[f"rubric[criteria][{i}][description]"] = crit.get("description", "")
+        fields[f"rubric[criteria][{i}][long_description]"] = crit.get("long_description", "") or ""
+        fields[f"rubric[criteria][{i}][points]"] = str(crit.get("points", 0))
+        for j, rating in enumerate(crit.get("ratings", [])):
+            fields[f"rubric[criteria][{i}][ratings][{j}][description]"] = rating.get("description", "")
+            fields[f"rubric[criteria][{i}][ratings][{j}][long_description]"] = rating.get("long_description", "") or ""
+            fields[f"rubric[criteria][{i}][ratings][{j}][points]"] = str(rating.get("points", 0))
+
+    result = api_request(
+        f"{CANVAS_BASE}/api/v1/courses/{target_course_id}/rubrics",
+        method="POST", token=token, data=fields,
+    )
+    # Canvas returns {"rubric": {...}, "rubric_association": {...}}
+    inner = result.get("rubric") or result
+    return inner.get("id")
+
+
+def clone_rubrics_to_course(course, target_course_id, token, source_course_id=None):
+    """Clone the three deliverable rubrics from source to target. Returns name → id map.
+
+    Reuses existing rubrics in the target if a same-titled rubric is already there
+    (e.g., on a re-run of the bundle import).
+    """
+    source = RUBRIC_SOURCE[course]
+    if source_course_id is None:
+        source_course_id = source["course_id"]
+
+    existing = api_fetch_all(
+        f"{CANVAS_BASE}/api/v1/courses/{target_course_id}/rubrics?per_page=50",
+        token,
+    )
+    by_title = {r["title"]: r["id"] for r in existing}
+
+    mapping = {}
+    for name, src_rubric_id in source["rubrics"].items():
+        if name in by_title:
+            mapping[name] = by_title[name]
+            print(f"    {name}: reusing existing rubric in target (id {by_title[name]})")
+            continue
+        print(f"    {name}: cloning from course {source_course_id} (src id {src_rubric_id})...")
+        rubric_data = fetch_rubric_data(source_course_id, src_rubric_id, token)
+        new_id = post_rubric_to_course(target_course_id, rubric_data, token)
+        mapping[name] = new_id
+        print(f"      → new id {new_id}")
+    return mapping
+
+
+def find_assignment_groups(course_id, token):
+    groups = api_request(
+        f"{CANVAS_BASE}/api/v1/courses/{course_id}/assignment_groups?per_page=50",
+        token=token,
+    )
+    return {g["name"]: g["id"] for g in groups}
+
+
+def find_module_by_number(modules, num):
+    for m in modules:
+        if m["name"].strip().lower() == "misc module":
+            continue
+        if re.search(rf"\bmodule\s+{num}\b", m["name"], re.I):
+            return m
+    return None
+
+
+def create_assignment(course_id, name, points, group_id, submission_type, due_at, token):
+    """Create an unpublished assignment via API. Returns its id."""
+    r = api_request(
+        f"{CANVAS_BASE}/api/v1/courses/{course_id}/assignments",
+        method="POST", token=token,
+        data={
+            "assignment[name]": name,
+            "assignment[points_possible]": str(points),
+            "assignment[assignment_group_id]": str(group_id),
+            "assignment[submission_types][]": submission_type,
+            "assignment[due_at]": due_at,
+            "assignment[published]": "false",
+        },
+    )
+    return r["id"]
+
+
+def attach_rubric_to_assignment(course_id, assignment_id, rubric_id, token):
+    """Attach a rubric to an assignment for grading."""
+    if not rubric_id:
+        return
+    api_request(
+        f"{CANVAS_BASE}/api/v1/courses/{course_id}/rubric_associations",
+        method="POST", token=token,
+        data={
+            "rubric_association[rubric_id]": str(rubric_id),
+            "rubric_association[association_id]": str(assignment_id),
+            "rubric_association[association_type]": "Assignment",
+            "rubric_association[use_for_grading]": "1",
+            "rubric_association[purpose]": "grading",
+        },
+    )
+
+
+def add_module_item(course_id, module_id, title, item_type, content_id, token):
+    api_request(
+        f"{CANVAS_BASE}/api/v1/courses/{course_id}/modules/{module_id}/items",
+        method="POST", token=token,
+        data={
+            "module_item[title]": title,
+            "module_item[type]": item_type,
+            "module_item[content_id]": str(content_id),
+        },
+    )
+
+
+def create_assignment_shells(course, target_course_id, rubric_map, start_date, token):
+    """Per-module: Participation + Presentation/Demo + GitHub Repo. Ethics already
+    created by Phase 2 as a graded discussion; we backfill its due date here."""
+    groups = find_assignment_groups(target_course_id, token)
+
+    def gid(fragment):
+        for k, v in groups.items():
+            if fragment.lower() in k.lower():
+                return v
+        raise SystemExit(f"No assignment group matching '{fragment}' in target course")
+
+    grp_part = gid("Participation")
+    grp_repo = gid("Repos")
+    grp_pres = gid("Presentation")
+    grp_demo = gid("Demos")
+    grp_portfolio = None
+    grp_reflection = None
+    for k, v in groups.items():
+        if "Final Portfolio" in k:
+            grp_portfolio = v
+        if "Final Reflection" in k:
+            grp_reflection = v
+
+    modules = api_fetch_all(
+        f"{CANVAS_BASE}/api/v1/courses/{target_course_id}/modules?per_page=100",
+        token,
+    )
+
+    for mod_num in range(1, 8):
+        module = find_module_by_number(modules, mod_num)
+        if not module:
+            print(f"    Module {mod_num}: not found in target, skipping")
+            continue
+
+        deliverable = DELIVERABLE_BY_MODULE[course][mod_num]
+        due_at = module_due_at(course, mod_num, start_date)
+        is_module6 = (mod_num == 6)
+        label = f"Module {mod_num}"
+
+        # 1. Participation (100 pts for Module 6, otherwise 80)
+        part_pts = 100 if is_module6 else 80
+        part_id = create_assignment(
+            target_course_id, f"{label} Participation", part_pts, grp_part,
+            "none", due_at, token,
+        )
+        add_module_item(
+            target_course_id, module["id"], f"{label} Participation",
+            "Assignment", part_id, token,
+        )
+
+        # 2. Presentation / Demo / Final Portfolio (with rubric)
+        if deliverable == "Final Portfolio":
+            deliv_group = grp_portfolio or grp_pres
+            deliv_rubric_key = "Presentation"
+        elif deliverable == "Presentation":
+            deliv_group = grp_pres
+            deliv_rubric_key = "Presentation"
+        else:  # Demo
+            deliv_group = grp_demo
+            deliv_rubric_key = "Demo"
+
+        deliv_id = create_assignment(
+            target_course_id, f"{label} {deliverable}", 100, deliv_group,
+            "on_paper", due_at, token,
+        )
+        attach_rubric_to_assignment(
+            target_course_id, deliv_id, rubric_map.get(deliv_rubric_key), token,
+        )
+        add_module_item(
+            target_course_id, module["id"], f"{label} {deliverable}",
+            "Assignment", deliv_id, token,
+        )
+
+        # 3. GitHub Repo (with rubric)
+        repo_id = create_assignment(
+            target_course_id, f"{label} GitHub Repo", 100, grp_repo,
+            "online_url", due_at, token,
+        )
+        attach_rubric_to_assignment(
+            target_course_id, repo_id, rubric_map.get("Repo"), token,
+        )
+        add_module_item(
+            target_course_id, module["id"], f"{label} GitHub Repo",
+            "Assignment", repo_id, token,
+        )
+
+        print(f"    Module {mod_num}: Participation ({part_pts} pts), "
+              f"{deliverable} (100 pts), GitHub Repo (100 pts)")
+
+
+def backfill_ethics_due_dates(course, target_course_id, start_date, token):
+    """Phase 2 created ethics discussions but didn't set due_at. Add it now."""
+    discussions = api_fetch_all(
+        f"{CANVAS_BASE}/api/v1/courses/{target_course_id}/discussion_topics?per_page=100",
+        token,
+    )
+    updated = 0
+    for d in discussions:
+        title = d.get("title", "")
+        m = re.match(r"Module\s+(\d+)\s+Ethics", title, re.I)
+        if not m:
+            continue
+        mod_num = int(m.group(1))
+        assignment_id = d.get("assignment_id")
+        if not assignment_id:
+            continue
+        due_at = module_due_at(course, mod_num, start_date)
+        api_request(
+            f"{CANVAS_BASE}/api/v1/courses/{target_course_id}/assignments/{assignment_id}",
+            method="PUT", token=token,
+            data={"assignment[due_at]": due_at},
+        )
+        updated += 1
+    print(f"    Set due dates on {updated} ethics discussion(s).")
+
+
+def import_full_bundle(course, course_id, token, start_date=None, source_course_id=None):
+    """Master cartridge + quizzes + assignment shells + rubrics."""
     master = os.path.join(ROOT, "dist", f"{course}-canvas-import.imscc")
     quizzes_dir = os.path.join(ROOT, "quizzes")
     final_exam_dir = os.path.join(ROOT, "final-exam")
+    start_date = start_date or DEFAULT_START_DATE
 
-    print(f"Target: {CANVAS_BASE}/courses/{course_id}")
+    print(f"Target:     {CANVAS_BASE}/courses/{course_id}")
+    print(f"Start date: {start_date}  (Module 1 Tuesday; later modules walk forward by 1 week)")
+    if source_course_id:
+        print(f"Rubric src: course {source_course_id}")
 
     print(f"\n[1] Master cartridge:")
     import_cartridge(master, course_id, token)
@@ -294,6 +595,15 @@ def import_full_bundle(course, course_id, token):
     print(f"\n[4] Placing quizzes into modules via Canvas API:")
     quiz_to_module_assignment(course, course_id, token)
 
+    print(f"\n[5] Cloning deliverable rubrics:")
+    rubric_map = clone_rubrics_to_course(course, course_id, token, source_course_id)
+
+    print(f"\n[6] Creating per-module assignment shells:")
+    create_assignment_shells(course, course_id, rubric_map, start_date, token)
+
+    print(f"\n[7] Backfilling ethics-discussion due dates:")
+    backfill_ethics_due_dates(course, course_id, start_date, token)
+
     print(f"\nDone. View at {CANVAS_BASE}/courses/{course_id}")
 
 
@@ -305,15 +615,32 @@ def main():
     args = sys.argv[1:]
     token = load_token()
 
-    if args[:1] == ["--bundle"] and len(args) == 3:
-        _, course, course_id = args
+    # Pull out optional flags
+    start_date = None
+    source_course_id = None
+    positional = []
+    i = 0
+    while i < len(args):
+        if args[i] == "--start-date" and i + 1 < len(args):
+            start_date = args[i + 1]
+            i += 2
+        elif args[i] == "--source-course" and i + 1 < len(args):
+            source_course_id = args[i + 1]
+            i += 2
+        else:
+            positional.append(args[i])
+            i += 1
+
+    if positional[:1] == ["--bundle"] and len(positional) == 3:
+        _, course, course_id = positional
         if course not in {"aiml2003", "aiml2013"}:
             raise SystemExit("Course must be aiml2003 or aiml2013")
-        import_full_bundle(course, course_id, token)
+        import_full_bundle(course, course_id, token,
+                           start_date=start_date, source_course_id=source_course_id)
         return
 
-    if len(args) == 2:
-        cartridge_path, course_id = args
+    if len(positional) == 2:
+        cartridge_path, course_id = positional
         print(f"Target: {CANVAS_BASE}/courses/{course_id}")
         import_cartridge(cartridge_path, course_id, token)
         print(f"View at {CANVAS_BASE}/courses/{course_id}")
