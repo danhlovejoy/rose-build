@@ -136,7 +136,7 @@
 <div class="hero">
   <h1>Logistic Regression: The Binary Classifier</h1>
   <p>AIML 2003 &mdash; Interactive Walkthrough</p>
-  <p class="hl">How does a model learn to draw a line between positive and negative?</p>
+  <p class="hl">Logistic regression separates positive reviews from negative ones with a straight line, and training sets where that line goes.</p>
 </div>
 
 <div class="container">
@@ -146,9 +146,9 @@
      ================================================================ -->
 <div class="stage">
   <div class="stage-line"><span class="stage-num">1</span><h2>The Setup</h2></div>
-  <p>You have a pile of movie reviews. Each one is labeled positive or negative. You want a model that can classify new, unlabeled reviews. That's binary classification &mdash; two categories, one decision.</p>
+  <p>You have a pile of movie reviews. Each is labeled positive or negative. You want a model that can classify new, unlabeled reviews into one of those two classes, which makes this a binary classification problem.</p>
   <p>The TF-IDF pipeline already turned each review into a vector of numbers. Now we need a rule that takes those numbers and outputs a class. Logistic regression is that rule.</p>
-  <p>To see how it works, we'll start with just two features: the TF-IDF scores for two words. That way we can draw the data on a 2D chart and watch the classifier learn.</p>
+  <p>To see how it works, we'll start with just two features: the TF-IDF scores for two words. That way we can draw the data on a 2D chart and watch training move the boundary.</p>
 </div>
 
 <div class="arrow-box">&darr;</div>
@@ -158,7 +158,7 @@
      ================================================================ -->
 <div class="stage">
   <div class="stage-line"><span class="stage-num">2</span><h2>Two Words, One Boundary</h2></div>
-  <p>Each dot is a review. The x-axis is how much "brilliant" appears (TF-IDF); the y-axis is how much "awful" appears. Green dots are positive reviews; red dots are negative. The dashed line is the decision boundary. Everything on one side is predicted positive, the other side negative.</p>
+  <p>Each dot is a review. The x-axis is how much "brilliant" appears (TF-IDF); the y-axis is how much "awful" appears. Green circles are positive reviews; red diamonds are negative. A dot turns orange when your current weights misclassify it. The dashed line is the decision boundary: everything on one side is predicted positive, and everything on the other side is predicted negative.</p>
 
   <div class="row">
     <div class="col-main">
@@ -203,13 +203,13 @@
 
   <div class="card">
     <strong>What does "best fit" mean here?</strong>
-    <p style="margin-bottom:0.5rem;">There are infinitely many lines you could draw through this chart. Most of them are bad (they put green dots on the red side, or vice versa). The "best fit" is the line that makes the model's predicted probabilities match the actual labels as closely as possible across all the training data.</p>
-    <p style="margin-bottom:0.5rem;">More precisely: for every review, the model outputs a probability (via the sigmoid). If a review is actually positive, the training signal pushes that probability toward 1. If it's actually negative, the signal pushes it toward 0. The best-fit weights are the ones that, on average, get those probabilities closest to the truth. That's what training optimizes.</p>
-    <p style="margin-bottom:0;">This isn't the same as "highest accuracy." A model could get 90% accuracy but be wildly overconfident on the ones it gets wrong. The best fit balances getting the right answer <em>and</em> knowing how sure it should be.</p>
+    <p style="margin-bottom:0.5rem;">There are infinitely many lines you could draw through this chart. Most of them are bad (they put positive reviews on the negative side, or vice versa). The "best fit" is the line whose predicted probabilities come closest to the actual labels across all the training data.</p>
+    <p style="margin-bottom:0.5rem;">For every review, the model outputs a probability (via the sigmoid). A loss function called log-loss scores each probability: for a positive review the loss shrinks as the probability approaches 1, and for a negative review it shrinks as the probability approaches 0. Training finds the weights with the lowest average loss. In this demo, Show Best Fit starts from those weights and then searches nearby values for the highest accuracy on these 60 reviews, so its line can differ slightly from the lowest-loss line.</p>
+    <p style="margin-bottom:0;">Lowest loss and highest accuracy are different goals. Two sets of weights can both reach 90% accuracy while one assigns 99% probability to its mistakes and the other assigns 55%. Log-loss penalizes the confident mistakes much more heavily, so the second set has the lower loss.</p>
   </div>
 
   <div class="tip">
-    <strong>The decision boundary is where the raw score equals zero.</strong> Points on the green side have a positive raw score (predicted positive). Points on the red side have a negative raw score (predicted negative). Moving the sliders rotates and shifts the line.
+    <strong>The decision boundary is where the raw score equals zero.</strong> Points with a positive raw score are predicted positive, and points with a negative raw score are predicted negative. Moving the sliders rotates and shifts the line.
   </div>
 </div>
 
@@ -219,8 +219,8 @@
      STAGE 3: THE SIGMOID
      ================================================================ -->
 <div class="stage">
-  <div class="stage-line"><span class="stage-num">3</span><h2>From Score to Probability</h2></div>
-  <p>The raw score can be any number (positive, negative, huge, tiny). The sigmoid function squishes it into a value between 0 and 1. That's the model's confidence that the review is positive.</p>
+  <div class="stage-line"><span class="stage-num">3</span><h2>The Sigmoid: Turning a Score into a Probability</h2></div>
+  <p>The raw score can be any number, positive or negative, large or small. The sigmoid function maps it to a value between 0 and 1, and the model reports that value as the probability that the review is positive.</p>
 
   <div class="row">
     <div class="col-main">
@@ -248,7 +248,7 @@
   </div>
 
   <div class="tip">
-    <strong>Distance from the boundary = confidence.</strong> A dot far from the line has a raw score far from zero, which sigmoid pushes close to 0 or 1. A dot near the line has a raw score near zero (sigmoid output near 0.5), and the prediction is uncertain.
+    <strong>Distance from the boundary sets the probability.</strong> A dot far from the line has a raw score far from zero, which the sigmoid maps close to 0 or 1. A dot near the line has a raw score near zero (sigmoid output near 0.5), and the prediction is uncertain.
   </div>
 </div>
 
@@ -259,11 +259,11 @@
      ================================================================ -->
 <div class="stage">
   <div class="stage-line"><span class="stage-num">4</span><h2>How the Model Trains</h2></div>
-  <p>The model starts with random weights. On each pass through the training data, a loss function measures how many reviews are misclassified, and gradient descent nudges the weights to reduce errors. Each nudge is small. After many rounds (called iterations), the boundary settles into the position that classifies the most reviews correctly.</p>
+  <p>The model starts with small random weights. On each pass through the training data (an iteration), gradient descent computes the log-loss over all 60 reviews and moves each weight a small step in the direction that reduces it. The steps get smaller as the loss falls. This demo stops after 80 iterations.</p>
 
   <div id="trainingPlot" style="width:100%; height:450px;"></div>
   <div class="btn-group">
-    <button class="btn btn-accent" id="trainBtn" onclick="startTraining()">Train (Watch It Converge)</button>
+    <button class="btn btn-accent" id="trainBtn" onclick="startTraining()">Train for 80 Iterations</button>
     <button class="btn btn-outline" onclick="resetTraining()">Reset</button>
     <span style="font-size:0.85rem; color:var(--muted); line-height:2;" id="trainStatus">Not started</span>
   </div>
@@ -277,7 +277,7 @@
   </div>
 
   <div class="tip">
-    <strong>This is gradient descent.</strong> The model computes how wrong it is, figures out which direction to move each weight, and takes a small step. Repeat. You don't need to know the math to understand the behavior: the line moves toward a better split, a little at a time, and eventually stabilizes.
+    <strong>This is gradient descent.</strong> Each iteration computes the gradient of the loss, which says how changing each weight would change the loss, and then moves every weight a small step in the direction that lowers it. You don't need the calculus to follow the behavior. The line shifts toward a better split a little at a time, and the shifts get smaller as the loss falls.
   </div>
 </div>
 
@@ -287,31 +287,31 @@
      STAGE 5: SCALING UP
      ================================================================ -->
 <div class="stage">
-  <div class="stage-line"><span class="stage-num">5</span><h2>From 2 Words to 5,000</h2></div>
+  <div class="stage-line"><span class="stage-num">5</span><h2>Scaling Up to 5,000 Words</h2></div>
   <p>The demo above uses two words. Your lab used 5,000. The math is identical: multiply each TF-IDF score by its weight, add them up, add the bias, pass through the sigmoid. The only difference is the number of terms in the sum.</p>
 
   <div class="eq-box" style="font-size:0.9rem;">
     raw score = w<sub>1</sub>&times;x<sub>1</sub> + w<sub>2</sub>&times;x<sub>2</sub> + &hellip; + w<sub>5000</sub>&times;x<sub>5000</sub> + b
   </div>
 
-  <p>With two features, the decision boundary is a line. With three features, it's a flat plane. With 5,000 features, it's a hyperplane, a flat surface in 5,000-dimensional space. You can't visualize 5,000 dimensions, but the model doesn't need to. It's just doing multiplication and addition, same as the two-word version.</p>
+  <p>With two features, the decision boundary is a line. With three features, it's a flat plane. With 5,000 features, it's a hyperplane, a flat surface in 5,000-dimensional space. You can't visualize 5,000 dimensions, and the computation doesn't require it: each prediction is still multiplication and addition, as in the two-word version.</p>
 
   <div class="card">
     <strong>What changes with more features?</strong>
     <table class="review-tbl">
       <thead><tr><th>Property</th><th>2 features</th><th>5,000 features</th></tr></thead>
       <tbody>
-        <tr><td>Number of weights to learn</td><td>2 + bias = 3</td><td>5,000 + bias = 5,001</td></tr>
+        <tr><td>Number of weights to train</td><td>2 + bias = 3</td><td>5,000 + bias = 5,001</td></tr>
         <tr><td>Decision boundary shape</td><td>Line (1D)</td><td>Hyperplane (4,999D)</td></tr>
-        <tr><td>Math per prediction</td><td>2 multiplications + 1 addition</td><td>5,000 multiplications + 1 addition</td></tr>
-        <tr><td>Can capture word interactions?</td><td>No</td><td>No, still linear</td></tr>
+        <tr><td>Math per prediction</td><td>2 multiplications + 2 additions</td><td>5,000 multiplications + 5,000 additions</td></tr>
+        <tr><td>Can it model word interactions?</td><td>No</td><td>No, still linear</td></tr>
         <tr><td>Training time (movie reviews)</td><td>&lt; 1 second</td><td>&lt; 1 second</td></tr>
       </tbody>
     </table>
   </div>
 
   <div class="warn-tip">
-    <strong>"Still linear" is the key limitation.</strong> Logistic regression draws a flat boundary. It can't learn "this word is positive unless that other word is also present." Every word contributes independently. That's why it works well on sentiment (where individual words carry strong signal) but struggles with sarcasm, negation, and context-dependent meaning.
+    <strong>Logistic regression is linear.</strong> The decision boundary is flat. Each word adds its weight times its TF-IDF score to the raw score, whatever other words appear in the review, so the model can't represent a rule like "this word is positive unless that other word is also present." That's why it performs well on sentiment, where individual words carry strong signal, and poorly on sarcasm and negation, where a word's meaning depends on the words around it.
   </div>
 </div>
 
@@ -322,14 +322,14 @@
      ================================================================ -->
 <div class="stage">
   <div class="stage-line"><span class="stage-num">6</span><h2>Confidence and Failures</h2></div>
-  <p>The model doesn't just say "positive" or "negative." It says how sure it is. Reviews far from the boundary get high-confidence predictions. Reviews near the boundary are coin flips. The interesting cases are high-confidence mistakes, reviews the model assigned high probability to and still got wrong.</p>
+  <p>Each prediction comes with a probability. Reviews far from the boundary get probabilities near 0 or 1, and reviews near the boundary get probabilities near 50%. The cases worth studying are high-confidence mistakes: reviews where the model assigned a probability near 0 or 1 to the wrong class.</p>
 
   <div id="confPlot" style="width:100%; height:380px;"></div>
 
   <div id="confTable"></div>
 
   <div class="tip">
-    <strong>High-confidence failures are the most informative errors.</strong> In your lab, Cell 6 finds these cases. They reveal what the feature representation misses: sarcasm ("a brilliant waste of talent"), negation ("not awful, just boring"), and context that a bag-of-words model misses entirely.
+    <strong>High-confidence failures are the most informative errors.</strong> In your lab, Cell 6 finds these cases. They show what the feature representation leaves out, such as sarcasm ("a brilliant waste of talent") and negation ("not awful, just boring"), where a bag-of-words model counts the words but ignores their order.
   </div>
 </div>
 
@@ -630,8 +630,8 @@ function startTraining() {
     if (trainState.iter >= 80) {
       clearInterval(trainInterval);
       trainInterval = null;
-      document.getElementById('trainBtn').textContent = 'Train (Watch It Converge)';
-      document.getElementById('trainStatus').textContent = `Converged at iteration ${trainState.iter}`;
+      document.getElementById('trainBtn').textContent = 'Train for 80 Iterations';
+      document.getElementById('trainStatus').textContent = `Stopped after ${trainState.iter} iterations`;
     }
   }, 80);
 }
@@ -639,7 +639,7 @@ function startTraining() {
 function resetTraining() {
   if (trainInterval) { clearInterval(trainInterval); trainInterval = null; }
   trainState = { w1: 0, w2: 0, b: 0, iter: 0 };
-  document.getElementById('trainBtn').textContent = 'Train (Watch It Converge)';
+  document.getElementById('trainBtn').textContent = 'Train for 80 Iterations';
   document.getElementById('trainStatus').textContent = 'Not started';
   document.getElementById('trainIter').textContent = '0';
   document.getElementById('trainAcc').textContent = '?';
@@ -719,7 +719,7 @@ function drawConfidencePlot() {
     mode: 'markers',
     marker: { color: colors, symbol: symbols, size: sizes, line: { width: 1, color: '#fff' } },
     text: results.map(r =>
-      `#${r.id} | P(pos)=${(r.prob*100).toFixed(1)}% | ${r.correct ? 'Correct' : 'WRONG'}<br>Actual: ${r.label ? 'pos' : 'neg'} | Predicted: ${r.pred ? 'pos' : 'neg'}`
+      `#${r.id} | P(pos)=${(r.prob*100).toFixed(1)}% | ${r.correct ? 'Correct' : 'Wrong'}<br>Actual: ${r.label ? 'pos' : 'neg'} | Predicted: ${r.pred ? 'pos' : 'neg'}`
     ),
     hoverinfo: 'text'
   }, {
@@ -735,7 +735,7 @@ function drawConfidencePlot() {
     annotations: [
       { x: 0.15, y: N + 2, text: '<b>Confident Negative</b>', showarrow: false, font: { size: 11, color: '#c62828' } },
       { x: 0.85, y: N + 2, text: '<b>Confident Positive</b>', showarrow: false, font: { size: 11, color: '#2e7d32' } },
-      { x: 0.5, y: N + 2, text: '<b>Unsure</b>', showarrow: false, font: { size: 11, color: '#9e9e9e' } }
+      { x: 0.5, y: N + 2, text: '<b>Uncertain</b>', showarrow: false, font: { size: 11, color: '#9e9e9e' } }
     ]
   }, { responsive: true });
 
@@ -743,7 +743,7 @@ function drawConfidencePlot() {
   const failures = results.filter(r => !r.correct);
   const confEl = document.getElementById('confTable');
   if (failures.length === 0) {
-    confEl.innerHTML = '<div class="tip"><strong>No misclassifications with the best-fit weights.</strong> Try clicking "New Random Data" for a dataset with more overlap.</div>';
+    confEl.innerHTML = '<div class="tip"><strong>No misclassifications with the best-fit weights.</strong> Click "New Random Data" to generate a new dataset, which may include reviews on the wrong side of the line.</div>';
   } else {
     confEl.innerHTML = `
       <div class="card">

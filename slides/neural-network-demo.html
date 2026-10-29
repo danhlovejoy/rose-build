@@ -161,7 +161,7 @@
 <div class="hero">
   <h1>Neural Networks: Why Layers Matter</h1>
   <p>AIML 2013 &bull; Module 3: Learned Embeddings</p>
-  <p class="hl">A single neuron can only draw a straight line. Stack a few neurons in a hidden layer and the network can untangle data no line could separate.</p>
+  <p class="hl">A single neuron separates two classes with a straight line. A network with a hidden layer of four neurons can separate classes that no straight line can.</p>
 </div>
 
 <div class="container">
@@ -169,7 +169,7 @@
   <!-- ========== STAGE 1 ========== -->
   <div class="stage">
     <div class="stage-line"><span class="stage-num">1</span><h2>A Problem a Line Can't Solve</h2></div>
-    <p>Below are 200 data points in two classes: blue crescents and orange crescents. They interleave. No straight line can perfectly separate them. Click the button to let a single neuron try its best.</p>
+    <p>Below are 200 data points in two classes: a blue crescent and an orange crescent. The crescents interleave, so no straight line can separate them perfectly. Click the button to train a single neuron for 500 epochs and draw the line it produces.</p>
     <div id="plot1" style="width:100%;height:400px;"></div>
     <div class="btn-group">
       <button class="btn btn-primary" onclick="trainPerceptron()">Classify with a Straight Line</button>
@@ -180,7 +180,7 @@
       <div class="stat-card"><div class="val" id="s1-verdict">&mdash;</div><div class="lbl">Verdict</div></div>
     </div>
     <div class="tip">
-      <strong>Why this matters:</strong> In Module 2 you designed HOG features by choosing gradient bins and cell sizes. That was the hand-crafted approach: you picked the representation, then fit a classifier on top. A single neuron <em>is</em> that classifier. If the representation isn't right for the task, no linear boundary can fix it.
+      <strong>Connection to Module 2:</strong> In Module 2 you designed HOG features by choosing gradient bins and cell sizes. That was the hand-crafted approach: you picked the representation, then fit a classifier on top. A single neuron is the same kind of linear classifier. If the features don't separate the classes, no linear boundary will.
     </div>
   </div>
 
@@ -189,7 +189,7 @@
   <!-- ========== STAGE 2 ========== -->
   <div class="stage">
     <div class="stage-line"><span class="stage-num">2</span><h2>Inside a Single Neuron</h2></div>
-    <p>A neuron computes a weighted sum of its inputs, adds a bias, and applies a sigmoid function that squashes the result between 0 and 1. The weights and bias define a straight line. Points on one side are classified as blue; points on the other side, orange. Drag the sliders to move the line and try to separate both classes.</p>
+    <p>A neuron computes a weighted sum of its inputs, adds a bias, and applies a sigmoid function that maps the result to a value between 0 and 1. The weights and bias define a straight line. Points on one side are classified as blue; points on the other side, orange. Drag the sliders to move the line and try to separate both classes.</p>
     <div class="eq-box" id="s2-equation">&sigma;(w<sub>1</sub> &middot; x + w<sub>2</sub> &middot; y + b)</div>
     <div id="plot2" style="width:100%;height:400px;"></div>
     <div style="max-width:500px;">
@@ -213,7 +213,7 @@
       <div class="stat-card"><div class="val" id="s2-acc">&mdash;</div><div class="lbl">Accuracy</div></div>
     </div>
     <div class="tip">
-      <strong>Notice:</strong> No matter how you adjust the sliders, the boundary stays straight. The neuron computes a weighted sum and applies a threshold. Geometrically, that weighted sum defines a line. To draw a curved boundary, you need more neurons working together.
+      <strong>The boundary is always straight.</strong> No matter how you adjust the sliders, the neuron classifies a point by whether its weighted sum plus bias is above or below zero, and the points where that sum equals zero form a straight line. A curved boundary requires more than one neuron.
     </div>
   </div>
 
@@ -221,8 +221,8 @@
 
   <!-- ========== STAGE 3 ========== -->
   <div class="stage">
-    <div class="stage-line"><span class="stage-num">3</span><h2>A Hidden Layer Untangles the Data</h2></div>
-    <p>Adding a layer of neurons between input and output lets the network develop its own coordinate system. Each hidden neuron draws a line in the original space; the output neuron combines them to carve out a curved region. The left plot shows the decision boundary in the original space. The right plot shows the same data after the hidden layer has transformed it &mdash; each point's position is determined by two of the hidden neurons' outputs.</p>
+    <div class="stage-line"><span class="stage-num">3</span><h2>Adding a Hidden Layer</h2></div>
+    <p>A layer of neurons between the input and the output gives each point a new set of coordinates: one value per hidden neuron. Each hidden neuron computes its own straight-line boundary in the original space, and the output neuron computes a weighted sum of the four hidden outputs, which produces a curved boundary. The left plot shows the decision boundary in the original space. The right plot places each point at the outputs of hidden neurons 1 and 2, two of the four values the hidden layer computes for it.</p>
     <div class="row">
       <div class="col-half">
         <div style="text-align:center;font-size:0.8rem;color:#656d76;font-weight:600;margin-bottom:0.25rem;">ORIGINAL SPACE</div>
@@ -243,7 +243,7 @@
       <div class="stat-card"><div class="val" id="s3-arch">2 → 4 → 1</div><div class="lbl">Architecture</div></div>
     </div>
     <div class="tip">
-      <strong>Watch the right plot.</strong> The hidden layer produces a new coordinate system where the two classes pull apart. In the original space the crescents interleave, but in the hidden layer's space they separate into distinct clusters. Once they're separated, the output neuron can draw a straight line between them. Each layer in a deep network does the same thing: it transforms the data so the next layer's job becomes easier.
+      <strong>Watch the right plot.</strong> As training runs, the blue and orange points move into separate regions of the hidden layer's coordinates. In the original space the crescents interleave, but in the four-dimensional hidden space the output neuron can separate them with a flat boundary (a hyperplane, the four-dimensional version of a straight line). Each layer in a deep network does the same kind of work: it computes new coordinates that make the next layer's classification easier.
     </div>
   </div>
 
@@ -252,7 +252,7 @@
   <!-- ========== STAGE 4 ========== -->
   <div class="stage">
     <div class="stage-line"><span class="stage-num">4</span><h2>The Representation Is the Embedding</h2></div>
-    <p>After training, each input passes through the hidden layer and comes out as a 4-dimensional vector (one value per hidden neuron). That vector is the <strong>embedding</strong>: a learned representation that captures class-relevant structure. Strip the output neuron away and you're left with a coordinate system where similar inputs land near each other.</p>
+    <p>After training, each input passes through the hidden layer and comes out as a 4-dimensional vector (one value per hidden neuron). That vector is the <em>embedding</em>. Training adjusted the hidden-layer weights so that the two classes get different vectors. If you remove the output neuron, each input is described by its four hidden values, and inputs from the same class have similar vectors.</p>
 
     <div class="net-diagram">
       <div class="net-layer">
@@ -275,13 +275,13 @@
       </div>
     </div>
 
-    <p>Click any point in the embedding space below to find its three nearest neighbors by cosine similarity. Points from the same class should be close; points from different classes should be far apart.</p>
+    <p>Click any point in the embedding space below to find its three nearest neighbors by cosine similarity. Points from the same class should have high similarity, and points from different classes should have lower similarity. The plot shows hidden neurons 1 and 2, but the similarity uses all four values, so the nearest neighbors are not always the closest dots on the plot.</p>
     <div id="plot4" style="width:100%;height:420px;"></div>
     <div id="s4-info" style="min-height:60px;">
       <div class="card" style="text-align:center;color:#656d76;">Click a point above to see its nearest neighbors.</div>
     </div>
     <div class="tip">
-      <strong>From 4 dimensions to 1,280.</strong> This toy network was trained to produce a 4-dimensional embedding from 200 points. MobileNetV2, which you'll use in Thursday's lab, produces a 1,280-dimensional embedding trained on 1.2 million ImageNet images. The principle is identical: strip the classification head, keep the representation, and use cosine similarity to find what's nearby. The only differences are scale and what the training data contained.
+      <strong>MobileNetV2 works the same way at a larger scale.</strong> This toy network was trained to produce a 4-dimensional embedding from 200 points. MobileNetV2, which you'll use in Thursday's lab, produces a 1,280-dimensional embedding and was trained on 1.2 million ImageNet images. In both cases you remove the classification head and compare the remaining vectors with cosine similarity. The only differences are scale and what the training data contained.
     </div>
   </div>
 

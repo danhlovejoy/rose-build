@@ -203,7 +203,7 @@
 <div class="hero">
   <h1>Confusion Matrix: Measuring What a Classifier Gets Wrong</h1>
   <p>AIML 2013 &mdash; Interactive Walkthrough</p>
-  <p class="hl">A classifier's accuracy is one number. The confusion matrix is the whole story.</p>
+  <p class="hl">Accuracy summarizes a classifier with one number. A confusion matrix counts every pairing of true label and predicted label, so it shows which classes the classifier mixes up.</p>
 </div>
 
 <div class="container">
@@ -213,8 +213,8 @@
      ================================================================ -->
 <div class="stage">
   <div class="stage-line"><span class="stage-num">1</span><h2>A Classifier's Scorecard</h2></div>
-  <p>You built an image classifier. It looks at photos of cats, dogs, and birds, and predicts a label for each one. Some predictions are right. Some are wrong. The confusion matrix records every outcome in one table.</p>
-  <p>Rows are the true labels (what the image actually shows). Columns are the model's predictions. Each cell counts how many images with that true label received that predicted label. Diagonal cells are correct predictions. Everything off the diagonal is an error.</p>
+  <p>You built an image classifier. It takes a photo as input and predicts one of three labels: Cat, Dog, or Bird. Some predictions are right and some are wrong, and the confusion matrix records every outcome in one table, with a count for each pairing of the label an image has and the label the classifier assigned to it.</p>
+  <p>Rows are the true labels (what the image shows). Columns are the model's predictions. Each cell counts how many images with that true label received that predicted label. Diagonal cells are correct predictions. Everything off the diagonal is an error.</p>
 
   <div class="row">
     <div class="col-main">
@@ -230,7 +230,7 @@
     <div class="col-side">
       <div class="card">
         <strong>Click any cell to edit</strong>
-        <p style="font-size:0.85rem;">Change the counts and watch the metrics update. Each cell represents a group of images: the row tells you what the image actually was, and the column tells you what the classifier predicted.</p>
+        <p style="font-size:0.85rem;">Change the counts and watch the metrics update. Each cell represents a group of images: the row gives their true label, and the column gives the label the classifier predicted.</p>
       </div>
       <div class="stats-row" style="flex-direction:column; gap:0.5rem;">
         <div class="stat-card"><div class="val" id="smallTotal">?</div><div class="lbl">total predictions</div></div>
@@ -241,7 +241,7 @@
   </div>
 
   <div class="tip">
-    <strong>The diagonal is your friend.</strong> A classifier that gets everything right has all its counts on the diagonal and zeros everywhere else. The off-diagonal cells tell you exactly which classes are being confused for which. That's where the name comes from.
+    <strong>Correct predictions are on the diagonal.</strong> A classifier that gets every image right has all its counts on the diagonal and zeros everywhere else. Each off-diagonal cell counts the images of one class that the classifier labeled as another, which is where the name comes from.
   </div>
 </div>
 
@@ -252,7 +252,7 @@
      ================================================================ -->
 <div class="stage">
   <div class="stage-line"><span class="stage-num">2</span><h2>Type I and Type II Errors</h2></div>
-  <p>Pick a class below. The matrix highlights four zones from that class's perspective: the images it correctly identified (true positives), the images it missed (false negatives, Type II), the images it claimed but got wrong (false positives, Type I), and everything else (true negatives).</p>
+  <p>Pick a class below. The matrix colors four zones for that class: images of the class that the classifier labeled correctly (true positives), images of the class that received a different label (false negatives, Type II), images of other classes that received this label (false positives, Type I), and everything else (true negatives).</p>
 
   <div class="class-pills" id="classPills"></div>
 
@@ -280,7 +280,7 @@
   </div>
 
   <div class="warn-tip">
-    <strong>Which error is worse depends on the application.</strong> A medical screening test that misses a disease (Type II) is far more dangerous than one that flags a healthy patient for follow-up (Type I). A self-driving car that hallucinates a pedestrian (Type I) stops unnecessarily; one that misses a real pedestrian (Type II) causes a collision. The confusion matrix shows both. The application decides which matters more.
+    <strong>Which error is worse depends on the application.</strong> A medical screening test that misses a disease (Type II) is far more dangerous than one that flags a healthy patient for follow-up (Type I). A self-driving car that detects a pedestrian who isn't there (Type I) stops for no reason; one that fails to detect a real pedestrian (Type II) can hit them. The confusion matrix counts both kinds.
   </div>
 </div>
 
@@ -290,8 +290,8 @@
      STAGE 3: ACCURACY, PRECISION, RECALL, F1
      ================================================================ -->
 <div class="stage">
-  <div class="stage-line"><span class="stage-num">3</span><h2>Four Metrics from Four Numbers</h2></div>
-  <p>The four cells from Stage 2 (TP, FP, FN, TN) are the raw ingredients. Four metrics extract different information from them. Each answers a different question about the classifier's performance on the selected class.</p>
+  <div class="stage-line"><span class="stage-num">3</span><h2>Accuracy, Precision, Recall, and F1</h2></div>
+  <p>Each metric below is computed from the counts in the matrix, and each answers a different question about the classifier. Precision and recall use the four counts from Stage 2 (TP, FP, FN, TN) for the selected class, and F1 combines those two. Accuracy uses the whole matrix.</p>
 
   <div class="class-pills" id="metricPills"></div>
 
@@ -303,7 +303,7 @@
   </div>
 
   <div class="tip">
-    <strong>Accuracy uses all four cells. Precision and recall each ignore two. F1 combines the two it can't ignore.</strong> A model can have 95% accuracy and still have terrible precision or recall for a rare class. Accuracy counts total correct predictions across all classes; precision and recall zoom in on one class at a time. F1 collapses precision and recall into one number, but it punishes imbalance between them. If either is low, F1 drops.
+    <strong>Precision and recall each look at one class.</strong> Accuracy counts correct predictions across all classes, while precision leaves out FN and TN and recall leaves out FP and TN, so a model can have 95% accuracy and still have low precision or recall for a rare class. F1 combines precision and recall into one number. If either is low, F1 drops.
   </div>
 </div>
 
@@ -313,8 +313,8 @@
      STAGE 4: WHEN ACCURACY LIES
      ================================================================ -->
 <div class="stage">
-  <div class="stage-line"><span class="stage-num">4</span><h2>When Accuracy Lies</h2></div>
-  <p>A classifier that predicts "not bird" for every image gets 0% on birds. But if birds are only 5% of the dataset, the overall accuracy is still 95%. The confusion matrix exposes this immediately &mdash; an entire row of zeros where the bird predictions should be.</p>
+  <div class="stage-line"><span class="stage-num">4</span><h2>Accuracy on Imbalanced Classes</h2></div>
+  <p>A classifier that never predicts Bird has 0% recall on birds. If birds are only 5% of the dataset and the classifier labels every other image correctly, its overall accuracy is still 95%. The confusion matrix shows the problem: the Bird column, which counts every image predicted as a bird, is all zeros.</p>
 
   <div class="btn-group">
     <button class="btn btn-primary" onclick="loadImbalanced()">Load Imbalanced Dataset</button>
@@ -348,14 +348,14 @@
      ================================================================ -->
 <div class="stage">
   <div class="stage-line"><span class="stage-num">5</span><h2>Scaling to 10 Classes</h2></div>
-  <p>With three classes you can read every cell. With ten, you need a heatmap. The matrix below shows a HOG-based classifier's results on CIFAR-10, the same pipeline you built in the lab. Dark cells mean high counts. The diagonal should be the darkest stripe; any bright off-diagonal cell means two classes are systematically confused.</p>
+  <p>With three classes you can read every cell, but a ten-class matrix has 100 cells, so this one is drawn as a heatmap. The matrix below shows a HOG-based classifier's results on CIFAR-10 (100 images per class), the same pipeline you built in the lab. Dark cells mean high counts. The diagonal should be the darkest stripe, and any dark off-diagonal cell means the classifier consistently mixes up two classes.</p>
 
   <div id="heatmapPlot" style="width:100%; height:520px;"></div>
 
   <div id="tenClassTable"></div>
 
   <div class="tip">
-    <strong>The off-diagonal hot spots are the most informative cells.</strong> They tell you which classes the feature extractor cannot distinguish. In a HOG-based classifier, automobile and truck share similar edge profiles (both are boxy, horizontal shapes). Cat and dog share similar fur textures and body proportions. Those pairs light up off the diagonal.
+    <strong>The largest off-diagonal counts are the most informative cells.</strong> They show which classes the HOG features cannot separate. Automobile and truck are the most confused pair (17 automobiles labeled truck, 12 trucks labeled automobile) because both are boxy, horizontal shapes with similar edge profiles. Cat and dog come next (14 and 12), since their fur textures and body proportions are similar.
   </div>
 
   <div class="card">
@@ -367,11 +367,11 @@
     <strong>Macro Average vs. Weighted Average</strong>
     <p style="font-size:0.85rem; margin-top:0.5rem; margin-bottom:0.5rem;">The per-class table above ends with two summary rows. Both compress ten per-class scores into one number, but they weight the classes differently.</p>
     <p style="font-size:0.85rem; margin-bottom:0.5rem;"><span style="color:#1a3a5c; font-weight:600;">Macro average</span> treats every class equally: add up the ten precision scores and divide by ten. A class with 5 images counts the same as a class with 500. This makes macro average sensitive to performance on rare classes. If a small class gets zero correct predictions, the macro average drops noticeably.</p>
-    <p style="font-size:0.85rem;"><span style="color:#1a3a5c; font-weight:600;">Weighted average</span> weights each class by its support (how many images actually belong to that class). A class with 500 images has 100&times; the influence of a class with 5. This gives a number closer to what the model does on a "typical" image. In a balanced dataset (equal class sizes), macro and weighted averages are identical.</p>
+    <p style="font-size:0.85rem;"><span style="color:#1a3a5c; font-weight:600;">Weighted average</span> weights each class by its support (how many images belong to that class). A class with 500 images has 100&times; the influence of a class with 5. This gives a number closer to the model's performance on a "typical" image. In a balanced dataset (equal class sizes), macro and weighted averages are identical. The CIFAR-10 matrix above has 100 images in every class, so its two rows match.</p>
   </div>
 
   <div class="warn-tip">
-    <strong>When to use which.</strong> Report macro average when every class matters equally regardless of frequency; a medical classifier should detect rare diseases as well as common ones. Report weighted average when overall throughput matters and rare-class failures are acceptable. Most classification reports (including scikit-learn's) print both, plus support, so the reader can decide.
+    <strong>When to use which.</strong> Report macro average when every class matters equally regardless of frequency; a medical classifier should detect rare diseases as well as common ones. Report weighted average when performance on the typical image matters more than performance on rare classes. Most classification reports (including scikit-learn's) print both, plus support, so the reader can decide.
   </div>
 </div>
 
@@ -417,12 +417,13 @@ const IMBALANCED_CM = [
   [5, 5, 5]
 ];
 
-// assert: lazy classifier total = 90+90+5+5+5 = 195, accuracy = (90+90+0)/195 ≈ 92.3%
-// assert: lazy classifier bird recall = 0/(0+10) = 0%
+// Same images as IMBALANCED_CM: 90 cats, 90 dogs, 15 birds
+// assert: lazy classifier total = 90+90+8+7 = 195, accuracy = (90+90+0)/195 ≈ 92.3%
+// assert: lazy classifier bird recall = 0/15 = 0%
 const LAZY_CM = [
   [90, 0, 0],
-  [5, 90, 0],
-  [5, 5, 0]
+  [0, 90, 0],
+  [8, 7, 0]
 ];
 
 // CIFAR-10 HOG-based classifier confusion matrix (realistic values, 100 per class)
@@ -572,12 +573,12 @@ function loadBadClassifier() { setCM(BAD_CM); }
 function loadImbalanced() {
   setCM(IMBALANCED_CM);
   document.getElementById('imbCardText').textContent =
-    'This dataset has 90 cats, 90 dogs, but only 15 birds. The classifier struggles with the rare class, but overall accuracy stays high because cats and dogs dominate the count.';
+    'This dataset has 90 cats and 90 dogs but only 15 birds. The classifier labels 5 of the 15 birds correctly (33.3% recall), but overall accuracy stays at 89.7% because cats and dogs make up 180 of the 195 images.';
 }
 function loadLazyClassifier() {
   setCM(LAZY_CM);
   document.getElementById('imbCardText').textContent =
-    'This classifier never predicts "bird." It gets 92.3% accuracy by ignoring the rare class entirely. The confusion matrix reveals the fraud: the bird column is all zeros. Accuracy cannot catch this; recall can.';
+    'This classifier sees the same 195 images as the imbalanced example but never predicts Bird. It scores 92.3% accuracy, higher than the 89.7% of the classifier that labels some birds correctly, because birds are only 15 of the 195 images. In the confusion matrix the Bird column is all zeros, and bird recall is 0%, which the accuracy number does not reveal.';
 }
 
 // ── Class selection ──
@@ -644,7 +645,7 @@ function updateMetrics() {
   el.innerHTML = `
     <div class="metric-formula">
       <span class="metric-name">Accuracy</span>
-      <span class="metric-calc">(TP + TN) / Total = (${tp} + ${tn}) / ${total}</span>
+      <span class="metric-calc">Correct / Total = ${correct} / ${total}</span>
       <span class="metric-result" style="color:${acc > 0.8 ? '#2e7d32' : acc > 0.6 ? '#e65100' : '#c62828'};">${(acc * 100).toFixed(1)}%</span>
     </div>
     <div class="metric-formula">
@@ -666,13 +667,13 @@ function updateMetrics() {
 
   document.getElementById('metricExplainerBody').innerHTML = `
     <p style="font-size:0.85rem; margin-top:0.5rem; margin-bottom:0.5rem;">
-      <strong style="color:#1a3a5c; display:inline;">Accuracy</strong> asks: of all ${total} predictions, how many were correct? It treats every class equally in the count, which makes it blind to per-class failures.
+      <strong style="color:#1a3a5c; display:inline;">Accuracy</strong> asks: of all ${total} predictions, how many were correct? It counts every prediction equally, so the largest classes dominate the result and a failure on a small class barely changes it.
     </p>
     <p style="font-size:0.85rem; margin-bottom:0.5rem;">
-      <strong style="color:#1a3a5c; display:inline;">Precision</strong> asks: of everything the model labeled "${name}," how much was actually ${name.toLowerCase()}? High precision means few false alarms. Low precision means too many false alarms.
+      <strong style="color:#1a3a5c; display:inline;">Precision</strong> asks: of everything the model labeled "${name}," how much was truly ${name.toLowerCase()}? High precision means few false alarms.
     </p>
     <p style="font-size:0.85rem; margin-bottom:0.5rem;">
-      <strong style="color:#1a3a5c; display:inline;">Recall</strong> asks: of all the real ${name.toLowerCase()} images, how many did the classifier catch? High recall means few misses. Low recall means real cases slip through.
+      <strong style="color:#1a3a5c; display:inline;">Recall</strong> asks: of all the real ${name.toLowerCase()} images, how many did the classifier label correctly? High recall means few misses.
     </p>
     <p style="font-size:0.85rem;">
       <strong style="color:#1a3a5c; display:inline;">F1 Score</strong> is the harmonic mean of precision and recall. An arithmetic mean would let a high precision mask a low recall (or vice versa). The harmonic mean penalizes that imbalance: if either metric is near zero, F1 drops to near zero regardless of the other. A classifier with 100% precision and 0% recall scores 0% F1, not 50%.

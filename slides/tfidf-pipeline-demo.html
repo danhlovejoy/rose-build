@@ -183,7 +183,7 @@
 <div class="hero">
   <h1>Inside the Pipeline</h1>
   <p>TF-IDF + Logistic Regression &mdash; AIML 2003</p>
-  <p class="hl">Trace a movie review through every step, from raw words to a positive/negative decision.</p>
+  <p class="hl">Pick a movie review and follow it through tokenization, TF-IDF, the learned coefficients, and the sigmoid to a positive or negative label.</p>
 </div>
 
 <div class="container">
@@ -193,11 +193,11 @@
      ================================================================ -->
 <div class="stage">
   <div class="stage-line"><span class="stage-num">1</span><h2>Raw Text</h2></div>
-  <p>The model receives raw text — words with no structure imposed and no numerical encoding yet. Pick a sample review or type your own.</p>
+  <p>The pipeline starts with raw text. At this point the review is a string of characters, and nothing has been converted to numbers yet. Pick a sample review or type your own.</p>
 
   <div class="review-group" id="reviewGroup"></div>
 
-  <textarea class="custom-input" id="customText" placeholder="Or type your own review here and click Run..."></textarea>
+  <textarea class="custom-input" id="customText" placeholder="Or type your own review here and click Run My Text"></textarea>
   <div class="custom-bar">
     <button class="btn btn-primary" onclick="runCustom()">Run My Text</button>
     <span id="customNote" style="font-size:0.85rem; color:var(--muted);"></span>
@@ -211,7 +211,7 @@
      ================================================================ -->
 <div class="stage">
   <div class="stage-line"><span class="stage-num">2</span><h2>Tokenization &amp; Stopword Removal</h2></div>
-  <p>First, split the text into individual words (tokens). Then remove stopwords (common words like "the," "is," and "a") that appear in every review regardless of sentiment. They carry no signal, so we drop them.</p>
+  <p>First, split the text into individual words (tokens). Then remove stopwords. These are common words such as "the" and "is" that appear in nearly every review, positive or negative, so they tell the classifier little about sentiment and we drop them.</p>
 
   <div id="tokenDisplay" class="token-display"></div>
 
@@ -223,10 +223,10 @@
   </div>
 
   <div class="tip">
-    <strong>This is what scikit-learn's <code>stop_words='english'</code> does.</strong> The exact list has 318 words. Removing them shrinks the vector and focuses the model on words that actually differ between positive and negative reviews.
+    <strong>scikit-learn's <code>stop_words='english'</code> does the same thing.</strong> Its list has 318 words, and this demo uses a shorter list of 160. Removing stopwords shrinks the vector and leaves the words that differ between positive and negative reviews. Unlike scikit-learn's list, this one keeps negations such as &ldquo;not,&rdquo; &ldquo;no,&rdquo; and &ldquo;didn't&rdquo; because they reverse the sentiment of a review. A bag-of-words model still gives &ldquo;not&rdquo; one coefficient of its own, so it can't tell &ldquo;not good&rdquo; apart from &ldquo;good&rdquo; plus an unrelated &ldquo;not.&rdquo;
   </div>
   <div class="tip" style="background:#fff3e0; border-color:#e65100;">
-    <strong style="color:#e65100;">Orange tokens</strong> are words the model has never seen in training. They survive tokenization and stopword removal, but the model has no TF-IDF entry or coefficient for them, so they're invisible to the classifier. A larger vocabulary catches more words, but this demo uses 65 to keep things readable.
+    <strong style="color:#e65100;">Orange tokens</strong> are words that are not in the model's vocabulary. They survive tokenization and stopword removal, but the model has no IDF value or coefficient for them, so they add nothing to the score. A model fit on every word in the training reviews would have a much larger vocabulary. This demo uses 74 words to keep the charts readable.
   </div>
 </div>
 
@@ -237,18 +237,18 @@
      ================================================================ -->
 <div class="stage">
   <div class="stage-line"><span class="stage-num">3</span><h2>TF-IDF Vectorization</h2></div>
-  <p>Each surviving token gets a TF-IDF score. TF measures how often the word appears in <em>this</em> review. IDF measures how rare it is across <em>all</em> 2,000 reviews. Multiply them together: words that are frequent here but rare elsewhere get the highest scores.</p>
+  <p>Each remaining token gets a TF-IDF score. TF measures how often the word appears in <em>this</em> review. IDF measures how rare it is across <em>all</em> 2,000 reviews. The TF-IDF score is TF multiplied by IDF, so words that are frequent in this review but rare in the others get the highest scores.</p>
 
   <div id="tfidfChart" style="width:100%; height:380px;"></div>
 
   <div class="stats-row">
-    <div class="stat-card"><div class="val" id="vocabSize">65</div><div class="lbl">vocabulary size</div></div>
+    <div class="stat-card"><div class="val" id="vocabSize">74</div><div class="lbl">vocabulary size</div></div>
     <div class="stat-card"><div class="val" id="nonzero">0</div><div class="lbl">nonzero entries</div></div>
     <div class="stat-card"><div class="val" id="sparsePct">0%</div><div class="lbl">of vector is zero</div></div>
   </div>
 
   <div class="tip">
-    <strong>This is what "sparse" means.</strong> The review becomes a vector of <span id="vocabSizeInline">65</span> numbers, but only a handful are nonzero. Most words in the vocabulary don't appear in any single review.
+    <strong>This is what "sparse" means.</strong> The review becomes a vector of <span id="vocabSizeInline">74</span> numbers, but only a handful are nonzero, because most words in the vocabulary don't appear in any given review.
   </div>
 </div>
 
@@ -259,17 +259,17 @@
      ================================================================ -->
 <div class="stage">
   <div class="stage-line"><span class="stage-num">4</span><h2>The Learned Coefficients</h2></div>
-  <p>During training, the model was trained on 1,600 labeled reviews, fitting coefficients that reflect which words tend to appear in positive reviews (green) and which tend to appear in negative reviews (red). These coefficients are fixed after training; they don't change when a new review comes in.</p>
+  <p>Logistic regression fit one coefficient per vocabulary word on 1,600 labeled training reviews. Words that appeared more often in positive reviews got positive coefficients (green, above +0.3), words that appeared more often in negative reviews got negative coefficients (red, below &minus;0.3), and the rest are gray. These coefficients are fixed after training. A new review does not change them.</p>
 
   <div id="coefChart" style="width:100%; height:500px;"></div>
 
   <div class="card">
     <strong>The intercept (bias) is &minus;0.05</strong>
-    <p style="margin:0;">With no words at all, the model is almost exactly neutral. Every word's contribution pushes the score up or down from this starting point.</p>
+    <p style="margin:0;">A review with no vocabulary words gets a raw score of &minus;0.05, which the sigmoid converts to a probability of 0.49. Each word's product raises or lowers the score from this starting value.</p>
   </div>
 
   <div class="tip">
-    <strong>Surprise words:</strong> "horror" has a slightly negative coefficient, not because horror is bad, but because horror reviews in the training data skewed negative. The coefficients reflect <em>statistical associations</em>, not meaning.
+    <strong>Some coefficients are surprising.</strong> "horror" has a coefficient of &minus;0.35 because reviews of horror films in the training data were more often negative. A coefficient records how often a word appears with each label, and it says nothing about what the word means.
   </div>
 </div>
 
@@ -280,7 +280,7 @@
      ================================================================ -->
 <div class="stage">
   <div class="stage-line"><span class="stage-num">5</span><h2>The Decision: Multiply and Add</h2></div>
-  <p>For each word in the review, multiply its TF-IDF score by its learned coefficient. Positive products pull toward "positive." Negative products pull toward "negative." The sum of all products (plus the intercept) is the raw score.</p>
+  <p>For each word in the review, multiply its TF-IDF score by its learned coefficient. A positive product raises the raw score, and a negative product lowers it. The raw score is the sum of all the products plus the intercept.</p>
 
   <div class="row">
     <div class="col-left">
@@ -300,13 +300,13 @@
   </div>
 
   <div class="stats-row">
-    <div class="stat-card"><div class="val c-pos" id="sumPos">0</div><div class="lbl">positive pull</div></div>
-    <div class="stat-card"><div class="val c-neg" id="sumNeg">0</div><div class="lbl">negative pull</div></div>
+    <div class="stat-card"><div class="val c-pos" id="sumPos">0</div><div class="lbl">sum of positive products</div></div>
+    <div class="stat-card"><div class="val c-neg" id="sumNeg">0</div><div class="lbl">sum of negative products</div></div>
     <div class="stat-card"><div class="val" id="rawScore">0</div><div class="lbl">raw score (sum + intercept)</div></div>
   </div>
 
   <div class="tip">
-    <strong>This is just multiplication and addition.</strong> Each word "votes" for positive or negative, weighted by how important it is in this review (TF-IDF) and how strongly the model associates it with a class (coefficient). The sum of all votes is the raw score.
+    <strong>The raw score uses only multiplication and addition.</strong> The waterfall chart adds the products one at a time, starting with the largest in absolute value, then adds the intercept. The last bar is the raw score.
   </div>
 </div>
 
@@ -317,12 +317,12 @@
      ================================================================ -->
 <div class="stage">
   <div class="stage-line"><span class="stage-num">6</span><h2>Sigmoid &rarr; Probability &rarr; Classification</h2></div>
-  <p>The raw score can be any number. The sigmoid function squishes it into a value between 0 and 1, a probability. Above 0.5 means positive. Below 0.5 means negative.</p>
+  <p>The raw score can be any number. The sigmoid function, 1 / (1 + e<sup>&minus;x</sup>), converts it to a value between 0 and 1, which the classifier reports as the probability that the review is positive. A probability of 0.5 or higher is classified as positive, and anything below 0.5 is classified as negative.</p>
 
   <div id="sigmoidChart" style="width:100%; height:350px;"></div>
 
   <div class="slider-row">
-    <label>Drag to explore: what raw score gives what probability?</label>
+    <label>Drag the slider to set a raw score and read the probability it produces.</label>
     <input type="range" id="sigSlider" min="-6" max="6" step="0.05" value="0" oninput="updateSigmoidSlider()">
   </div>
 
@@ -341,7 +341,7 @@
 </div><!-- /.container -->
 
 <div class="footer">
-  AIML 2003 &mdash; Spring 2026 &bull; Built for in-class demonstration. Select a review, scroll down, and trace the pipeline.
+  AIML 2003 &mdash; Spring 2026 &bull; Select a review and scroll down to trace it through the pipeline.
 </div>
 
 <!-- ================================================================
@@ -435,24 +435,23 @@ const VOCAB = {
 
 const INTERCEPT = -0.05;
 
+// Negations (no, not, nor, cannot, every n't contraction) are deliberately NOT stopwords:
+// they flip sentiment, unlike scikit-learn's list, which removes them.
 const STOPWORDS = new Set([
-  "a","about","above","after","again","against","all","am","an","and","any","are",
-  "aren't","as","at","be","because","been","before","being","below","between","both",
-  "but","by","can","can't","cannot","could","couldn't","did","didn't","do","does",
-  "doesn't","doing","don't","down","during","each","few","for","from","further","get",
-  "got","had","hadn't","has","hasn't","have","haven't","having","he","he'd","he'll",
-  "he's","her","here","here's","hers","herself","him","himself","his","how","how's",
-  "i","i'd","i'll","i'm","i've","if","in","into","is","isn't","it","it's","its",
-  "itself","just","let's","me","might","more","most","mustn't","my","myself","no",
-  "nor","not","of","off","on","once","only","or","other","ought","our","ours",
-  "ourselves","out","over","own","s","same","shan't","she","she'd","she'll","she's",
-  "should","shouldn't","so","some","such","than","that","that's","the","their","theirs",
-  "them","themselves","then","there","there's","these","they","they'd","they'll",
-  "they're","they've","this","those","through","to","too","under","until","up","very",
-  "was","wasn't","we","we'd","we'll","we're","we've","were","weren't","what","what's",
-  "when","when's","where","where's","which","while","who","who's","whom","why","why's",
-  "will","with","won't","would","wouldn't","you","you'd","you'll","you're","you've",
-  "your","yours","yourself","yourselves"
+  "a","about","above","after","again","against","all","am","an","and","any","are","as",
+  "at","be","because","been","before","being","below","between","both","but","by","can",
+  "could","did","do","does","doing","down","during","each","few","for","from","further",
+  "get","got","had","has","have","having","he","he'd","he'll","he's","her","here",
+  "here's","hers","herself","him","himself","his","how","how's","i","i'd","i'll","i'm",
+  "i've","if","in","into","is","it","it's","its","itself","just","let's","me","might",
+  "more","most","my","myself","of","off","on","once","only","or","other","ought","our",
+  "ours","ourselves","out","over","own","s","same","she","she'd","she'll","she's",
+  "should","so","some","such","than","that","that's","the","their","theirs","them",
+  "themselves","then","there","there's","these","they","they'd","they'll","they're",
+  "they've","this","those","through","to","too","under","until","up","very","was","we",
+  "we'd","we'll","we're","we've","were","what","what's","when","when's","where",
+  "where's","which","while","who","who's","whom","why","why's","will","with","would",
+  "you","you'd","you'll","you're","you've","your","yours","yourself","yourselves"
 ]);
 
 const REVIEWS = [
@@ -476,7 +475,9 @@ const REVIEWS = [
 // ── Pipeline functions ──
 
 function tokenize(text) {
-  return text.toLowerCase().replace(/[^a-z\s]/g, '').split(/\s+/).filter(t => t.length > 0);
+  // Keep apostrophes inside words so contractions like "didn't" match the stopword list
+  return text.toLowerCase().replace(/\u2019/g, "'").replace(/[^a-z'\s]/g, '')
+    .split(/\s+/).map(t => t.replace(/^'+|'+$/g, '')).filter(t => t.length > 0);
 }
 
 function classifyTokens(tokens) {
@@ -551,7 +552,7 @@ function runCustom() {
   const unknown = kept.length - inVocab.length;
   if (unknown > 0) {
     document.getElementById('customNote').textContent =
-      `${unknown} word(s) not in the model's vocabulary — shown in orange. The model can't use words it hasn't seen in training.`;
+      `${unknown} word(s) not in the model's vocabulary are shown in orange. They have no IDF value or coefficient, so they add nothing to the score.`;
   } else {
     document.getElementById('customNote').textContent = 'All kept words are in the vocabulary.';
   }
@@ -578,7 +579,7 @@ function renderTokens(classified) {
     if (t.isStop) cls = 'tok-stop';
     else if (t.inVocab) cls = 'tok-kept';
     else cls = 'tok-unknown';
-    return `<span class="tok ${cls}" title="${t.isStop ? 'stopword — removed' : t.inVocab ? 'in vocabulary' : 'not in vocabulary — invisible to model'}">${t.word}</span>`;
+    return `<span class="tok ${cls}" title="${t.isStop ? 'stopword — removed' : t.inVocab ? 'in vocabulary' : 'not in vocabulary, adds nothing to the score'}">${t.word}</span>`;
   }).join('');
 
   const total = classified.length;
@@ -636,7 +637,7 @@ function renderCoefChart() {
     marker: { color: colors.slice().reverse() },
     hovertemplate: '%{y}: coef = %{x:.2f}<extra></extra>'
   }], {
-    xaxis: { title: 'Coefficient (positive → green, negative → red)', gridcolor: '#e8ecf0', zeroline: true, zerolinecolor: '#1a3a5c', zerolinewidth: 2 },
+    xaxis: { title: 'Coefficient (green above +0.3, red below −0.3, gray in between)', gridcolor: '#e8ecf0', zeroline: true, zerolinecolor: '#1a3a5c', zerolinewidth: 2 },
     yaxis: { automargin: true, tickfont: { size: 10 } },
     plot_bgcolor: '#fff', paper_bgcolor: '#fff',
     margin: { l: 110, r: 20, t: 10, b: 40 },
@@ -795,11 +796,11 @@ function updateResultDisplay(raw, prob) {
 
   const tip = document.getElementById('finalTip');
   if (prob > 0.45 && prob < 0.55) {
-    tip.innerHTML = '<strong>Close call.</strong> This review lands near the decision boundary. The output is uncertain because the positive and negative word contributions nearly cancel out. A human would recognize the mixed sentiment, but the classifier operates on a sum near zero.';
+    tip.innerHTML = '<strong>Close call.</strong> The probability is between 45% and 55%, so this score is near the 0.5 decision boundary. The positive and negative products nearly cancel, which leaves a raw score close to zero. A human reader would call the review mixed, but the classifier has only the sum to work with.';
   } else if (prob >= 0.55) {
-    tip.innerHTML = `<strong>Classified as positive (${(prob*100).toFixed(1)}%).</strong> The positive-coefficient words in this review outweighed the negative ones. The further from 50%, the more confident the model is.`;
+    tip.innerHTML = `<strong>Classified as positive (${(prob*100).toFixed(1)}%).</strong> The products of the positive-coefficient words add up to more than the products of the negative ones. The further the probability is from 50%, the higher the confidence label.`;
   } else {
-    tip.innerHTML = `<strong>Classified as negative (${((1-prob)*100).toFixed(1)}% confidence).</strong> The negative-coefficient words dominated. The raw score landed on the left side of the sigmoid curve, pulling the probability below 0.5.`;
+    tip.innerHTML = `<strong>Classified as negative (${((1-prob)*100).toFixed(1)}% negative).</strong> The products of the negative-coefficient words add up to more than the products of the positive ones. The raw score is below zero, so the sigmoid returns a probability below 0.5.`;
   }
 }
 

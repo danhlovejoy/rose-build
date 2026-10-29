@@ -179,7 +179,7 @@
 <div class="hero">
   <h1>Pixel Histograms: How Machines Represent Light</h1>
   <p class="sub">An interactive lesson in image representation</p>
-  <p class="hl">Every image is a grid of numbers. A histogram tells you the story of those numbers.</p>
+  <p class="hl">Every image is a grid of numbers, and a histogram counts how many pixels have each value.</p>
   <p class="courses">AIML 2013 &bull; Module 2</p>
 </div>
 
@@ -189,11 +189,11 @@
   <div class="stage">
     <div class="stage-line">
       <div class="stage-num">1</div>
-      <h2>What is a pixel histogram?</h2>
+      <h2>Counting pixels by brightness</h2>
     </div>
-    <p>A grayscale image is a 2D grid of numbers, each between 0 (black) and 255 (white). A histogram counts how many pixels fall at each value. A photo taken in bright sunlight piles up near 255. A photo taken in a dim room piles up near 0. Before any neural network touches an image, a histogram tells you whether the data is usable.</p>
+    <p>A grayscale image is a 2D grid of numbers, each between 0 (black) and 255 (white). A histogram counts how many pixels have each value. It has one bar per value. In a photo taken in bright sunlight, most pixels have values near 255, and in a photo taken in a dim room, most have values near 0. Check the histogram before you pass an image to a feature extractor or a neural network, because it shows whether the image has enough contrast to work with.</p>
     <div class="tip">
-      <strong>Why this matters for HOG.</strong> HOG features are computed from <em>gradients</em>, differences between neighboring pixel values. If the histogram is flat (all pixels near the same value), gradients are tiny and HOG produces garbage. Understanding the histogram is step one in diagnosing a bad feature extractor.
+      <strong>Why this matters for HOG.</strong> HOG features are computed from <em>gradients</em>, the differences between neighboring pixel values. If the histogram is one narrow peak (all pixels near the same value), neighboring pixels differ by small amounts, so the gradients are weak and the HOG descriptor contains little edge information. When HOG features perform poorly, check the histogram first.
     </div>
   </div>
 
@@ -209,7 +209,7 @@
       <input type="file" id="fileInput" accept="image/*">
       <div class="upload-icon">&#128247;</div>
       <p><strong>Click to upload</strong> or drag and drop</p>
-      <p>JPEG, PNG, WEBP &mdash; any size</p>
+      <p>JPEG, PNG, or WEBP. Images wider than 600 pixels are scaled down.</p>
     </div>
 
     <div class="sample-strip" id="sampleStrip">
@@ -223,7 +223,7 @@
       <div class="stage-num">3</div>
       <h2>Explore transformations</h2>
     </div>
-    <p>Each mode transforms the image and recomputes the histogram. Watch how the distribution shifts.</p>
+    <p>Each mode transforms the image and recomputes the histogram. Watch how the shape of the histogram changes.</p>
 
     <div class="mode-bar" id="modeBar">
       <button class="mode-btn active" data-mode="color">Color (RGB)</button>
@@ -240,7 +240,7 @@
       <input type="range" id="bwThresh" min="0" max="255" value="128">
     </div>
     <div id="ctrlLowres" class="slider-row" style="display:none; max-width:400px;">
-      <label>Resolution <span class="val" id="lrVal">32 px</span></label>
+      <label>Block size <span class="val" id="lrVal">32 px</span></label>
       <input type="range" id="lrSize" min="4" max="120" value="32">
     </div>
     <div id="ctrlChannel" class="mode-bar" style="display:none; margin-top:0;">
@@ -297,13 +297,13 @@
       <h2>Think about it</h2>
     </div>
     <div class="info-box">
-      <p><strong>Try this with your own photo:</strong> Take a picture in a very dark room and one in bright daylight. Load each one here. The histogram will tell you immediately which image has more usable information. The dark image's histogram is crushed toward 0, so there are almost no gradients for HOG to work with.</p>
+      <p><strong>Try this with your own photo:</strong> Take one picture in a dark room and one in bright daylight. Load each one here. In the dark image, most pixel values are close to 0, so neighboring pixels differ by small amounts and HOG has few strong gradients to count.</p>
     </div>
     <div class="warn-tip">
-      <strong>Histogram equalization sounds like magic. It is not.</strong> Equalization stretches the histogram so pixel values are more evenly distributed. It recovers detail in dark images — but it also amplifies noise. A histogram with a long flat tail of very dark pixels doesn't contain hidden detail; it contains sensor noise. Equalization will make that noise more visible, not more informative.
+      <strong>Equalization cannot add detail the camera did not record.</strong> Equalization remaps pixel values so they spread more evenly across 0&ndash;255. In a dark image, this makes faint detail easier to see. It also amplifies sensor noise, because the same mapping applies to every pixel with a given value, whether that value came from the scene or from noise. If the dark end of the histogram is mostly noise, equalization stretches the noise along with everything else.
     </div>
     <div class="info-box" style="margin-top:1rem;">
-      <p><strong>Discussion question for ethics:</strong> Surveillance cameras in low-light environments produce images whose histograms are heavily left-skewed. Histogram equalization can be applied automatically to "improve" them before a face detection model runs. Who decides whether that enhancement is appropriate? What is lost when the original distribution is discarded?</p>
+      <p><strong>Discussion question for ethics:</strong> Surveillance cameras in low-light environments produce images whose histograms are concentrated near 0. Histogram equalization can be applied automatically to "improve" them before a face detection model runs. Who decides whether that enhancement is appropriate? What is lost when the original distribution is discarded?</p>
     </div>
   </div>
 
@@ -599,9 +599,10 @@ function computeHistograms(imgData, mode, ch) {
     const col = ch==='r' ? 'rgba(229,57,53,0.8)' : ch==='g' ? 'rgba(67,160,71,0.8)' : 'rgba(30,136,229,0.8)';
     return [{ data: hist, color: col, label: ch.toUpperCase() + ' channel' }];
   } else {
-    // gray-based modes — read the R channel (all equal for gray/bw/equalize)
+    // luma: equals the gray value for gray/bw/equalize, and gives brightness for low-res (still in color)
     const hist = new Float32Array(256);
-    for (let i = 0; i < n; i++) hist[imgData.data[i*4]]++;
+    for (let i = 0; i < n; i++)
+      hist[Math.round(0.299*imgData.data[i*4] + 0.587*imgData.data[i*4+1] + 0.114*imgData.data[i*4+2])]++;
     return [{ data: hist, color: 'rgba(26,58,92,0.75)', label: 'Intensity' }];
   }
 }
@@ -673,18 +674,15 @@ function drawHistogram(hists) {
 function computeStats(imgData, mode, ch) {
   const n = imgData.width * imgData.height;
   let values;
-  if (mode === 'color') {
-    // use luma
-    values = new Float32Array(n);
-    for (let i = 0; i < n; i++)
-      values[i] = 0.299*imgData.data[i*4] + 0.587*imgData.data[i*4+1] + 0.114*imgData.data[i*4+2];
-  } else if (mode === 'channel') {
+  if (mode === 'channel') {
     const off = ch==='r'?0:ch==='g'?1:2;
     values = new Float32Array(n);
     for (let i = 0; i < n; i++) values[i] = imgData.data[i*4+off];
   } else {
+    // use luma (equals the gray value in the gray-based modes)
     values = new Float32Array(n);
-    for (let i = 0; i < n; i++) values[i] = imgData.data[i*4];
+    for (let i = 0; i < n; i++)
+      values[i] = 0.299*imgData.data[i*4] + 0.587*imgData.data[i*4+1] + 0.114*imgData.data[i*4+2];
   }
   let sum=0, min=255, max=0;
   for (let i=0;i<n;i++){sum+=values[i];if(values[i]<min)min=values[i];if(values[i]>max)max=values[i];}
@@ -697,19 +695,19 @@ function computeStats(imgData, mode, ch) {
 
 // ── Insights ───────────────────────────────────────────────────────────────────
 const INSIGHTS = {
-  color:   (s) => `The three channels often have different shapes. In daylight photos, green peaks higher because cameras are more sensitive to green light (they use twice as many green sensors as red or blue). Mean brightness: ${s.mean}/255. Std dev: ${s.std} — higher means more contrast.`,
-  gray:    (s) => `Grayscale collapses three channels into one weighted sum (0.299R + 0.587G + 0.114B). Mean: ${s.mean}. Std dev: ${s.std}. A well-exposed image typically has a mean near 120&ndash;140 and a std dev above 40. Yours: ${parseFloat(s.std) < 30 ? 'low contrast — gradients will be weak' : parseFloat(s.std) > 60 ? 'high contrast — good for HOG' : 'moderate contrast'}.`,
-  bw:      (s) => `After thresholding, every pixel is either 0 or 255 — the histogram has two spikes and nothing in between. The ratio of black to white pixels encodes the threshold's effect. Dynamic range collapses to ${s.range}. All intermediate gradient information is gone.`,
-  lowres:  (s) => `Downsampling replaces each block of pixels with a single color. The histogram doesn't change much in shape — the same values appear, just fewer unique ones. But HOG cells that span multiple block boundaries lose gradient accuracy because adjacent pixels are now identical within a block.`,
-  equalize:(s) => `Histogram equalization redistributes values so the CDF is linear. Mean is now near ${s.mean} (should be close to 128). Std dev: ${s.std} — equalization tends to push this up. If the original image was dark, you'll see detail emerge. If it was already well-exposed, equalization adds noise.`,
-  channel: (s) => `You are looking at a single color channel. The histogram tells you how that color is distributed across the image. A red channel that peaks near 0 means very little red in the scene. A channel with a narrow peak has low variation — uniform color patches. Mean: ${s.mean}, range: ${s.range}.`,
+  color:   (s) => `Each color channel gets its own histogram, and their shapes often differ because a scene contains more of some colors than others. Mean brightness (luma): ${s.mean}/255. Std dev: ${s.std}. A higher std dev means more contrast.`,
+  gray:    (s) => `Grayscale combines the three channels into one weighted sum (0.299R + 0.587G + 0.114B). Mean: ${s.mean}. Std dev: ${s.std}. A well-exposed image typically has a mean near 120&ndash;140 and a std dev above 40. This image has ${parseFloat(s.std) < 30 ? 'low contrast, so its gradients will be weak' : parseFloat(s.std) > 60 ? 'high contrast, which gives HOG strong gradients' : 'moderate contrast'}.`,
+  bw:      (s) => `After thresholding, every pixel is either 0 or 255, so the histogram has two spikes and nothing in between. Raising the threshold turns more pixels black. The dynamic range is ${s.range}, but only two values remain, so neighboring pixels differ by either 0 or 255 and the intermediate gradient information is gone.`,
+  lowres:  (s) => `Downsampling copies the color of each block’s top-left pixel to the whole block. The histogram keeps roughly the same shape because the remaining values are a sample of the original ones, but fewer distinct values appear. Inside a block, neighboring pixels are identical, so the gradient is zero everywhere except at block boundaries, and HOG cells lose most of their edge detail.`,
+  equalize:(s) => `Histogram equalization remaps values so the cumulative distribution (CDF) is approximately linear. The mean is now ${s.mean}, and for most images it is close to 128. Std dev: ${s.std}. Equalization usually increases it. If the original image was dark, detail that was hard to see becomes visible. If it was already well-exposed, equalization adds little detail and can amplify noise.`,
+  channel: (s) => `This view shows one color channel. Its histogram counts how many pixels have each value of that channel. If most of the red histogram is near 0, the scene contains little red. A narrow peak means the channel varies little across the image, as in large patches of uniform color. Mean: ${s.mean}. Range: ${s.range}.`,
 };
 
 const HIST_LABELS = {
   color: 'R / G / B intensity (0&ndash;255)',
   gray:  'luma intensity (0&ndash;255)',
   bw:    'binary threshold (0 or 255)',
-  lowres:'intensity (0&ndash;255)',
+  lowres:'luma intensity (0&ndash;255)',
   equalize: 'equalized intensity (0&ndash;255)',
   channel: 'single channel intensity (0&ndash;255)',
 };

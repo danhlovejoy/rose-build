@@ -102,7 +102,7 @@
      ================================================================ -->
 <div class="stage">
   <div class="stage-line"><span class="stage-num">1</span><h2>Start with an Image</h2></div>
-  <p>HOG starts with a photograph and ends with a vector of numbers. Pick an example or upload your own. The image will be resized to 128&times;128 pixels, small enough to see every step, large enough to have interesting structure.</p>
+  <p>HOG takes an image as input and produces a vector of numbers. Pick an example or upload one. The demo resizes every image to 128&times;128 pixels, which is small enough that you can follow each step on the canvases below and large enough to contain several distinct edges and shapes.</p>
 
   <div class="example-grid" id="exampleGrid"></div>
 
@@ -121,7 +121,7 @@
      ================================================================ -->
 <div class="stage">
   <div class="stage-line"><span class="stage-num">2</span><h2>Convert to Grayscale</h2></div>
-  <p>Color doesn't help HOG. Edge structure is the same whether a wall is red or blue. Converting to grayscale collapses three channels (R, G, B) into one brightness value per pixel. Every step after this operates on a single 128&times;128 grid of numbers.</p>
+  <p>HOG describes edges. An edge has the same position and angle whether the wall is red or blue. Converting to grayscale replaces the three color channels (R, G, B) with one brightness value per pixel, a weighted sum of 0.299R + 0.587G + 0.114B, and every later step works on this single 128&times;128 grid of numbers.</p>
 
   <div class="vis-grid">
     <div class="vis-item"><canvas id="cvGray" width="256" height="256"></canvas><div class="vis-label">Grayscale</div></div>
@@ -136,24 +136,24 @@
      ================================================================ -->
 <div class="stage">
   <div class="stage-line"><span class="stage-num">3</span><h2>Compute Gradients</h2></div>
-  <p>A gradient measures how fast brightness changes at each pixel. The horizontal gradient (G<sub>x</sub>) catches vertical edges. The vertical gradient (G<sub>y</sub>) catches horizontal edges. Together, they give each pixel a magnitude (how strong the edge is) and a direction (which way it points).</p>
+  <p>A gradient measures how fast brightness changes at each pixel. The horizontal gradient (G<sub>x</sub>) is large at vertical edges. The vertical gradient (G<sub>y</sub>) is large at horizontal edges. From G<sub>x</sub> and G<sub>y</sub>, each pixel gets a magnitude, which is how strong the edge is, and a direction, which is the angle in which brightness increases fastest and is perpendicular to the edge itself.</p>
 
   <div class="vis-grid">
     <div class="vis-item"><canvas id="cvGx" width="256" height="256"></canvas><div class="vis-label">G<sub>x</sub> (horizontal gradient)</div></div>
     <div class="vis-item"><canvas id="cvGy" width="256" height="256"></canvas><div class="vis-label">G<sub>y</sub> (vertical gradient)</div></div>
     <div class="vis-item"><canvas id="cvMag" width="256" height="256"></canvas><div class="vis-label">Magnitude (edge strength)</div></div>
-    <div class="vis-item"><canvas id="cvDir" width="256" height="256"></canvas><div class="vis-label">Direction (edge angle, color-coded)</div></div>
+    <div class="vis-item"><canvas id="cvDir" width="256" height="256"></canvas><div class="vis-label">Direction (gradient angle, color-coded)</div></div>
   </div>
 
   <div class="card">
     <strong>Reading the color-coding</strong>
-    <p style="margin-bottom:0.5rem;"><strong>G<sub>x</sub> and G<sub>y</sub>:</strong> Green pixels = brightness increasing in that direction. Red pixels = brightness decreasing. Dark blue = no change. Brighter colors = stronger gradients.</p>
-    <p style="margin-bottom:0.5rem;"><strong>Magnitude:</strong> Brighter = stronger edge. Black = flat area with no brightness change.</p>
-    <p style="margin-bottom:0;"><strong>Direction:</strong> Color = edge angle (hue cycles through 0&deg;&ndash;180&deg;). Saturation = edge strength. Gray pixels have weak gradients, so their direction is unreliable and shown desaturated. The color wheel: <span style="color:#f00;">&bull;</span> 0&deg; horizontal <span style="color:#0f0;">&bull;</span> 60&deg; <span style="color:#0ff;">&bull;</span> 90&deg; vertical <span style="color:#00f;">&bull;</span> 120&deg; <span style="color:#f0f;">&bull;</span> 150&deg; <span style="color:#f00;">&bull;</span> 180&deg; wraps to 0&deg;.</p>
+    <p style="margin-bottom:0.5rem;"><strong>G<sub>x</sub> and G<sub>y</sub>:</strong> Green pixels are where brightness increases in that direction (left to right for G<sub>x</sub>, top to bottom for G<sub>y</sub>), and red pixels are where it decreases. Dark blue means no change. Brighter colors mean stronger gradients.</p>
+    <p style="margin-bottom:0.5rem;"><strong>Magnitude:</strong> Brighter pixels are stronger edges. Black pixels are flat areas with no brightness change.</p>
+    <p style="margin-bottom:0;"><strong>Direction:</strong> Hue shows the gradient angle and cycles once through the color wheel over 0&deg;&ndash;180&deg;. Saturation shows gradient strength. Pixels with weak gradients have unreliable angles, so they are drawn desaturated and look gray. The colors are: <span style="color:#f00;">&bull;</span> 0&deg; (horizontal gradient) <span style="color:#0f0;">&bull;</span> 60&deg; <span style="color:#0ff;">&bull;</span> 90&deg; (vertical gradient) <span style="color:#00f;">&bull;</span> 120&deg; <span style="color:#f0f;">&bull;</span> 150&deg; <span style="color:#f00;">&bull;</span> 180&deg; wraps to 0&deg;.</p>
   </div>
 
   <div class="tip">
-    <strong>The Sobel filter</strong> is a 3&times;3 kernel convolved across the image. G<sub>x</sub> uses <code>[[-1,0,1],[-2,0,2],[-1,0,1]]</code> to detect horizontal brightness changes. G<sub>y</sub> uses the transpose. Magnitude = &radic;(G<sub>x</sub>&sup2; + G<sub>y</sub>&sup2;). Direction = arctan(G<sub>y</sub> / G<sub>x</sub>).
+    <strong>The Sobel filter</strong> is a 3&times;3 kernel convolved across the image. G<sub>x</sub> uses <code>[[-1,0,1],[-2,0,2],[-1,0,1]]</code> to detect horizontal brightness changes. G<sub>y</sub> uses the transpose. Magnitude = &radic;(G<sub>x</sub>&sup2; + G<sub>y</sub>&sup2;). Direction = arctan(G<sub>y</sub> / G<sub>x</sub>), folded into 0&deg;&ndash;180&deg;.
   </div>
 </div>
 
@@ -165,11 +165,11 @@
 <div class="stage">
   <div class="stage-line"><span class="stage-num">4</span><h2>Divide into Cells, Build Histograms</h2></div>
 
-  <p>This is the core of HOG. The image is divided into a grid of small cells, each 8&times;8 pixels. Inside each cell, every pixel has a gradient direction (from Stage 3) and a gradient magnitude. The question is: what directions do the edges in this cell point, and how strong are they?</p>
+  <p>HOG divides the image into a grid of cells, each 8&times;8 pixels. Every pixel in a cell has a gradient direction and a gradient magnitude from Stage 3. A cell's histogram records which directions its gradients point and how strong they are.</p>
 
-  <p>To answer that, HOG sorts all 64 gradient directions within each cell into 9 orientation bins, spaced 20&deg; apart from 0&deg; to 180&deg;. Each pixel "votes" for a bin based on its gradient direction, and its vote is weighted by its gradient magnitude; strong edges count more than weak ones. The result is a 9-number histogram: a compact summary of the cell's edge pattern.</p>
+  <p>HOG sorts the 64 gradient directions in each cell into 9 orientation bins, spaced 20&deg; apart over 0&deg;&ndash;180&deg;. Each pixel "votes" for a bin based on its gradient direction, and its vote is weighted by its gradient magnitude, so strong edges count more than weak ones. A pixel whose direction falls between two bin angles splits its vote between those two bins. The result is a 9-number histogram that summarizes the cell's edge pattern.</p>
 
-  <p>Click any cell in the grid below to see its histogram. The zoomed view shows the actual gradient arrows inside the cell, and the histogram shows how those arrows get sorted into bins.</p>
+  <p>Click any cell in the grid below to see its histogram. The zoomed view draws the gradient of each pixel in the cell, and the histogram shows how those gradients are sorted into bins.</p>
 
   <div class="vis-grid">
     <div class="vis-item">
@@ -188,13 +188,13 @@
 
   <div class="card">
     <strong>How to read the histogram</strong>
-    <p style="margin-bottom:0.5rem;">Each bar represents a 20&deg; slice of orientation space. The height of the bar is the total gradient magnitude of all pixels in the cell whose edges point in that direction. A tall bar at 80&deg;&ndash;100&deg; means the cell has strong near-vertical edges. A flat histogram means edges point in many directions (or the cell has no edges at all).</p>
-    <p style="margin-bottom:0;">The zoomed cell view shows small arrows at each pixel: the arrow direction is the gradient direction, and the arrow length is the gradient magnitude. You can trace how each arrow contributes to the histogram.</p>
+    <p style="margin-bottom:0.5rem;">Each bar represents a 20&deg; range of gradient directions. The height of the bar is the magnitude-weighted vote total for that bin, after the normalization described in Stage 5. A tall bar at 80&deg;&ndash;100&deg; means brightness changes from top to bottom, so the cell has strong near-horizontal edges. A flat histogram means the gradients point in many directions, or that the cell has no edges.</p>
+    <p style="margin-bottom:0;">The zoomed cell view draws a short line at each pixel. The line's angle is the gradient direction, its length is the gradient magnitude, and its color matches its bin in the legend below. You can trace how each line contributes to the histogram.</p>
   </div>
 
   <div class="card">
     <strong>The 9 orientation bins</strong>
-    <p style="margin-bottom:0.75rem;">Each bin captures a 20&deg; wedge of the half-circle (0&deg;&ndash;180&deg;). The filled arc shows which gradient directions fall into that bin.</p>
+    <p style="margin-bottom:0.75rem;">Each bin covers a 20&deg; wedge of the half-circle (0&deg;&ndash;180&deg;). The solid wedge shows which gradient directions go into that bin. The faded wedge opposite it shows the directions 180&deg; away, which go into the same bin because HOG ignores the sign of the gradient.</p>
     <div id="binLegend" style="display:flex; flex-wrap:wrap; gap:0.75rem; justify-content:center;"></div>
   </div>
 
@@ -206,7 +206,7 @@
   </div>
 
   <div class="tip">
-    <strong>Why 0&deg;&ndash;180&deg; and not 0&deg;&ndash;360&deg;?</strong> HOG uses unsigned gradients. A dark-to-light edge and a light-to-dark edge at the same angle are the same edge &mdash; just viewed from opposite sides. Folding 360&deg; into 180&deg; makes the descriptor invariant to contrast polarity. A horizontal edge is a horizontal edge, regardless of which side is brighter.
+    <strong>Why 0&deg;&ndash;180&deg; and not 0&deg;&ndash;360&deg;?</strong> HOG uses unsigned gradients. A dark-to-light edge and a light-to-dark edge at the same angle produce gradients 180&deg; apart, and HOG puts both in the same bin. Folding 360&deg; into 180&deg; makes the descriptor ignore contrast polarity, so a horizontal edge produces the same histogram whichever side of it is brighter.
   </div>
 </div>
 
@@ -217,21 +217,21 @@
      ================================================================ -->
 <div class="stage">
   <div class="stage-line"><span class="stage-num">5</span><h2>The HOG Descriptor</h2></div>
-  <p>Stack all 256 cell histograms into one long vector. That's the HOG descriptor: a numerical fingerprint of the image's edge structure. The classic visualization draws oriented lines in each cell, with length proportional to the bin magnitude.</p>
+  <p>Before stacking, the demo divides each cell's histogram by the L2 norm of a 2&times;2 block of neighboring cells, so the values depend on relative edge strength rather than on the overall contrast of the image. The 256 normalized histograms are then concatenated into one vector of 2,304 numbers. That vector is the HOG descriptor. The visualization below draws one line per bin in each cell, at the bin's gradient angle, with length proportional to that bin's value relative to the largest bin in the cell. Because the lines follow the gradient direction, they run perpendicular to the edges in the image.</p>
 
   <div class="vis-grid">
     <div class="vis-item"><canvas id="cvHogVis" width="384" height="384"></canvas><div class="vis-label">HOG visualization overlay</div></div>
     <div class="vis-item" style="flex:1; min-width:300px;">
       <div class="card">
         <strong>The full descriptor vector (2,304 values)</strong>
-        <p style="font-size:0.85rem; margin-bottom:0.5rem;">Scroll to see all 2,304 numbers. Each group of 9 is one cell's histogram. The entire vector is what gets compared via cosine similarity.</p>
+        <p style="font-size:0.85rem; margin-bottom:0.5rem;">Scroll to see all 2,304 numbers. Each group of 9 is one cell's histogram, and cells with no edges are grayed out. Stage 6 compares two of these vectors with cosine similarity.</p>
         <div id="hogVectorScroll" style="max-height:320px; overflow-y:auto; border:1px solid var(--border); border-radius:4px; padding:0.5rem; background:#fff; font-family:'SF Mono',Consolas,monospace; font-size:0.75rem; line-height:1.8;"></div>
       </div>
     </div>
   </div>
 
   <div class="warn-tip">
-    <strong>What HOG keeps and what it throws away.</strong> The descriptor encodes local edge orientations and their magnitudes. It throws away color, exact pixel positions, and global spatial relationships. Two images with the same edge pattern but different colors produce nearly identical HOG descriptors.
+    <strong>What HOG keeps and what it discards.</strong> The descriptor encodes local edge orientations and their magnitudes. It discards color and the exact position of each edge within its 8&times;8 cell. The order of the cells in the vector preserves their position in the image. Two images with the same edge pattern but different colors produce nearly identical HOG descriptors.
   </div>
 </div>
 
@@ -242,7 +242,7 @@
      ================================================================ -->
 <div class="stage">
   <div class="stage-line"><span class="stage-num">6</span><h2>Compare Two Images</h2></div>
-  <p>Compute HOG descriptors for two images, then measure their cosine similarity. Same edge patterns = high similarity. Different edge patterns = low similarity. The comparison ignores color entirely.</p>
+  <p>Pick two images. The demo computes a HOG descriptor for each one and measures the cosine similarity between them. Images with similar edge patterns score high, and images with different edge patterns score low. The comparison uses only the grayscale images, so color affects the score only through brightness.</p>
 
   <div class="compare-row">
     <div class="compare-col">
@@ -679,7 +679,7 @@ document.getElementById('cvCellGrid').addEventListener('click', function(e) {
     marker: { color: '#2e7d32' }
   }], {
     xaxis: { title: 'Orientation bin', tickangle: -30 },
-    yaxis: { title: 'Weighted magnitude', gridcolor: '#e8ecf0' },
+    yaxis: { title: 'Weighted magnitude (normalized)', gridcolor: '#e8ecf0' },
     plot_bgcolor: '#fff', paper_bgcolor: '#fff',
     margin: { l: 50, r: 10, t: 10, b: 60 },
     font: { family: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif', size: 11 }
@@ -872,9 +872,9 @@ function pickComp(side, name) {
 
     const el = document.getElementById('compExplain');
     el.style.display = '';
-    if (sim > 0.8) el.innerHTML = '<strong>High similarity.</strong> These images have similar edge patterns — the HOG descriptors point in nearly the same direction.';
-    else if (sim > 0.5) el.innerHTML = '<strong>Moderate similarity.</strong> Some shared edge structure, but enough differences to separate the descriptors.';
-    else el.innerHTML = '<strong>Low similarity.</strong> Different edge patterns produce descriptors pointing in different directions.';
+    if (sim > 0.8) el.innerHTML = '<strong>High similarity.</strong> These images have similar edge patterns, so their HOG descriptors point in nearly the same direction.';
+    else if (sim > 0.5) el.innerHTML = '<strong>Moderate similarity.</strong> The images share some edge directions, but their descriptors differ in many cells.';
+    else el.innerHTML = '<strong>Low similarity.</strong> Different edge patterns produce descriptors that point in different directions.';
 
     // Side-by-side vector comparison (downsampled)
     const step = Math.max(1, Math.floor(examples[compA].vector.length / 200));

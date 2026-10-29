@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Attention: How Every Word Reaches Across the Sentence &mdash; AIML 2003 / 2013</title>
+<title>Attention: How Every Word Scores Every Other Word &mdash; AIML 2003 / 2013</title>
 <style>
   :root {
     --primary: #1a3a5c;
@@ -265,9 +265,9 @@
 <body>
 
 <div class="hero">
-  <h1>Attention: How Every Word Reaches Across the Sentence</h1>
+  <h1>Attention: How Every Word Scores Every Other Word</h1>
   <p>AIML 2003 / 2013 &bull; Interactive Demo</p>
-  <p class="hl">Click a word. See which other words it pays attention to, and how swapping one adjective rewires the whole sentence.</p>
+  <p class="hl">Click a word to see how much attention it gives every other word in the sentence, then swap one adjective and watch which attention weights change.</p>
 </div>
 
 <div class="container">
@@ -293,7 +293,7 @@
   </div>
 
   <div class="warn-tip">
-    <strong>Early models had no mechanism for this.</strong> They processed words sequentially, passing a fixed-size state vector forward. By the time a pronoun appeared 8 tokens later, the noun it referred to had often decayed out of that state.
+    <strong>Earlier sequence models had no direct way to do this.</strong> They processed words one at a time and passed a fixed-size state vector from each word to the next. When a pronoun appeared 7 tokens after its noun, as &ldquo;it&rdquo; does after &ldquo;trophy&rdquo; here, information about that noun had often been overwritten in the state.
   </div>
 </div>
 
@@ -304,17 +304,17 @@
      ================================================================ -->
 <div class="stage">
   <div class="stage-line"><span class="stage-num">2</span><h2>Attention in Action</h2></div>
-  <p>Attention scrapped the relay. Instead, every word scores every other word for relevance in a single pass. Click any word below to see its scores. Brighter highlight means more attention.</p>
+  <p>Attention removes that word-to-word relay. In a single pass, every word gets a relevance score against every other word in the sentence, and the scores are converted into attention weights. Click any word below. A darker green box means a higher attention weight, and each box shows its weight as a percentage.</p>
 
   <p style="font-size:0.85rem; color:#656d76; font-family:'SF Mono', Consolas, monospace;">Click any word:</p>
   <div class="sentence-display" id="s2Sentence"></div>
 
   <div class="explain-box" id="s2Explain">
-    <strong>TRY IT &rarr;</strong> Click &ldquo;it&rdquo; to see how the model figures out what &ldquo;it&rdquo; refers to by looking at surrounding words.
+    <strong>TRY IT &rarr;</strong> Click &ldquo;it&rdquo; to see which noun gets the largest share of its attention.
   </div>
 
   <div class="tip">
-    <strong>Position 12 reaches position 2 in one step.</strong> The 2017 &ldquo;Attention Is All You Need&rdquo; paper replaced sequential state-passing with this all-pairs scoring.
+    <strong>Any two positions connect in one step.</strong> Word 12 (&ldquo;big&rdquo;) gets a direct attention weight for word 2 (&ldquo;trophy&rdquo;) without passing through words 3 to 11. The 2017 &ldquo;Attention Is All You Need&rdquo; paper replaced sequential state-passing with this all-pairs scoring.
   </div>
 </div>
 
@@ -325,7 +325,7 @@
      ================================================================ -->
 <div class="stage">
   <div class="stage-line"><span class="stage-num">3</span><h2>Three Roles Every Word Plays</h2></div>
-  <p>Each word gets multiplied by three learned weight matrices, producing three vectors with different jobs. Click each card to see what the role does.</p>
+  <p>Each word&rsquo;s embedding is multiplied by three weight matrices, and the results are three vectors with different jobs. Training sets the values in those matrices. Click each card to see what the role does.</p>
 
   <div class="qkv-row">
     <div class="qkv-card q-card" onclick="showQKV('q')">
@@ -343,13 +343,13 @@
   </div>
 
   <div class="qkv-detail q-detail" id="qkvDetailQ">
-    <p>The word&rsquo;s question. For &ldquo;it,&rdquo; the query encodes something like &ldquo;I&rsquo;m a pronoun; which noun do I refer to?&rdquo; It gets compared against every key to produce scores.</p>
+    <p>The query is the vector that gets compared against every key to produce scores. For &ldquo;it,&rdquo; you can read the query as encoding &ldquo;I&rsquo;m a pronoun; which noun do I refer to?&rdquo;</p>
   </div>
   <div class="qkv-detail k-detail" id="qkvDetailK">
-    <p>The word&rsquo;s label. &ldquo;Trophy&rdquo; broadcasts a key encoding &ldquo;singular noun, physical object, potential referent.&rdquo; A high dot product between a query and this key produces a high attention score.</p>
+    <p>The key is the vector that every query is compared against. The key for &ldquo;trophy&rdquo; might encode &ldquo;singular noun that could be a referent.&rdquo; A high dot product between a query and this key produces a high attention score.</p>
   </div>
   <div class="qkv-detail v-detail" id="qkvDetailV">
-    <p>The payload. Once a word wins a high score, its value is what actually gets blended into the output. Values carry the semantic content forward; queries and keys are just the routing mechanism.</p>
+    <p>The value is the vector that gets added into the output, scaled by the word&rsquo;s attention weight. Queries and keys only set the weights. The values supply the content that gets combined.</p>
   </div>
 
   <div class="eq-box" style="margin-top:1.5rem;">
@@ -357,7 +357,7 @@
   </div>
 
   <div class="tip">
-    <strong>Query meets all keys; the best-matching keys let their values through.</strong> Because Q, K, and V are separate projections, the model can learn to search for one pattern (Q), advertise another (K), and transmit a third (V).
+    <strong>Each role has its own weight matrix.</strong> Because the three projections are separate, training can set them independently. A word&rsquo;s key does not have to match its own query, and its value can carry different information from either.
   </div>
 </div>
 
@@ -367,8 +367,8 @@
      STAGE 4: SCORE COMPUTATION
      ================================================================ -->
 <div class="stage">
-  <div class="stage-line"><span class="stage-num">4</span><h2>The Arithmetic: From Scores to Weights</h2></div>
-  <p>Pick a word. Its Query is dot-producted against the Key of every word, producing raw scores. Softmax converts those scores into percentages that sum to 100%. The percentages control how much each Value contributes to the output.</p>
+  <div class="stage-line"><span class="stage-num">4</span><h2>The Arithmetic: Scores and Softmax Weights</h2></div>
+  <p>Pick a word. Its query is multiplied (dot product) with the key of every word in the sentence, and each result is a raw score. Softmax converts the raw scores into percentages that sum to 100%, and each percentage sets how much that word&rsquo;s value contributes to the output.</p>
 
   <div class="btn-group">
     <button class="btn btn-primary" id="s4BtnIt" onclick="selectScoreWord(8)">it</button>
@@ -377,11 +377,11 @@
     <button class="btn btn-outline" id="s4BtnBig" onclick="selectScoreWord(11)">big</button>
   </div>
 
-  <p id="s4QueryLabel" style="font-size:0.85rem; color:#656d76;">Attention scores when <strong>&ldquo;it&rdquo;</strong> queries the sentence:</p>
+  <p id="s4QueryLabel" style="font-size:0.85rem; color:#656d76;">Attention weights when <strong>&ldquo;it&rdquo;</strong> is the query:</p>
   <div class="score-list" id="s4ScoreList"></div>
 
   <div class="tip" style="margin-top:1.5rem;">
-    <strong>The weighted sum is the output.</strong> Each Value gets multiplied by its weight and summed. &ldquo;It&rdquo; ends up with a representation that&rsquo;s ~52% trophy and ~15% suitcase. The pronoun resolved in one step.
+    <strong>The weighted sum is the output.</strong> Each value vector is multiplied by its weight, and the results are added together. With &ldquo;big,&rdquo; 52% of the output for &ldquo;it&rdquo; comes from the value of &ldquo;trophy&rdquo; and 15% from &ldquo;suitcase.&rdquo; The other ten words, including &ldquo;it&rdquo; itself, supply the remaining 33%.
   </div>
 </div>
 
@@ -392,33 +392,33 @@
      ================================================================ -->
 <div class="stage">
   <div class="stage-line"><span class="stage-num">5</span><h2>The Full Pipeline</h2></div>
-  <p>Transformers stack dozens of attention layers and run multiple heads per layer. Here is what one layer does, end to end.</p>
+  <p>Transformers stack dozens of attention layers and run multiple heads per layer. One layer runs these five steps in order.</p>
 
   <div class="pipeline-steps">
     <div class="pipeline-step">
       <div><span class="step-num">1</span></div>
-      <div class="step-text"><h4>Project into Q, K, V</h4><p>Each word&rsquo;s embedding (a single vector) gets multiplied by three separate weight matrices (W<sub>Q</sub>, W<sub>K</sub>, W<sub>V</sub>), producing three specialized vectors. Training optimizes these matrices. A word like &ldquo;it&rdquo; ends up with a Query that encodes &ldquo;I need a noun referent,&rdquo; while &ldquo;trophy&rdquo; gets a Key that says &ldquo;I am a referent.&rdquo;</p></div>
+      <div class="step-text"><h4>Project into Q, K, V</h4><p>Each word&rsquo;s embedding (a single vector) is multiplied by three separate weight matrices (W<sub>Q</sub>, W<sub>K</sub>, W<sub>V</sub>), and the results are the query, key, and value vectors. Training sets the values in these matrices. A word like &ldquo;it&rdquo; ends up with a query that encodes &ldquo;I need a noun referent,&rdquo; while &ldquo;trophy&rdquo; gets a key that encodes &ldquo;I am a referent.&rdquo;</p></div>
     </div>
     <div class="pipeline-step">
       <div><span class="step-num">2</span></div>
-      <div class="step-text"><h4>Compute compatibility scores</h4><p>The current word&rsquo;s Query is dot-producted with every Key in the sentence, including its own. High dot product = strong match. For &ldquo;it&rdquo; querying &ldquo;trophy,&rdquo; the score is high because the pronoun&rsquo;s query aligns with the noun&rsquo;s key.</p></div>
+      <div class="step-text"><h4>Compute compatibility scores</h4><p>The current word&rsquo;s query is multiplied (dot product) with every key in the sentence, including its own. A high dot product means a strong match. For &ldquo;it&rdquo; querying &ldquo;trophy,&rdquo; the score is high because the pronoun&rsquo;s query aligns with the noun&rsquo;s key.</p></div>
     </div>
     <div class="pipeline-step">
       <div><span class="step-num">3</span></div>
-      <div class="step-text"><h4>Normalize with softmax</h4><p>Softmax exponentiates each score and divides by the total, producing weights that are all positive and sum to 1.0. The highest score gets the largest share; the lowest gets a sliver but never zero.</p></div>
+      <div class="step-text"><h4>Normalize with softmax</h4><p>Softmax exponentiates each score and divides by the total, producing weights that are all positive and sum to 1.0. The highest score gets the largest weight, and the lowest gets a small weight that is never exactly zero.</p></div>
     </div>
     <div class="pipeline-step">
       <div><span class="step-num">4</span></div>
-      <div class="step-text"><h4>Weighted sum of Values</h4><p>Each Value is scaled by its softmax weight and the results are summed. The output for &ldquo;it&rdquo; is a vector that&rsquo;s ~52% trophy, ~15% suitcase, and small fractions of everything else.</p></div>
+      <div class="step-text"><h4>Weighted sum of Values</h4><p>Each value is scaled by its softmax weight and the results are summed. With &ldquo;big,&rdquo; the output for &ldquo;it&rdquo; takes 52% of its value from &ldquo;trophy&rdquo; and 15% from &ldquo;suitcase,&rdquo; with small fractions from the other words.</p></div>
     </div>
     <div class="pipeline-step">
       <div><span class="step-num">5</span></div>
-      <div class="step-text"><h4>Repeat across heads and layers</h4><p>8&ndash;64 heads run in parallel per layer, each tracking a different relationship type (coreference, syntax, proximity, etc.). Their outputs concatenate and feed into the next layer. GPT-4 class models stack 80+ layers. Stage 6 below shows what four heads look like on this sentence.</p></div>
+      <div class="step-text"><h4>Repeat across heads and layers</h4><p>Several heads run in parallel in each layer, and each head can track a different type of relationship, such as coreference or syntax. Their outputs are concatenated and passed to the next layer. The original 2017 Transformer used 8 heads per layer, and GPT-3 (175B parameters) uses 96 heads in each of its 96 layers. Stage 6 below shows four heads on this sentence.</p></div>
     </div>
   </div>
 
   <div class="tip">
-    <strong>Parallelism is why this scales.</strong> Sequential models processed one word at a time; attention processes every pair at once. That tradeoff (more compute per step, but far fewer steps) is what made training on the entire internet feasible.
+    <strong>Attention runs in parallel.</strong> Sequential models processed one word at a time, while attention computes the scores for every pair of words at once. Each step costs more compute, but there are far fewer sequential steps, which made it practical to train on text collections of hundreds of billions of tokens.
   </div>
 </div>
 
@@ -428,8 +428,8 @@
      STAGE 6: MULTI-HEAD ATTENTION
      ================================================================ -->
 <div class="stage">
-  <div class="stage-line"><span class="stage-num">6</span><h2>Multiple Heads, Multiple Perspectives</h2></div>
-  <p>Stage 2 used one attention head. Real transformers run many heads in parallel, each trained to track a different type of relationship. Switch between heads below, then click any word to see how the attention pattern reorganizes.</p>
+  <div class="stage-line"><span class="stage-num">6</span><h2>Multi-Head Attention</h2></div>
+  <p>Stage 2 used one attention head. Transformers run many heads in parallel, and each head has its own weight matrices, so different heads can track different types of relationship. Switch between heads below, then click any word to see how its attention weights change.</p>
 
   <div class="head-tabs" id="headTabs">
     <button class="head-tab active" data-head="coref" onclick="selectHead('coref')">Coreference</button>
@@ -444,7 +444,7 @@
   <div class="sentence-display" id="s6Sentence"></div>
 
   <div class="explain-box" id="s6Explain">
-    <strong>TRY IT &rarr;</strong> Click &ldquo;it&rdquo; under each head tab. The top-attended word changes every time.
+    <strong>TRY IT &rarr;</strong> Click &ldquo;it&rdquo; under each head tab. Each head gives a different top-attended word.
   </div>
 
   <div class="card" style="margin-top:1.5rem;">
@@ -454,7 +454,7 @@
   </div>
 
   <div class="tip">
-    <strong>No single head sees the full picture.</strong> The coreference head resolves &ldquo;it&rdquo; &rarr; &ldquo;trophy&rdquo; but misses that &ldquo;big&rdquo; describes &ldquo;trophy&rdquo; (descriptor head&rsquo;s job). The syntax head binds &ldquo;didn&rsquo;t&rdquo; to &ldquo;fit&rdquo; but ignores pronouns. Concatenating all four heads yields a representation that encodes referents, grammar, locality, and description at once.
+    <strong>Each head covers part of the sentence structure.</strong> The coreference head sends 62% of the attention from &ldquo;it&rdquo; to &ldquo;trophy,&rdquo; while the syntax head sends only 5%. From &ldquo;trophy,&rdquo; the descriptor head sends 35% to &ldquo;big&rdquo; and the coreference head sends 8%. Concatenating the outputs of all four heads gives each word a representation that encodes referents, grammar, locality, and description at once.
   </div>
 </div>
 
@@ -507,18 +507,18 @@ const attentionSmall = {
 };
 
 const explanations = {
-  0:  '<strong>THE &rarr;</strong> A determiner searching for its noun. Attention flows to &ldquo;trophy.&rdquo;',
-  1:  '<strong>TROPHY &rarr;</strong> Attends to itself, to &ldquo;big&rdquo; (its descriptor), and to &ldquo;fit&rdquo; and &ldquo;suitcase&rdquo; (the spatial relationship it participates in).',
-  2:  '<strong>DIDN&rsquo;T &rarr;</strong> A negation binding to its verb: &ldquo;fit.&rdquo;',
-  3:  '<strong>FIT &rarr;</strong> The verb needs a subject and an object. It attends to &ldquo;trophy&rdquo; (what&rsquo;s fitting) and &ldquo;suitcase&rdquo; (where it fits).',
-  4:  '<strong>IN &rarr;</strong> A preposition that needs an object. Strongest connection: &ldquo;suitcase.&rdquo;',
-  5:  '<strong>THE &rarr;</strong> Second determiner, reaching to its noun: &ldquo;suitcase.&rdquo;',
-  6:  '<strong>SUITCASE &rarr;</strong> Attends to itself, to &ldquo;trophy&rdquo; (the thing not fitting), and to &ldquo;fit&rdquo; (the action).',
-  7:  '<strong>BECAUSE &rarr;</strong> A causal connector reaching forward to the reason: the adjective at the end.',
-  8:  '<strong>IT &rarr;</strong> The pronoun resolves its reference. With &ldquo;big,&rdquo; it attends most to &ldquo;trophy&rdquo; (a big trophy wouldn&rsquo;t fit). With &ldquo;small,&rdquo; attention shifts to &ldquo;suitcase&rdquo; (a small suitcase can&rsquo;t hold it).',
-  9:  '<strong>WAS &rarr;</strong> A linking verb distributing attention across the subject (&ldquo;it&rdquo;) and description (&ldquo;big&rdquo;).',
-  10: '<strong>TOO &rarr;</strong> An intensifier attaching to the adjective it modifies.',
-  11: '<strong>BIG/SMALL &rarr;</strong> The adjective reaches back to what it describes. With &ldquo;big,&rdquo; attention flows to &ldquo;trophy.&rdquo; With &ldquo;small,&rdquo; to &ldquo;suitcase.&rdquo;',
+  0:  '<strong>THE &rarr;</strong> A determiner. Most of its attention (55%) goes to its noun, &ldquo;trophy.&rdquo;',
+  1:  '<strong>TROPHY &rarr;</strong> Its largest weight (30%) is on itself. The next largest go to the adjective that describes it (15%) and to &ldquo;fit&rdquo; and &ldquo;suitcase,&rdquo; the words that say where it does not fit.',
+  2:  '<strong>DIDN&rsquo;T &rarr;</strong> A negation. Its largest weight (35%) goes to the verb it negates, &ldquo;fit.&rdquo;',
+  3:  '<strong>FIT &rarr;</strong> The verb has a subject and a location. It attends to &ldquo;trophy&rdquo; (the thing that doesn&rsquo;t fit) and &ldquo;suitcase&rdquo; (where it doesn&rsquo;t fit).',
+  4:  '<strong>IN &rarr;</strong> A preposition. Its largest weight (35%) goes to its object, &ldquo;suitcase.&rdquo;',
+  5:  '<strong>THE &rarr;</strong> The second determiner. Most of its attention (55%) goes to its noun, &ldquo;suitcase.&rdquo;',
+  6:  '<strong>SUITCASE &rarr;</strong> Apart from itself, its largest weights go to &ldquo;trophy&rdquo; (the thing that doesn&rsquo;t fit) and &ldquo;fit&rdquo; (the verb).',
+  7:  '<strong>BECAUSE &rarr;</strong> A causal connector. Its largest weight goes to the word that states the reason, the adjective at the end.',
+  8:  '<strong>IT &rarr;</strong> The pronoun. With &ldquo;big,&rdquo; 52% of its attention goes to &ldquo;trophy&rdquo; (a big trophy wouldn&rsquo;t fit). With &ldquo;small,&rdquo; 48% goes to &ldquo;suitcase&rdquo; (a small suitcase can&rsquo;t hold it).',
+  9:  '<strong>WAS &rarr;</strong> A linking verb. Its attention is spread across its subject (&ldquo;it&rdquo;) and the adjective that describes the subject.',
+  10: '<strong>TOO &rarr;</strong> An intensifier. Its largest weight (34%) goes to the adjective it modifies.',
+  11: '<strong>BIG/SMALL &rarr;</strong> The adjective&rsquo;s largest weight (32%) goes to the noun it describes. That noun is &ldquo;trophy&rdquo; with &ldquo;big&rdquo; and &ldquo;suitcase&rdquo; with &ldquo;small.&rdquo;',
 };
 
 
@@ -595,11 +595,11 @@ const HEADS = {
   coref:     { data: headCoref,     color: '#1565c0', label: 'Coreference',
                desc: 'Tracks pronoun \u2192 noun and determiner \u2192 noun references. Click \u201cit\u201d to see it resolve to \u201ctrophy.\u201d' },
   syntax:    { data: headSyntax,    color: '#2e7d32', label: 'Syntax',
-               desc: 'Tracks grammatical bindings: negation \u2192 verb, linking verb \u2192 predicate, preposition \u2192 object. Click \u201cdidn\u2019t\u201d to see it lock onto \u201cfit.\u201d' },
+               desc: 'Tracks grammatical relations: negation \u2192 verb, linking verb \u2192 predicate, preposition \u2192 object, and intensifier \u2192 adjective. Click \u201cdidn\u2019t\u201d to see 58% of its attention go to \u201cfit.\u201d' },
   proximity: { data: headProximity, color: '#e65100', label: 'Proximity',
-               desc: 'Each word attends mostly to its immediate neighbors. Not glamorous, but necessary \u2014 local context carries word order and phrase boundaries.' },
+               desc: 'Each word gives most of its attention to itself and the words on either side. This local context encodes word order and phrase boundaries.' },
   descriptor:{ data: headDescriptor,color: '#5e35b1', label: 'Descriptor',
-               desc: 'Tracks adjective \u2192 noun and noun \u2192 adjective connections. Click \u201cbig\u201d to see it reach back to \u201ctrophy\u201d and \u201csuitcase.\u201d' },
+               desc: 'Tracks adjective \u2192 noun and noun \u2192 adjective connections. Click \u201cbig\u201d to see its attention split between \u201ctrophy\u201d (40%) and \u201csuitcase\u201d (25%).' },
 };
 
 // ── State ──
@@ -662,7 +662,7 @@ function renderS2() {
     '<div class="sentence-word" id="s2w' + i + '" onclick="selectS2Word(' + i + ')">' +
       t + '<span class="attn-label" id="s2lbl' + i + '"></span></div>'
   ).join('');
-  document.getElementById('s2Explain').innerHTML = '<strong>TRY IT &rarr;</strong> Click &ldquo;it&rdquo; to see how it resolves its reference.';
+  document.getElementById('s2Explain').innerHTML = '<strong>TRY IT &rarr;</strong> Click &ldquo;it&rdquo; to see which noun gets the largest share of its attention.';
 }
 
 function selectS2Word(idx) {
@@ -710,7 +710,7 @@ function selectScoreWord(idx) {
   });
 
   document.getElementById('s4QueryLabel').innerHTML =
-    'Attention scores when <strong>&ldquo;' + tokens[idx] + '&rdquo;</strong> queries the sentence:';
+    'Attention weights when <strong>&ldquo;' + tokens[idx] + '&rdquo;</strong> is the query:';
 
   renderS4();
 }

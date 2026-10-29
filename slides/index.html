@@ -36,47 +36,47 @@
 
 <a class="card" href="logistic-regression-demo.html">
   <strong>Logistic Regression: The Binary Classifier</strong>
-  <p>Drag a decision boundary, watch gradient descent train in real time, inspect individual predictions, and see where the model fails. A two-feature visualization of how binary classification works.</p>
+  <p>Drag a decision boundary, watch gradient descent train in real time, inspect individual predictions, and see where the model fails. The plot uses two features, so you can see the whole decision boundary at once.</p>
 </a>
 
 <a class="card" href="cosine-similarity-demo.html">
   <strong>Cosine Similarity: Measuring How Alike Two Things Are</strong>
-  <p>Drag 2D vectors to build geometric intuition, compare documents by their words, compare images by their edges, and explore similarity matrices. The same math serves both NLP and CV.</p>
+  <p>Drag 2D vectors to build geometric intuition, compare documents by their words, compare images by their edges, and explore similarity matrices. The same formula works for text in NLP and for images in CV.</p>
 </a>
 
 <a class="card" href="embeddings-meaning-demo.html">
   <strong>What Do Embeddings Encode?</strong>
-  <p>Every word becomes a list of numbers, and those numbers encode meaning. Explore attribute dimensions, nearest neighbors, and analogy math (king &minus; man + woman) to see how geometry captures semantics.</p>
+  <p>An embedding model converts each word into a list of numbers that encodes the word's meaning. Set attribute values, find the nearest word by cosine similarity, compute analogies such as king &minus; man + woman, and compare toy vectors with real 384-dimension embeddings.</p>
 </a>
 
 <a class="card" href="pixel-histogram-demo.html">
   <strong>Pixel Histograms: How Machines Represent Light</strong>
-  <p>Load an image, inspect individual pixel values, and watch brightness histograms update in real time. See how grayscale conversion, thresholding, and equalization change what the machine sees.</p>
+  <p>Load an image and watch its histogram update as you switch modes. Compare grayscale conversion, thresholding, downsampling, equalization, and single-channel views to see how each one changes the pixel values a model receives.</p>
 </a>
 
 <a class="card" href="hog-demo.html">
   <strong>HOG: Histogram of Oriented Gradients</strong>
-  <p>Watch an image become a vector. Grayscale, Sobel gradients, cell histograms, the classic HOG visualization, and cosine similarity comparison &mdash; all computed live in the browser. Upload your own images.</p>
+  <p>Watch an image become a vector one step at a time. The page converts it to grayscale, computes Sobel gradients, builds a histogram for each cell, draws the HOG visualization, and compares two descriptors with cosine similarity, all in your browser. You can upload your own images.</p>
 </a>
 
 <a class="card" href="confusion-matrix-demo.html">
   <strong>Confusion Matrix: Measuring What a Classifier Gets Wrong</strong>
-  <p>A classifier's accuracy is one number. The confusion matrix is the whole story. Adjust thresholds, watch precision and recall move, and see why the same model looks strong or weak depending on which error you care about.</p>
+  <p>Accuracy summarizes a classifier in one number, and the confusion matrix breaks that number down by true label and predicted label. Edit the cell counts and watch precision and recall change. A classifier can score high accuracy on an imbalanced dataset and still never predict the rare class.</p>
 </a>
 
 <a class="card" href="neural-network-demo.html">
   <strong>Neural Networks: Why Layers Matter</strong>
-  <p>A single neuron draws a straight line. Stack neurons into a hidden layer and the network untangles data no line could separate. Train live, watch the decision boundary bend, and inspect what each hidden unit computes.</p>
+  <p>A single neuron can only separate classes with a straight line. With a hidden layer, a network can separate data that no straight line can. Train the network in your browser and watch the decision boundary curve as training runs, then inspect what each hidden unit computes.</p>
 </a>
 
 <a class="card" href="attention-demo.html">
   <strong>Attention: How Every Word Reaches Across the Sentence</strong>
-  <p>Click a word to see which others it attends to. Step through the Q/K/V pipeline, compare attention heads, and watch how swapping one adjective rewires the whole sentence. The mechanism behind transformers.</p>
+  <p>Click a word to see its attention weights over the other words. Step through the Q/K/V computation and compare attention heads. Swapping one adjective changes the attention weights across the whole sentence. Transformers are built from this mechanism.</p>
 </a>
 
 <a class="card" href="hallucination-demo.html">
   <strong>Hallucination: Why Models Produce Fluent Falsehoods</strong>
-  <p>A language model has no fact store. It predicts the next token. Walk through the stages where confident-sounding errors are born, and see why fluency and truth are not the same thing.</p>
+  <p>A language model has no store of facts. It predicts the next token from the tokens before it, so it can produce a fluent sentence that is false. Step through generation one token at a time and adjust the temperature to see how a wrong token can become the one that is sampled.</p>
 </a>
 
 <div class="footer">AIML 2003 &bull; AIML 2013 &mdash; Spring 2026</div>

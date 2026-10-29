@@ -161,7 +161,7 @@
 <div class="hero">
   <h1>Cosine Similarity</h1>
   <p>Measuring How Alike Two Things Are</p>
-  <p class="hl">The same math works for text and images. Two vectors, one angle, one number.</p>
+  <p class="hl">The same formula compares text and images: it takes two vectors and returns one number based on the angle between them.</p>
   <p class="courses">AIML 2003 (NLP) &bull; AIML 2013 (Computer Vision)</p>
 </div>
 
@@ -171,8 +171,8 @@
      STAGE 1: THE GEOMETRY
      ================================================================ -->
 <div class="stage">
-  <div class="stage-line"><span class="stage-num">1</span><h2>The Geometry: Two Arrows, One Angle</h2></div>
-  <p>Forget text and images for a moment. Start with two arrows (vectors) pointing out from the origin. Cosine similarity measures the angle between them. Same direction = 1. Perpendicular = 0. Opposite = &minus;1.</p>
+  <div class="stage-line"><span class="stage-num">1</span><h2>The Geometry: The Angle Between Two Vectors</h2></div>
+  <p>Set text and images aside for now. Start with two arrows (vectors) that begin at the origin. Cosine similarity measures the angle between them. The score is 1 when the vectors point in the same direction and &minus;1 when they point in opposite directions, and perpendicular vectors, which share no direction at all, score exactly 0. Drag the sliders to try it.</p>
 
   <div class="row">
     <div class="col-main">
@@ -225,7 +225,7 @@
   </div>
 
   <div class="tip">
-    <strong>Length doesn't matter.</strong> Cosine similarity only cares about direction. A short arrow and a long arrow pointing the same way have similarity 1.0. That's why it works for comparing documents of different lengths or images of different sizes: the magnitude of the vector washes out.
+    <strong>Length doesn't change the score.</strong> Cosine similarity depends only on direction. A short arrow and a long arrow pointing the same way have similarity 1.0, because the formula divides the dot product by both lengths. That's why it works for comparing documents of different lengths, or images that differ only in contrast, which scales every gradient by the same factor.
   </div>
 
   <div class="card">
@@ -246,7 +246,7 @@
      ================================================================ -->
 <div class="stage">
   <div class="stage-line"><span class="stage-num">2</span><h2>Text: Comparing Documents by Their Words</h2></div>
-  <p>Each document becomes a TF-IDF vector (one number per word in the vocabulary). Two documents that use similar words in similar proportions will point in similar directions. Cosine similarity measures that alignment.</p>
+  <p>Each document becomes a vector with one number per word in the vocabulary. In a full pipeline those numbers are TF-IDF weights. This demo uses term frequency only: each word's count divided by the document's word count, after stopwords are removed. Two documents that use the same words in similar proportions produce vectors that point in similar directions, and cosine similarity measures how closely those directions agree.</p>
 
   <p>Pick a pair or type your own:</p>
 
@@ -284,7 +284,7 @@
   </div>
 
   <div class="tip">
-    <strong>Why cosine instead of counting shared words?</strong> Two reviews might share the words "film" and "movie," but those appear in every review and carry low TF-IDF scores. Cosine similarity weights each shared word by how distinctive it is. Sharing the word "masterpiece" matters more than sharing the word "the."
+    <strong>Why cosine instead of counting shared words?</strong> Two reviews might share the words "film" and "movie," but those words appear in nearly every review, so IDF gives them low weights. With TF-IDF vectors, each shared word adds to the dot product in proportion to its weight in both documents, so sharing "masterpiece" raises the score more than sharing "film." This demo skips the IDF step, so here every word counts by frequency alone.
   </div>
 </div>
 
@@ -295,7 +295,7 @@
      ================================================================ -->
 <div class="stage">
   <div class="stage-line"><span class="stage-num">3</span><h2>Images: Comparing Pictures by Their Edges</h2></div>
-  <p>HOG converts an image into a vector of gradient orientation counts: a fixed-length fingerprint of the image's edge structure. Two images with similar HOG vectors have similar shapes and textures, regardless of color or exact pixel values.</p>
+  <p>HOG converts an image into a vector of gradient orientation counts: a fixed-length summary of the image's edge structure. Two images with similar HOG vectors have similar shapes and textures, regardless of color or exact pixel values.</p>
   <p>Below are synthetic "HOG-like" feature vectors for image pairs. Each bar represents a gradient orientation bin. The more the two patterns match, the higher the cosine similarity.</p>
 
   <div class="pair-grid" id="imagePairs"></div>
@@ -310,7 +310,7 @@
   </div>
 
   <div class="tip">
-    <strong>Same idea, different domain.</strong> TF-IDF produces one number per word. HOG produces one number per orientation bin per cell. Both are vectors. Cosine similarity treats them identically. It operates identically regardless of whether the numbers represent words or edges.
+    <strong>Text and images use the same formula.</strong> TF-IDF produces one number per word. HOG produces one number per orientation bin per cell. Both are vectors. Cosine similarity runs the same calculation on either kind, and nothing in the formula depends on whether the numbers count words in a review or gradient orientations in a patch of pixels.
   </div>
 </div>
 
@@ -347,21 +347,21 @@
 
   <div class="card">
     <strong>Same meaning, different words (NLP)</strong>
-    <p style="margin:0;">"The movie was excellent" and "The film was outstanding" mean the same thing, but share zero distinctive words after stopword removal. Cosine similarity on TF-IDF vectors: <strong>0.0</strong>. The vectors point in completely different directions because the features (individual words) don't overlap.</p>
+    <p style="margin:0;">"The movie was excellent" and "The film was outstanding" mean the same thing, but share no words after stopword removal, so the cosine similarity of their TF-IDF vectors is 0.0. The vectors are perpendicular because no word has a nonzero value in both.</p>
   </div>
 
   <div class="card">
     <strong>Same shape, different context (CV)</strong>
-    <p style="margin:0;">A bicycle wheel and a clock face produce similar HOG descriptors: both are circular with radial gradient patterns. High cosine similarity, but the images are semantically unrelated. HOG encodes edges, not objects.</p>
+    <p style="margin:0;">A bicycle wheel and a clock face produce similar HOG descriptors: both are circular with radial gradient patterns. Their cosine similarity is high even though the objects are unrelated, because HOG records edge orientations and contains no information about which object produced them.</p>
   </div>
 
   <div class="card">
     <strong>The fix for both: learned representations</strong>
-    <p style="margin:0;">Word embeddings (NLP) and CNN features (CV) solve this because their training places "excellent" and "outstanding" near each other in vector space, and separates wheels from clocks despite similar edges. That's Week 4. Cosine similarity stays the same. The vectors encode richer distinctions.</p>
+    <p style="margin:0;">Word embeddings (NLP) and CNN features (CV) address both problems. Training places "excellent" and "outstanding" near each other in vector space and assigns wheels and clocks different vectors even though their edges match. You'll see these in Week 4. You still compute cosine similarity with the same formula; the vectors it compares encode more of the distinctions you care about.</p>
   </div>
 
   <div class="warn-tip">
-    <strong>Cosine similarity does exactly what it's built to do, and ONLY what it's built to do.</strong> It doesn't ACTUALLY compute meaning or understanding. It computes the angle between two vectors. What those numbers encode is outside its scope. TF-IDF vectors for &#8220;excellent&#8221; and &#8220;outstanding&#8221; sit far apart because the words don&#8217;t overlap, so the metric reports low similarity. That&#8217;s correct given the representation, even though a human would disagree. HOG has the same blind spot: a bicycle wheel and a clock both produce radial gradient patterns, so their vectors land close together. Cosine similarity says they&#8217;re alike. Given what it was handed, it&#8217;s right. In dense vector spaces using generative models, its accuracy is much higher because the representations are learned to capture semantic relationships. But it&#8217;s still just measuring angles between vectors. 
+    <strong>Cosine similarity measures angles between vectors.</strong> It doesn&#8217;t compute meaning. The representation determines what the numbers in each vector encode. The TF-IDF vectors for &#8220;The movie was excellent&#8221; and &#8220;The film was outstanding&#8221; share no words, so their cosine similarity is 0. That&#8217;s correct for that representation, even though a human reader would call the sentences equivalent. HOG has the same limitation: a bicycle wheel and a clock face both produce radial gradient patterns, so their vectors point in nearly the same direction and the metric reports high similarity. With dense embeddings computed by a trained neural network, cosine scores agree with human judgments of meaning more often, because training places related words and objects near each other.
   </div>
 </div>
 
@@ -531,26 +531,26 @@ function textCosineSim(textA, textB) {
 
 const TEXT_PAIRS = [
   // HIGH similarity — heavy shared vocabulary
-  { label: 'High similarity: same words, same praise',
+  { label: 'High similarity: the same praise in the same words',
     a: 'The acting was brilliant and the story was compelling. A beautifully crafted film with brilliant performances.',
     b: 'Brilliant acting and a compelling story. This beautifully crafted film delivers brilliant performances throughout.' },
-  { label: 'High similarity: both negative, shared vocabulary',
+  { label: 'High similarity: two negative reviews with shared vocabulary',
     a: 'A boring and terrible waste of time. The awful acting and dull plot made this film painful to watch.',
     b: 'Terrible acting and a boring plot make this an awful waste of time. Dull and painful from start to finish.' },
   // MODERATE — some overlap, some divergence
-  { label: 'Moderate: same sentiment, partial overlap',
+  { label: 'Low: same sentiment, two shared words',
     a: 'A brilliant and beautifully crafted film with outstanding performances from the entire cast.',
     b: 'An excellent film with superb acting and beautiful cinematography. The cast delivers strong work.' },
   // LOW — opposite vocabulary
-  { label: 'Low: opposite sentiment, opposite words',
+  { label: 'Zero: opposite sentiment, no shared words',
     a: 'A brilliant and beautifully crafted film with outstanding performances.',
     b: 'An awful waste of time with terrible acting and a boring plot.' },
   // NEAR-ZERO — same meaning but no shared distinctive words
-  { label: 'Near zero: same meaning, different words',
+  { label: 'Zero: same meaning, different words',
     a: 'The movie was excellent and I enjoyed it thoroughly.',
     b: 'The film was outstanding and I had a wonderful time watching it.' },
   // NEAR-ZERO — completely unrelated
-  { label: 'Near zero: unrelated topics',
+  { label: 'Zero: unrelated topics',
     a: 'The horror movie had brilliant special effects and a compelling villain.',
     b: 'The romantic comedy was fun and had a surprisingly sweet ending.' }
 ];
@@ -598,7 +598,7 @@ function computeTextSim() {
       type: 'bar', orientation: 'h', name: 'Doc B', marker: { color: '#e65100' } }
   ], {
     barmode: 'group',
-    xaxis: { title: 'TF-IDF weight', gridcolor: '#e8ecf0' },
+    xaxis: { title: 'Term frequency (TF)', gridcolor: '#e8ecf0' },
     yaxis: { automargin: true },
     plot_bgcolor: '#fff', paper_bgcolor: '#fff',
     margin: { l: 90, r: 20, t: 10, b: 50 },
@@ -609,9 +609,9 @@ function computeTextSim() {
   // Explanation
   let explain = '';
   if (r.sim > 0.7) explain = `These documents share ${r.shared.length} word(s) and use them in similar proportions. The vectors point in nearly the same direction.`;
-  else if (r.sim > 0.3) explain = `Some overlap: ${r.shared.length} shared word(s), but the proportions differ enough to pull the vectors apart. Moderate similarity.`;
-  else if (r.sim > 0.01) explain = `Minimal overlap. ${r.shared.length} shared word(s), but they're a small fraction of each document's vocabulary. The vectors point in different directions.`;
-  else explain = `No shared words after stopword removal. The vectors are perpendicular (or nearly so) — cosine similarity is zero even though both documents are about movies.`;
+  else if (r.sim > 0.3) explain = `The documents share ${r.shared.length} word(s), but those words make up different proportions of each document, so the angle between the vectors is wider. The similarity is moderate.`;
+  else if (r.sim > 0.01) explain = `The documents share ${r.shared.length} word(s), but those words are a small fraction of each document's vocabulary, so the vectors point in different directions.`;
+  else explain = `The documents share no words after stopword removal, so the dot product is zero and the vectors are perpendicular. Cosine similarity is 0 even when both documents are about the same topic.`;
 
   if (r.shared.length > 0) explain += ` Shared: <strong>${r.shared.join(', ')}</strong>.`;
   document.getElementById('textExplain').innerHTML = `<strong>What's happening</strong><p style="margin:0;">${explain}</p>`;
