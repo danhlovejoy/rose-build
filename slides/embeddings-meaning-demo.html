@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>What Do Embeddings Encode? From Attributes to Analogy Math &mdash; AIML 2003</title>
+<title>What Do Embeddings Encode? Attributes and Analogy Math &mdash; AIML 2003</title>
 <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
 <style>
   :root {
@@ -47,6 +47,7 @@
   .stage-line h2 { font-size: 1.3rem; color: var(--primary); margin-bottom: 0.75rem; display: inline; vertical-align: middle; }
   .stage-line { border-bottom: 2px solid var(--primary); margin-bottom: 1rem; padding-bottom: 0.4rem; }
   p { font-size: 0.95rem; margin-bottom: 0.75rem; }
+  .stage p a, .tip a { color: var(--primary-light); font-weight: 600; }
 
   .card {
     background: var(--light-bg); border: 1px solid var(--border);
@@ -115,8 +116,10 @@
   }
   .vec-table tr:hover { background: #eef3fa; }
   .vec-table tr.active-row { background: #dbe8f5; }
-  .vec-table .cell-hot { background: #c8e6c9; color: #1b5e20; font-weight: 700; }
-  .vec-table .cell-warm { background: #fff9c4; color: #f57f17; font-weight: 600; }
+  .vec-table .cell-pos { background: #d6e4f5; color: #0d47a1; font-weight: 700; }
+  .vec-table .cell-pos-light { background: #edf3fb; color: #1565c0; font-weight: 600; }
+  .vec-table .cell-neg { background: #ffe0cc; color: #bf360c; font-weight: 700; }
+  .vec-table .cell-neg-light { background: #fff1e6; color: #e65100; font-weight: 600; }
   .vec-table .cell-zero { background: #f5f5f5; color: #bbb; }
 
   /* Word buttons */
@@ -135,6 +138,43 @@
   .slider-grid label { font-size: 0.88rem; font-weight: 500; }
   .slider-grid input[type="range"] { width: 100%; }
   .slider-grid .sv { font-family: "SF Mono", Consolas, monospace; font-size: 0.85rem; text-align: right; color: var(--primary); font-weight: 600; }
+
+  /* Stage 1: 3D chart beside tabbed controls; stacks below 900px */
+  .s1-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; align-items: start; margin: 1rem 0; }
+  .s1-chart-wrap { position: relative; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+  .s1-reset { position: absolute; left: 0.5rem; top: 0.5rem; padding: 0.3rem 0.7rem; font-size: 0.78rem; }
+  .tabs { display: flex; gap: 0.25rem; border-bottom: 2px solid var(--border); }
+  .tab {
+    padding: 0.5rem 1rem; border: none; background: none; cursor: pointer;
+    font-family: inherit; font-size: 0.9rem; font-weight: 600; color: var(--muted);
+    border-bottom: 3px solid transparent; margin-bottom: -2px;
+  }
+  .tab:hover { color: var(--primary); }
+  .tab[aria-selected="true"] { color: var(--primary); border-bottom-color: var(--primary); }
+  .tab:focus-visible { outline: 2px solid var(--primary-light); outline-offset: 2px; }
+  .tab-panel { padding-top: 0.75rem; }
+  .tab-panel p { font-size: 0.9rem; }
+  .s1-stats { gap: 0.5rem; margin: 0.75rem 0 0; }
+  .s1-stats .stat-card { min-width: 90px; padding: 0.5rem; }
+  .s1-stats .val { font-size: 1.05rem; }
+  .s1-zero { font-size: 0.85rem; color: var(--muted); margin: 0.5rem 0 0; }
+  @media (max-width: 900px) {
+    .s1-layout { grid-template-columns: 1fr; }
+  }
+
+  /* Stage 1 probe sliders with snap buttons */
+  .slider-grid.s1-grid { grid-template-columns: 80px 1fr 50px auto; }
+  .snap-group { display: flex; gap: 0.25rem; }
+  .snap-btn {
+    padding: 0.2rem 0.55rem; border: 1px solid var(--border); border-radius: 4px;
+    background: #fff; cursor: pointer; font-family: "SF Mono", Consolas, monospace;
+    font-size: 0.8rem; color: var(--primary);
+  }
+  .snap-btn:hover { border-color: var(--primary); background: var(--light-bg); }
+  @media (max-width: 600px) {
+    .slider-grid.s1-grid { grid-template-columns: 70px 1fr 45px; }
+    .slider-grid.s1-grid .snap-group { grid-column: 1 / -1; justify-content: flex-end; margin-bottom: 0.4rem; }
+  }
 
   /* Real embeddings */
   .real-vec {
@@ -157,8 +197,8 @@
 
 <div class="hero">
   <h1>What Do Embeddings Encode?</h1>
-  <p>From Attributes to Analogy Math</p>
-  <p class="hl">Every word becomes a list of numbers. Those numbers encode meaning. Here's how.</p>
+  <p>Attributes and Analogy Math</p>
+  <p class="hl">An embedding model converts each word into a list of numbers, and those numbers encode the word's meaning.</p>
 </div>
 
 <div class="container">
@@ -167,27 +207,54 @@
      STAGE 1: THE ATTRIBUTE MATRIX
      ================================================================ -->
 <div class="stage">
-  <div class="stage-line"><span class="stage-num">1</span><h2>Words as Vectors: The Attribute Matrix</h2></div>
-  <p>Imagine you could describe any word with a handful of measurable attributes. Each attribute gets a number from 0 to 1. The result is a vector: a list of numbers that encodes what the word <em>means</em>.</p>
-  <p>Click any word below to highlight its row. Notice how <strong>King</strong> and <strong>Queen</strong> differ on exactly one attribute.</p>
+  <div class="stage-line"><span class="stage-num">1</span><h2>Words as Vectors: Points in Space</h2></div>
+  <p>Imagine describing every word with a few measurable attributes. Each attribute gets a number between &minus;1 and +1, where +1 means the word has the attribute, &minus;1 means it has the opposite (female instead of male, child instead of adult), and a value in between means the attribute partly applies. The result is a vector. It's a list of numbers that encodes what the word <em>means</em>.</p>
+  <p>With three attributes, each word becomes a point in 3D space. Drag the chart to rotate it. Six of the words are on the corners of a cube, where every value is &minus;1 or +1. Prince and Princess are at &minus;0.5 on Adult, halfway between 0 and child, because in everyday writing the words often describe young people (fairy tales, &ldquo;little princess&rdquo;) even though a real prince can be any age.</p>
+
+  <div class="s1-layout">
+    <div class="s1-chart-wrap">
+      <div id="s1Chart" style="width:100%; height:460px;"></div>
+      <button class="btn btn-outline s1-reset" id="s1Reset">Reset view</button>
+    </div>
+
+    <div>
+      <div class="tabs" role="tablist" aria-label="Stage 1 controls" id="s1Tabs">
+        <button class="tab" role="tab" id="s1TabBuild" aria-selected="true" aria-controls="s1PanelBuild">Build a Vector</button>
+        <button class="tab" role="tab" id="s1TabAnalogy" aria-selected="false" aria-controls="s1PanelAnalogy" tabindex="-1">Analogy Arithmetic</button>
+      </div>
+
+      <div class="tab-panel" role="tabpanel" id="s1PanelBuild" aria-labelledby="s1TabBuild">
+        <p>Pick a word or set the sliders yourself. The purple diamond marks the position of your vector, and the closest word by cosine similarity gets a larger marker.</p>
+        <div class="word-group" id="s1Words"></div>
+        <div class="slider-grid s1-grid" id="s1Sliders"></div>
+      </div>
+
+      <div class="tab-panel" role="tabpanel" id="s1PanelAnalogy" aria-labelledby="s1TabAnalogy" hidden>
+        <p>Subtract one word's vector and add another's. The chart plots the resulting vector.</p>
+        <div class="btn-group">
+          <button class="btn btn-primary" data-analogy="kingQueen">King &minus; Man + Woman</button>
+          <button class="btn btn-accent" data-analogy="queenGirl">Queen &minus; Woman + Girl</button>
+        </div>
+        <div class="eq-box" id="s1Eq" style="display:none;"></div>
+        <p id="s1Note" style="margin:0;"></p>
+      </div>
+
+      <div class="stats-row s1-stats" id="s1Stats">
+        <div class="stat-card"><div class="val" id="s1Vec">?</div><div class="lbl">your vector</div></div>
+        <div class="stat-card"><div class="val" id="s1Nearest">?</div><div class="lbl">closest word</div></div>
+        <div class="stat-card"><div class="val" id="s1Sim">?</div><div class="lbl">cosine sim to closest</div></div>
+      </div>
+      <p id="s1Zero" class="s1-zero" hidden>All three values are zero. The zero vector has no direction, so cosine similarity to any word is undefined.</p>
+    </div>
+  </div>
 
   <table class="vec-table" id="s1Table">
-    <thead><tr><th>Word</th><th>Royalty</th><th>Male</th><th>Adult</th><th>Power</th></tr></thead>
+    <thead><tr><th>Word</th><th>Royalty</th><th>Male</th><th>Adult</th></tr></thead>
     <tbody id="s1Body"></tbody>
   </table>
 
-  <div id="s1Chart" style="width:100%; height:340px;"></div>
-
-  <div class="word-group" id="s1Words"></div>
-
-  <div class="stats-row" id="s1Stats" style="display:none;">
-    <div class="stat-card"><div class="val" id="s1Dims">4</div><div class="lbl">dimensions</div></div>
-    <div class="stat-card"><div class="val" id="s1NonZero">?</div><div class="lbl">nonzero values</div></div>
-    <div class="stat-card"><div class="val" id="s1Sim">?</div><div class="lbl">cosine sim to <span id="s1SimRef">King</span></div></div>
-  </div>
-
   <div class="tip">
-    <strong>The key insight:</strong> King and Queen have the same Royalty, Adult, and Power scores. They differ only on Male. That one dimension captures the gender distinction. The vector encodes meaning as a <em>pattern</em> of numbers, not a single label.
+    <strong>The key insight:</strong> Man &rarr; Woman, King &rarr; Queen, Prince &rarr; Princess and Boy &rarr; Girl are all the same step. Only Male changes. Every pair that differs only in gender differs by the same vector, so subtracting Man and adding Woman applies that difference to any third word, which is what the analogy buttons do. The values describe how the words are used in text rather than their dictionary definitions. Stage 4 explains how a neural network computes them during training.
   </div>
 </div>
 
@@ -198,8 +265,8 @@
      ================================================================ -->
 <div class="stage">
   <div class="stage-line"><span class="stage-num">2</span><h2>Zero Values: Not Every Attribute Applies</h2></div>
-  <p>Royalty, gender, and age are meaningful for people, but not for everything. What happens when a word has no connection to an attribute? That dimension goes to zero. The vector is still the same length, but some slots are empty.</p>
-  <p>Look at how many dimensions "light up" for each word versus how many stay dark.</p>
+  <p>Attributes like Male and Adult are meaningful for people, but not for everything. Stage 1 used &minus;1 to mean the opposite of an attribute. When a word has no connection to an attribute at all, that dimension is 0 instead, so Water gets 0 on Male because it is neither male nor female. The vector is still the same length, but some slots are empty.</p>
+  <p>Look at how many dimensions are colored for each word versus how many stay white. Dog and Puppy differ in one slot: Puppy is &minus;1 on Adult, while Dog is 0 because &ldquo;dog&rdquo; doesn't specify an age.</p>
 
   <div id="s2Chart" style="width:100%; height:360px;"></div>
 
@@ -214,18 +281,18 @@
   </div>
 
   <div class="tip">
-    <strong>This is what "sparse" means.</strong> When most values in a vector are zero, we call it sparse. TF-IDF vectors are extremely sparse: thousands of dimensions, almost all zero. Embedding vectors are dense: hundreds of dimensions, almost none zero. The zeros here are the conceptual bridge. They show why sparse representations have limits.
+    <strong>This is what "sparse" means.</strong> When most values in a vector are zero, we call it sparse. TF-IDF vectors are sparse: thousands of dimensions, almost all zero. Embedding vectors are dense: hundreds of dimensions, almost none zero. A zero carries no information, so a sparse vector describes each word with only a few of its dimensions.
   </div>
 </div>
 
 <div class="arrow-box">&darr;</div>
 
 <!-- ================================================================
-     STAGE 3: FROM TOY TO REAL
+     STAGE 3: TOY VECTORS AND REAL EMBEDDINGS
      ================================================================ -->
 <div class="stage">
-  <div class="stage-line"><span class="stage-num">3</span><h2>From Toy Vectors to Real Embeddings</h2></div>
-  <p>Our "toy" model above has 8 dimensions with human-readable labels. A real embedding model like <code>all-MiniLM-L6-v2</code> produces vectors with <strong>384 dimensions</strong>. No dimension has a name. No single number means "royalty" or "gender." The meaning is distributed across all 384 values.</p>
+  <div class="stage-line"><span class="stage-num">3</span><h2>Toy Vectors and Real Embeddings</h2></div>
+  <p>Our "toy" model above has 7 dimensions with human-readable labels. A real embedding model like <code>all-MiniLM-L6-v2</code> produces vectors with 384 dimensions. Dimensions are not named. No single number means "royalty" or "gender." The meaning is distributed across all 384 values.</p>
 
   <div class="btn-group">
     <button class="btn btn-primary" onclick="showRealComparison('king')">King</button>
@@ -241,30 +308,30 @@
 
   <div class="card">
     <strong>Actual <code>all-MiniLM-L6-v2</code> vector <span id="realWordLabel"></span></strong>
-    <p style="margin:0 0 0.5rem; font-size:0.88rem; color:var(--muted);">These are real outputs from the model. Each of 384 learned dimensions contributes to the meaning. No dimension has a human-readable label. Scroll to see more.</p>
+    <p style="margin:0 0 0.5rem; font-size:0.88rem; color:var(--muted);">These are real outputs from the model. All 384 dimensions contribute to the meaning. Dimensions are not named. Scroll to see more.</p>
     <div class="real-vec" id="realVecDisplay"></div>
   </div>
 
   <div id="realChart" style="width:100%; height:300px;"></div>
 
   <div class="stats-row">
-    <div class="stat-card"><div class="val">8</div><div class="lbl">toy dimensions</div></div>
+    <div class="stat-card"><div class="val">7</div><div class="lbl">toy dimensions</div></div>
     <div class="stat-card"><div class="val">384</div><div class="lbl">real dimensions</div></div>
     <div class="stat-card"><div class="val" id="realNonZero">384</div><div class="lbl">nonzero (real)</div></div>
     <div class="stat-card"><div class="val" id="realSparsity">0%</div><div class="lbl">zeros (real)</div></div>
   </div>
 
   <div class="warn-tip">
-    <strong>Real embeddings are dense.</strong> In our toy model, &ldquo;Water&rdquo; has 6 zero dimensions out of 8 (75% sparse). In the real <code>all-MiniLM-L6-v2</code> vector for &ldquo;water,&rdquo; virtually every dimension carries a nonzero value. That density is what lets embeddings capture subtle relationships that sparse representations miss. The trade-off: you can no longer point to one dimension and say &ldquo;that&rsquo;s the royalty dimension.&rdquo; The meaning is distributed across all 384 numbers.
+    <strong>Real embeddings are dense.</strong> In our toy model, &ldquo;Water&rdquo; has 6 zero dimensions out of 7 (86% sparse). In the real <code>all-MiniLM-L6-v2</code> vector for &ldquo;water,&rdquo; every dimension has a nonzero value. With 384 nonzero values, one vector can encode many relationships at once, including ones no human-labeled attribute covers. The trade-off is that you can no longer point to one dimension and say &ldquo;that&rsquo;s the royalty dimension.&rdquo;
   </div>
 
   <div class="tip">
-    <strong>Negative values are normal.</strong> Our toy vectors use 0 to 1 because each dimension has a human-readable label (&ldquo;Royalty&rdquo; is either present or it isn&rsquo;t). The real vectors above range from about &minus;0.17 to 0.25. No dimension has a name, so there is no intuitive meaning for &ldquo;negative Royalty.&rdquo; Instead, positive and negative values together define a direction in high-dimensional space, and it is the direction that encodes meaning.
+    <strong>Negative values are normal.</strong> Our toy vectors already use them, and because each toy dimension has a name, you can read the sign: &minus;1 on Male means female. The real vectors above range from about &minus;0.17 to 0.25. Dimensions are not named, so a single negative value has no meaning by itself. Positive and negative values together define a direction in high-dimensional space, and the direction encodes the meaning, just as it did on the cube in Stage 1.
   </div>
 
   <div class="card">
     <strong>The analogy still works</strong>
-    <p style="margin:0;">The same King &minus; Man + Woman = Queen arithmetic works in 384 dimensions. Mikolov et al. showed this in 2013 with Word2Vec. The relationships are harder to visualize, but the geometry is identical: meaning is direction, and analogy is vector subtraction and addition.</p>
+    <p style="margin:0;">The same King &minus; Man + Woman &asymp; Queen arithmetic works with trained embeddings. Mikolov et al. showed it in 2013 with Word2Vec vectors. Those vectors have hundreds of dimensions instead of three, so you can't plot them, but the operation is the same: subtract one vector, add another, and find the word with the highest cosine similarity to the result.</p>
   </div>
 </div>
 
@@ -275,14 +342,14 @@
      ================================================================ -->
 <div class="stage">
   <div class="stage-line"><span class="stage-num">4</span><h2>How Do Words Get Their Vectors?</h2></div>
-  <p>Nobody sat down and decided that dimension 47 of &ldquo;king&rdquo; should be 0.0476. The numbers are <em>learned</em> by a neural network trained on enormous amounts of text.</p>
+  <p>No person chose the value 0.0476 for dimension 45 of &ldquo;king.&rdquo; A neural network computes every value during training on large amounts of text.</p>
 
-  <p>The core idea is simple: words that appear in similar contexts should get similar vectors. During training on billions of sentences, &ldquo;king&rdquo; and &ldquo;queen&rdquo; appear near the same surrounding words (&ldquo;throne,&rdquo; &ldquo;crown,&rdquo; &ldquo;ruled&rdquo;), so the optimization gradually pulls their vectors closer together. &ldquo;Water&rdquo; appears in completely different contexts (&ldquo;drink,&rdquo; &ldquo;river,&rdquo; &ldquo;flow&rdquo;), so its vector drifts to a different region of the space.</p>
+  <p>Words that appear in similar contexts get similar vectors. During training on billions of sentences, &ldquo;king&rdquo; and &ldquo;queen&rdquo; appear near the same surrounding words (&ldquo;throne,&rdquo; &ldquo;crown,&rdquo; &ldquo;ruled&rdquo;), so each training step moves their vectors a little closer together. &ldquo;Water&rdquo; appears in completely different contexts (&ldquo;drink,&rdquo; &ldquo;river,&rdquo; &ldquo;flow&rdquo;), so its vector ends up in a different region of the space.</p>
 
-  <p>The <code>all-MiniLM-L6-v2</code> model you will use in the lab was trained on over one billion sentence pairs. The model card on Hugging Face (one of this week&rsquo;s readings) lists the exact training datasets. After training, the 384 numbers for each word are fixed: you load the model, hand it a word or sentence, and it returns the vector. That is what you will do in Cell 1 of the lab.</p>
+  <p>The <code>all-MiniLM-L6-v2</code> model you will use in the lab was trained on over one billion sentence pairs. The <a href="https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2" target="_blank" rel="noopener">model card on Hugging Face</a> (one of this week&rsquo;s readings) lists the exact training datasets. After training, the 384 numbers for each word are fixed: you load the model, hand it a word or sentence, and it returns the vector. That is what you will do in Cell 1 of the lab.</p>
 
   <div class="tip">
-    <strong>Go deeper in the readings.</strong> The StatQuest video walks through how the training loop works step by step. The Alammar article makes the same process visual with diagrams showing how similar words get pulled together and dissimilar words get pushed apart. Both are assigned this week.
+    <strong>Go deeper in the readings.</strong> The StatQuest video, <a href="https://www.youtube.com/watch?v=viZrOnJclY0" target="_blank" rel="noopener">Word Embedding and Word2Vec</a>, walks through the training loop step by step. Jay Alammar&rsquo;s <a href="https://jalammar.github.io/illustrated-word2vec/" target="_blank" rel="noopener">The Illustrated Word2Vec</a> shows the same process in diagrams: each training step moves the vectors of words that share contexts closer together and moves unrelated words apart. Both are assigned this week.
   </div>
 </div>
 
@@ -298,37 +365,41 @@
 <script>
 // ── Core Data ──
 
-const ATTRIBUTES_S1 = ['Royalty', 'Male', 'Adult', 'Power'];
-const ATTRIBUTES_S2 = ['Royalty', 'Male', 'Adult', 'Power', 'Liquid', 'Tech', 'Animal', 'Food'];
+// Values run from -1 (the opposite: female, child, commoner) to +1 (has the attribute).
+// In Stage 2, 0 means the attribute doesn't apply (Water is neither male nor female).
+// Prince/Princess sit at Adult -0.5: the words often describe young people, but a prince can be any age.
+
+const ATTRIBUTES_S1 = ['Royalty', 'Male', 'Adult'];
+const ATTRIBUTES_S2 = ['Royalty', 'Male', 'Adult', 'Liquid', 'Tech', 'Animal', 'Food'];
 
 const WORDS_S1 = {
-  'King':     [1.0, 1.0, 1.0, 0.9],
-  'Queen':    [1.0, 0.0, 1.0, 0.9],
-  'Man':      [0.0, 1.0, 1.0, 0.3],
-  'Woman':    [0.0, 0.0, 1.0, 0.3],
-  'Prince':   [1.0, 1.0, 0.3, 0.5],
-  'Princess': [1.0, 0.0, 0.3, 0.5],
-  'Boy':      [0.0, 1.0, 0.0, 0.1],
-  'Girl':     [0.0, 0.0, 0.0, 0.1],
+  'King':     [ 1,  1,  1  ],
+  'Queen':    [ 1, -1,  1  ],
+  'Man':      [-1,  1,  1  ],
+  'Woman':    [-1, -1,  1  ],
+  'Prince':   [ 1,  1, -0.5],
+  'Princess': [ 1, -1, -0.5],
+  'Boy':      [-1,  1, -1  ],
+  'Girl':     [-1, -1, -1  ],
 };
 
 const WORDS_S2 = {
-  'King':     [1.0, 1.0, 1.0, 0.9, 0.0, 0.0, 0.0, 0.0],
-  'Queen':    [1.0, 0.0, 1.0, 0.9, 0.0, 0.0, 0.0, 0.0],
-  'Man':      [0.0, 1.0, 1.0, 0.3, 0.0, 0.0, 0.0, 0.0],
-  'Woman':    [0.0, 0.0, 1.0, 0.3, 0.0, 0.0, 0.0, 0.0],
-  'Prince':   [1.0, 1.0, 0.3, 0.5, 0.0, 0.0, 0.0, 0.0],
-  'Princess': [1.0, 0.0, 0.3, 0.5, 0.0, 0.0, 0.0, 0.0],
-  'Boy':      [0.0, 1.0, 0.0, 0.1, 0.0, 0.0, 0.0, 0.0],
-  'Girl':     [0.0, 0.0, 0.0, 0.1, 0.0, 0.0, 0.0, 0.0],
-  'Water':    [0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0],
-  'Coffee':   [0.0, 0.0, 0.0, 0.0, 0.9, 0.0, 0.0, 0.7],
-  'Computer': [0.0, 0.0, 0.0, 0.1, 0.0, 1.0, 0.0, 0.0],
-  'Robot':    [0.0, 0.0, 0.0, 0.2, 0.0, 0.9, 0.0, 0.0],
-  'Dog':      [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0],
-  'Puppy':    [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0],
-  'Pizza':    [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0],
-  'Steak':    [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.2, 1.0],
+  'King':     [ 1.0,  1.0,  1.0, 0.0, 0.0, 0.0, 0.0],
+  'Queen':    [ 1.0, -1.0,  1.0, 0.0, 0.0, 0.0, 0.0],
+  'Man':      [-1.0,  1.0,  1.0, 0.0, 0.0, 0.0, 0.0],
+  'Woman':    [-1.0, -1.0,  1.0, 0.0, 0.0, 0.0, 0.0],
+  'Prince':   [ 1.0,  1.0, -0.5, 0.0, 0.0, 0.0, 0.0],
+  'Princess': [ 1.0, -1.0, -0.5, 0.0, 0.0, 0.0, 0.0],
+  'Boy':      [-1.0,  1.0, -1.0, 0.0, 0.0, 0.0, 0.0],
+  'Girl':     [-1.0, -1.0, -1.0, 0.0, 0.0, 0.0, 0.0],
+  'Water':    [ 0.0,  0.0,  0.0, 1.0, 0.0, 0.0, 0.0],
+  'Coffee':   [ 0.0,  0.0,  0.0, 0.9, 0.0, 0.0, 0.7],
+  'Computer': [ 0.0,  0.0,  0.0, 0.0, 1.0, 0.0, 0.0],
+  'Robot':    [ 0.0,  0.0,  0.0, 0.0, 0.9, 0.0, 0.0],
+  'Dog':      [ 0.0,  0.0,  0.0, 0.0, 0.0, 1.0, 0.0],
+  'Puppy':    [ 0.0,  0.0, -1.0, 0.0, 0.0, 1.0, 0.0],
+  'Pizza':    [ 0.0,  0.0,  0.0, 0.0, 0.0, 0.0, 1.0],
+  'Steak':    [ 0.0,  0.0,  0.0, 0.0, 0.0, 0.2, 1.0],
 };
 
 
@@ -348,14 +419,39 @@ function cosineSim(a, b) {
 
 
 function cellClass(v) {
-  if (v >= 0.7) return 'cell-hot';
-  if (v >= 0.2) return 'cell-warm';
+  if (v >= 0.75) return 'cell-pos';
+  if (v > 0) return 'cell-pos-light';
+  if (v <= -0.75) return 'cell-neg';
+  if (v < 0) return 'cell-neg-light';
   return 'cell-zero';
 }
 
-// ── Stage 1: Attribute Matrix ──
+// Signed display with a true minus sign: +1.0, −0.5, 0.0
+function fmt(v) {
+  if (Math.abs(v) < 1e-9) return '0.0';
+  return v > 0 ? '+' + v.toFixed(1) : '−' + Math.abs(v).toFixed(1);
+}
 
-let s1Selected = null;
+// ── Stage 1: Words as points in 3D ──
+
+const S1_CAMERA = { eye: { x: 1.35, y: -1.5, z: 0.7 } };
+
+// a − b + c. The arrow b → c is the relationship being carried over to a.
+const ANALOGIES = {
+  kingQueen: {
+    a: 'King', b: 'Man', c: 'Woman',
+    note: 'The result is exactly Queen. The two green arrows show why: the step from Man to Woman is the same step as King to Queen, so adding that step to King produces Queen’s vector.',
+  },
+  queenGirl: {
+    a: 'Queen', b: 'Woman', c: 'Girl',
+    note: 'No word has that vector. The closest is Princess, because Princess is −0.5 on Adult rather than −1. Real embeddings work the same way: the result of analogy arithmetic rarely matches a word’s vector exactly, so the answer is the word with the highest cosine similarity to the result.',
+  },
+};
+
+// assert: king - man + woman == queen exactly
+// assert: queen - woman + girl == (1, -1, -1), nearest word princess (cosine 0.962)
+let s1Probe = [...WORDS_S1['King']];
+let s1Analogy = null;
 
 function renderS1() {
   const wordNames = Object.keys(WORDS_S1);
@@ -380,61 +476,189 @@ function renderS1() {
     const tr = document.createElement('tr');
     tr.id = 's1row_' + w;
     tr.style.cursor = 'pointer';
-    tr.innerHTML = `<td>${w}</td>${v.map(val => `<td class="${cellClass(val)}">${val.toFixed(1)}</td>`).join('')}`;
+    tr.innerHTML = `<td>${w}</td>${v.map(val => `<td class="${cellClass(val)}">${fmt(val)}</td>`).join('')}`;
     tr.addEventListener('click', () => selectS1(w));
     tbody.appendChild(tr);
   });
 
-  // Initial heatmap
-  updateS1Chart();
+  // Probe sliders, each with -1 / 0 / +1 snap buttons
+  const sliders = document.getElementById('s1Sliders');
+  sliders.innerHTML = ATTRIBUTES_S1.map((attr, i) =>
+    `<label for="s1s_${i}">${attr}</label>
+     <input type="range" min="-1" max="1" step="0.1" value="0" id="s1s_${i}">
+     <span class="sv" id="s1v_${i}">0.0</span>
+     <span class="snap-group">${[-1, 0, 1].map(v =>
+       `<button class="snap-btn" data-dim="${i}" data-val="${v}">${v > 0 ? '+1' : v < 0 ? '−1' : '0'}</button>`).join('')}</span>`
+  ).join('');
+  ATTRIBUTES_S1.forEach((_, i) => {
+    document.getElementById('s1s_' + i).addEventListener('input', e => {
+      s1Probe[i] = parseFloat(e.target.value);
+      s1Analogy = null;
+      updateS1();
+    });
+  });
+  sliders.querySelectorAll('.snap-btn').forEach(b => b.addEventListener('click', () => {
+    s1Probe[+b.dataset.dim] = +b.dataset.val;
+    s1Analogy = null;
+    updateS1();
+  }));
+
+  document.querySelectorAll('[data-analogy]').forEach(b =>
+    b.addEventListener('click', () => runAnalogy(b.dataset.analogy)));
+  document.getElementById('s1Reset').addEventListener('click', () =>
+    Plotly.relayout('s1Chart', { 'scene.camera': S1_CAMERA }));
+
+  initS1Tabs();
+}
+
+// Tabs keep the probe and arrows as they are; only the visible panel changes.
+// Left/Right arrow keys move between tabs.
+function initS1Tabs() {
+  const tabs = [...document.querySelectorAll('#s1Tabs [role="tab"]')];
+  const select = tab => tabs.forEach(t => {
+    const on = t === tab;
+    t.setAttribute('aria-selected', on);
+    t.tabIndex = on ? 0 : -1;
+    document.getElementById(t.getAttribute('aria-controls')).hidden = !on;
+  });
+  tabs.forEach((t, i) => {
+    t.addEventListener('click', () => select(t));
+    t.addEventListener('keydown', e => {
+      if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
+      const next = tabs[(i + (e.key === 'ArrowRight' ? 1 : tabs.length - 1)) % tabs.length];
+      select(next);
+      next.focus();
+    });
+  });
 }
 
 function selectS1(word) {
-  // Deselect previous
-  document.querySelectorAll('#s1Words .word-btn').forEach(b => b.classList.remove('active'));
-  document.querySelectorAll('#s1Body tr').forEach(r => r.classList.remove('active-row'));
-
-  s1Selected = word;
-  document.getElementById('s1btn_' + word).classList.add('active');
-  document.getElementById('s1row_' + word).classList.add('active-row');
-
-  // Show stats
-  const statsEl = document.getElementById('s1Stats');
-  statsEl.style.display = '';
-  const v = WORDS_S1[word];
-  const nonz = v.filter(x => x > 0).length;
-  document.getElementById('s1NonZero').textContent = nonz;
-
-  // Cosine sim to King
-  const ref = 'King';
-  document.getElementById('s1SimRef').textContent = ref;
-  const sim = cosineSim(v, WORDS_S1[ref]);
-  document.getElementById('s1Sim').textContent = sim.toFixed(3);
-
-  updateS1Chart(word);
+  s1Probe = [...WORDS_S1[word]];
+  s1Analogy = null;
+  updateS1();
 }
 
-function updateS1Chart(highlight) {
+function runAnalogy(key) {
+  const { a, b, c } = ANALOGIES[key];
+  s1Probe = WORDS_S1[a].map((v, i) => v - WORDS_S1[b][i] + WORDS_S1[c][i]);
+  s1Analogy = key;
+  updateS1();
+}
+
+// Closest word by cosine similarity. Returns null for the zero vector, which has no direction.
+function nearestS1(vec) {
+  if (vec.every(v => Math.abs(v) < 1e-9)) return null;
+  let best = null;
+  Object.entries(WORDS_S1).forEach(([w, v]) => {
+    const sim = cosineSim(vec, v);
+    if (!best || sim > best.sim) best = { word: w, sim };
+  });
+  return best;
+}
+
+function updateS1() {
+  // Sync sliders
+  s1Probe.forEach((v, i) => {
+    document.getElementById('s1s_' + i).value = v;
+    document.getElementById('s1v_' + i).textContent = fmt(v);
+  });
+
+  const near = nearestS1(s1Probe);
+
+  document.querySelectorAll('#s1Words .word-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('#s1Body tr').forEach(r => r.classList.remove('active-row'));
+  if (near) {
+    document.getElementById('s1btn_' + near.word).classList.add('active');
+    document.getElementById('s1row_' + near.word).classList.add('active-row');
+  }
+
+  document.getElementById('s1Vec').textContent = '(' + s1Probe.map(fmt).join(', ') + ')';
+  document.getElementById('s1Nearest').textContent = near ? near.word : 'none';
+  document.getElementById('s1Sim').textContent = near ? near.sim.toFixed(3) : '—';
+
+  // Analogy readout
+  const eq = document.getElementById('s1Eq');
+  const note = document.getElementById('s1Note');
+  if (s1Analogy) {
+    const { a, b, c, note: text } = ANALOGIES[s1Analogy];
+    eq.style.display = '';
+    eq.textContent = `${a} − ${b} + ${c} = (${s1Probe.map(fmt).join(', ')})`;
+    note.textContent = text;
+  } else {
+    eq.style.display = 'none';
+    note.textContent = '';
+  }
+  document.getElementById('s1Zero').hidden = !!near;
+
+  updateS1Chart(near);
+}
+
+function updateS1Chart(near) {
   const wordNames = Object.keys(WORDS_S1);
-  const traces = ATTRIBUTES_S1.map((attr, ai) => ({
-    y: wordNames,
-    x: wordNames.map(w => WORDS_S1[w][ai]),
-    name: attr,
-    type: 'bar',
-    orientation: 'h',
-    marker: {
-      color: ['#1565c0', '#e65100', '#2e7d32', '#7b1fa2'][ai],
-      opacity: wordNames.map(w => (highlight && w !== highlight) ? 0.15 : 0.9),
-    }
+
+  // Cube wireframe: the 12 edges of [-1, 1]^3, separated by nulls
+  const edge = { x: [], y: [], z: [] };
+  const corners = [];
+  [-1, 1].forEach(x => [-1, 1].forEach(y => [-1, 1].forEach(z => corners.push([x, y, z]))));
+  corners.forEach((p, i) => corners.forEach((q, j) => {
+    if (j <= i) return;
+    if (p.filter((v, k) => v !== q[k]).length !== 1) return;
+    edge.x.push(p[0], q[0], null); edge.y.push(p[1], q[1], null); edge.z.push(p[2], q[2], null);
   }));
 
+  const traces = [
+    { type: 'scatter3d', mode: 'lines', ...edge, connectgaps: false,
+      line: { color: '#c5ced8', width: 2 }, hoverinfo: 'skip' },
+    { type: 'scatter3d', mode: 'markers+text',
+      x: wordNames.map(w => WORDS_S1[w][0]),
+      y: wordNames.map(w => WORDS_S1[w][1]),
+      z: wordNames.map(w => WORDS_S1[w][2]),
+      text: wordNames, textposition: 'top center',
+      textfont: { size: 13, color: '#1a3a5c' },
+      marker: {
+        size: wordNames.map(w => near && w === near.word ? 11 : 6),
+        color: wordNames.map(w => near && w === near.word ? '#2e5a88' : '#1a3a5c'),
+        line: { color: '#fff', width: 1 },
+      },
+      hovertemplate: '<b>%{text}</b><br>Royalty %{x}<br>Male %{y}<br>Adult %{z}<extra></extra>' },
+    { type: 'scatter3d', mode: 'markers',
+      x: [s1Probe[0]], y: [s1Probe[1]], z: [s1Probe[2]],
+      marker: { size: 9, symbol: 'diamond', color: '#5e35b1', line: { color: '#fff', width: 1 } },
+      hovertemplate: 'Your vector<br>Royalty %{x}<br>Male %{y}<br>Adult %{z}<extra></extra>' },
+  ];
+
+  // Analogy arrows: b → c, and the same step carried from a → result
+  if (s1Analogy) {
+    const { a, b, c } = ANALOGIES[s1Analogy];
+    [[WORDS_S1[b], WORDS_S1[c]], [WORDS_S1[a], s1Probe]].forEach(([from, to]) => {
+      traces.push({ type: 'scatter3d', mode: 'lines',
+        x: [from[0], to[0]], y: [from[1], to[1]], z: [from[2], to[2]],
+        line: { color: '#2e7d32', width: 7 }, hoverinfo: 'skip' });
+      const d = to.map((v, i) => v - from[i]);
+      const len = Math.hypot(...d);
+      traces.push({ type: 'cone', anchor: 'tip',
+        x: [to[0]], y: [to[1]], z: [to[2]],
+        u: [d[0] / len], v: [d[1] / len], w: [d[2] / len],
+        sizemode: 'absolute', sizeref: 0.16,
+        colorscale: [[0, '#2e7d32'], [1, '#2e7d32']], showscale: false, hoverinfo: 'skip' });
+    });
+  }
+
+  const axis = title => ({
+    title: { text: title, font: { size: 13, color: '#1a3a5c' } },
+    range: [-1.3, 1.3], tickvals: [-1, -0.5, 0, 0.5, 1],
+    gridcolor: '#e8ecf0', zerolinecolor: '#9aa7b4', backgroundcolor: '#fff', showbackground: true,
+  });
+
   Plotly.react('s1Chart', traces, {
-    barmode: 'group',
-    xaxis: { title: 'Value', range: [0, 1.1], gridcolor: '#e8ecf0' },
-    yaxis: { automargin: true, autorange: 'reversed' },
-    plot_bgcolor: '#fff', paper_bgcolor: '#fff',
-    margin: { l: 80, r: 20, t: 10, b: 50 },
-    legend: { orientation: 'h', y: 1.12 },
+    uirevision: 's1',  // keep the user's rotation when the data changes
+    scene: {
+      xaxis: axis('Royalty'), yaxis: axis('Male'), zaxis: axis('Adult'),
+      aspectmode: 'cube', camera: S1_CAMERA,
+    },
+    showlegend: false,
+    paper_bgcolor: '#fff',
+    margin: { l: 0, r: 0, t: 0, b: 0 },
     font: { family: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif', size: 11 }
   }, { responsive: true });
 }
@@ -455,11 +679,13 @@ function updateS2Chart() {
     x: ATTRIBUTES_S2,
     y: wordNames,
     type: 'heatmap',
-    colorscale: [[0, '#f5f5f5'], [0.2, '#fff9c4'], [0.7, '#a5d6a7'], [1, '#2e7d32']],
+    // Diverging: orange = opposite (-1), white = doesn't apply (0), blue = has it (+1)
+    colorscale: [[0, '#e65100'], [0.5, '#ffffff'], [1, '#1565c0']],
+    zmin: -1, zmax: 1,
     showscale: true,
-    colorbar: { title: 'Value', titleside: 'right' },
+    colorbar: { title: 'Value', titleside: 'right', tickvals: [-1, 0, 1] },
     hoverongaps: false,
-    text: z.map(row => row.map(v => v.toFixed(1))),
+    text: z.map(row => row.map(fmt)),
     texttemplate: '%{text}',
     textfont: { size: 11 },
     hovertemplate: '<b>%{y}</b> · %{x}<extra></extra>',
@@ -510,14 +736,14 @@ function renderCustomSliders() {
   const grid = document.getElementById('customSliders');
   grid.innerHTML = ATTRIBUTES_S2.map((attr, i) =>
     `<label>${attr}</label>
-     <input type="range" min="0" max="1" step="0.1" value="0" id="cs_${i}" oninput="updateCustomVal(${i})">
+     <input type="range" min="-1" max="1" step="0.1" value="0" id="cs_${i}" oninput="updateCustomVal(${i})">
      <span class="sv" id="csv_${i}">0.0</span>`
   ).join('');
 }
 
 function updateCustomVal(i) {
   const v = parseFloat(document.getElementById('cs_' + i).value);
-  document.getElementById('csv_' + i).textContent = v.toFixed(1);
+  document.getElementById('csv_' + i).textContent = fmt(v);
 }
 
 function addCustomWord() {
@@ -548,7 +774,7 @@ function showRealComparison(word) {
 
   // Toy display
   document.getElementById('realToyWord').textContent = word.charAt(0).toUpperCase() + word.slice(1);
-  document.getElementById('realToyVec').textContent = '[' + toyVec.map(v => v.toFixed(1)).join(', ') + ']';
+  document.getElementById('realToyVec').textContent = '[' + toyVec.map(fmt).join(', ') + ']';
 
   // Real display
   document.getElementById('realWordLabel').textContent = `for "${word}"`;
