@@ -20,6 +20,7 @@ Single-file HTML demos and PPTX decks shared across both courses. See `docs/DEMO
 | `neural-network-demo.html` | Why hidden layers untangle nonlinear data | Both |
 | `pixel-histogram-demo.html` | Brightness histograms, thresholding, equalization | AIML 2013 |
 | `tfidf-pipeline-demo.html` | Full 6-stage TF-IDF + LR pipeline | AIML 2003 |
+| `token-is-a-token-demo.html` | Text tokens vs. image patches as input vectors (ViT framing) | Both |
 
 ## Lecture Decks (PPTX)
 
