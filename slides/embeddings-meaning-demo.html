@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>What Do Embeddings Encode? Attributes and Analogy Math &mdash; AIML 2003</title>
-<script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/plotly.js/4.2.0/plotly.min.js"></script>
 <style>
   :root {
     --primary: #1a3a5c;
@@ -660,7 +660,7 @@ function updateS1Chart(near) {
     paper_bgcolor: '#fff',
     margin: { l: 0, r: 0, t: 0, b: 0 },
     font: { family: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif', size: 11 }
-  }, { responsive: true });
+  }, { responsive: true, showSendToCloud: false });
 }
 
 // ── Stage 2: Extended attributes + zero values ──
@@ -683,7 +683,7 @@ function updateS2Chart() {
     colorscale: [[0, '#e65100'], [0.5, '#ffffff'], [1, '#1565c0']],
     zmin: -1, zmax: 1,
     showscale: true,
-    colorbar: { title: 'Value', titleside: 'right', tickvals: [-1, 0, 1] },
+    colorbar: { title: { text: 'Value', side: 'right' }, tickvals: [-1, 0, 1] },
     hoverongaps: false,
     text: z.map(row => row.map(fmt)),
     texttemplate: '%{text}',
@@ -695,7 +695,7 @@ function updateS2Chart() {
     plot_bgcolor: '#fff', paper_bgcolor: '#fff',
     margin: { l: 80, r: 20, t: 50, b: 20 },
     font: { family: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif', size: 11 },
-  }, { responsive: true });
+  }, { responsive: true, showSendToCloud: false });
 
   // Highlight axis labels on hover (remove old listeners first to avoid stacking)
   const chartEl = document.getElementById('s2Chart');
@@ -797,12 +797,12 @@ function showRealComparison(word) {
       marker: { color: realVec.slice(0, 50).map(v => v > 0 ? '#2e7d32' : '#c62828') } }
   ], {
     title: { text: `${capWord} (first 50 of 384 dimensions)`, font: { size: 13, color: '#1a3a5c' } },
-    xaxis: { title: 'Dimension index', gridcolor: '#e8ecf0' },
-    yaxis: { title: 'Value', gridcolor: '#e8ecf0', zeroline: true, zerolinecolor: '#1a3a5c' },
+    xaxis: { title: { text: 'Dimension index' }, gridcolor: '#e8ecf0' },
+    yaxis: { title: { text: 'Value' }, gridcolor: '#e8ecf0', zeroline: true, zerolinecolor: '#1a3a5c' },
     plot_bgcolor: '#fff', paper_bgcolor: '#fff',
     margin: { l: 50, r: 20, t: 40, b: 50 },
     font: { family: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif', size: 11 }
-  }, { responsive: true });
+  }, { responsive: true, showSendToCloud: false });
 }
 
 // ── Initialize ──

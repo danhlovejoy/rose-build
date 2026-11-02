@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Confusion Matrix: Measuring What a Classifier Gets Wrong &mdash; AIML 2013</title>
-<script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/plotly.js/4.2.0/plotly.min.js"></script>
 <style>
   :root {
     --primary: #1a3a5c;
@@ -721,21 +721,21 @@ function render10ClassHeatmap() {
     hovertext: zText,
     hoverinfo: 'text',
     showscale: true,
-    colorbar: { title: 'Count', titleside: 'right' }
+    colorbar: { title: { text: 'Count', side: 'right' } }
   }], {
     xaxis: {
-      title: 'Predicted Label', side: 'bottom',
+      title: { text: 'Predicted Label' }, side: 'bottom',
       tickangle: -45, tickfont: { size: 11 },
       gridcolor: '#e8ecf0'
     },
     yaxis: {
-      title: 'True Label', autorange: 'reversed',
+      title: { text: 'True Label' }, autorange: 'reversed',
       tickfont: { size: 11 }, gridcolor: '#e8ecf0'
     },
     plot_bgcolor: '#fff', paper_bgcolor: '#fff',
     margin: { l: 90, r: 80, t: 20, b: 90 },
     font: { family: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif', size: 12 }
-  }, { responsive: true });
+  }, { responsive: true, showSendToCloud: false });
 
   // Per-class metrics table
   let tableHTML = '<table class="cm-per-class" style="width:100%; border-collapse:collapse; font-size:0.85rem; margin-top:0.75rem;">';

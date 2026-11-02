@@ -27,10 +27,10 @@ Watch especially for:
 
 **Single-file architecture:** Each demo is one self-contained HTML file. All CSS in a single `<style>` block in `<head>`. All JS in a single `<script>` block at the end of `<body>`. No external stylesheets, no JS modules, no build step.
 
-**External dependencies:** Plotly only, loaded from CDN. Pin the version.
+**External dependencies:** Plotly only, loaded from cdnjs (Cloudflare). Pin the version. Do not use `cdn.plot.ly`, which some campus firewalls block.
 
 ```html
-<script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/plotly.js/4.2.0/plotly.min.js"></script>
 ```
 
 If the demo uses only Canvas (no charts), omit Plotly entirely.
@@ -166,7 +166,8 @@ const DATA = [];
 ### Plotly
 
 - Always use `Plotly.react()`, never `Plotly.newPlot()`. `react` is idempotent and avoids event listener leaks.
-- Always pass `{ responsive: true }` as the third argument.
+- Always pass `{ responsive: true, showSendToCloud: false }` as the third argument. Plotly 4 shows a "Share chart" button by default that uploads the chart to Plotly's cloud service.
+- Write every title as an object: `title: { text: 'Value' }`, and `title: { text: 'Count', side: 'right' }` on a colorbar. Plotly 3 dropped string titles and `titleside`, and a string title now renders as nothing.
 - Standard layout properties:
 
 ```js

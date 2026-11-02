@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Logistic Regression: The Binary Classifier &mdash; AIML 2003</title>
-<script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/plotly.js/4.2.0/plotly.min.js"></script>
 <style>
   :root {
     --primary: #1a3a5c;
@@ -472,13 +472,13 @@ function drawBoundary() {
     { x: lineX, y: lineY, mode: 'lines', name: 'Decision Boundary',
       line: { color: '#1a3a5c', width: 2.5, dash: 'dash' } }
   ], {
-    xaxis: { title: 'TF-IDF("brilliant")', range: [-0.05, 1.05], gridcolor: '#e8ecf0', zeroline: false },
-    yaxis: { title: 'TF-IDF("awful")', range: [-0.05, 1.05], gridcolor: '#e8ecf0', zeroline: false },
+    xaxis: { title: { text: 'TF-IDF("brilliant")' }, range: [-0.05, 1.05], gridcolor: '#e8ecf0', zeroline: false },
+    yaxis: { title: { text: 'TF-IDF("awful")' }, range: [-0.05, 1.05], gridcolor: '#e8ecf0', zeroline: false },
     plot_bgcolor: '#fff', paper_bgcolor: '#fff',
     margin: { l: 60, r: 20, t: 10, b: 50 },
     legend: { x: 0.02, y: 0.98, bgcolor: 'rgba(255,255,255,0.85)' },
     font: { family: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif', size: 12 }
-  }, { responsive: true });
+  }, { responsive: true, showSendToCloud: false });
 
   // Wire click on points
   document.getElementById('boundaryPlot').removeAllListeners('plotly_click');
@@ -584,8 +584,8 @@ function drawSigmoidWithDot(rawHighlight, probHighlight) {
   }
 
   Plotly.react('sigmoidPlot', traces, {
-    xaxis: { title: 'Raw Score', gridcolor: '#e8ecf0', zeroline: true, zerolinecolor: '#d0d7de', range: [-6, 6] },
-    yaxis: { title: 'P(positive)', gridcolor: '#e8ecf0', range: [-0.05, 1.05] },
+    xaxis: { title: { text: 'Raw Score' }, gridcolor: '#e8ecf0', zeroline: true, zerolinecolor: '#d0d7de', range: [-6, 6] },
+    yaxis: { title: { text: 'P(positive)' }, gridcolor: '#e8ecf0', range: [-0.05, 1.05] },
     plot_bgcolor: '#fff', paper_bgcolor: '#fff',
     margin: { l: 50, r: 20, t: 10, b: 50 },
     showlegend: false,
@@ -594,7 +594,7 @@ function drawSigmoidWithDot(rawHighlight, probHighlight) {
       { x: -4.5, y: 0.12, text: '<b>NEGATIVE</b>', showarrow: false, font: { size: 12, color: '#c62828' } },
       { x: 4.5, y: 0.88, text: '<b>POSITIVE</b>', showarrow: false, font: { size: 12, color: '#2e7d32' } }
     ]
-  }, { responsive: true });
+  }, { responsive: true, showSendToCloud: false });
 }
 
 // ── Stage 4: Training animation ──
@@ -649,12 +649,12 @@ function resetTraining() {
 
   // Clear plot
   Plotly.react('trainingPlot', [], {
-    xaxis: { title: 'TF-IDF("brilliant")', range: [-0.05, 1.05], gridcolor: '#e8ecf0' },
-    yaxis: { title: 'TF-IDF("awful")', range: [-0.05, 1.05], gridcolor: '#e8ecf0' },
+    xaxis: { title: { text: 'TF-IDF("brilliant")' }, range: [-0.05, 1.05], gridcolor: '#e8ecf0' },
+    yaxis: { title: { text: 'TF-IDF("awful")' }, range: [-0.05, 1.05], gridcolor: '#e8ecf0' },
     plot_bgcolor: '#fff', paper_bgcolor: '#fff',
     margin: { l: 60, r: 20, t: 10, b: 50 },
     font: { family: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif', size: 12 }
-  }, { responsive: true });
+  }, { responsive: true, showSendToCloud: false });
 }
 
 function drawTrainingFrame() {
@@ -681,15 +681,15 @@ function drawTrainingFrame() {
     { x: lineX, y: lineY, mode: 'lines', name: 'Boundary',
       line: { color: '#1a3a5c', width: 2.5 } }
   ], {
-    xaxis: { title: 'TF-IDF("brilliant")', range: [-0.05, 1.05], gridcolor: '#e8ecf0', zeroline: false },
-    yaxis: { title: 'TF-IDF("awful")', range: [-0.05, 1.05], gridcolor: '#e8ecf0', zeroline: false },
+    xaxis: { title: { text: 'TF-IDF("brilliant")' }, range: [-0.05, 1.05], gridcolor: '#e8ecf0', zeroline: false },
+    yaxis: { title: { text: 'TF-IDF("awful")' }, range: [-0.05, 1.05], gridcolor: '#e8ecf0', zeroline: false },
     plot_bgcolor: '#fff', paper_bgcolor: '#fff',
     margin: { l: 60, r: 20, t: 10, b: 50 },
     showlegend: false,
     font: { family: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif', size: 12 },
     annotations: [{ x: 0.98, y: 1.02, xref: 'x', yref: 'y', text: `Iteration ${iter}`,
       showarrow: false, font: { size: 13, color: '#1a3a5c', family: 'monospace' } }]
-  }, { responsive: true });
+  }, { responsive: true, showSendToCloud: false });
 
   const acc = accuracy(w1, w2, b);
   document.getElementById('trainIter').textContent = iter;
@@ -726,7 +726,7 @@ function drawConfidencePlot() {
     x: [0.5, 0.5], y: [-1, N], mode: 'lines', showlegend: false,
     line: { color: '#9e9e9e', width: 1, dash: 'dash' }
   }], {
-    xaxis: { title: 'P(positive)', range: [-0.02, 1.02], gridcolor: '#e8ecf0' },
+    xaxis: { title: { text: 'P(positive)' }, range: [-0.02, 1.02], gridcolor: '#e8ecf0' },
     yaxis: { visible: false },
     plot_bgcolor: '#fff', paper_bgcolor: '#fff',
     margin: { l: 20, r: 20, t: 10, b: 50 },
@@ -737,7 +737,7 @@ function drawConfidencePlot() {
       { x: 0.85, y: N + 2, text: '<b>Confident Positive</b>', showarrow: false, font: { size: 11, color: '#2e7d32' } },
       { x: 0.5, y: N + 2, text: '<b>Uncertain</b>', showarrow: false, font: { size: 11, color: '#9e9e9e' } }
     ]
-  }, { responsive: true });
+  }, { responsive: true, showSendToCloud: false });
 
   // Failure table
   const failures = results.filter(r => !r.correct);

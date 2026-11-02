@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Neural Networks: Why Layers Matter &mdash; AIML 2013</title>
-<script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/plotly.js/4.2.0/plotly.min.js"></script>
 <style>
   :root {
     --primary: #1a3a5c;
@@ -502,10 +502,10 @@ function drawStage1() {
   const traces = scatterTraces(DATA);
   const layout = Object.assign({}, PLOTLY_LAYOUT_BASE, {
     margin: { l: 50, r: 20, t: 10, b: 45 },
-    xaxis: { range: X_RANGE, gridcolor: '#e8ecf0', title: 'x₁' },
-    yaxis: { range: Y_RANGE, gridcolor: '#e8ecf0', title: 'x₂', scaleanchor: 'x' },
+    xaxis: { range: X_RANGE, gridcolor: '#e8ecf0', title: { text: 'x₁' } },
+    yaxis: { range: Y_RANGE, gridcolor: '#e8ecf0', title: { text: 'x₂' }, scaleanchor: 'x' },
   });
-  Plotly.react('plot1', traces, layout, { responsive: true });
+  Plotly.react('plot1', traces, layout, { responsive: true, showSendToCloud: false });
   document.getElementById('s1-acc').textContent = '—';
   document.getElementById('s1-verdict').textContent = '—';
   s1Drawn = false;
@@ -545,10 +545,10 @@ function trainPerceptron() {
   ];
   const layout = Object.assign({}, PLOTLY_LAYOUT_BASE, {
     margin: { l: 50, r: 20, t: 10, b: 45 },
-    xaxis: { range: X_RANGE, gridcolor: '#e8ecf0', title: 'x₁' },
-    yaxis: { range: Y_RANGE, gridcolor: '#e8ecf0', title: 'x₂', scaleanchor: 'x' },
+    xaxis: { range: X_RANGE, gridcolor: '#e8ecf0', title: { text: 'x₁' } },
+    yaxis: { range: Y_RANGE, gridcolor: '#e8ecf0', title: { text: 'x₂' }, scaleanchor: 'x' },
   });
-  Plotly.react('plot1', traces, layout, { responsive: true });
+  Plotly.react('plot1', traces, layout, { responsive: true, showSendToCloud: false });
   document.getElementById('s1-acc').textContent = (acc * 100).toFixed(0) + '%';
   document.getElementById('s1-acc').style.color = acc < 0.9 ? '#c62828' : '#2e7d32';
   document.getElementById('s1-verdict').textContent = acc < 0.9 ? 'Not enough' : 'Solved';
@@ -603,10 +603,10 @@ function updateStage2() {
   ];
   const layout = Object.assign({}, PLOTLY_LAYOUT_BASE, {
     margin: { l: 50, r: 20, t: 10, b: 45 },
-    xaxis: { range: X_RANGE, gridcolor: '#e8ecf0', title: 'x₁' },
-    yaxis: { range: Y_RANGE, gridcolor: '#e8ecf0', title: 'x₂', scaleanchor: 'x' },
+    xaxis: { range: X_RANGE, gridcolor: '#e8ecf0', title: { text: 'x₁' } },
+    yaxis: { range: Y_RANGE, gridcolor: '#e8ecf0', title: { text: 'x₂' }, scaleanchor: 'x' },
   });
-  Plotly.react('plot2', traces, layout, { responsive: true });
+  Plotly.react('plot2', traces, layout, { responsive: true, showSendToCloud: false });
 
   document.getElementById('s2-acc').textContent = (acc * 100).toFixed(0) + '%';
   document.getElementById('s2-acc').style.color = acc < 0.9 ? '#c62828' : '#2e7d32';
@@ -644,10 +644,10 @@ function drawStage3() {
   const tracesLeft = [heatmapTrace(boundary), ...scatterTraces(DATA)];
   const layoutLeft = Object.assign({}, PLOTLY_LAYOUT_BASE, {
     margin: { l: 45, r: 10, t: 10, b: 40 },
-    xaxis: { range: X_RANGE, gridcolor: '#e8ecf0', title: 'x₁' },
-    yaxis: { range: Y_RANGE, gridcolor: '#e8ecf0', title: 'x₂' },
+    xaxis: { range: X_RANGE, gridcolor: '#e8ecf0', title: { text: 'x₁' } },
+    yaxis: { range: Y_RANGE, gridcolor: '#e8ecf0', title: { text: 'x₂' } },
   });
-  Plotly.react('plot3a', tracesLeft, layoutLeft, { responsive: true });
+  Plotly.react('plot3a', tracesLeft, layoutLeft, { responsive: true, showSendToCloud: false });
 
   /* Right plot: hidden layer space (neurons 0 and 1) */
   const hActs = getHiddenActivations();
@@ -669,10 +669,10 @@ function drawStage3() {
   ];
   const layoutRight = Object.assign({}, PLOTLY_LAYOUT_BASE, {
     margin: { l: 45, r: 10, t: 10, b: 40 },
-    xaxis: { range: [-0.05, 1.05], gridcolor: '#e8ecf0', title: 'Hidden Neuron 1' },
-    yaxis: { range: [-0.05, 1.05], gridcolor: '#e8ecf0', title: 'Hidden Neuron 2' },
+    xaxis: { range: [-0.05, 1.05], gridcolor: '#e8ecf0', title: { text: 'Hidden Neuron 1' } },
+    yaxis: { range: [-0.05, 1.05], gridcolor: '#e8ecf0', title: { text: 'Hidden Neuron 2' } },
   });
-  Plotly.react('plot3b', tracesRight, layoutRight, { responsive: true });
+  Plotly.react('plot3b', tracesRight, layoutRight, { responsive: true, showSendToCloud: false });
 
   /* Stats */
   const acc = getAccuracy(hiddenNet, DATA);
@@ -798,10 +798,10 @@ function drawStage4() {
 
   const layout = Object.assign({}, PLOTLY_LAYOUT_BASE, {
     margin: { l: 50, r: 20, t: 10, b: 45 },
-    xaxis: { range: [-0.05, 1.05], gridcolor: '#e8ecf0', title: 'Hidden Neuron 1' },
-    yaxis: { range: [-0.05, 1.05], gridcolor: '#e8ecf0', title: 'Hidden Neuron 2' },
+    xaxis: { range: [-0.05, 1.05], gridcolor: '#e8ecf0', title: { text: 'Hidden Neuron 1' } },
+    yaxis: { range: [-0.05, 1.05], gridcolor: '#e8ecf0', title: { text: 'Hidden Neuron 2' } },
   });
-  Plotly.react('plot4', traces, layout, { responsive: true });
+  Plotly.react('plot4', traces, layout, { responsive: true, showSendToCloud: false });
 }
 
 function cosine(a, b) {

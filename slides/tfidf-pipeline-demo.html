@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Inside the Pipeline: TF-IDF + Logistic Regression &mdash; AIML 2003</title>
-<script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/plotly.js/4.2.0/plotly.min.js"></script>
 <style>
   :root {
     --primary: #1a3a5c;
@@ -609,12 +609,12 @@ function renderTfIdfChart(tfidf) {
     marker: { color: colors.reverse() },
     hovertemplate: '%{y}: TF-IDF = %{x:.3f}<extra></extra>'
   }], {
-    xaxis: { title: 'TF-IDF Score', gridcolor: '#e8ecf0', zeroline: false },
+    xaxis: { title: { text: 'TF-IDF Score' }, gridcolor: '#e8ecf0', zeroline: false },
     yaxis: { automargin: true },
     plot_bgcolor: '#fff', paper_bgcolor: '#fff',
     margin: { l: 110, r: 20, t: 10, b: 40 },
     font: { family: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif', size: 12 }
-  }, { responsive: true });
+  }, { responsive: true, showSendToCloud: false });
 
   const vocabSize = Object.keys(VOCAB).length;
   const nz = entries.length;
@@ -637,12 +637,12 @@ function renderCoefChart() {
     marker: { color: colors.slice().reverse() },
     hovertemplate: '%{y}: coef = %{x:.2f}<extra></extra>'
   }], {
-    xaxis: { title: 'Coefficient (green above +0.3, red below −0.3, gray in between)', gridcolor: '#e8ecf0', zeroline: true, zerolinecolor: '#1a3a5c', zerolinewidth: 2 },
+    xaxis: { title: { text: 'Coefficient (green above +0.3, red below −0.3, gray in between)' }, gridcolor: '#e8ecf0', zeroline: true, zerolinecolor: '#1a3a5c', zerolinewidth: 2 },
     yaxis: { automargin: true, tickfont: { size: 10 } },
     plot_bgcolor: '#fff', paper_bgcolor: '#fff',
     margin: { l: 110, r: 20, t: 10, b: 40 },
     font: { family: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif', size: 11 }
-  }, { responsive: true });
+  }, { responsive: true, showSendToCloud: false });
 }
 
 function renderContributions(contribs, rawScore) {
@@ -682,12 +682,12 @@ function renderContributions(contribs, rawScore) {
     hovertemplate: '%{x}: %{y:.3f}<extra></extra>'
   }], {
     xaxis: { tickangle: -45, tickfont: { size: 11 } },
-    yaxis: { title: 'Cumulative Score', gridcolor: '#e8ecf0', zeroline: true, zerolinecolor: '#1a3a5c', zerolinewidth: 2 },
+    yaxis: { title: { text: 'Cumulative Score' }, gridcolor: '#e8ecf0', zeroline: true, zerolinecolor: '#1a3a5c', zerolinewidth: 2 },
     plot_bgcolor: '#fff', paper_bgcolor: '#fff',
     margin: { l: 50, r: 20, t: 10, b: 80 },
     font: { family: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif', size: 12 },
     showlegend: false
-  }, { responsive: true });
+  }, { responsive: true, showSendToCloud: false });
 
   // Stats
   const posSum = contribs.filter(c => c.product > 0).reduce((s, c) => s + c.product, 0);
@@ -730,8 +730,8 @@ function renderSigmoid(rawScore, prob) {
       hovertemplate: '%{text}<br>Raw: %{x:.2f}<br>P(positive): %{y:.1%}<extra></extra>'
     }
   ], {
-    xaxis: { title: 'Raw Score', gridcolor: '#e8ecf0', zeroline: true, zerolinecolor: '#d0d7de', range: [-6, 6] },
-    yaxis: { title: 'P(positive)', gridcolor: '#e8ecf0', zeroline: false, range: [-0.05, 1.05] },
+    xaxis: { title: { text: 'Raw Score' }, gridcolor: '#e8ecf0', zeroline: true, zerolinecolor: '#d0d7de', range: [-6, 6] },
+    yaxis: { title: { text: 'P(positive)' }, gridcolor: '#e8ecf0', zeroline: false, range: [-0.05, 1.05] },
     plot_bgcolor: '#fff', paper_bgcolor: '#fff',
     margin: { l: 50, r: 20, t: 10, b: 50 },
     font: { family: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif', size: 12 },
@@ -743,7 +743,7 @@ function renderSigmoid(rawScore, prob) {
       x: 5.5, y: 0.85, text: '<b>POSITIVE</b>', showarrow: false,
       font: { size: 13, color: '#2e7d32' }
     }]
-  }, { responsive: true });
+  }, { responsive: true, showSendToCloud: false });
 
   // Slider
   document.getElementById('sigSlider').value = rawScore;

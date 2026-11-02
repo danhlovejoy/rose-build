@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Hallucination: Why Models Produce Fluent Falsehoods &mdash; AIML 2003</title>
-<script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/plotly.js/4.2.0/plotly.min.js"></script>
 <style>
   :root {
     --primary: #1a3a5c;
@@ -532,12 +532,12 @@ function renderTokenStep() {
     textposition: 'outside',
     hovertemplate: '%{y}: %{x:.1%}<extra></extra>'
   }], {
-    xaxis: { title: 'Probability', range: [0, Math.max(...probs) * 1.3], gridcolor: '#e8ecf0' },
+    xaxis: { title: { text: 'Probability' }, range: [0, Math.max(...probs) * 1.3], gridcolor: '#e8ecf0' },
     yaxis: { autorange: 'reversed' },
     plot_bgcolor: '#fff', paper_bgcolor: '#fff',
     margin: { l: 110, r: 60, t: 10, b: 40 },
     font: { family: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif', size: 12 }
-  }, { responsive: true });
+  }, { responsive: true, showSendToCloud: false });
 
   // Wire clicks on bars
   const plotEl = document.getElementById('tokenPlot');
@@ -626,7 +626,7 @@ function finishSentence() {
       showarrow: false,
       font: { size: 16, color: isCorrect ? '#2e7d32' : '#c62828' }
     }]
-  }, { responsive: true });
+  }, { responsive: true, showSendToCloud: false });
 
   // Compute avg prob from the full path
   const pathProbs = path.probs.filter(p => p !== null);
@@ -651,7 +651,7 @@ function finishUnscripted(token) {
       showarrow: false,
       font: { size: 16, color: '#1a3a5c' }
     }]
-  }, { responsive: true });
+  }, { responsive: true, showSendToCloud: false });
 }
 
 function autoGreedy() {
@@ -742,7 +742,7 @@ function renderTempChart(T) {
     textposition: 'outside',
     hovertemplate: '%{y}: %{x:.1%}<extra></extra>'
   }], {
-    xaxis: { title: 'Probability', range: [0, 1.0], gridcolor: '#e8ecf0' },
+    xaxis: { title: { text: 'Probability' }, range: [0, 1.0], gridcolor: '#e8ecf0' },
     yaxis: { autorange: 'reversed' },
     plot_bgcolor: '#fff', paper_bgcolor: '#fff',
     margin: { l: 110, r: 60, t: 10, b: 40 },
@@ -752,7 +752,7 @@ function renderTempChart(T) {
       text: `T = ${T.toFixed(2)}`, showarrow: false,
       font: { size: 14, color: '#1a3a5c', family: '"SF Mono", Consolas, monospace' }
     }]
-  }, { responsive: true });
+  }, { responsive: true, showSendToCloud: false });
 }
 
 function sampleOnce() {
